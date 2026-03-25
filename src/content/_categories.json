@@ -1,0 +1,23 @@
+[
+  {
+    "slug": "getting-started",
+    "title": "Getting Started",
+    "description": "Onboarding and introductory documents for new team members",
+    "icon": "rocket",
+    "minRole": "employee"
+  },
+  {
+    "slug": "engineering",
+    "title": "Engineering",
+    "description": "Technical standards, guides, and development resources",
+    "icon": "code",
+    "minRole": "employee"
+  },
+  {
+    "slug": "management",
+    "title": "Management",
+    "description": "Leadership policies, team management, and strategic documents",
+    "icon": "briefcase",
+    "minRole": "manager"
+  }
+]

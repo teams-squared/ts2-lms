@@ -1,0 +1,70 @@
+---
+title: "Coding Standards"
+description: "Our team's coding conventions, best practices, and style guidelines"
+minRole: "employee"
+updatedAt: "2026-03-20"
+author: "Engineering Team"
+tags: ["engineering", "standards", "code"]
+order: 1
+---
+
+# Coding Standards
+
+This document outlines the coding conventions and best practices used across Teams Squared engineering projects.
+
+## General Principles
+
+1. **Write readable code** - Code is read far more often than it is written
+2. **Keep it simple** - Avoid unnecessary complexity
+3. **Be consistent** - Follow the patterns established in the codebase
+4. **Test your code** - All new features should include tests
+
+## TypeScript / JavaScript
+
+### Naming Conventions
+
+- **Variables and functions**: `camelCase`
+- **Classes and interfaces**: `PascalCase`
+- **Constants**: `UPPER_SNAKE_CASE`
+- **File names**: `kebab-case.ts` or `PascalCase.tsx` for components
+
+### Code Style
+
+```typescript
+// Prefer const over let, never use var
+const MAX_RETRIES = 3;
+
+// Use explicit return types for functions
+function calculateTotal(items: Item[]): number {
+  return items.reduce((sum, item) => sum + item.price, 0);
+}
+
+// Use async/await over .then() chains
+async function fetchData(url: string): Promise<Data> {
+  const response = await fetch(url);
+  return response.json();
+}
+```
+
+## Git Workflow
+
+1. Create a feature branch from `dev`
+2. Make small, focused commits with clear messages
+3. Open a PR and request review from at least one team member
+4. Squash and merge after approval
+
+### Commit Messages
+
+Use the format: `type(scope): description`
+
+Examples:
+- `feat(auth): add Microsoft SSO login`
+- `fix(api): handle null response in user endpoint`
+- `docs(readme): update deployment instructions`
+
+## Code Review Guidelines
+
+- Review within 24 hours of being assigned
+- Be constructive and specific in feedback
+- Approve when all comments are addressed
+- Use "Request Changes" sparingly - prefer suggestions

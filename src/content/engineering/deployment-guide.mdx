@@ -1,0 +1,60 @@
+---
+title: "Deployment Guide"
+description: "How to deploy applications and services at Teams Squared"
+minRole: "employee"
+updatedAt: "2026-03-18"
+author: "DevOps Team"
+tags: ["engineering", "deployment", "devops"]
+order: 2
+---
+
+# Deployment Guide
+
+This guide covers our deployment processes and best practices.
+
+## Environments
+
+| Environment | Branch | URL | Purpose |
+|------------|--------|-----|---------|
+| Development | `dev` | dev.teamssquared.com | Testing and development |
+| Staging | `staging` | staging.teamssquared.com | Pre-production validation |
+| Production | `main` | teamssquared.com | Live environment |
+
+## Deployment Process
+
+### 1. Prepare Your Changes
+
+Ensure your code:
+- Passes all tests locally
+- Has been reviewed and approved
+- Is merged to the appropriate branch
+
+### 2. Automated Deployment
+
+We use CI/CD pipelines that automatically deploy when code is merged:
+
+```bash
+# The pipeline runs automatically, but you can monitor it:
+# Check the GitHub Actions tab for deployment status
+```
+
+### 3. Verify Deployment
+
+After deployment:
+1. Check the application is running correctly
+2. Verify key features work as expected
+3. Monitor error tracking for any new issues
+
+## Rollback Procedure
+
+If something goes wrong:
+
+1. **Quick rollback**: Revert the merge commit on the target branch
+2. **Pipeline rollback**: Re-deploy the previous version through CI/CD
+3. **Emergency**: Contact the on-call engineer immediately
+
+## Environment Variables
+
+Environment variables are managed through the deployment platform. Never commit secrets to the repository.
+
+> **Important:** Always test in staging before deploying to production. No exceptions.
