@@ -11,13 +11,13 @@ export default function LoginPage() {
 
   return (
     <div className="min-h-[calc(100vh-8rem)] flex items-center justify-center bg-brand-gradient px-4">
-      <div className="w-full max-w-md bg-white rounded-2xl shadow-lg border border-gray-100 p-8">
-        <div className="flex flex-col items-center mb-8">
-          <Logo size={48} />
-          <h1 className="mt-4 text-xl font-semibold text-gray-900">
+      <div className="w-full max-w-md bg-white rounded-lg shadow-lg border border-gray-100 border-t-2 border-t-brand-500 p-6">
+        <div className="flex flex-col items-center mb-6">
+          <Logo size={44} />
+          <h1 className="mt-3 text-lg font-semibold text-gray-900">
             Welcome back
           </h1>
-          <p className="mt-1 text-sm text-gray-500">
+          <p className="mt-0.5 text-sm text-gray-500">
             Sign in to access documentation
           </p>
         </div>
@@ -27,7 +27,7 @@ export default function LoginPage() {
         </Suspense>
 
         {!hasMicrosoftProvider && (
-          <div className="mt-6 p-3 rounded-lg bg-blue-50 text-blue-700 text-xs">
+          <div className="mt-5 p-3 rounded-lg bg-blue-50 text-blue-700 text-xs">
             <strong>Demo accounts:</strong>
             <br />
             admin@teamssquared.com / admin123

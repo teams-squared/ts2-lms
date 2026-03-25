@@ -8,6 +8,7 @@ import {
 } from "@/lib/docs";
 import { hasAccess } from "@/lib/roles";
 import Sidebar from "@/components/layout/Sidebar";
+import { ChevronRightIcon, FileTextIcon } from "@/components/icons";
 import type { Role } from "@/lib/types";
 
 export default async function CategoryPage({
@@ -27,17 +28,17 @@ export default async function CategoryPage({
   const docs = getDocsByCategory(categorySlug, userRole);
 
   return (
-    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
+    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
       {/* Breadcrumb */}
-      <nav className="text-sm text-gray-500 mb-6">
+      <nav className="flex items-center text-sm text-gray-500 mb-5">
         <Link href="/" className="hover:text-brand-600">
           Home
         </Link>
-        <span className="mx-2">/</span>
+        <ChevronRightIcon className="w-3.5 h-3.5 mx-1.5 text-gray-300" />
         <Link href="/docs" className="hover:text-brand-600">
           Docs
         </Link>
-        <span className="mx-2">/</span>
+        <ChevronRightIcon className="w-3.5 h-3.5 mx-1.5 text-gray-300" />
         <span className="text-gray-900 font-medium">{category.title}</span>
       </nav>
 
@@ -49,48 +50,51 @@ export default async function CategoryPage({
         />
 
         <div className="flex-1 min-w-0">
-          <h1 className="text-3xl font-bold text-gray-900 mb-2">
+          <h1 className="text-2xl font-bold text-gray-900 mb-1">
             {category.title}
           </h1>
-          <p className="text-gray-500 mb-8">{category.description}</p>
+          <p className="text-sm text-gray-500 mb-5">{category.description}</p>
 
           {docs.length > 0 ? (
-            <div className="space-y-3">
+            <div className="space-y-2">
               {docs.map((doc) => (
                 <Link
                   key={doc.slug}
                   href={`/docs/${categorySlug}/${doc.slug}`}
-                  className="block p-5 rounded-xl border border-gray-100 bg-white hover:border-brand-200 hover:shadow-sm transition-all group"
+                  className="flex items-start gap-3 px-4 py-3 rounded-lg border border-gray-200/60 bg-white shadow-card hover:shadow-card-hover hover:border-brand-300 border-l-2 border-l-transparent hover:border-l-brand-500 transition-all group"
                 >
-                  <h3 className="text-base font-semibold text-gray-900 group-hover:text-brand-600 transition-colors">
-                    {doc.title}
-                  </h3>
-                  <p className="text-sm text-gray-500 mt-1">
-                    {doc.description}
-                  </p>
-                  <div className="flex items-center gap-4 mt-3 text-xs text-gray-400">
-                    {doc.author && <span>By {doc.author}</span>}
-                    {doc.updatedAt && (
-                      <span>Updated {doc.updatedAt}</span>
-                    )}
-                    {doc.tags && doc.tags.length > 0 && (
-                      <div className="flex gap-1">
-                        {doc.tags.map((tag) => (
-                          <span
-                            key={tag}
-                            className="px-2 py-0.5 rounded-full bg-gray-100 text-gray-500"
-                          >
-                            {tag}
-                          </span>
-                        ))}
-                      </div>
-                    )}
+                  <FileTextIcon className="w-4 h-4 text-gray-300 mt-0.5 flex-shrink-0 group-hover:text-brand-400" />
+                  <div className="min-w-0 flex-1">
+                    <h3 className="text-sm font-semibold text-gray-900 group-hover:text-brand-600 transition-colors">
+                      {doc.title}
+                    </h3>
+                    <p className="text-xs text-gray-500 mt-0.5">
+                      {doc.description}
+                    </p>
+                    <div className="flex items-center gap-3 mt-1.5 text-xs text-gray-400">
+                      {doc.author && <span>By {doc.author}</span>}
+                      {doc.updatedAt && (
+                        <span>Updated {doc.updatedAt}</span>
+                      )}
+                      {doc.tags && doc.tags.length > 0 && (
+                        <div className="flex gap-1">
+                          {doc.tags.map((tag) => (
+                            <span
+                              key={tag}
+                              className="px-1.5 py-0.5 rounded bg-gray-100 text-gray-500"
+                            >
+                              {tag}
+                            </span>
+                          ))}
+                        </div>
+                      )}
+                    </div>
                   </div>
                 </Link>
               ))}
             </div>
           ) : (
-            <div className="text-center py-20 text-gray-400">
+            <div className="text-center py-12 text-gray-400 text-sm">
               No documents in this category yet.
             </div>
           )}

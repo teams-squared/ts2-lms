@@ -4,6 +4,7 @@ import { getAccessibleCategories, getDocsByCategory } from "@/lib/docs";
 import Logo from "@/components/Logo";
 import SearchBar from "@/components/search/SearchBar";
 import CategoryCard from "@/components/docs/CategoryCard";
+import { BookOpenIcon, SearchIcon, LockIcon } from "@/components/icons";
 import type { Role } from "@/lib/types";
 
 export default async function HomePage() {
@@ -14,16 +15,15 @@ export default async function HomePage() {
   return (
     <div>
       {/* Hero section */}
-      <section className="bg-brand-gradient py-20 px-4">
+      <section className="bg-brand-gradient py-12 px-4">
         <div className="max-w-4xl mx-auto text-center">
-          <Logo size={64} showText={false} className="justify-center mb-6" />
-          <h1 className="text-4xl sm:text-5xl font-bold text-gray-900 mb-4">
+          <Logo size={52} showText={false} className="justify-center mb-4" />
+          <h1 className="text-3xl sm:text-4xl font-bold text-gray-900 mb-3">
             Teams Squared{" "}
             <span style={{ color: "#4400FF" }}>Documentation</span>
           </h1>
-          <p className="text-lg text-gray-600 mb-8 max-w-2xl mx-auto">
+          <p className="text-base text-gray-600 mb-6 max-w-2xl mx-auto">
             Your central hub for company guides, processes, and resources.
-            Everything you need for day-to-day work, all in one place.
           </p>
 
           {session ? (
@@ -31,7 +31,7 @@ export default async function HomePage() {
           ) : (
             <Link
               href="/login"
-              className="inline-flex items-center px-6 py-3 rounded-xl bg-brand-600 text-white font-medium hover:bg-brand-700 transition-colors shadow-lg shadow-brand-600/25"
+              className="inline-flex items-center px-5 py-2.5 rounded-lg bg-brand-600 text-white font-medium hover:bg-brand-700 transition-colors shadow-lg shadow-brand-600/25"
             >
               Sign In to Access Docs
             </Link>
@@ -41,11 +41,11 @@ export default async function HomePage() {
 
       {/* Categories grid */}
       {session && categories.length > 0 && (
-        <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16">
-          <h2 className="text-2xl font-bold text-gray-900 mb-8">
+        <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10">
+          <h2 className="text-xl font-bold text-gray-900 mb-5">
             Browse by Category
           </h2>
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
             {categories.map((cat) => {
               const docs = getDocsByCategory(cat.slug, userRole);
               return (
@@ -53,6 +53,7 @@ export default async function HomePage() {
                   key={cat.slug}
                   category={cat}
                   docCount={docs.length}
+                  docTitles={docs.map((d) => d.title)}
                 />
               );
             })}
@@ -60,34 +61,40 @@ export default async function HomePage() {
         </section>
       )}
 
-      {/* Not signed in CTA */}
+      {/* Not signed in features */}
       {!session && (
-        <section className="max-w-4xl mx-auto px-4 py-16 text-center">
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-8">
-            <div className="p-6">
-              <div className="text-3xl mb-3">{"\u{1F4DA}"}</div>
-              <h3 className="font-semibold text-gray-900 mb-1">
+        <section className="max-w-4xl mx-auto px-4 py-10">
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-6">
+            <div className="p-4 text-center">
+              <div className="w-10 h-10 rounded-lg bg-brand-50 flex items-center justify-center mx-auto mb-3 text-brand-500">
+                <BookOpenIcon className="w-5 h-5" />
+              </div>
+              <h3 className="font-semibold text-gray-900 text-sm mb-1">
                 Organized Docs
               </h3>
-              <p className="text-sm text-gray-500">
+              <p className="text-xs text-gray-500">
                 Find what you need quickly with categorized documentation
               </p>
             </div>
-            <div className="p-6">
-              <div className="text-3xl mb-3">{"\u{1F50D}"}</div>
-              <h3 className="font-semibold text-gray-900 mb-1">
+            <div className="p-4 text-center">
+              <div className="w-10 h-10 rounded-lg bg-brand-50 flex items-center justify-center mx-auto mb-3 text-brand-500">
+                <SearchIcon className="w-5 h-5" />
+              </div>
+              <h3 className="font-semibold text-gray-900 text-sm mb-1">
                 Fast Search
               </h3>
-              <p className="text-sm text-gray-500">
+              <p className="text-xs text-gray-500">
                 Search across all documents instantly with fuzzy matching
               </p>
             </div>
-            <div className="p-6">
-              <div className="text-3xl mb-3">{"\u{1F512}"}</div>
-              <h3 className="font-semibold text-gray-900 mb-1">
+            <div className="p-4 text-center">
+              <div className="w-10 h-10 rounded-lg bg-brand-50 flex items-center justify-center mx-auto mb-3 text-brand-500">
+                <LockIcon className="w-5 h-5" />
+              </div>
+              <h3 className="font-semibold text-gray-900 text-sm mb-1">
                 Role-Based Access
               </h3>
-              <p className="text-sm text-gray-500">
+              <p className="text-xs text-gray-500">
                 Secure access control ensures the right people see the right
                 docs
               </p>

@@ -10,6 +10,7 @@ import {
 import { hasAccess } from "@/lib/roles";
 import Sidebar from "@/components/layout/Sidebar";
 import DocRenderer from "@/components/docs/DocRenderer";
+import { ChevronRightIcon } from "@/components/icons";
 import type { Role } from "@/lib/types";
 
 export default async function DocPage({
@@ -32,24 +33,24 @@ export default async function DocPage({
   const docs = getDocsByCategory(categorySlug, userRole);
 
   return (
-    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
+    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
       {/* Breadcrumb */}
-      <nav className="text-sm text-gray-500 mb-6">
+      <nav className="flex items-center text-sm text-gray-500 mb-5">
         <Link href="/" className="hover:text-brand-600">
           Home
         </Link>
-        <span className="mx-2">/</span>
+        <ChevronRightIcon className="w-3.5 h-3.5 mx-1.5 text-gray-300" />
         <Link href="/docs" className="hover:text-brand-600">
           Docs
         </Link>
-        <span className="mx-2">/</span>
+        <ChevronRightIcon className="w-3.5 h-3.5 mx-1.5 text-gray-300" />
         <Link
           href={`/docs/${categorySlug}`}
           className="hover:text-brand-600"
         >
           {category.title}
         </Link>
-        <span className="mx-2">/</span>
+        <ChevronRightIcon className="w-3.5 h-3.5 mx-1.5 text-gray-300" />
         <span className="text-gray-900 font-medium">{doc.meta.title}</span>
       </nav>
 
@@ -61,27 +62,25 @@ export default async function DocPage({
         />
 
         <article className="flex-1 min-w-0">
-          {/* Doc header */}
-          <div className="mb-8 pb-6 border-b border-gray-100">
-            <h1 className="text-3xl font-bold text-gray-900 mb-2">
+          <div className="mb-6 pb-4 border-b border-gray-100">
+            <h1 className="text-2xl font-bold text-gray-900 mb-1">
               {doc.meta.title}
             </h1>
-            <p className="text-gray-500">{doc.meta.description}</p>
-            <div className="flex items-center gap-4 mt-3 text-xs text-gray-400">
+            <p className="text-sm text-gray-500">{doc.meta.description}</p>
+            <div className="flex items-center gap-3 mt-2 text-xs text-gray-400">
               {doc.meta.author && <span>By {doc.meta.author}</span>}
               {doc.meta.updatedAt && (
                 <span>Updated {doc.meta.updatedAt}</span>
               )}
               {doc.meta.minRole !== "employee" && (
-                <span className="px-2 py-0.5 rounded-full bg-amber-50 text-amber-600 font-medium">
+                <span className="px-1.5 py-0.5 rounded bg-amber-50 text-amber-600 font-medium">
                   {doc.meta.minRole}+ only
                 </span>
               )}
             </div>
           </div>
 
-          {/* Rendered MDX content */}
-          <div className="prose prose-gray max-w-none prose-headings:scroll-mt-20 prose-a:text-brand-600 prose-a:no-underline hover:prose-a:underline prose-code:before:content-none prose-code:after:content-none">
+          <div className="prose prose-sm prose-gray max-w-none prose-headings:scroll-mt-16 prose-a:text-brand-600 prose-a:no-underline hover:prose-a:underline prose-code:before:content-none prose-code:after:content-none">
             <DocRenderer source={doc.content} />
           </div>
         </article>
