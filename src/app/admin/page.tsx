@@ -1,10 +1,11 @@
 import { auth } from "@/lib/auth";
 import { redirect } from "next/navigation";
 import Link from "next/link";
-import rolesConfig from "@/content/_roles.json";
 import categories from "@/content/_categories.json";
 import { getAllDocs } from "@/lib/docs";
+import { getAllElevatedUsers } from "@/lib/role-store";
 import { LayoutGridIcon, FileTextIcon, UsersIcon } from "@/components/icons";
+import RoleManager from "@/components/admin/RoleManager";
 
 export default async function AdminPage() {
   const session = await auth();
@@ -13,6 +14,7 @@ export default async function AdminPage() {
   }
 
   const docs = getAllDocs();
+  const elevatedUsers = await getAllElevatedUsers();
 
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
@@ -48,7 +50,7 @@ export default async function AdminPage() {
         <div className="p-4 rounded-lg border border-gray-200/60 bg-white shadow-card">
           <div className="flex items-center justify-between mb-2">
             <div className="text-2xl font-bold text-brand-600">
-              {rolesConfig.admins.length + rolesConfig.managers.length}
+              {elevatedUsers.length}
             </div>
             <UsersIcon className="w-5 h-5 text-brand-300" />
           </div>
@@ -56,64 +58,9 @@ export default async function AdminPage() {
         </div>
       </div>
 
-      {/* Role Configuration */}
+      {/* Role Management */}
       <div className="mb-8">
-        <h2 className="text-lg font-semibold text-gray-900 mb-3">
-          Role Configuration
-        </h2>
-        <div className="rounded-lg border border-gray-200/60 bg-white shadow-card overflow-hidden">
-          <table className="min-w-full divide-y divide-gray-100">
-            <thead className="bg-gray-50">
-              <tr>
-                <th className="px-4 py-2.5 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Role
-                </th>
-                <th className="px-4 py-2.5 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Users
-                </th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-gray-50">
-              <tr>
-                <td className="px-4 py-2.5">
-                  <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-red-50 text-red-700">
-                    admin
-                  </span>
-                </td>
-                <td className="px-4 py-2.5 text-sm text-gray-600">
-                  {rolesConfig.admins.join(", ")}
-                </td>
-              </tr>
-              <tr>
-                <td className="px-4 py-2.5">
-                  <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-amber-50 text-amber-700">
-                    manager
-                  </span>
-                </td>
-                <td className="px-4 py-2.5 text-sm text-gray-600">
-                  {rolesConfig.managers.join(", ")}
-                </td>
-              </tr>
-              <tr>
-                <td className="px-4 py-2.5">
-                  <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-green-50 text-green-700">
-                    employee
-                  </span>
-                </td>
-                <td className="px-4 py-2.5 text-sm text-gray-600">
-                  All other authenticated users (default role)
-                </td>
-              </tr>
-            </tbody>
-          </table>
-        </div>
-        <p className="mt-2 text-xs text-gray-400">
-          To modify roles, edit{" "}
-          <code className="px-1 py-0.5 rounded bg-gray-100 text-gray-600">
-            src/content/_roles.json
-          </code>{" "}
-          and redeploy.
-        </p>
+        <RoleManager />
       </div>
 
       {/* Categories */}

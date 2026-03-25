@@ -1,5 +1,4 @@
 import type { Role } from "./types";
-import rolesConfig from "@/content/_roles.json";
 
 const ROLE_LEVEL: Record<Role, number> = {
   employee: 1,
@@ -11,8 +10,11 @@ export function hasAccess(userRole: Role, requiredRole: Role): boolean {
   return ROLE_LEVEL[userRole] >= ROLE_LEVEL[requiredRole];
 }
 
-export function getUserRole(email: string): Role {
-  if (rolesConfig.admins.includes(email)) return "admin";
-  if (rolesConfig.managers.includes(email)) return "manager";
-  return rolesConfig.defaultRole as Role;
+export async function getUserRole(email: string): Promise<Role> {
+  // Dynamic import to avoid pulling fs/path into Edge Runtime
+  const { getRoleConfig } = await import("./role-store");
+  const config = await getRoleConfig();
+  if (config.admins.includes(email)) return "admin";
+  if (config.managers.includes(email)) return "manager";
+  return config.defaultRole as Role;
 }
