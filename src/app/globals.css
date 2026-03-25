@@ -1,0 +1,33 @@
+@import "tailwindcss";
+
+@plugin "@tailwindcss/typography";
+
+@theme inline {
+  --color-brand-50: #f0e6ff;
+  --color-brand-100: #d4b3ff;
+  --color-brand-200: #b880ff;
+  --color-brand-300: #9c4dff;
+  --color-brand-400: #8026ff;
+  --color-brand-500: #5000E8;
+  --color-brand-600: #4400FF;
+  --color-brand-700: #3600cc;
+  --color-brand-800: #280099;
+  --color-brand-900: #1a0066;
+
+  --font-sans: "Inter", system-ui, sans-serif;
+  --font-mono: var(--font-geist-mono);
+}
+
+body {
+  background: #ffffff;
+  color: #171717;
+  font-family: var(--font-sans);
+}
+
+.bg-brand-gradient {
+  background: radial-gradient(ellipse at center, white 30%, #f0e6ff 70%, #d4b3ff 100%);
+}
+
+.bg-brand-gradient-subtle {
+  background: radial-gradient(ellipse at center, white 60%, #f0e6ff 100%);
+}
