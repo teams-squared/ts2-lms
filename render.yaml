@@ -1,0 +1,26 @@
+services:
+  - type: web
+    name: ts2-documentation-portal
+    runtime: node
+    plan: pro
+    buildCommand: npm install && npm run build
+    startCommand: npm start
+    disk:
+      name: data
+      mountPath: /data
+      sizeGB: 1
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: ROLES_DATA_DIR
+        value: /data
+      - key: NEXTAUTH_SECRET
+        sync: false
+      - key: NEXTAUTH_URL
+        sync: false
+      - key: AZURE_AD_CLIENT_ID
+        sync: false
+      - key: AZURE_AD_CLIENT_SECRET
+        sync: false
+      - key: AZURE_AD_TENANT_ID
+        sync: false

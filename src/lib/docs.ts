@@ -4,7 +4,7 @@ import matter from "gray-matter";
 import type { Category, DocMeta, Role } from "./types";
 import { hasAccess } from "./roles";
 
-const CONTENT_DIR = path.join(process.cwd(), "src", "content");
+const CONTENT_DIR = process.env.CONTENT_DIR || path.join(/*turbopackIgnore: true*/ process.cwd(), "src", "content");
 
 export function getCategories(): Category[] {
   const filePath = path.join(CONTENT_DIR, "_categories.json");
