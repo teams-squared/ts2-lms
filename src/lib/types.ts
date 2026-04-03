@@ -18,4 +18,5 @@ export interface Category {
   description: string;
   icon: string;
   minRole: Role;
+  parentCategory?: string;
 }

@@ -5,9 +5,11 @@ import {
   getAccessibleCategories,
   getDocsByCategory,
   getCategoryBySlug,
+  getSubcategoriesOf,
 } from "@/lib/docs";
 import { hasAccess } from "@/lib/roles";
 import Sidebar from "@/components/layout/Sidebar";
+import CategoryCard from "@/components/docs/CategoryCard";
 import { ChevronRightIcon, FileTextIcon } from "@/components/icons";
 import type { Role } from "@/lib/types";
 
@@ -25,20 +27,68 @@ export default async function CategoryPage({
   if (!hasAccess(userRole, category.minRole)) notFound();
 
   const categories = getAccessibleCategories(userRole);
+  const subcategories = getSubcategoriesOf(categorySlug, userRole);
   const docs = getDocsByCategory(categorySlug, userRole);
 
+  // Parent category: has subcategories but no docs directly
+  if (subcategories.length > 0 && docs.length === 0) {
+    return (
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        <nav className="flex items-center text-sm text-gray-500 mb-5">
+          <Link href="/" className="hover:text-brand-600">Home</Link>
+          <ChevronRightIcon className="w-3.5 h-3.5 mx-1.5 text-gray-300" />
+          <Link href="/docs" className="hover:text-brand-600">Docs</Link>
+          <ChevronRightIcon className="w-3.5 h-3.5 mx-1.5 text-gray-300" />
+          <span className="text-gray-900 font-medium">{category.title}</span>
+        </nav>
+
+        <div className="flex gap-8">
+          <Sidebar categories={categories} currentCategory={categorySlug} />
+
+          <div className="flex-1 min-w-0">
+            <h1 className="text-2xl font-bold text-gray-900 mb-1">
+              {category.title}
+            </h1>
+            <p className="text-sm text-gray-500 mb-5">{category.description}</p>
+
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+              {subcategories.map((sub) => {
+                const subDocs = getDocsByCategory(sub.slug, userRole);
+                return (
+                  <CategoryCard
+                    key={sub.slug}
+                    category={sub}
+                    docCount={subDocs.length}
+                    docTitles={subDocs.map((d) => d.title)}
+                  />
+                );
+              })}
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  // Regular category: has docs
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-      {/* Breadcrumb */}
       <nav className="flex items-center text-sm text-gray-500 mb-5">
-        <Link href="/" className="hover:text-brand-600">
-          Home
-        </Link>
+        <Link href="/" className="hover:text-brand-600">Home</Link>
         <ChevronRightIcon className="w-3.5 h-3.5 mx-1.5 text-gray-300" />
-        <Link href="/docs" className="hover:text-brand-600">
-          Docs
-        </Link>
+        <Link href="/docs" className="hover:text-brand-600">Docs</Link>
         <ChevronRightIcon className="w-3.5 h-3.5 mx-1.5 text-gray-300" />
+        {category.parentCategory && (
+          <>
+            <Link
+              href={`/docs/${category.parentCategory}`}
+              className="hover:text-brand-600"
+            >
+              {getCategoryBySlug(category.parentCategory)?.title}
+            </Link>
+            <ChevronRightIcon className="w-3.5 h-3.5 mx-1.5 text-gray-300" />
+          </>
+        )}
         <span className="text-gray-900 font-medium">{category.title}</span>
       </nav>
 
@@ -73,9 +123,7 @@ export default async function CategoryPage({
                     </p>
                     <div className="flex items-center gap-3 mt-1.5 text-xs text-gray-400">
                       {doc.author && <span>By {doc.author}</span>}
-                      {doc.updatedAt && (
-                        <span>Updated {doc.updatedAt}</span>
-                      )}
+                      {doc.updatedAt && <span>Updated {doc.updatedAt}</span>}
                       {doc.tags && doc.tags.length > 0 && (
                         <div className="flex gap-1">
                           {doc.tags.map((tag) => (

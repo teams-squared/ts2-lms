@@ -9,9 +9,17 @@
   {
     "slug": "security",
     "title": "Cybersecurity",
-    "description": "Security policies, onboarding course, and guidelines for all team members",
+    "description": "Security policies and guidelines for all team members",
     "icon": "shield",
     "minRole": "employee"
+  },
+  {
+    "slug": "cybersecurity-onboarding",
+    "title": "Cybersecurity Onboarding",
+    "description": "Mandatory security onboarding course — complete this during your first week",
+    "icon": "shield",
+    "minRole": "employee",
+    "parentCategory": "security"
   },
   {
     "slug": "engineering",

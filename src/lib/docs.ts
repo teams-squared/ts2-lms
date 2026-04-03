@@ -92,3 +92,13 @@ export function getAllDocs(): DocMeta[] {
 export function getCategoryBySlug(slug: string): Category | undefined {
   return getCategories().find((cat) => cat.slug === slug);
 }
+
+export function getTopLevelCategories(userRole: Role): Category[] {
+  return getAccessibleCategories(userRole).filter((cat) => !cat.parentCategory);
+}
+
+export function getSubcategoriesOf(parentSlug: string, userRole: Role): Category[] {
+  return getAccessibleCategories(userRole).filter(
+    (cat) => cat.parentCategory === parentSlug
+  );
+}
