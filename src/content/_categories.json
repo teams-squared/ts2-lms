@@ -7,6 +7,13 @@
     "minRole": "employee"
   },
   {
+    "slug": "security",
+    "title": "Cybersecurity",
+    "description": "Security policies, onboarding course, and guidelines for all team members",
+    "icon": "shield",
+    "minRole": "employee"
+  },
+  {
     "slug": "engineering",
     "title": "Engineering",
     "description": "Technical standards, guides, and development resources",
