@@ -1,7 +1,6 @@
 import Link from "next/link";
 import { auth } from "@/lib/auth";
 import { getTopLevelCategories, getDocsByCategory } from "@/lib/docs";
-import Logo from "@/components/Logo";
 import SearchBar from "@/components/search/SearchBar";
 import CategoryCard from "@/components/docs/CategoryCard";
 import { BookOpenIcon, SearchIcon, LockIcon } from "@/components/icons";
@@ -26,7 +25,6 @@ export default async function HomePage() {
       {/* Hero section */}
       <section className="bg-brand-gradient py-12 px-4">
         <div className="max-w-4xl mx-auto text-center">
-          <Logo size={48} className="justify-center mb-4" />
           <h1 className="text-3xl sm:text-4xl font-bold text-gray-900 mb-3">
             Teams Squared{" "}
             <span style={{ color: "#4400FF" }}>Documentation</span>
