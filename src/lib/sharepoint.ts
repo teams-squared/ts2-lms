@@ -1,10 +1,24 @@
 import { getGraphClient } from "./graph-client";
 import type { Category } from "./types";
 
-const DRIVE_ID = process.env.SHAREPOINT_DRIVE_ID!;
 const DOCS_ROOT = encodeURIComponent(
   process.env.SHAREPOINT_DOCS_ROOT || "Docs for Portal"
 );
+
+// Prefer site-based path (more reliable for SharePoint).
+// Falls back to drive ID if site ID is not set.
+const SITE_ID = process.env.SHAREPOINT_SITE_ID;
+const DRIVE_ID = process.env.SHAREPOINT_DRIVE_ID;
+
+if (!SITE_ID && !DRIVE_ID) {
+  throw new Error(
+    "Missing SharePoint configuration: set SHAREPOINT_SITE_ID (preferred) or SHAREPOINT_DRIVE_ID."
+  );
+}
+
+const API_BASE = SITE_ID
+  ? `/sites/${SITE_ID}/drive/root:`
+  : `/drives/${DRIVE_ID}/root:`;
 
 // ---------------------------------------------------------------------------
 // In-memory TTL cache
@@ -43,7 +57,7 @@ export async function fetchCategoriesFromSharePoint(): Promise<Category[]> {
   return withCache("categories", 10 * 60 * 1000, async () => {
     const client = getGraphClient();
     const response: Response = await client
-      .api(`/drives/${DRIVE_ID}/root:/${DOCS_ROOT}/_categories.json:/content`)
+      .api(`${API_BASE}/${DOCS_ROOT}/_categories.json:/content`)
       .responseType("raw" as never)
       .get();
     const text = await response.text();
@@ -61,7 +75,7 @@ export async function fetchDocListFromSharePoint(
   return withCache(`doclist:${categorySlug}`, 5 * 60 * 1000, async () => {
     const client = getGraphClient();
     const result = await client
-      .api(`/drives/${DRIVE_ID}/root:/${DOCS_ROOT}/${categorySlug}:/children`)
+      .api(`${API_BASE}/${DOCS_ROOT}/${categorySlug}:/children`)
       .select("name")
       .get();
 
@@ -85,7 +99,7 @@ export async function fetchDocContentFromSharePoint(
   return withCache(`content:${categorySlug}/${fileName}`, 2 * 60 * 1000, async () => {
     const client = getGraphClient();
     const response: Response = await client
-      .api(`/drives/${DRIVE_ID}/root:/${DOCS_ROOT}/${categorySlug}/${fileName}:/content`)
+      .api(`${API_BASE}/${DOCS_ROOT}/${categorySlug}/${fileName}:/content`)
       .responseType("raw" as never)
       .get();
     if (!response.ok) {
