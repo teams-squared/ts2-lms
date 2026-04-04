@@ -26,8 +26,8 @@ export async function getDocsByCategory(
   if (files.length === 0) return [];
 
   const docs: DocMeta[] = await Promise.all(
-    files.map(async ({ name, downloadUrl }) => {
-      const raw = await fetchDocContentFromSharePoint(downloadUrl);
+    files.map(async (name) => {
+      const raw = await fetchDocContentFromSharePoint(categorySlug, name);
       const { data } = matter(raw);
       const slug = name.replace(".mdx", "");
       return {
@@ -56,10 +56,10 @@ export async function getDocContent(
   slug: string
 ): Promise<{ meta: DocMeta; content: string } | null> {
   const files = await fetchDocListFromSharePoint(category);
-  const file = files.find((f) => f.name === `${slug}.mdx`);
-  if (!file) return null;
+  const fileName = `${slug}.mdx`;
+  if (!files.includes(fileName)) return null;
 
-  const raw = await fetchDocContentFromSharePoint(file.downloadUrl);
+  const raw = await fetchDocContentFromSharePoint(category, fileName);
   const { data, content } = matter(raw);
 
   return {
