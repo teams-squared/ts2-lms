@@ -1,48 +1,48 @@
-import fs from "fs";
-import path from "path";
 import matter from "gray-matter";
 import type { Category, DocMeta, Role } from "./types";
 import { hasAccess } from "./roles";
+import {
+  fetchCategoriesFromSharePoint,
+  fetchDocListFromSharePoint,
+  fetchDocContentFromSharePoint,
+} from "./sharepoint";
 
-const CONTENT_DIR = process.env.CONTENT_DIR || path.join(/*turbopackIgnore: true*/ process.cwd(), "src", "content");
-
-export function getCategories(): Category[] {
-  const filePath = path.join(CONTENT_DIR, "_categories.json");
-  const raw = fs.readFileSync(filePath, "utf-8");
-  return JSON.parse(raw);
+export async function getCategories(): Promise<Category[]> {
+  return fetchCategoriesFromSharePoint();
 }
 
-export function getAccessibleCategories(userRole: Role): Category[] {
-  return getCategories().filter((cat) => hasAccess(userRole, cat.minRole));
+export async function getAccessibleCategories(
+  userRole: Role
+): Promise<Category[]> {
+  const categories = await getCategories();
+  return categories.filter((cat) => hasAccess(userRole, cat.minRole));
 }
 
-export function getDocsByCategory(
+export async function getDocsByCategory(
   categorySlug: string,
   userRole?: Role
-): DocMeta[] {
-  const categoryDir = path.join(CONTENT_DIR, categorySlug);
-  if (!fs.existsSync(categoryDir)) return [];
+): Promise<DocMeta[]> {
+  const files = await fetchDocListFromSharePoint(categorySlug);
+  if (files.length === 0) return [];
 
-  const files = fs
-    .readdirSync(categoryDir)
-    .filter((f) => f.endsWith(".mdx"));
-
-  const docs: DocMeta[] = files.map((file) => {
-    const filePath = path.join(categoryDir, file);
-    const raw = fs.readFileSync(filePath, "utf-8");
-    const { data } = matter(raw);
-    return {
-      title: data.title || file.replace(".mdx", ""),
-      description: data.description || "",
-      slug: file.replace(".mdx", ""),
-      category: categorySlug,
-      minRole: data.minRole || "employee",
-      updatedAt: data.updatedAt || "",
-      author: data.author,
-      tags: data.tags || [],
-      order: data.order || 0,
-    };
-  });
+  const docs: DocMeta[] = await Promise.all(
+    files.map(async ({ name, downloadUrl }) => {
+      const raw = await fetchDocContentFromSharePoint(downloadUrl);
+      const { data } = matter(raw);
+      const slug = name.replace(".mdx", "");
+      return {
+        title: data.title || slug,
+        description: data.description || "",
+        slug,
+        category: categorySlug,
+        minRole: data.minRole || "employee",
+        updatedAt: data.updatedAt || "",
+        author: data.author,
+        tags: data.tags || [],
+        order: data.order || 0,
+      } satisfies DocMeta;
+    })
+  );
 
   const filtered = userRole
     ? docs.filter((doc) => hasAccess(userRole, doc.minRole))
@@ -51,14 +51,15 @@ export function getDocsByCategory(
   return filtered.sort((a, b) => (a.order || 0) - (b.order || 0));
 }
 
-export function getDocContent(
+export async function getDocContent(
   category: string,
   slug: string
-): { meta: DocMeta; content: string } | null {
-  const filePath = path.join(CONTENT_DIR, category, `${slug}.mdx`);
-  if (!fs.existsSync(filePath)) return null;
+): Promise<{ meta: DocMeta; content: string } | null> {
+  const files = await fetchDocListFromSharePoint(category);
+  const file = files.find((f) => f.name === `${slug}.mdx`);
+  if (!file) return null;
 
-  const raw = fs.readFileSync(filePath, "utf-8");
+  const raw = await fetchDocContentFromSharePoint(file.downloadUrl);
   const { data, content } = matter(raw);
 
   return {
@@ -77,28 +78,32 @@ export function getDocContent(
   };
 }
 
-export function getAllDocs(): DocMeta[] {
-  const categories = getCategories();
-  const allDocs: DocMeta[] = [];
-
-  for (const cat of categories) {
-    const docs = getDocsByCategory(cat.slug);
-    allDocs.push(...docs);
-  }
-
-  return allDocs;
-}
-
-export function getCategoryBySlug(slug: string): Category | undefined {
-  return getCategories().find((cat) => cat.slug === slug);
-}
-
-export function getTopLevelCategories(userRole: Role): Category[] {
-  return getAccessibleCategories(userRole).filter((cat) => !cat.parentCategory);
-}
-
-export function getSubcategoriesOf(parentSlug: string, userRole: Role): Category[] {
-  return getAccessibleCategories(userRole).filter(
-    (cat) => cat.parentCategory === parentSlug
+export async function getAllDocs(): Promise<DocMeta[]> {
+  const categories = await getCategories();
+  const results = await Promise.all(
+    categories.map((cat) => getDocsByCategory(cat.slug))
   );
+  return results.flat();
+}
+
+export async function getCategoryBySlug(
+  slug: string
+): Promise<Category | undefined> {
+  const categories = await getCategories();
+  return categories.find((cat) => cat.slug === slug);
+}
+
+export async function getTopLevelCategories(
+  userRole: Role
+): Promise<Category[]> {
+  const categories = await getAccessibleCategories(userRole);
+  return categories.filter((cat) => !cat.parentCategory);
+}
+
+export async function getSubcategoriesOf(
+  parentSlug: string,
+  userRole: Role
+): Promise<Category[]> {
+  const categories = await getAccessibleCategories(userRole);
+  return categories.filter((cat) => cat.parentCategory === parentSlug);
 }

@@ -1,8 +1,7 @@
 import { auth } from "@/lib/auth";
 import { redirect } from "next/navigation";
 import Link from "next/link";
-import categories from "@/content/_categories.json";
-import { getAllDocs } from "@/lib/docs";
+import { getAllDocs, getCategories } from "@/lib/docs";
 import { getAllElevatedUsers } from "@/lib/role-store";
 import { LayoutGridIcon, FileTextIcon, UsersIcon } from "@/components/icons";
 import RoleManager from "@/components/admin/RoleManager";
@@ -13,8 +12,11 @@ export default async function AdminPage() {
     redirect("/docs");
   }
 
-  const docs = getAllDocs();
-  const elevatedUsers = await getAllElevatedUsers();
+  const [docs, categories, elevatedUsers] = await Promise.all([
+    getAllDocs(),
+    getCategories(),
+    getAllElevatedUsers(),
+  ]);
 
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">

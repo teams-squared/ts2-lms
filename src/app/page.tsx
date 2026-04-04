@@ -10,7 +10,16 @@ import type { Role } from "@/lib/types";
 export default async function HomePage() {
   const session = await auth();
   const userRole = (session?.user?.role as Role) || "employee";
-  const categories = session ? getAccessibleCategories(userRole) : [];
+  const categories = session ? await getAccessibleCategories(userRole) : [];
+
+  const categoryDocs = session
+    ? await Promise.all(
+        categories.map(async (cat) => ({
+          cat,
+          docs: await getDocsByCategory(cat.slug, userRole),
+        }))
+      )
+    : [];
 
   return (
     <div>
@@ -40,23 +49,20 @@ export default async function HomePage() {
       </section>
 
       {/* Categories grid */}
-      {session && categories.length > 0 && (
+      {session && categoryDocs.length > 0 && (
         <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10">
           <h2 className="text-xl font-bold text-gray-900 mb-5">
             Browse by Category
           </h2>
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-            {categories.map((cat) => {
-              const docs = getDocsByCategory(cat.slug, userRole);
-              return (
-                <CategoryCard
-                  key={cat.slug}
-                  category={cat}
-                  docCount={docs.length}
-                  docTitles={docs.map((d) => d.title)}
-                />
-              );
-            })}
+            {categoryDocs.map(({ cat, docs }) => (
+              <CategoryCard
+                key={cat.slug}
+                category={cat}
+                docCount={docs.length}
+                docTitles={docs.map((d) => d.title)}
+              />
+            ))}
           </div>
         </section>
       )}

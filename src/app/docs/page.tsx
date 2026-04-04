@@ -11,7 +11,24 @@ import type { Role } from "@/lib/types";
 export default async function DocsPage() {
   const session = await auth();
   const userRole = (session?.user?.role as Role) || "employee";
-  const topLevel = getTopLevelCategories(userRole);
+  const topLevel = await getTopLevelCategories(userRole);
+
+  const sections = await Promise.all(
+    topLevel.map(async (cat) => {
+      const subcategories = await getSubcategoriesOf(cat.slug, userRole);
+      if (subcategories.length > 0) {
+        const subcatDocs = await Promise.all(
+          subcategories.map(async (sub) => ({
+            sub,
+            docs: await getDocsByCategory(sub.slug, userRole),
+          }))
+        );
+        return { cat, subcategories: subcatDocs, docs: [] };
+      }
+      const docs = await getDocsByCategory(cat.slug, userRole);
+      return { cat, subcategories: [], docs };
+    })
+  );
 
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
@@ -26,9 +43,7 @@ export default async function DocsPage() {
       </div>
 
       <div className="space-y-8">
-        {topLevel.map((cat) => {
-          const subcategories = getSubcategoriesOf(cat.slug, userRole);
-
+        {sections.map(({ cat, subcategories, docs }) => {
           if (subcategories.length > 0) {
             return (
               <div key={cat.slug}>
@@ -36,23 +51,19 @@ export default async function DocsPage() {
                   {cat.title}
                 </h2>
                 <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-                  {subcategories.map((sub) => {
-                    const docs = getDocsByCategory(sub.slug, userRole);
-                    return (
-                      <CategoryCard
-                        key={sub.slug}
-                        category={sub}
-                        docCount={docs.length}
-                        docTitles={docs.map((d) => d.title)}
-                      />
-                    );
-                  })}
+                  {subcategories.map(({ sub, docs: subDocs }) => (
+                    <CategoryCard
+                      key={sub.slug}
+                      category={sub}
+                      docCount={subDocs.length}
+                      docTitles={subDocs.map((d) => d.title)}
+                    />
+                  ))}
                 </div>
               </div>
             );
           }
 
-          const docs = getDocsByCategory(cat.slug, userRole);
           return (
             <CategoryCard
               key={cat.slug}

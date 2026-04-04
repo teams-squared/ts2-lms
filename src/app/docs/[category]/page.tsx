@@ -22,16 +22,25 @@ export default async function CategoryPage({
   const session = await auth();
   const userRole = (session?.user?.role as Role) || "employee";
 
-  const category = getCategoryBySlug(categorySlug);
+  const category = await getCategoryBySlug(categorySlug);
   if (!category) notFound();
   if (!hasAccess(userRole, category.minRole)) notFound();
 
-  const categories = getAccessibleCategories(userRole);
-  const subcategories = getSubcategoriesOf(categorySlug, userRole);
-  const docs = getDocsByCategory(categorySlug, userRole);
+  const [categories, subcategories, docs] = await Promise.all([
+    getAccessibleCategories(userRole),
+    getSubcategoriesOf(categorySlug, userRole),
+    getDocsByCategory(categorySlug, userRole),
+  ]);
 
   // Parent category: has subcategories but no docs directly
   if (subcategories.length > 0 && docs.length === 0) {
+    const subcatDocs = await Promise.all(
+      subcategories.map(async (sub) => ({
+        sub,
+        docs: await getDocsByCategory(sub.slug, userRole),
+      }))
+    );
+
     return (
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         <nav className="flex items-center text-sm text-gray-500 mb-5">
@@ -52,17 +61,14 @@ export default async function CategoryPage({
             <p className="text-sm text-gray-500 mb-5">{category.description}</p>
 
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-              {subcategories.map((sub) => {
-                const subDocs = getDocsByCategory(sub.slug, userRole);
-                return (
-                  <CategoryCard
-                    key={sub.slug}
-                    category={sub}
-                    docCount={subDocs.length}
-                    docTitles={subDocs.map((d) => d.title)}
-                  />
-                );
-              })}
+              {subcatDocs.map(({ sub, docs: subDocs }) => (
+                <CategoryCard
+                  key={sub.slug}
+                  category={sub}
+                  docCount={subDocs.length}
+                  docTitles={subDocs.map((d) => d.title)}
+                />
+              ))}
             </div>
           </div>
         </div>
@@ -71,6 +77,10 @@ export default async function CategoryPage({
   }
 
   // Regular category: has docs
+  const parentTitle = category.parentCategory
+    ? (await getCategoryBySlug(category.parentCategory))?.title
+    : null;
+
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
       <nav className="flex items-center text-sm text-gray-500 mb-5">
@@ -78,13 +88,13 @@ export default async function CategoryPage({
         <ChevronRightIcon className="w-3.5 h-3.5 mx-1.5 text-gray-300" />
         <Link href="/docs" className="hover:text-brand-600">Docs</Link>
         <ChevronRightIcon className="w-3.5 h-3.5 mx-1.5 text-gray-300" />
-        {category.parentCategory && (
+        {category.parentCategory && parentTitle && (
           <>
             <Link
               href={`/docs/${category.parentCategory}`}
               className="hover:text-brand-600"
             >
-              {getCategoryBySlug(category.parentCategory)?.title}
+              {parentTitle}
             </Link>
             <ChevronRightIcon className="w-3.5 h-3.5 mx-1.5 text-gray-300" />
           </>

@@ -22,15 +22,16 @@ export default async function DocPage({
   const session = await auth();
   const userRole = (session?.user?.role as Role) || "employee";
 
-  const category = getCategoryBySlug(categorySlug);
-  if (!category) notFound();
+  const [category, doc, categories, docs] = await Promise.all([
+    getCategoryBySlug(categorySlug),
+    getDocContent(categorySlug, slug),
+    getAccessibleCategories(userRole),
+    getDocsByCategory(categorySlug, userRole),
+  ]);
 
-  const doc = getDocContent(categorySlug, slug);
+  if (!category) notFound();
   if (!doc) notFound();
   if (!hasAccess(userRole, doc.meta.minRole)) notFound();
-
-  const categories = getAccessibleCategories(userRole);
-  const docs = getDocsByCategory(categorySlug, userRole);
 
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
