@@ -26,18 +26,18 @@ export default function DocsLoading() {
         <div className="h-9 bg-gray-200 rounded-lg max-w-xl" />
       </div>
 
-      <div className="space-y-8">
-        <div>
-          <div className="h-3.5 bg-gray-200 rounded w-24 mb-3" />
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-            {[0, 1, 2].map((i) => <CategoryCardSkeleton key={i} />)}
-          </div>
+      <div className="space-y-6">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+          <CategoryCardSkeleton />
         </div>
         <div>
-          <div className="h-3.5 bg-gray-200 rounded w-20 mb-3" />
+          <div className="h-3 bg-gray-200 rounded w-24 mb-3" />
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
             {[0, 1].map((i) => <CategoryCardSkeleton key={i} />)}
           </div>
+        </div>
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+          <CategoryCardSkeleton />
         </div>
       </div>
     </div>

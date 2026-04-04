@@ -42,12 +42,12 @@ export default async function DocsPage() {
         <SearchBar className="max-w-xl" />
       </div>
 
-      <div className="space-y-8">
+      <div className="space-y-6">
         {sections.map(({ cat, subcategories, docs }) => {
           if (subcategories.length > 0) {
             return (
               <div key={cat.slug}>
-                <h2 className="text-sm font-semibold text-gray-500 uppercase tracking-wider mb-3">
+                <h2 className="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-3">
                   {cat.title}
                 </h2>
                 <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
@@ -65,12 +65,13 @@ export default async function DocsPage() {
           }
 
           return (
-            <CategoryCard
-              key={cat.slug}
-              category={cat}
-              docCount={docs.length}
-              docTitles={docs.map((d) => d.title)}
-            />
+            <div key={cat.slug} className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+              <CategoryCard
+                category={cat}
+                docCount={docs.length}
+                docTitles={docs.map((d) => d.title)}
+              />
+            </div>
           );
         })}
       </div>
