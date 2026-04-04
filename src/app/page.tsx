@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { auth } from "@/lib/auth";
-import { getAccessibleCategories, getDocsByCategory } from "@/lib/docs";
+import { getTopLevelCategories, getDocsByCategory } from "@/lib/docs";
 import Logo from "@/components/Logo";
 import SearchBar from "@/components/search/SearchBar";
 import CategoryCard from "@/components/docs/CategoryCard";
@@ -10,11 +10,11 @@ import type { Role } from "@/lib/types";
 export default async function HomePage() {
   const session = await auth();
   const userRole = (session?.user?.role as Role) || "employee";
-  const categories = session ? await getAccessibleCategories(userRole) : [];
+  const topLevel = session ? await getTopLevelCategories(userRole) : [];
 
   const categoryDocs = session
     ? await Promise.all(
-        categories.map(async (cat) => ({
+        topLevel.map(async (cat) => ({
           cat,
           docs: await getDocsByCategory(cat.slug, userRole),
         }))

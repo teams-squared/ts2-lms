@@ -78,15 +78,28 @@ export async function fetchDocListFromSharePoint(
 ): Promise<string[]> {
   return withCache(`doclist:${categorySlug}`, 5 * 60 * 1000, async () => {
     const client = getGraphClient();
-    const result = await client
-      .api(`${API_BASE}/${DOCS_ROOT}/${categorySlug}:/children`)
-      .select("name")
-      .get();
+    try {
+      const result = await client
+        .api(`${API_BASE}/${DOCS_ROOT}/${categorySlug}:/children`)
+        .select("name")
+        .get();
 
-    const items: { name: string }[] = result.value ?? [];
-    return items
-      .filter((item) => item.name.endsWith(".mdx"))
-      .map((item) => item.name);
+      const items: { name: string }[] = result.value ?? [];
+      return items
+        .filter((item) => item.name.endsWith(".mdx"))
+        .map((item) => item.name);
+    } catch (e: unknown) {
+      // Parent categories have no folder in SharePoint — return empty list
+      if (
+        typeof e === "object" &&
+        e !== null &&
+        "statusCode" in e &&
+        (e as { statusCode: number }).statusCode === 404
+      ) {
+        return [];
+      }
+      throw e;
+    }
   });
 }
 
