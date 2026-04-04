@@ -13,7 +13,7 @@ export default function LoginPage() {
     <div className="min-h-[calc(100vh-8rem)] flex items-center justify-center bg-brand-gradient px-4">
       <div className="w-full max-w-md bg-white rounded-lg shadow-lg border border-gray-100 border-t-2 border-t-brand-500 p-6">
         <div className="flex flex-col items-center mb-6">
-          <Logo size={44} />
+          <Logo size={36} showText />
           <h1 className="mt-3 text-lg font-semibold text-gray-900">
             Welcome back
           </h1>

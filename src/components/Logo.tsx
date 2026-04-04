@@ -8,34 +8,22 @@ interface LogoProps {
 
 export default function Logo({
   className = "",
-  showText = true,
+  showText = false,
   size = 40,
 }: LogoProps) {
+  const src = showText ? "/logo_w_text.png" : "/logo.png";
+  // The text logo is wider than it is tall — scale width accordingly
+  const width = showText ? Math.round(size * 2.8) : size;
+
   return (
-    <div className={`flex items-center gap-3 ${className}`}>
+    <div className={`flex items-center ${className}`}>
       <Image
-        src="/logo.png"
+        src={src}
         alt="Teams Squared"
-        width={size}
+        width={width}
         height={size}
         className="object-contain"
       />
-      {showText && (
-        <div className="flex flex-col leading-none">
-          <span
-            className="font-bold tracking-tight"
-            style={{ color: "#4800E8", fontSize: `${size * 0.38}px` }}
-          >
-            teams
-          </span>
-          <span
-            className="font-bold tracking-tight"
-            style={{ color: "#4800E8", fontSize: `${size * 0.38}px` }}
-          >
-            squared
-          </span>
-        </div>
-      )}
     </div>
   );
 }
