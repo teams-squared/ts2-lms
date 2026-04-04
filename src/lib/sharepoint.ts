@@ -20,6 +20,8 @@ const API_BASE = SITE_ID
   ? `/sites/${SITE_ID}/drive/root:`
   : `/drives/${DRIVE_ID}/root:`;
 
+console.log("[sharepoint] API_BASE:", API_BASE, "| DOCS_ROOT:", DOCS_ROOT);
+
 // ---------------------------------------------------------------------------
 // In-memory TTL cache
 // ---------------------------------------------------------------------------
@@ -56,8 +58,10 @@ async function withCache<T>(
 export async function fetchCategoriesFromSharePoint(): Promise<Category[]> {
   return withCache("categories", 10 * 60 * 1000, async () => {
     const client = getGraphClient();
+    const path = `${API_BASE}/${DOCS_ROOT}/_categories.json:/content`;
+    console.log("[sharepoint] fetching categories:", path);
     const response: Response = await client
-      .api(`${API_BASE}/${DOCS_ROOT}/_categories.json:/content`)
+      .api(path)
       .responseType("raw" as never)
       .get();
     const text = await response.text();
