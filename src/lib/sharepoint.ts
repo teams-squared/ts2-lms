@@ -2,7 +2,9 @@ import { getGraphClient } from "./graph-client";
 import type { Category } from "./types";
 
 const DRIVE_ID = process.env.SHAREPOINT_DRIVE_ID!;
-const DOCS_ROOT = process.env.SHAREPOINT_DOCS_ROOT || "Docs for Portal";
+const DOCS_ROOT = encodeURIComponent(
+  process.env.SHAREPOINT_DOCS_ROOT || "Docs for Portal"
+);
 
 // ---------------------------------------------------------------------------
 // In-memory TTL cache
