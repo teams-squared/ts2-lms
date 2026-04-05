@@ -1,6 +1,10 @@
 import Link from "next/link";
 import { auth } from "@/lib/auth";
-import { getTopLevelCategories, getDocsByCategory } from "@/lib/docs";
+import {
+  getTopLevelCategories,
+  getDocsByCategory,
+  getSubcategoriesOf,
+} from "@/lib/docs";
 import SearchBar from "@/components/search/SearchBar";
 import CategoryCard from "@/components/docs/CategoryCard";
 import { BookOpenIcon, SearchIcon, LockIcon } from "@/components/icons";
@@ -13,10 +17,18 @@ export default async function HomePage() {
 
   const categoryDocs = session
     ? await Promise.all(
-        topLevel.map(async (cat) => ({
-          cat,
-          docs: await getDocsByCategory(cat.slug, userRole),
-        }))
+        topLevel.map(async (cat) => {
+          const directDocs = await getDocsByCategory(cat.slug, userRole);
+          if (directDocs.length > 0) {
+            return { cat, docs: directDocs };
+          }
+          // Parent category — aggregate docs across subcategories
+          const subcategories = await getSubcategoriesOf(cat.slug, userRole);
+          const subDocs = await Promise.all(
+            subcategories.map((sub) => getDocsByCategory(sub.slug, userRole))
+          );
+          return { cat, docs: subDocs.flat() };
+        })
       )
     : [];
 
