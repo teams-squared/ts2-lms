@@ -65,7 +65,7 @@ export default async function DocPage({
 
         <article className="flex-1 min-w-0 max-w-3xl">
           <DocSearch />
-          <div className="mb-6 pb-4 border-b border-gray-100 bg-brand-50/40 rounded-lg px-4 py-3">
+          <div className="mb-6 bg-brand-50/40 rounded-lg px-4 py-3">
             <h1 className="text-2xl font-bold text-gray-900 mb-1">
               {doc.meta.title}
             </h1>
