@@ -18,6 +18,10 @@ export default async function AdminPage() {
     getAllElevatedUsers(),
   ]);
 
+  const categoryTitleMap = Object.fromEntries(
+    categories.map((c) => [c.slug, c.title])
+  );
+
   return (
     <div className="px-4 sm:px-6 lg:px-8 py-6 animate-fade-in">
       <div className="mb-6">
@@ -149,7 +153,12 @@ export default async function AdminPage() {
                     </Link>
                   </td>
                   <td className="px-4 py-2.5 text-sm text-gray-600">
-                    {doc.category}
+                    <Link
+                      href={`/docs/${doc.category}`}
+                      className="hover:text-brand-600"
+                    >
+                      {categoryTitleMap[doc.category] ?? doc.category}
+                    </Link>
                   </td>
                   <td className="px-4 py-2.5">
                     <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-brand-50 text-brand-700">

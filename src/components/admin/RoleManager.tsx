@@ -205,7 +205,7 @@ export default function RoleManager() {
       </div>
 
       <p className="mt-2 text-xs text-gray-400">
-        Users not listed here default to the <strong>employee</strong> role.
+        Users not listed here default to the <strong>employee</strong>{" "}role.
         Role changes take effect on the user&apos;s next sign-in.
       </p>
     </div>
