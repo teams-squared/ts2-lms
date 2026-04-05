@@ -54,3 +54,17 @@ body {
 .shadow-card-hover {
   box-shadow: 0 4px 12px rgba(68, 0, 255, 0.08), 0 1px 3px rgba(0, 0, 0, 0.06);
 }
+
+mark.search-highlight {
+  background: #fef08a;
+  color: inherit;
+  border-radius: 2px;
+  padding: 0 1px;
+}
+
+mark.search-highlight-current {
+  background: #f59e0b;
+  color: #1c1917;
+  border-radius: 2px;
+  padding: 0 1px;
+}

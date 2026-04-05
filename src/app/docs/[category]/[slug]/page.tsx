@@ -10,6 +10,7 @@ import {
 import { hasAccess } from "@/lib/roles";
 import Sidebar from "@/components/layout/Sidebar";
 import DocRenderer from "@/components/docs/DocRenderer";
+import DocSearch from "@/components/docs/DocSearch";
 import { ChevronRightIcon } from "@/components/icons";
 import type { Role } from "@/lib/types";
 
@@ -63,6 +64,7 @@ export default async function DocPage({
         />
 
         <article className="flex-1 min-w-0 max-w-3xl">
+          <DocSearch />
           <div className="mb-6 pb-4 border-b border-gray-100 bg-brand-50/40 rounded-lg px-4 py-3">
             <h1 className="text-2xl font-bold text-gray-900 mb-1">
               {doc.meta.title}
@@ -81,7 +83,7 @@ export default async function DocPage({
             </div>
           </div>
 
-          <div className="prose prose-sm prose-gray max-w-none prose-headings:scroll-mt-16 prose-a:text-brand-600 prose-a:no-underline hover:prose-a:underline prose-code:before:content-none prose-code:after:content-none">
+          <div id="doc-content" className="prose prose-sm prose-gray max-w-none prose-headings:scroll-mt-16 prose-a:text-brand-600 prose-a:no-underline hover:prose-a:underline prose-code:before:content-none prose-code:after:content-none">
             <DocRenderer source={doc.content} />
           </div>
         </article>
