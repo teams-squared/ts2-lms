@@ -42,7 +42,7 @@ export default async function CategoryPage({
     );
 
     return (
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+      <div className="px-4 sm:px-6 lg:px-8 py-6 animate-fade-in">
         <nav className="flex items-center text-sm text-gray-500 mb-5">
           <Link href="/" className="hover:text-brand-600">Home</Link>
           <ChevronRightIcon className="w-3.5 h-3.5 mx-1.5 text-gray-300" />
@@ -60,7 +60,7 @@ export default async function CategoryPage({
             </h1>
             <p className="text-sm text-gray-500 mb-5">{category.description}</p>
 
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
               {subcatDocs.map(({ sub, docs: subDocs }) => (
                 <CategoryCard
                   key={sub.slug}
@@ -82,7 +82,7 @@ export default async function CategoryPage({
     : null;
 
   return (
-    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+    <div className="px-4 sm:px-6 lg:px-8 py-6 animate-fade-in">
       <nav className="flex items-center text-sm text-gray-500 mb-5">
         <Link href="/" className="hover:text-brand-600">Home</Link>
         <ChevronRightIcon className="w-3.5 h-3.5 mx-1.5 text-gray-300" />

@@ -1,6 +1,6 @@
 import Link from "next/link";
 import type { Category } from "@/lib/types";
-import { CATEGORY_ICONS, FileTextIcon, ChevronRightIcon } from "@/components/icons";
+import { CATEGORY_ICONS, CATEGORY_COLORS, FileTextIcon, ChevronRightIcon } from "@/components/icons";
 
 interface CategoryCardProps {
   category: Category;
@@ -14,22 +14,26 @@ export default function CategoryCard({
   docTitles,
 }: CategoryCardProps) {
   const Icon = CATEGORY_ICONS[category.icon] || FileTextIcon;
-  const visibleTitles = docTitles?.slice(0, 3) || [];
+  const iconBg = CATEGORY_COLORS[category.icon] || "#f0e6ff";
+  const visibleTitles = docTitles?.slice(0, 5) || [];
   const remaining = (docTitles?.length || 0) - visibleTitles.length;
 
   return (
     <Link href={`/docs/${category.slug}`}>
-      <div className="group relative p-4 rounded-lg border border-gray-200/60 bg-white shadow-card hover:shadow-card-hover hover:border-brand-300 transition-all duration-200">
+      <div className="group relative p-5 rounded-lg border border-gray-200/60 bg-white shadow-card hover:shadow-card-hover hover:border-brand-300 hover:scale-[1.01] transition-all duration-150">
         <div className="flex items-start justify-between mb-2">
-          <div className="w-9 h-9 rounded-lg bg-brand-50 flex items-center justify-center text-brand-500">
-            <Icon className="w-5 h-5" />
+          <div
+            className="w-9 h-9 rounded-lg flex items-center justify-center"
+            style={{ backgroundColor: iconBg }}
+          >
+            <Icon className="w-5 h-5" style={{ color: "#4400FF" }} />
           </div>
           <ChevronRightIcon className="w-4 h-4 text-gray-300 group-hover:text-brand-400 group-hover:translate-x-0.5 transition-all" />
         </div>
         <h3 className="text-sm font-semibold text-gray-900 group-hover:text-brand-600 transition-colors">
           {category.title}
         </h3>
-        <p className="text-xs text-gray-500 mt-0.5 line-clamp-2">
+        <p className="text-xs text-gray-500 mt-0.5">
           {category.description}
         </p>
 

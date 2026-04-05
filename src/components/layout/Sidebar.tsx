@@ -65,18 +65,23 @@ function NodeItem({ node, currentCategory, depth }: NodeItemProps) {
             style={{ transform: open ? "rotate(90deg)" : "rotate(0deg)" }}
           />
         </button>
-        {open && (
-          <ul className="mt-0.5 space-y-0.5">
-            {children.map((child) => (
-              <NodeItem
-                key={child.category.slug}
-                node={child}
-                currentCategory={currentCategory}
-                depth={depth + 1}
-              />
-            ))}
-          </ul>
-        )}
+        <div
+          className="overflow-hidden transition-[grid-template-rows] duration-200 ease-in-out"
+          style={{ display: "grid", gridTemplateRows: open ? "1fr" : "0fr" }}
+        >
+          <div className="min-h-0">
+            <ul className="mt-0.5 space-y-0.5">
+              {children.map((child) => (
+                <NodeItem
+                  key={child.category.slug}
+                  node={child}
+                  currentCategory={currentCategory}
+                  depth={depth + 1}
+                />
+              ))}
+            </ul>
+          </div>
+        </div>
       </li>
     );
   }

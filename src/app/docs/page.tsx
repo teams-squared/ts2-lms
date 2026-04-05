@@ -31,7 +31,7 @@ export default async function DocsPage() {
   );
 
   return (
-    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+    <div className="px-4 sm:px-6 lg:px-8 py-6 animate-fade-in">
       <div className="mb-6">
         <h1 className="text-2xl font-bold text-gray-900 mb-1">
           Documentation
@@ -47,10 +47,10 @@ export default async function DocsPage() {
           if (subcategories.length > 0) {
             return (
               <div key={cat.slug}>
-                <h2 className="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-3">
+                <h2 className="text-xs font-semibold text-brand-600 uppercase tracking-wider mb-3 border-l-2 border-brand-400 pl-2">
                   {cat.title}
                 </h2>
-                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
                   {subcategories.map(({ sub, docs: subDocs }) => (
                     <CategoryCard
                       key={sub.slug}
@@ -65,7 +65,7 @@ export default async function DocsPage() {
           }
 
           return (
-            <div key={cat.slug} className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+            <div key={cat.slug} className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
               <CategoryCard
                 category={cat}
                 docCount={docs.length}

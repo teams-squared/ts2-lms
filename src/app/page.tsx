@@ -23,7 +23,7 @@ export default async function HomePage() {
   return (
     <div>
       {/* Hero section */}
-      <section className="bg-brand-gradient py-12 px-4">
+      <section className="bg-brand-gradient py-10 px-4">
         <div className="max-w-4xl mx-auto text-center">
           <h1 className="text-3xl sm:text-4xl font-bold text-gray-900 mb-3">
             Teams Squared{" "}
@@ -52,7 +52,7 @@ export default async function HomePage() {
           <h2 className="text-xl font-bold text-gray-900 mb-5">
             Browse by Category
           </h2>
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
             {categoryDocs.map(({ cat, docs }) => (
               <CategoryCard
                 key={cat.slug}

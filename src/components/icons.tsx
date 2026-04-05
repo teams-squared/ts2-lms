@@ -161,3 +161,12 @@ export const CATEGORY_ICONS: Record<string, React.FC<IconProps>> = {
   shield: ShieldIcon,
   gear: SettingsIcon,
 };
+
+export const CATEGORY_COLORS: Record<string, string> = {
+  shield: "#ede9fe",
+  rocket: "#ecfdf5",
+  code: "#fffbeb",
+  briefcase: "#fff1f2",
+  book: "#eff6ff",
+  gear: "#f0fdf4",
+};

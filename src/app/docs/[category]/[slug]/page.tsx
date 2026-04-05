@@ -34,7 +34,7 @@ export default async function DocPage({
   if (!hasAccess(userRole, doc.meta.minRole)) notFound();
 
   return (
-    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+    <div className="px-4 sm:px-6 lg:px-8 py-6 animate-fade-in">
       {/* Breadcrumb */}
       <nav className="flex items-center text-sm text-gray-500 mb-5">
         <Link href="/" className="hover:text-brand-600">
@@ -62,8 +62,8 @@ export default async function DocPage({
           docs={docs}
         />
 
-        <article className="flex-1 min-w-0">
-          <div className="mb-6 pb-4 border-b border-gray-100">
+        <article className="flex-1 min-w-0 max-w-3xl">
+          <div className="mb-6 pb-4 border-b border-gray-100 bg-brand-50/40 rounded-lg px-4 py-3">
             <h1 className="text-2xl font-bold text-gray-900 mb-1">
               {doc.meta.title}
             </h1>
