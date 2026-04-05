@@ -74,7 +74,7 @@ export default function AppSidebar() {
 
   return (
     <aside
-      className="hidden md:flex flex-col flex-shrink-0 min-h-screen bg-[#f0eeff] border-r border-brand-100 transition-[width] duration-200 ease-in-out overflow-hidden"
+      className="hidden md:flex flex-col flex-shrink-0 h-screen sticky top-0 bg-[#f0eeff] border-r border-brand-100 transition-[width] duration-200 ease-in-out overflow-hidden"
       style={{ width: `${w}px` }}
     >
       {/* Logo */}
