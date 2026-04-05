@@ -20,7 +20,6 @@ const API_BASE = SITE_ID
   ? `/sites/${SITE_ID}/drive/root:`
   : `/drives/${DRIVE_ID}/root:`;
 
-console.log("[sharepoint] API_BASE:", API_BASE, "| DOCS_ROOT:", DOCS_ROOT);
 
 // ---------------------------------------------------------------------------
 // In-memory TTL cache
@@ -70,7 +69,6 @@ export async function fetchCategoriesFromSharePoint(): Promise<Category[]> {
   return withCache("categories", TTL.categories, async () => {
     const client = getGraphClient();
     const path = `${API_BASE}/${DOCS_ROOT}/_categories.json:/content`;
-    console.log("[sharepoint] fetching categories:", path);
     const response: Response = await client
       .api(path)
       .responseType("raw" as never)
@@ -145,7 +143,6 @@ export async function fetchDocContentFromSharePoint(
  */
 export async function warmSharePointCache(): Promise<void> {
   try {
-    console.log("[sharepoint] warming cache...");
     const categories = await fetchCategoriesFromSharePoint();
 
     const docLists = await Promise.all(
@@ -165,12 +162,8 @@ export async function warmSharePointCache(): Promise<void> {
       )
     );
 
-    const total = docLists.reduce((sum, { files }) => sum + files.length, 0);
-    console.log(
-      `[sharepoint] cache warm complete: ${categories.length} categories, ${total} docs`
-    );
   } catch (err) {
-    console.error("[sharepoint] cache warming failed (non-fatal):", err);
+    console.error("[sharepoint] cache warming failed:", err);
   }
 }
 

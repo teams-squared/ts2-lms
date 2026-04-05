@@ -10,10 +10,6 @@ export async function POST() {
 
   clearCache();
 
-  console.log(
-    `[cache] flushed by ${session.user?.email} at ${new Date().toISOString()}`
-  );
-
   return NextResponse.json({
     success: true,
     message: "Cache cleared. Next requests will fetch fresh data from SharePoint.",
