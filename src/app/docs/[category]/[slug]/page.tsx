@@ -30,6 +30,10 @@ export default async function DocPage({
     getDocsByCategory(categorySlug, userRole),
   ]);
 
+  const parentCategory = category?.parentCategory
+    ? await getCategoryBySlug(category.parentCategory)
+    : null;
+
   if (!category) notFound();
   if (!doc) notFound();
   if (!hasAccess(userRole, doc.meta.minRole)) notFound();
@@ -46,6 +50,17 @@ export default async function DocPage({
           Docs
         </Link>
         <ChevronRightIcon className="w-3.5 h-3.5 mx-1.5 text-gray-300" />
+        {parentCategory && (
+          <>
+            <Link
+              href={`/docs/${parentCategory.slug}`}
+              className="hover:text-brand-600"
+            >
+              {parentCategory.title}
+            </Link>
+            <ChevronRightIcon className="w-3.5 h-3.5 mx-1.5 text-gray-300" />
+          </>
+        )}
         <Link
           href={`/docs/${categorySlug}`}
           className="hover:text-brand-600"
