@@ -10,15 +10,25 @@ const DOCS_ROOT = encodeURIComponent(
 const SITE_ID = process.env.SHAREPOINT_SITE_ID;
 const DRIVE_ID = process.env.SHAREPOINT_DRIVE_ID;
 
-if (!SITE_ID && !DRIVE_ID) {
-  throw new Error(
-    "Missing SharePoint configuration: set SHAREPOINT_SITE_ID (preferred) or SHAREPOINT_DRIVE_ID."
-  );
+function getApiBase(): string {
+  if (!SITE_ID && !DRIVE_ID) {
+    throw new Error(
+      "Missing SharePoint configuration: set SHAREPOINT_SITE_ID (preferred) or SHAREPOINT_DRIVE_ID."
+    );
+  }
+  return SITE_ID
+    ? `/sites/${SITE_ID}/drive/root:`
+    : `/drives/${DRIVE_ID}/root:`;
 }
 
-const API_BASE = SITE_ID
-  ? `/sites/${SITE_ID}/drive/root:`
-  : `/drives/${DRIVE_ID}/root:`;
+function isSharePointConfigured(): boolean {
+  return !!(
+    (SITE_ID || DRIVE_ID) &&
+    process.env.SHAREPOINT_TENANT_ID &&
+    process.env.SHAREPOINT_CLIENT_ID &&
+    process.env.SHAREPOINT_CLIENT_SECRET
+  );
+}
 
 
 // ---------------------------------------------------------------------------
@@ -66,9 +76,10 @@ async function withCache<T>(
  * TTL: 10 minutes.
  */
 export async function fetchCategoriesFromSharePoint(): Promise<Category[]> {
+  if (!isSharePointConfigured()) return [];
   return withCache("categories", TTL.categories, async () => {
     const client = getGraphClient();
-    const path = `${API_BASE}/${DOCS_ROOT}/_categories.json:/content`;
+    const path = `${getApiBase()}/${DOCS_ROOT}/_categories.json:/content`;
     const response: Response = await client
       .api(path)
       .responseType("raw" as never)
@@ -85,11 +96,12 @@ export async function fetchCategoriesFromSharePoint(): Promise<Category[]> {
 export async function fetchDocListFromSharePoint(
   categorySlug: string
 ): Promise<string[]> {
+  if (!isSharePointConfigured()) return [];
   return withCache(`doclist:${categorySlug}`, TTL.docList, async () => {
     const client = getGraphClient();
     try {
       const result = await client
-        .api(`${API_BASE}/${DOCS_ROOT}/${categorySlug}:/children`)
+        .api(`${getApiBase()}/${DOCS_ROOT}/${categorySlug}:/children`)
         .select("name")
         .get();
 
@@ -121,10 +133,11 @@ export async function fetchDocContentFromSharePoint(
   categorySlug: string,
   fileName: string
 ): Promise<string> {
+  if (!isSharePointConfigured()) return "";
   return withCache(`content:${categorySlug}/${fileName}`, TTL.content, async () => {
     const client = getGraphClient();
     const response: Response = await client
-      .api(`${API_BASE}/${DOCS_ROOT}/${categorySlug}/${fileName}:/content`)
+      .api(`${getApiBase()}/${DOCS_ROOT}/${categorySlug}/${fileName}:/content`)
       .responseType("raw" as never)
       .get();
     if (!response.ok) {

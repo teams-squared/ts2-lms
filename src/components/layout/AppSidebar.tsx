@@ -29,6 +29,9 @@ export default function AppSidebar() {
     });
   }
 
+  // Hide sidebar on auth pages
+  if (pathname === "/login") return null;
+
   // Don't render width-dependent UI until mounted (avoid hydration flash)
   const w = mounted ? (collapsed ? 60 : 220) : 220;
 

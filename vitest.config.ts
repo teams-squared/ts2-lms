@@ -11,6 +11,9 @@ export default defineConfig({
     exclude: ["node_modules", "e2e/**"],
     env: {
       SHAREPOINT_SITE_ID: "test-site-id-for-vitest",
+      SHAREPOINT_TENANT_ID: "test-tenant-id-for-vitest",
+      SHAREPOINT_CLIENT_ID: "test-client-id-for-vitest",
+      SHAREPOINT_CLIENT_SECRET: "test-client-secret-for-vitest",
     },
     coverage: {
       provider: "v8",
