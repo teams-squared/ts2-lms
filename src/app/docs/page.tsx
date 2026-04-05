@@ -50,7 +50,7 @@ export default async function DocsPage() {
                 <h2 className="text-xs font-semibold text-brand-600 uppercase tracking-wider mb-3 border-l-2 border-brand-400 pl-2">
                   {cat.title}
                 </h2>
-                <div className="grid grid-cols-[repeat(auto-fill,minmax(260px,1fr))] gap-4">
+                <div className="grid grid-cols-[repeat(auto-fit,minmax(260px,1fr))] gap-4">
                   {subcategories.map(({ sub, docs: subDocs }) => (
                     <CategoryCard
                       key={sub.slug}
@@ -65,7 +65,7 @@ export default async function DocsPage() {
           }
 
           return (
-            <div key={cat.slug} className="grid grid-cols-[repeat(auto-fill,minmax(260px,1fr))] gap-4">
+            <div key={cat.slug} className="grid grid-cols-[repeat(auto-fit,minmax(260px,1fr))] gap-4">
               <CategoryCard
                 category={cat}
                 docCount={docs.length}
