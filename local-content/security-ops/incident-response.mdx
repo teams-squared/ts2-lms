@@ -1,0 +1,88 @@
+---
+title: Incident Response
+description: Steps to follow during a security incident at Teams Squared.
+author: Security Team
+date: 2026-02-20
+tags: [security, incident, response, admin]
+---
+
+# Incident Response
+
+This document is for admins and security responders only.
+
+## Severity Levels
+
+| Level | Description | SLA |
+|-------|-------------|-----|
+| P0 | Active breach / data exfiltration | Respond in 15 min |
+| P1 | Suspected compromise / unusual access | Respond in 1 hour |
+| P2 | Policy violation / weak credential detected | Respond in 1 business day |
+| P3 | Informational / low-risk finding | Next sprint |
+
+## Initial Triage
+
+When an alert fires (via PagerDuty or direct report):
+
+```bash
+# 1. Check auth logs for anomalous logins
+gcloud logging read 'resource.type="gce_instance" AND severity>=WARNING' \
+  --limit=50 --format=json | jq '.[] | {time: .timestamp, msg: .jsonPayload.message}'
+
+# 2. Identify affected user or service account
+gcloud iam service-accounts list --filter="email:*@teamssquared.iam.gserviceaccount.com"
+
+# 3. Check recent API activity
+gcloud logging read 'protoPayload.methodName:"SetIamPolicy"' --limit=20
+```
+
+## Containment Steps
+
+### Revoke compromised credentials immediately
+
+```bash
+# Disable a service account
+gcloud iam service-accounts disable SA_EMAIL
+
+# Rotate a user's API key in our system
+curl -X POST https://api.teamssquared.com/admin/users/{userId}/rotate-key \
+  -H "Authorization: Bearer $ADMIN_TOKEN"
+```
+
+### Isolate affected systems
+
+```bash
+# Block IP at firewall level
+gcloud compute firewall-rules create block-attacker \
+  --direction=INGRESS \
+  --action=DENY \
+  --rules=all \
+  --source-ranges=ATTACKER_IP \
+  --priority=100
+```
+
+## Evidence Collection
+
+Preserve logs **before** any remediation that might overwrite them:
+
+```bash
+# Export relevant log window (last 2 hours)
+gcloud logging read \
+  'timestamp>="2026-02-20T14:00:00Z" AND timestamp<="2026-02-20T16:00:00Z"' \
+  --format=json > incident_$(date +%Y%m%d_%H%M%S).json
+```
+
+## Notification Requirements
+
+Depending on severity and data affected:
+
+- [ ] Notify CTO and Legal within **1 hour** of P0 confirmation
+- [ ] If PII exposed: notify affected users within **72 hours** (GDPR/CCPA)
+- [ ] File breach report with ICO/regulatory body if required
+
+## Post-Incident Review
+
+Schedule a blameless postmortem within **5 business days**:
+1. Timeline reconstruction
+2. Root cause analysis (5 Whys)
+3. Action items with owners and due dates
+4. Update runbooks and detection rules
