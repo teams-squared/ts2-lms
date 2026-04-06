@@ -42,12 +42,12 @@ const mockUseSession = vi.mocked(useSession);
 const mockUsePathname = vi.mocked(usePathname);
 
 const SESSION_EMPLOYEE = {
-  data: { user: { name: "Alice", email: "alice@example.com", role: "employee" as const } },
+  data: { expires: "2099-01-01", user: { name: "Alice", email: "alice@example.com", role: "employee" as const } },
   status: "authenticated" as const,
   update: vi.fn(),
 };
 const SESSION_ADMIN = {
-  data: { user: { name: "Bob", email: "bob@example.com", role: "admin" as const } },
+  data: { expires: "2099-01-01", user: { name: "Bob", email: "bob@example.com", role: "admin" as const } },
   status: "authenticated" as const,
   update: vi.fn(),
 };
