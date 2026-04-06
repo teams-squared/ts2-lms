@@ -69,7 +69,7 @@ export default function AppSidebar() {
         href={href}
         title={!showLabel ? label : undefined}
         onClick={onNavigate}
-        className={`flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium transition-colors ${
+        className={`flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium transition-colors focus:outline-none focus:ring-2 focus:ring-brand-400 ${
           active
             ? "bg-brand-100 text-brand-800"
             : "text-gray-600 hover:bg-white/60 hover:text-gray-900"
@@ -206,7 +206,9 @@ export default function AppSidebar() {
           <button
             onClick={toggle}
             title={collapsed ? "Expand sidebar" : "Collapse sidebar"}
-            className="flex-shrink-0 p-1 rounded-md text-gray-400 hover:text-gray-600 hover:bg-white/50 transition-colors"
+            aria-expanded={!collapsed}
+            aria-label={collapsed ? "Expand sidebar" : "Collapse sidebar"}
+            className="flex-shrink-0 p-1 rounded-md text-gray-400 hover:text-gray-600 hover:bg-white/50 focus:outline-none focus:ring-2 focus:ring-brand-400 transition-colors"
           >
             <ChevronRightIcon
               className="w-4 h-4 transition-transform duration-200"

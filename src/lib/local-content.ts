@@ -30,7 +30,8 @@ export async function fetchCategoriesFromLocal(): Promise<Category[]> {
       "utf-8"
     );
     return JSON.parse(raw) as Category[];
-  } catch {
+  } catch (err) {
+    console.error("[local-content] Failed to load _categories.json:", err);
     return [];
   }
 }
@@ -41,7 +42,12 @@ export async function fetchDocListFromLocal(
   try {
     const files = await readdir(path.join(LOCAL_CONTENT_DIR, categorySlug));
     return files.filter((f) => f.endsWith(".mdx"));
-  } catch {
+  } catch (err) {
+    // ENOENT = category directory doesn't exist (normal); other errors are unexpected
+    const code = (err as NodeJS.ErrnoException).code;
+    if (code !== "ENOENT") {
+      console.error(`[local-content] Failed to list docs for "${categorySlug}":`, err);
+    }
     return [];
   }
 }
@@ -51,5 +57,10 @@ export async function fetchDocContentFromLocal(
   fileName: string
 ): Promise<string> {
   const filePath = path.join(LOCAL_CONTENT_DIR, categorySlug, fileName);
-  return readFile(filePath, "utf-8");
+  try {
+    return await readFile(filePath, "utf-8");
+  } catch (err) {
+    console.error(`[local-content] Failed to read "${filePath}":`, err);
+    return "";
+  }
 }
