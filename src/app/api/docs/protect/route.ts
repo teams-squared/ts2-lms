@@ -35,13 +35,32 @@ export async function POST(req: NextRequest) {
 
   // Verify the document exists
   const fileName = `${slug}.mdx`;
-  const files = await fetchDocListFromSharePoint(category);
+
+  let files: string[];
+  try {
+    files = await fetchDocListFromSharePoint(category);
+  } catch (err) {
+    console.error("[protect] failed to list SharePoint docs:", err);
+    return NextResponse.json(
+      { error: "Could not reach SharePoint. Check server logs." },
+      { status: 502 }
+    );
+  }
+
   if (!files.includes(fileName)) {
     return NextResponse.json({ error: "Document not found" }, { status: 404 });
   }
 
-  // Fetch current raw MDX content
-  const raw = await fetchDocContentFromSharePoint(category, fileName);
+  let raw: string;
+  try {
+    raw = await fetchDocContentFromSharePoint(category, fileName);
+  } catch (err) {
+    console.error("[protect] failed to fetch doc content:", err);
+    return NextResponse.json(
+      { error: "Could not read document from SharePoint. Check server logs." },
+      { status: 502 }
+    );
+  }
 
   // Parse frontmatter and body separately
   const parsed = matter(raw);
@@ -59,7 +78,16 @@ export async function POST(req: NextRequest) {
   const updated = matter.stringify(parsed.content, parsed.data);
 
   // Write back to SharePoint (also clears cache entries for this doc)
-  await writeDocContentToSharePoint(category, fileName, updated);
+  try {
+    await writeDocContentToSharePoint(category, fileName, updated);
+  } catch (err) {
+    const message = err instanceof Error ? err.message : String(err);
+    console.error("[protect] failed to write doc to SharePoint:", message);
+    return NextResponse.json(
+      { error: `SharePoint write failed: ${message}` },
+      { status: 502 }
+    );
+  }
 
   return NextResponse.json({ success: true });
 }

@@ -169,12 +169,14 @@ export async function writeDocContentToSharePoint(
   const client = getGraphClient();
   const path = `${getApiBase()}/${DOCS_ROOT}/${categorySlug}/${fileName}:/content`;
 
-  // PUT the raw content — Graph API accepts text/plain for file uploads
+  // PUT the raw content as a Buffer so the Graph SDK sends raw bytes
+  // rather than JSON-serialising the string (which would corrupt the MDX).
+  const body = Buffer.from(content, "utf-8");
   const response: Response = await client
     .api(path)
     .header("Content-Type", "text/plain")
     .responseType("raw" as never)
-    .put(content);
+    .put(body);
 
   if (!response.ok) {
     throw new Error(
