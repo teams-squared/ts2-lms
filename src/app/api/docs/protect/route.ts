@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
+import { revalidatePath } from "next/cache";
 import matter from "gray-matter";
 import bcrypt from "bcryptjs";
 import { auth } from "@/lib/auth";
@@ -77,7 +78,7 @@ export async function POST(req: NextRequest) {
   // Re-serialise: matter.stringify(content, frontmatter)
   const updated = matter.stringify(parsed.content, parsed.data);
 
-  // Write back to SharePoint (also clears cache entries for this doc)
+  // Write back to SharePoint (clears the full in-memory cache)
   try {
     await writeDocContentToSharePoint(category, fileName, updated);
   } catch (err) {
@@ -88,6 +89,10 @@ export async function POST(req: NextRequest) {
       { status: 502 }
     );
   }
+
+  // Tell Next.js to purge any server-side cached RSC payload for this page
+  // so the next render always re-runs the server component with fresh data.
+  revalidatePath(`/docs/${category}/${slug}`);
 
   return NextResponse.json({ success: true });
 }

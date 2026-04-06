@@ -184,9 +184,11 @@ export async function writeDocContentToSharePoint(
     );
   }
 
-  // Invalidate cache so the next read picks up the new content
-  cache.delete(`content:${categorySlug}/${fileName}`);
-  cache.delete(`doclist:${categorySlug}`);
+  // Clear the entire in-memory cache so the next read picks up the new
+  // content. Targeted key deletes are insufficient when there is any risk
+  // of concurrent re-population (e.g. a page render racing the write).
+  // Password changes are rare, so wiping the full cache is acceptable.
+  cache.clear();
 }
 
 /**
