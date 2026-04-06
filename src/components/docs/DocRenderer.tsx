@@ -2,6 +2,7 @@ import { compileMDX } from "next-mdx-remote/rsc";
 import remarkGfm from "remark-gfm";
 import rehypeSlug from "rehype-slug";
 import rehypeAutolinkHeadings from "rehype-autolink-headings";
+import rehypeHighlight from "rehype-highlight";
 
 interface DocRendererProps {
   source: string;
@@ -13,7 +14,7 @@ export default async function DocRenderer({ source }: DocRendererProps) {
     options: {
       mdxOptions: {
         remarkPlugins: [remarkGfm],
-        rehypePlugins: [rehypeSlug, rehypeAutolinkHeadings],
+        rehypePlugins: [rehypeSlug, rehypeAutolinkHeadings, rehypeHighlight],
       },
     },
   });
