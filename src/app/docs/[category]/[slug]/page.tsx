@@ -13,6 +13,7 @@ import Sidebar from "@/components/layout/Sidebar";
 import DocRenderer from "@/components/docs/DocRenderer";
 import DocSearch from "@/components/docs/DocSearch";
 import DocPasswordGate from "@/components/docs/DocPasswordGate";
+import DocProtectionPanel from "@/components/docs/DocProtectionPanel";
 import { ChevronRightIcon, LockIcon } from "@/components/icons";
 import type { Role } from "@/lib/types";
 
@@ -119,14 +120,33 @@ export default async function DocPage({
               >
                 <DocRenderer source={doc.content} />
               </div>
+
+              {/* Password management panel — managers and admins only */}
+              {hasAccess(userRole, "manager") && (
+                <DocProtectionPanel
+                  category={categorySlug}
+                  slug={slug}
+                  passwordProtected={!!doc.meta.passwordProtected}
+                />
+              )}
             </>
           ) : (
-            <DocPasswordGate
-              category={categorySlug}
-              slug={slug}
-              title={doc.meta.title}
-              description={doc.meta.description}
-            />
+            <>
+              <DocPasswordGate
+                category={categorySlug}
+                slug={slug}
+                title={doc.meta.title}
+                description={doc.meta.description}
+              />
+              {/* Managers/admins can manage protection even when locked out */}
+              {hasAccess(userRole, "manager") && (
+                <DocProtectionPanel
+                  category={categorySlug}
+                  slug={slug}
+                  passwordProtected={!!doc.meta.passwordProtected}
+                />
+              )}
+            </>
           )}
         </article>
       </div>

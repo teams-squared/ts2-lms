@@ -150,6 +150,44 @@ export async function fetchDocContentFromSharePoint(
 }
 
 /**
+ * Write raw MDX content back to a file in SharePoint via the Graph API.
+ * Requires the Azure AD app to have Files.ReadWrite.All (or Sites.ReadWrite.All)
+ * granted in the Azure portal.
+ *
+ * After a successful write, the in-memory cache entries for this document are
+ * cleared so the updated content is picked up on the next request.
+ */
+export async function writeDocContentToSharePoint(
+  categorySlug: string,
+  fileName: string,
+  content: string
+): Promise<void> {
+  if (!isSharePointConfigured()) {
+    throw new Error("SharePoint is not configured.");
+  }
+
+  const client = getGraphClient();
+  const path = `${getApiBase()}/${DOCS_ROOT}/${categorySlug}/${fileName}:/content`;
+
+  // PUT the raw content — Graph API accepts text/plain for file uploads
+  const response: Response = await client
+    .api(path)
+    .header("Content-Type", "text/plain")
+    .responseType("raw" as never)
+    .put(content);
+
+  if (!response.ok) {
+    throw new Error(
+      `Failed to write ${categorySlug}/${fileName}: ${response.status} ${response.statusText}`
+    );
+  }
+
+  // Invalidate cache so the next read picks up the new content
+  cache.delete(`content:${categorySlug}/${fileName}`);
+  cache.delete(`doclist:${categorySlug}`);
+}
+
+/**
  * Pre-populate the in-memory cache on process start so the first real user
  * request hits warm cache instead of cold SharePoint API calls.
  * Fire-and-forget: errors are logged but never thrown.
