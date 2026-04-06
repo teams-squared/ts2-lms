@@ -26,9 +26,11 @@ export default function RoleManager() {
       if (res.ok) {
         const data = await res.json();
         setUsers(data);
+      } else {
+        showMessage("error", "Could not load role assignments");
       }
     } catch {
-      // ignore
+      showMessage("error", "Could not load role assignments");
     } finally {
       setLoading(false);
     }
