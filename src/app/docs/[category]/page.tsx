@@ -10,7 +10,7 @@ import {
 import { hasAccess } from "@/lib/roles";
 import Sidebar from "@/components/layout/Sidebar";
 import CategoryCard from "@/components/docs/CategoryCard";
-import { CATEGORY_ICONS, CATEGORY_COLORS, ChevronRightIcon, FileTextIcon, LockIcon } from "@/components/icons";
+import { CATEGORY_ICONS, CATEGORY_COLORS, CATEGORY_ACCENT_COLORS, ChevronRightIcon, FileTextIcon, LockIcon } from "@/components/icons";
 import type { Role } from "@/lib/types";
 
 export default async function CategoryPage({
@@ -34,6 +34,7 @@ export default async function CategoryPage({
 
   const CatIcon = CATEGORY_ICONS[category.icon] || FileTextIcon;
   const catColor = CATEGORY_COLORS[category.icon] || "#f0e6ff";
+  const catAccent = CATEGORY_ACCENT_COLORS[category.icon] || "#a78bfa";
 
   // Parent category: has subcategories but no docs directly
   if (subcategories.length > 0 && docs.length === 0) {
@@ -145,7 +146,7 @@ export default async function CategoryPage({
                   className="flex items-stretch rounded-lg border border-gray-200/60 bg-white shadow-card hover:shadow-card-hover hover:border-brand-300 transition-all duration-150 group overflow-hidden"
                 >
                   {/* Left category color accent */}
-                  <div className="w-1 flex-shrink-0" style={{ backgroundColor: catColor }} />
+                  <div className="w-1 flex-shrink-0" style={{ backgroundColor: catAccent }} />
 
                   <div className="flex items-start gap-3 px-4 py-3 flex-1 min-w-0">
                     <FileTextIcon className="w-4 h-4 text-gray-300 mt-0.5 flex-shrink-0 group-hover:text-brand-400 transition-colors" />

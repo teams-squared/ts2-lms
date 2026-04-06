@@ -77,7 +77,7 @@ function NodeItem({ node, currentCategory, depth }: NodeItemProps) {
         {/* Tree connector line */}
         {open && (
           <span
-            className="absolute w-px bg-gray-200"
+            className="absolute w-px bg-gray-300"
             style={{
               left: `${12 + indent + (depth === 0 ? 10 : 6)}px`,
               top: "32px",

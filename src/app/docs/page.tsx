@@ -36,12 +36,12 @@ export default async function DocsPage() {
       {/* Branded hero header */}
       <div className="bg-brand-gradient rounded-xl px-6 py-7 mb-6">
         <div className="flex items-center gap-3 mb-3">
-          <div className="w-10 h-10 rounded-xl bg-white/20 flex items-center justify-center flex-shrink-0">
-            <BookOpenIcon className="w-5 h-5 text-white" />
+          <div className="w-10 h-10 rounded-xl bg-brand-100/60 flex items-center justify-center flex-shrink-0">
+            <BookOpenIcon className="w-5 h-5 text-brand-700" />
           </div>
           <div>
-            <h1 className="text-xl font-bold text-white leading-tight">Documentation</h1>
-            <p className="text-sm text-white/70 mt-0.5">
+            <h1 className="text-xl font-bold text-brand-900 leading-tight">Documentation</h1>
+            <p className="text-sm text-brand-700 mt-0.5">
               Browse all available documentation by category
             </p>
           </div>

@@ -1,6 +1,6 @@
 import Link from "next/link";
 import type { Category } from "@/lib/types";
-import { CATEGORY_ICONS, CATEGORY_COLORS, FileTextIcon, ChevronRightIcon, LockIcon } from "@/components/icons";
+import { CATEGORY_ICONS, CATEGORY_COLORS, CATEGORY_ACCENT_COLORS, FileTextIcon, ChevronRightIcon, LockIcon } from "@/components/icons";
 
 interface CategoryCardProps {
   category: Category;
@@ -15,6 +15,7 @@ export default function CategoryCard({
 }: CategoryCardProps) {
   const Icon = CATEGORY_ICONS[category.icon] || FileTextIcon;
   const iconBg = CATEGORY_COLORS[category.icon] || "#f0e6ff";
+  const accentColor = CATEGORY_ACCENT_COLORS[category.icon] || "#a78bfa";
   const visibleTitles = docTitles?.slice(0, 5) || [];
   const remaining = (docTitles?.length || 0) - visibleTitles.length;
 
@@ -22,7 +23,7 @@ export default function CategoryCard({
     <Link href={`/docs/${category.slug}`}>
       <div className="group relative rounded-lg border border-gray-200/60 bg-white shadow-card hover:shadow-card-hover hover:border-brand-300 hover:scale-[1.01] transition-all duration-150 overflow-hidden">
         {/* Top color accent strip */}
-        <div className="h-1 w-full" style={{ backgroundColor: iconBg }} />
+        <div className="h-1 w-full" style={{ backgroundColor: accentColor }} />
 
         <div className="p-5">
           <div className="flex items-start justify-between mb-2">

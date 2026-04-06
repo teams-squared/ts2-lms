@@ -170,3 +170,15 @@ export const CATEGORY_COLORS: Record<string, string> = {
   book: "#eff6ff",
   gear: "#f0fdf4",
 };
+
+// More saturated accent colours for decorative strips/borders (400-level equivalents).
+// Use these instead of CATEGORY_COLORS wherever a colour strip needs to be visible
+// against a white background (e.g. card top border, doc-list left accent).
+export const CATEGORY_ACCENT_COLORS: Record<string, string> = {
+  shield: "#a78bfa",   // violet-400
+  rocket: "#34d399",   // emerald-400
+  code: "#fbbf24",     // amber-400
+  briefcase: "#fb7185", // rose-400
+  book: "#60a5fa",     // blue-400
+  gear: "#4ade80",     // green-400
+};
