@@ -13,6 +13,9 @@ const inter = Inter({
 export const metadata: Metadata = {
   title: "Teams Squared Docs",
   description: "Internal documentation portal for Teams Squared",
+  icons: {
+    icon: '/logo.png',
+  },
 };
 
 export default function RootLayout({
