@@ -27,14 +27,14 @@ test.describe("Search API authentication", () => {
 
   test("admin search includes all docs", async ({ page }) => {
     await login(page, USERS.admin.email, USERS.admin.password);
-    const employeeResponse = await page.request.get("/api/search");
-    const employeeDocs = await employeeResponse.json();
-
-    // Admin should get at least as many docs as employee
-    await login(page, USERS.employee.email, USERS.employee.password);
     const adminResponse = await page.request.get("/api/search");
     const adminDocs = await adminResponse.json();
 
-    expect(employeeDocs.length).toBeGreaterThanOrEqual(adminDocs.length);
+    await login(page, USERS.employee.email, USERS.employee.password);
+    const employeeResponse = await page.request.get("/api/search");
+    const employeeDocs = await employeeResponse.json();
+
+    // Admin should see at least as many docs as employee
+    expect(adminDocs.length).toBeGreaterThanOrEqual(employeeDocs.length);
   });
 });

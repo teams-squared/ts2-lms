@@ -68,6 +68,11 @@ export default function SearchBar({ className = "" }: SearchBarProps) {
         <SearchIcon className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
         <input
           type="text"
+          role="combobox"
+          aria-label="Search documentation"
+          aria-expanded={showDropdown}
+          aria-autocomplete="list"
+          aria-controls="search-listbox"
           value={query}
           onChange={(e) => {
             setQuery(e.target.value);
@@ -80,7 +85,12 @@ export default function SearchBar({ className = "" }: SearchBarProps) {
       </div>
 
       {showDropdown && (
-        <div className="absolute top-full mt-1.5 w-full bg-white rounded-lg border border-gray-200 shadow-lg overflow-hidden z-50">
+        <div
+          id="search-listbox"
+          role="listbox"
+          aria-label="Search results"
+          className="absolute top-full mt-1.5 w-full bg-white rounded-lg border border-gray-200 shadow-lg overflow-hidden z-50"
+        >
           {loading && (
             <div className="px-4 py-3 text-sm text-gray-400">
               Loading search index…
@@ -95,6 +105,8 @@ export default function SearchBar({ className = "" }: SearchBarProps) {
             <Link
               key={`${doc.category}/${doc.slug}`}
               href={`/docs/${doc.category}/${doc.slug}`}
+              role="option"
+              aria-selected={false}
               onClick={() => {
                 setIsOpen(false);
                 setQuery("");
