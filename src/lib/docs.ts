@@ -78,10 +78,12 @@ export async function getDocContent(
   };
 }
 
-export async function getAllDocs(): Promise<DocMeta[]> {
-  const categories = await getCategories();
+export async function getAllDocs(userRole?: Role): Promise<DocMeta[]> {
+  const categories = userRole
+    ? await getAccessibleCategories(userRole)
+    : await getCategories();
   const results = await Promise.all(
-    categories.map((cat) => getDocsByCategory(cat.slug))
+    categories.map((cat) => getDocsByCategory(cat.slug, userRole))
   );
   return results.flat();
 }

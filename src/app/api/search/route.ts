@@ -1,7 +1,13 @@
 import { getAllDocs } from "@/lib/docs";
+import { auth } from "@/lib/auth";
 import { NextResponse } from "next/server";
 
 export async function GET() {
-  const docs = await getAllDocs();
+  const session = await auth();
+  if (!session) {
+    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  }
+
+  const docs = await getAllDocs(session.user?.role);
   return NextResponse.json(docs);
 }
