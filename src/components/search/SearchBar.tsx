@@ -15,13 +15,24 @@ export default function SearchBar({ className = "" }: SearchBarProps) {
   const [results, setResults] = useState<DocMeta[]>([]);
   const [docs, setDocs] = useState<DocMeta[]>([]);
   const [isOpen, setIsOpen] = useState(false);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(false);
   const ref = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
+    setLoading(true);
+    setError(false);
     fetch("/api/search")
-      .then((res) => res.json())
+      .then((res) => {
+        if (!res.ok) throw new Error(`Search API returned ${res.status}`);
+        return res.json();
+      })
       .then((data) => setDocs(data))
-      .catch(() => {});
+      .catch((err) => {
+        console.error("Search failed to load:", err);
+        setError(true);
+      })
+      .finally(() => setLoading(false));
   }, []);
 
   useEffect(() => {
@@ -49,6 +60,8 @@ export default function SearchBar({ className = "" }: SearchBarProps) {
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
 
+  const showDropdown = isOpen && (results.length > 0 || error || loading);
+
   return (
     <div ref={ref} className={`relative ${className}`}>
       <div className="relative">
@@ -66,9 +79,19 @@ export default function SearchBar({ className = "" }: SearchBarProps) {
         />
       </div>
 
-      {isOpen && results.length > 0 && (
+      {showDropdown && (
         <div className="absolute top-full mt-1.5 w-full bg-white rounded-lg border border-gray-200 shadow-lg overflow-hidden z-50">
-          {results.map((doc) => (
+          {loading && (
+            <div className="px-4 py-3 text-sm text-gray-400">
+              Loading search index…
+            </div>
+          )}
+          {!loading && error && (
+            <div className="px-4 py-3 text-sm text-red-500">
+              Search unavailable — please try again later.
+            </div>
+          )}
+          {!loading && !error && results.map((doc) => (
             <Link
               key={`${doc.category}/${doc.slug}`}
               href={`/docs/${doc.category}/${doc.slug}`}
