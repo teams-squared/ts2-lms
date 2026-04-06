@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
+import { cookies } from "next/headers";
 import { auth } from "@/lib/auth";
 import {
   getAccessibleCategories,
@@ -11,7 +12,8 @@ import { hasAccess } from "@/lib/roles";
 import Sidebar from "@/components/layout/Sidebar";
 import DocRenderer from "@/components/docs/DocRenderer";
 import DocSearch from "@/components/docs/DocSearch";
-import { ChevronRightIcon } from "@/components/icons";
+import DocPasswordGate from "@/components/docs/DocPasswordGate";
+import { ChevronRightIcon, LockIcon } from "@/components/icons";
 import type { Role } from "@/lib/types";
 
 export default async function DocPage({
@@ -37,6 +39,11 @@ export default async function DocPage({
   if (!category) notFound();
   if (!doc) notFound();
   if (!hasAccess(userRole, doc.meta.minRole)) notFound();
+
+  // Check whether the user has unlocked this document in the current session
+  const cookieStore = await cookies();
+  const unlockCookie = cookieStore.get(`doc-unlock-${categorySlug}-${slug}`);
+  const isUnlocked = !doc.meta.passwordProtected || !!unlockCookie;
 
   return (
     <div className="px-4 sm:px-6 lg:px-8 py-6 animate-fade-in">
@@ -79,28 +86,48 @@ export default async function DocPage({
         />
 
         <article className="flex-1 min-w-0 max-w-3xl">
-          <DocSearch />
-          <div className="mb-6 bg-brand-50/40 rounded-lg px-4 py-3">
-            <h1 className="text-2xl font-bold text-gray-900 mb-1">
-              {doc.meta.title}
-            </h1>
-            <p className="text-sm text-gray-500">{doc.meta.description}</p>
-            <div className="flex items-center gap-3 mt-2 text-xs text-gray-400">
-              {doc.meta.author && <span>By {doc.meta.author}</span>}
-              {doc.meta.updatedAt && (
-                <span>Updated {doc.meta.updatedAt}</span>
-              )}
-              {doc.meta.minRole !== "employee" && (
-                <span className="px-1.5 py-0.5 rounded bg-amber-50 text-amber-600 font-medium">
-                  {doc.meta.minRole}+ only
-                </span>
-              )}
-            </div>
-          </div>
+          {isUnlocked ? (
+            <>
+              <DocSearch />
+              <div className="mb-6 bg-brand-50/40 rounded-lg px-4 py-3">
+                <h1 className="text-2xl font-bold text-gray-900 mb-1">
+                  {doc.meta.title}
+                </h1>
+                <p className="text-sm text-gray-500">{doc.meta.description}</p>
+                <div className="flex items-center gap-3 mt-2 text-xs text-gray-400">
+                  {doc.meta.author && <span>By {doc.meta.author}</span>}
+                  {doc.meta.updatedAt && (
+                    <span>Updated {doc.meta.updatedAt}</span>
+                  )}
+                  {doc.meta.minRole !== "employee" && (
+                    <span className="px-1.5 py-0.5 rounded bg-amber-50 text-amber-600 font-medium">
+                      {doc.meta.minRole}+ only
+                    </span>
+                  )}
+                  {doc.meta.passwordProtected && (
+                    <span className="flex items-center gap-1 px-1.5 py-0.5 rounded bg-brand-50 text-brand-600 font-medium">
+                      <LockIcon className="w-3 h-3" />
+                      Password protected
+                    </span>
+                  )}
+                </div>
+              </div>
 
-          <div id="doc-content" className="prose prose-sm prose-gray max-w-none prose-headings:scroll-mt-16 prose-a:text-brand-600 prose-a:no-underline hover:prose-a:underline prose-code:before:content-none prose-code:after:content-none">
-            <DocRenderer source={doc.content} />
-          </div>
+              <div
+                id="doc-content"
+                className="prose prose-sm prose-gray max-w-none prose-headings:scroll-mt-16 prose-a:text-brand-600 prose-a:no-underline hover:prose-a:underline prose-code:before:content-none prose-code:after:content-none"
+              >
+                <DocRenderer source={doc.content} />
+              </div>
+            </>
+          ) : (
+            <DocPasswordGate
+              category={categorySlug}
+              slug={slug}
+              title={doc.meta.title}
+              description={doc.meta.description}
+            />
+          )}
         </article>
       </div>
     </div>

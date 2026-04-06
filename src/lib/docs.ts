@@ -40,6 +40,7 @@ export async function getDocsByCategory(
         author: data.author,
         tags: data.tags || [],
         order: data.order || 0,
+        passwordProtected: !!data.password,
       } satisfies DocMeta;
     })
   );
@@ -54,7 +55,7 @@ export async function getDocsByCategory(
 export async function getDocContent(
   category: string,
   slug: string
-): Promise<{ meta: DocMeta; content: string } | null> {
+): Promise<{ meta: DocMeta; content: string; passwordHash?: string } | null> {
   const files = await fetchDocListFromSharePoint(category);
   const fileName = `${slug}.mdx`;
   if (!files.includes(fileName)) return null;
@@ -73,8 +74,13 @@ export async function getDocContent(
       author: data.author,
       tags: data.tags || [],
       order: data.order || 0,
+      passwordProtected: !!data.password,
     },
     content,
+    // Only present server-side — never serialised to the client directly.
+    // page.tsx passes it only to the unlock API; it never appears in any
+    // component props or JSON responses.
+    passwordHash: data.password as string | undefined,
   };
 }
 

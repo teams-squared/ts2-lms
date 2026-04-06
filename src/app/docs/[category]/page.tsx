@@ -175,6 +175,12 @@ export default async function CategoryPage({
                             {doc.minRole}
                           </span>
                         )}
+                        {doc.passwordProtected && (
+                          <span className="flex items-center gap-0.5 text-[10px] text-brand-600 bg-brand-50 px-1.5 py-0.5 rounded-full">
+                            <LockIcon className="w-2.5 h-2.5" />
+                            password
+                          </span>
+                        )}
                         {doc.tags && doc.tags.length > 0 && (
                           <div className="flex gap-1">
                             {doc.tags.map((tag) => (
