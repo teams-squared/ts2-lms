@@ -37,6 +37,15 @@ describe("DocRenderer", () => {
     expect(pluginNames.some((n: string) => n.toLowerCase().includes("highlight"))).toBe(true);
   });
 
+  it("shows error message when compileMDX throws", async () => {
+    mockCompileMDX.mockRejectedValue(new Error("invalid MDX syntax"));
+
+    const result = await DocRenderer({ source: "<<< broken mdx >>>" });
+    render(result as React.ReactElement);
+
+    expect(screen.getByText(/could not be rendered/i)).toBeInTheDocument();
+  });
+
   it("renders the compiled MDX content", async () => {
     mockCompileMDX.mockResolvedValue({
       content: <code className="language-typescript">const x = 1;</code>,

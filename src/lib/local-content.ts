@@ -2,17 +2,15 @@
  * Local filesystem content provider.
  *
  * Used automatically when SharePoint credentials are absent (local dev).
- * Content is read from `local-content/` in the project root — that directory
- * is gitignored so it never gets committed. Copy `local-content.example/` to
- * `local-content/` to get started:
- *
- *   cp -r local-content.example local-content   # macOS/Linux
- *   xcopy local-content.example local-content /e /i   # Windows
+ * Content is read from `local-content/` in the project root. The directory
+ * is committed to dev branches for testing; in production it is ignored
+ * because SharePoint is configured and isSharePointConfigured() returns true.
  *
  * Directory layout mirrors the SharePoint structure:
  *
  *   local-content/
  *     _categories.json       ← category definitions
+ *     _roles.json            ← demo user role overrides
  *     [category-slug]/
  *       [doc-slug].mdx       ← one file per document
  */

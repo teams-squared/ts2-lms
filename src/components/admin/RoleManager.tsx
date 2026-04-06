@@ -73,6 +73,9 @@ export default function RoleManager() {
   }
 
   async function handleRemove(email: string) {
+    if (!window.confirm(`Remove elevated role from ${email}?\nThis takes effect on their next sign-in.`)) {
+      return;
+    }
     try {
       const res = await fetch("/api/roles", {
         method: "DELETE",
