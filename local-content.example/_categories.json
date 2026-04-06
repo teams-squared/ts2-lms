@@ -1,0 +1,51 @@
+[
+  {
+    "slug": "getting-started",
+    "title": "Getting Started",
+    "description": "Onboarding guides and first-day essentials for all new team members.",
+    "icon": "rocket",
+    "minRole": "employee",
+    "order": 1
+  },
+  {
+    "slug": "hr-policies",
+    "title": "HR Policies",
+    "description": "Company policies, benefits, leave, and workplace guidelines.",
+    "icon": "book",
+    "minRole": "employee",
+    "order": 2
+  },
+  {
+    "slug": "engineering",
+    "title": "Engineering",
+    "description": "Technical standards, architecture decisions, and development workflows.",
+    "icon": "code",
+    "minRole": "employee",
+    "order": 3
+  },
+  {
+    "slug": "engineering-playbooks",
+    "title": "Engineering Playbooks",
+    "description": "Step-by-step runbooks for common engineering tasks and incidents.",
+    "icon": "book",
+    "minRole": "employee",
+    "order": 4,
+    "parentCategory": "engineering"
+  },
+  {
+    "slug": "management-guides",
+    "title": "Management Guides",
+    "description": "Resources for team leads and managers — performance, hiring, and planning.",
+    "icon": "briefcase",
+    "minRole": "manager",
+    "order": 5
+  },
+  {
+    "slug": "security-ops",
+    "title": "Security Operations",
+    "description": "Internal security procedures, incident response, and access control.",
+    "icon": "shield",
+    "minRole": "admin",
+    "order": 6
+  }
+]

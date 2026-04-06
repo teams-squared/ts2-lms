@@ -1,5 +1,10 @@
 import { getGraphClient } from "./graph-client";
 import type { Category } from "./types";
+import {
+  fetchCategoriesFromLocal,
+  fetchDocListFromLocal,
+  fetchDocContentFromLocal,
+} from "./local-content";
 
 const DOCS_ROOT = encodeURIComponent(
   process.env.SHAREPOINT_DOCS_ROOT || "Docs for Portal"
@@ -76,7 +81,7 @@ async function withCache<T>(
  * TTL: 10 minutes.
  */
 export async function fetchCategoriesFromSharePoint(): Promise<Category[]> {
-  if (!isSharePointConfigured()) return [];
+  if (!isSharePointConfigured()) return fetchCategoriesFromLocal();
   return withCache("categories", TTL.categories, async () => {
     const client = getGraphClient();
     const path = `${getApiBase()}/${DOCS_ROOT}/_categories.json:/content`;
@@ -96,7 +101,7 @@ export async function fetchCategoriesFromSharePoint(): Promise<Category[]> {
 export async function fetchDocListFromSharePoint(
   categorySlug: string
 ): Promise<string[]> {
-  if (!isSharePointConfigured()) return [];
+  if (!isSharePointConfigured()) return fetchDocListFromLocal(categorySlug);
   return withCache(`doclist:${categorySlug}`, TTL.docList, async () => {
     const client = getGraphClient();
     try {
@@ -133,7 +138,7 @@ export async function fetchDocContentFromSharePoint(
   categorySlug: string,
   fileName: string
 ): Promise<string> {
-  if (!isSharePointConfigured()) return "";
+  if (!isSharePointConfigured()) return fetchDocContentFromLocal(categorySlug, fileName);
   return withCache(`content:${categorySlug}/${fileName}`, TTL.content, async () => {
     const client = getGraphClient();
     const response: Response = await client
