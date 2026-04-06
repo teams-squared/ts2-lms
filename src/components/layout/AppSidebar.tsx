@@ -9,6 +9,26 @@ import { BookOpenIcon, ShieldIcon, ChevronRightIcon } from "@/components/icons";
 
 const STORAGE_KEY = "sidebar-collapsed";
 
+const ROLE_STYLES = {
+  admin: {
+    badge: "bg-brand-100 text-brand-700",
+    dot: "bg-brand-500",
+    avatar: "bg-brand-200 text-brand-800",
+  },
+  manager: {
+    badge: "bg-blue-100 text-blue-700",
+    dot: "bg-blue-500",
+    avatar: "bg-blue-200 text-blue-800",
+  },
+  employee: {
+    badge: "bg-gray-100 text-gray-600",
+    dot: "bg-gray-400",
+    avatar: "bg-gray-200 text-gray-700",
+  },
+} as const;
+
+type RoleKey = keyof typeof ROLE_STYLES;
+
 export default function AppSidebar() {
   const { data: session } = useSession();
   const pathname = usePathname();
@@ -38,6 +58,9 @@ export default function AppSidebar() {
   const isActive = (href: string) =>
     href === "/" ? pathname === "/" : pathname.startsWith(href);
 
+  const role = (session?.user?.role as RoleKey) || "employee";
+  const roleStyle = ROLE_STYLES[role] ?? ROLE_STYLES.employee;
+
   function NavLink({
     href,
     icon: Icon,
@@ -52,10 +75,10 @@ export default function AppSidebar() {
       <Link
         href={href}
         title={collapsed ? label : undefined}
-        className={`flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium transition-colors ${
+        className={`flex items-center gap-3 py-2 text-sm font-medium transition-colors ${
           active
-            ? "bg-brand-100 text-brand-800"
-            : "text-gray-600 hover:bg-white/60 hover:text-gray-900"
+            ? "border-l-[3px] border-brand-500 bg-brand-50 text-brand-700 pl-[9px] pr-3 rounded-r-lg"
+            : "border-l-[3px] border-transparent text-gray-600 hover:bg-white/60 hover:text-gray-900 px-3 rounded-lg"
         }`}
       >
         <Icon className="w-4 h-4 flex-shrink-0" />
@@ -114,12 +137,12 @@ export default function AppSidebar() {
 
       {/* User section */}
       {session && (
-        <div className="px-2 py-3 border-t border-brand-100/60 flex-shrink-0 space-y-1">
+        <div className="px-2 py-3 border-t border-gray-200/70 flex-shrink-0 space-y-1">
           <div
             className="flex items-center gap-2 px-3 py-1.5 overflow-hidden"
             title={collapsed ? (session.user?.name || session.user?.email || "") : undefined}
           >
-            <div className="w-6 h-6 rounded-full bg-brand-200 flex items-center justify-center flex-shrink-0 text-xs font-semibold text-brand-800">
+            <div className={`w-6 h-6 rounded-full flex items-center justify-center flex-shrink-0 text-xs font-semibold ${roleStyle.avatar}`}>
               {(session.user?.name || session.user?.email || "?")[0].toUpperCase()}
             </div>
             <div
@@ -135,8 +158,8 @@ export default function AppSidebar() {
               <p className="text-xs font-medium text-gray-700 truncate">
                 {session.user?.name || session.user?.email}
               </p>
-              <span className="inline-flex items-center gap-1 text-xs text-brand-700">
-                <span className="w-1.5 h-1.5 rounded-full bg-brand-400 flex-shrink-0" />
+              <span className={`inline-flex items-center gap-1 text-[10px] px-1.5 py-0.5 rounded-full font-medium mt-0.5 ${roleStyle.badge}`}>
+                <span className={`w-1.5 h-1.5 rounded-full flex-shrink-0 ${roleStyle.dot}`} />
                 {session.user?.role}
               </span>
             </div>
