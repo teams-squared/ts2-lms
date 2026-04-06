@@ -11,6 +11,7 @@ import { hasAccess } from "@/lib/roles";
 import Sidebar from "@/components/layout/Sidebar";
 import DocRenderer from "@/components/docs/DocRenderer";
 import DocSearch from "@/components/docs/DocSearch";
+import CopyLinkButton from "@/components/docs/CopyLinkButton";
 import { ChevronRightIcon } from "@/components/icons";
 import type { Role } from "@/lib/types";
 
@@ -81,11 +82,14 @@ export default async function DocPage({
         <article className="flex-1 min-w-0 max-w-3xl">
           <DocSearch />
           <div className="mb-6 bg-brand-50/40 rounded-lg px-4 py-3">
-            <h1 className="text-2xl font-bold text-gray-900 mb-1">
-              {doc.meta.title}
-            </h1>
+            <div className="flex items-start justify-between gap-2">
+              <h1 className="text-2xl font-bold text-gray-900 mb-1">
+                {doc.meta.title}
+              </h1>
+              <CopyLinkButton />
+            </div>
             <p className="text-sm text-gray-500">{doc.meta.description}</p>
-            <div className="flex items-center gap-3 mt-2 text-xs text-gray-400">
+            <div className="flex flex-wrap items-center gap-3 mt-2 text-xs text-gray-400">
               {doc.meta.author && <span>By {doc.meta.author}</span>}
               {doc.meta.updatedAt && (
                 <span>Updated {doc.meta.updatedAt}</span>
@@ -93,6 +97,19 @@ export default async function DocPage({
               {doc.meta.minRole !== "employee" && (
                 <span className="px-1.5 py-0.5 rounded bg-amber-50 text-amber-600 font-medium">
                   {doc.meta.minRole}+ only
+                </span>
+              )}
+              {doc.meta.tags && doc.meta.tags.length > 0 && (
+                <span className="flex flex-wrap gap-1.5">
+                  {doc.meta.tags.map((tag) => (
+                    <Link
+                      key={tag}
+                      href={`/docs?tag=${encodeURIComponent(tag)}`}
+                      className="px-2 py-0.5 rounded-full bg-brand-50 text-brand-600 font-medium hover:bg-brand-100 transition-colors"
+                    >
+                      {tag}
+                    </Link>
+                  ))}
                 </span>
               )}
             </div>

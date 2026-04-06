@@ -3,19 +3,29 @@ import { render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import SearchBar from "@/components/search/SearchBar";
 
+const mockPush = vi.fn();
+
+vi.mock("next/navigation", () => ({
+  useRouter: () => ({ push: mockPush }),
+}));
+
 vi.mock("next/link", () => ({
   default: ({
     href,
     children,
     className,
+    role,
+    "aria-selected": ariaSelected,
     onClick,
   }: {
     href: string;
     children: React.ReactNode;
     className?: string;
+    role?: string;
+    "aria-selected"?: boolean;
     onClick?: () => void;
   }) => (
-    <a href={href} className={className} onClick={onClick}>
+    <a href={href} className={className} role={role} aria-selected={ariaSelected} onClick={onClick}>
       {children}
     </a>
   ),
@@ -46,6 +56,7 @@ const MOCK_DOCS = [
 
 beforeEach(() => {
   vi.stubGlobal("fetch", vi.fn());
+  mockPush.mockReset();
 });
 
 afterEach(() => {
@@ -129,5 +140,71 @@ describe("SearchBar — success state", () => {
     await user.click(screen.getByText("Security Basics"));
     expect(screen.queryByText("Security Basics")).not.toBeInTheDocument();
     expect(input).toHaveValue("");
+  });
+});
+
+describe("SearchBar — keyboard navigation", () => {
+  beforeEach(() => {
+    vi.mocked(fetch).mockResolvedValue(
+      new Response(JSON.stringify(MOCK_DOCS), {
+        status: 200,
+        headers: { "Content-Type": "application/json" },
+      })
+    );
+  });
+
+  it("ArrowDown highlights the first result", async () => {
+    const user = userEvent.setup();
+    render(<SearchBar />);
+    const input = screen.getByPlaceholderText("Search documentation...");
+    await user.type(input, "started");
+    await waitFor(() => screen.getByText("Getting Started"));
+    await user.keyboard("{ArrowDown}");
+    const option = screen.getByRole("option", { name: /getting started/i });
+    expect(option).toHaveAttribute("aria-selected", "true");
+  });
+
+  it("ArrowUp from first item does not go below -1", async () => {
+    const user = userEvent.setup();
+    render(<SearchBar />);
+    const input = screen.getByPlaceholderText("Search documentation...");
+    await user.type(input, "started");
+    await waitFor(() => screen.getByText("Getting Started"));
+    // No arrow down first — pressing ArrowUp should keep nothing selected
+    await user.keyboard("{ArrowUp}");
+    const option = screen.getByRole("option", { name: /getting started/i });
+    expect(option).toHaveAttribute("aria-selected", "false");
+  });
+
+  it("Enter with selected result calls router.push and resets state", async () => {
+    const user = userEvent.setup();
+    render(<SearchBar />);
+    const input = screen.getByPlaceholderText("Search documentation...");
+    await user.type(input, "started");
+    await waitFor(() => screen.getByText("Getting Started"));
+    await user.keyboard("{ArrowDown}");
+    await user.keyboard("{Enter}");
+    expect(mockPush).toHaveBeenCalledWith("/docs/onboarding/getting-started");
+    expect(input).toHaveValue("");
+  });
+
+  it("Escape closes the dropdown", async () => {
+    const user = userEvent.setup();
+    render(<SearchBar />);
+    const input = screen.getByPlaceholderText("Search documentation...");
+    await user.type(input, "security");
+    await waitFor(() => screen.getByText("Security Basics"));
+    await user.keyboard("{Escape}");
+    expect(screen.queryByText("Security Basics")).not.toBeInTheDocument();
+  });
+
+  it("Cmd+K focuses the input", async () => {
+    const user = userEvent.setup();
+    render(<SearchBar />);
+    // Blur input first
+    const input = screen.getByPlaceholderText("Search documentation...");
+    input.blur();
+    await user.keyboard("{Meta>}k{/Meta}");
+    expect(document.activeElement).toBe(input);
   });
 });
