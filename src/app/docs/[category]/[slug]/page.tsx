@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
+import GithubSlugger from "github-slugger";
 import { auth } from "@/lib/auth";
 import {
   getAccessibleCategories,
@@ -12,8 +13,24 @@ import Sidebar from "@/components/layout/Sidebar";
 import DocRenderer from "@/components/docs/DocRenderer";
 import DocSearch from "@/components/docs/DocSearch";
 import CopyLinkButton from "@/components/docs/CopyLinkButton";
+import { DocVisitRecorder } from "@/components/docs/RecentlyViewed";
+import TableOfContents from "@/components/docs/TableOfContents";
+import type { TocHeading } from "@/components/docs/TableOfContents";
 import { ChevronRightIcon } from "@/components/icons";
 import type { Role } from "@/lib/types";
+
+function extractHeadings(mdx: string): TocHeading[] {
+  const slugger = new GithubSlugger();
+  const headings: TocHeading[] = [];
+  const regex = /^(#{1,3})\s+(.+)$/gm;
+  let match;
+  while ((match = regex.exec(mdx)) !== null) {
+    const depth = match[1].length as 1 | 2 | 3;
+    const text = match[2].trim();
+    headings.push({ depth, text, id: slugger.slug(text) });
+  }
+  return headings;
+}
 
 export default async function DocPage({
   params,
@@ -38,6 +55,9 @@ export default async function DocPage({
   if (!category) notFound();
   if (!doc) notFound();
   if (!hasAccess(userRole, doc.meta.minRole)) notFound();
+
+  const headings = extractHeadings(doc.content);
+  const tocHeadings = headings.length >= 3 ? headings : [];
 
   return (
     <div className="px-4 sm:px-6 lg:px-8 py-6 animate-fade-in">
@@ -115,10 +135,16 @@ export default async function DocPage({
             </div>
           </div>
 
+          <DocVisitRecorder
+            title={doc.meta.title}
+            href={`/docs/${categorySlug}/${slug}`}
+          />
           <div id="doc-content" className="prose prose-sm prose-gray max-w-none prose-headings:scroll-mt-16 prose-a:text-brand-600 prose-a:no-underline hover:prose-a:underline prose-code:before:content-none prose-code:after:content-none">
             <DocRenderer source={doc.content} />
           </div>
         </article>
+
+        <TableOfContents headings={tocHeadings} />
       </div>
     </div>
   );
