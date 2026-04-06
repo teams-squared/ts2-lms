@@ -14,7 +14,11 @@ export const metadata: Metadata = {
   title: "Teams Squared Docs",
   description: "Internal documentation portal for Teams Squared",
   icons: {
-    icon: '/logo.png',
+    icon: [
+      { url: "/logo.png", type: "image/png", sizes: "any" },
+      { url: "/logo.png", type: "image/png" },
+    ],
+    shortcut: "/logo.png",
   },
 };
 
