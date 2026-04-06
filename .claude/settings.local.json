@@ -1,6 +1,7 @@
 {
   "permissions": {
     "allow": [
+      "Bash(git:*)",
       "Bash(npx create-next-app@latest . --typescript --tailwind --eslint --app --src-dir --import-alias \"@/*\" --yes)",
       "Bash(npm install:*)",
       "Bash(npm run:*)",
@@ -8,7 +9,9 @@
       "Bash(npm uninstall:*)",
       "Bash(npm info:*)",
       "Bash(taskkill //F //IM node.exe)",
-      "Bash(npx next:*)"
+      "Bash(npx next:*)",
+      "Skill(update-config)",
+      "Skill(update-config:*)"
     ]
   }
 }
