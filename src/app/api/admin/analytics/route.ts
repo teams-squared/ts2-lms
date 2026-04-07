@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@/lib/auth";
 import type { Role } from "@/lib/types";
 
-const VALID_PERIODS = ["7d", "30d", "90d"] as const;
+const VALID_PERIODS = ["1d", "7d", "30d", "90d"] as const;
 type Period = (typeof VALID_PERIODS)[number];
 
 function periodToDays(p: Period): number {
