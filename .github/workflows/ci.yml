@@ -1,0 +1,106 @@
+name: CI
+
+on:
+  push:
+    branches:
+      - dev
+  pull_request:
+    branches:
+      - main
+      - dev
+
+permissions:
+  contents: read
+  pull-requests: write
+
+# Cancel any in-progress run for the same branch/PR when a new commit is
+# pushed, preventing pile-ups on rapid-fire pushes to dev.
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  ci:
+    name: Lint · Type-check · Test · Build
+    runs-on: ubuntu-latest
+
+    steps:
+      # ── 1. Source ──────────────────────────────────────────────────────────
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      # ── 2. Runtime + dependency cache ─────────────────────────────────────
+      # cache: 'npm' keys node_modules on the package-lock.json hash.
+      # Cache hits skip the network entirely; misses still benefit from a
+      # partial restore via the runner-os fallback key.
+      - name: Set up Node 20
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+          cache: "npm"
+
+      # ── 3. Install ─────────────────────────────────────────────────────────
+      # npm ci requires package-lock.json and produces a reproducible install.
+      - name: Install dependencies
+        run: npm ci
+
+      # ── 4. Lint ────────────────────────────────────────────────────────────
+      - name: Lint
+        run: npm run lint
+
+      # ── 5. Type-check ──────────────────────────────────────────────────────
+      # Runs before the expensive next build step to fail fast with clean
+      # TypeScript diagnostics across the full tsconfig include surface.
+      - name: Type-check
+        run: npx tsc --noEmit
+
+      # ── 6. Unit tests + coverage ───────────────────────────────────────────
+      # All required env vars (SharePoint, etc.) are defined inline in
+      # vitest.config.ts — no repository secrets needed here.
+      - name: Unit tests
+        run: npm run test:coverage
+
+      # ── 7. Coverage summary → job summary ─────────────────────────────────
+      # Parses coverage/coverage-summary.json (written by the json-summary
+      # reporter) and appends a markdown table to the Actions job summary,
+      # visible in the PR checks tab without any third-party action.
+      - name: Post coverage summary
+        if: always()
+        run: |
+          node - <<'EOF'
+          const fs = require("fs");
+          const file = "coverage/coverage-summary.json";
+          if (!fs.existsSync(file)) { console.log("No coverage summary found."); process.exit(0); }
+          const { total } = JSON.parse(fs.readFileSync(file, "utf8"));
+          const rows = Object.entries(total)
+            .map(([k, v]) => `| ${k} | ${v.pct}% | ${v.covered} / ${v.total} |`)
+            .join("\n");
+          const md = `## Coverage\n| Metric | % | Covered / Total |\n|---|---|---|\n${rows}\n`;
+          fs.appendFileSync(process.env.GITHUB_STEP_SUMMARY, md);
+          console.log(md);
+          EOF
+
+      # ── 8. Upload coverage HTML as artifact ───────────────────────────────
+      - name: Upload coverage report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: coverage-report
+          path: coverage/
+          retention-days: 30
+
+      # ── 9. Build ───────────────────────────────────────────────────────────
+      # Dummy env vars prevent "missing variable" build warnings without
+      # exposing real credentials. No Azure AD calls are made at build time.
+      - name: Build
+        run: npm run build
+        env:
+          NEXTAUTH_URL: http://localhost:3000
+          AUTH_SECRET: ci-build-only-not-real
+          AZURE_AD_CLIENT_ID: ci-placeholder
+          AZURE_AD_CLIENT_SECRET: ci-placeholder
+          AZURE_AD_TENANT_ID: ci-placeholder
+          SHAREPOINT_SITE_ID: ci-placeholder
+          SHAREPOINT_TENANT_ID: ci-placeholder
+          SHAREPOINT_CLIENT_ID: ci-placeholder
+          SHAREPOINT_CLIENT_SECRET: ci-placeholder

@@ -17,7 +17,7 @@ export default defineConfig({
     },
     coverage: {
       provider: "v8",
-      reporter: ["text", "html"],
+      reporter: ["text", "html", "json-summary"],
       include: ["src/lib/**", "src/components/**"],
       exclude: ["src/lib/graph-client.ts"],
     },
