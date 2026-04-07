@@ -21,6 +21,11 @@ import type { Category } from "./types";
 
 const LOCAL_CONTENT_DIR = path.join(process.cwd(), "local-content");
 
+/** Allow only safe path segments — letters, digits, hyphens, underscores. */
+function isSafeSegment(segment: string): boolean {
+  return /^[a-zA-Z0-9_-]+$/.test(segment);
+}
+
 export async function fetchCategoriesFromLocal(): Promise<Category[]> {
   try {
     const raw = await readFile(
@@ -37,6 +42,7 @@ export async function fetchCategoriesFromLocal(): Promise<Category[]> {
 export async function fetchDocListFromLocal(
   categorySlug: string
 ): Promise<string[]> {
+  if (!isSafeSegment(categorySlug)) return [];
   try {
     const files = await readdir(path.join(LOCAL_CONTENT_DIR, categorySlug));
     return files.filter((f) => f.endsWith(".mdx"));
@@ -54,7 +60,11 @@ export async function fetchDocContentFromLocal(
   categorySlug: string,
   fileName: string
 ): Promise<string> {
-  const filePath = path.join(LOCAL_CONTENT_DIR, categorySlug, fileName);
+  const baseName = path.basename(fileName); // strip any directory component
+  if (!isSafeSegment(categorySlug) || !baseName.endsWith(".mdx") || !isSafeSegment(baseName.replace(".mdx", ""))) {
+    return "";
+  }
+  const filePath = path.join(LOCAL_CONTENT_DIR, categorySlug, baseName);
   try {
     return await readFile(filePath, "utf-8");
   } catch (err) {

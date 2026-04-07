@@ -110,7 +110,7 @@ describe("POST /api/docs/protect — SharePoint errors", () => {
     const res = await POST(makeReq({ category: "eng", slug: "my-doc", password: "secret123" }));
     expect(res.status).toBe(502);
     const body = await res.json();
-    expect(body.error).toContain("Write failed");
+    expect(body.error).toContain("Failed to save document");
   });
 });
 

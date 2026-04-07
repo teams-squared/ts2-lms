@@ -34,6 +34,12 @@ export async function POST(req: NextRequest) {
     );
   }
 
+  // Validate inputs to prevent path traversal
+  const SAFE_SEGMENT = /^[a-zA-Z0-9_-]+$/;
+  if (!SAFE_SEGMENT.test(category) || !SAFE_SEGMENT.test(slug)) {
+    return NextResponse.json({ error: "Invalid category or slug" }, { status: 400 });
+  }
+
   // Verify the document exists
   const fileName = `${slug}.mdx`;
 
@@ -85,7 +91,7 @@ export async function POST(req: NextRequest) {
     const message = err instanceof Error ? err.message : String(err);
     console.error("[protect] failed to write doc to SharePoint:", message);
     return NextResponse.json(
-      { error: `SharePoint write failed: ${message}` },
+      { error: "Failed to save document. Check server logs." },
       { status: 502 }
     );
   }

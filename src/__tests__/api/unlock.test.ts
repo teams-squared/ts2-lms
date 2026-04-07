@@ -88,6 +88,34 @@ describe("POST /api/docs/unlock — input validation", () => {
   });
 });
 
+// ── Path traversal protection ──────────────────────────────────────────────
+
+describe("POST /api/docs/unlock — path traversal protection", () => {
+  it("returns 400 when category contains path traversal sequences", async () => {
+    const res = await POST(makeReq({ category: "../../etc", slug: "secret", password: "pass" }));
+    expect(res.status).toBe(400);
+  });
+
+  it("returns 400 when slug contains path traversal sequences", async () => {
+    const res = await POST(makeReq({ category: "eng", slug: "../auth", password: "pass" }));
+    expect(res.status).toBe(400);
+  });
+});
+
+// ── Role access check ──────────────────────────────────────────────────────
+
+describe("POST /api/docs/unlock — role access", () => {
+  it("returns 403 when user role is below the document minRole", async () => {
+    vi.mocked(auth).mockResolvedValue({ user: { email: "e@ts2.com", role: "employee" } } as never);
+    vi.mocked(getDocContent).mockResolvedValue({
+      ...PROTECTED_DOC,
+      meta: { ...PROTECTED_DOC.meta, minRole: "manager" as const },
+    });
+    const res = await POST(makeReq({ category: "eng", slug: "secret", password: "correct" }));
+    expect(res.status).toBe(403);
+  });
+});
+
 // ── Document checks ────────────────────────────────────────────────────────
 
 describe("POST /api/docs/unlock — document checks", () => {
@@ -127,10 +155,10 @@ describe("POST /api/docs/unlock — happy path", () => {
     expect(setCookie).toContain("HttpOnly");
   });
 
-  it("sets SameSite=Lax on the cookie", async () => {
+  it("sets SameSite=Strict on the cookie", async () => {
     const res = await POST(makeReq({ category: "eng", slug: "secret", password: "correct" }));
     const setCookie = res.headers.get("set-cookie") ?? "";
-    expect(setCookie.toLowerCase()).toContain("samesite=lax");
+    expect(setCookie.toLowerCase()).toContain("samesite=strict");
   });
 
   it("does not set Max-Age (session cookie)", async () => {

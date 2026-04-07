@@ -5,11 +5,13 @@ import { authConfig } from "./auth.config";
 import { getUserRole } from "./roles";
 import type { Role } from "./types";
 
-// NextAuth v5 reads AUTH_SECRET; fall back to NEXTAUTH_SECRET or a dev-only placeholder
+// NextAuth v5 requires AUTH_SECRET to sign session tokens.
+// In production, fail loudly rather than fall back to a known string.
 if (!process.env.AUTH_SECRET) {
-  process.env.AUTH_SECRET =
-    process.env.NEXTAUTH_SECRET ||
-    "dev-only-secret-change-in-production";
+  if (process.env.NODE_ENV === "production") {
+    throw new Error("AUTH_SECRET environment variable is required in production.");
+  }
+  process.env.AUTH_SECRET = process.env.NEXTAUTH_SECRET || "dev-only-secret-change-in-production";
 }
 
 // Demo users for local development (when Azure AD is not configured).
@@ -19,35 +21,30 @@ const DEMO_USERS = [
     id: "1",
     email: "admin@teamssquared.com",
     name: "Admin User",
-    // admin123
     passwordHash: "$2b$10$L6zwYSrmwx8e3.pAv/U5eOgGBa4lEXU6i00.9e0qEgmrZVLrN8gBW",
   },
   {
     id: "2",
     email: "manager@teamssquared.com",
     name: "Manager User",
-    // manager123
     passwordHash: "$2b$10$brGntn51.msXEyx8R9gENuQsmyLtyV1yavpONpZFR3UT18bvF6yd.",
   },
   {
     id: "3",
     email: "employee@teamssquared.com",
     name: "Employee User",
-    // employee123
     passwordHash: "$2b$10$f7YPyfQLRgtCcv30djChMuh0CMI8kNBi7OKdTAvYkU6lJYbwBxK96",
   },
   {
     id: "4",
     email: "sarah@teamssquared.com",
     name: "Sarah Admin",
-    // admin123
     passwordHash: "$2b$10$L6zwYSrmwx8e3.pAv/U5eOgGBa4lEXU6i00.9e0qEgmrZVLrN8gBW",
   },
   {
     id: "5",
     email: "carol@teamssquared.com",
     name: "Carol Manager",
-    // manager123
     passwordHash: "$2b$10$brGntn51.msXEyx8R9gENuQsmyLtyV1yavpONpZFR3UT18bvF6yd.",
   },
 ];

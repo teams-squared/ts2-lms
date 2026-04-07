@@ -1,7 +1,11 @@
 import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@/lib/auth";
 import { getDocContent } from "@/lib/docs";
+import { hasAccess } from "@/lib/roles";
 import bcrypt from "bcryptjs";
+import type { Role } from "@/lib/types";
+
+const SAFE_SEGMENT = /^[a-zA-Z0-9_-]+$/;
 
 export async function POST(req: NextRequest) {
   // Must be authenticated
@@ -25,9 +29,20 @@ export async function POST(req: NextRequest) {
     );
   }
 
+  // Validate inputs to prevent path traversal
+  if (!SAFE_SEGMENT.test(category) || !SAFE_SEGMENT.test(slug)) {
+    return NextResponse.json({ error: "Invalid category or slug" }, { status: 400 });
+  }
+
   const doc = await getDocContent(category, slug);
   if (!doc) {
     return NextResponse.json({ error: "Document not found" }, { status: 404 });
+  }
+
+  // Enforce role-based access — users must meet the document's minRole
+  const userRole = (session.user.role as Role) || "employee";
+  if (!hasAccess(userRole, doc.meta.minRole)) {
+    return NextResponse.json({ error: "Forbidden" }, { status: 403 });
   }
 
   if (!doc.passwordHash) {
@@ -47,9 +62,9 @@ export async function POST(req: NextRequest) {
   const response = NextResponse.json({ success: true });
   response.cookies.set(cookieName, "1", {
     httpOnly: true,
-    sameSite: "lax",
-    path: "/",
-    // No maxAge / expires = session cookie
+    sameSite: "strict",
+    secure: process.env.NODE_ENV === "production",
+    path: `/docs/${category}/${slug}`,
   });
 
   return response;
