@@ -71,7 +71,7 @@ beforeEach(() => {
 
 describe("POST /api/docs/unlock — auth", () => {
   it("returns 401 when not authenticated", async () => {
-    vi.mocked(auth).mockResolvedValue(null);
+    vi.mocked(auth).mockResolvedValue(null as never);
     const res = await POST(makeReq({ category: "eng", slug: "secret", password: "pass" }));
     expect(res.status).toBe(401);
   });

@@ -53,7 +53,7 @@ beforeEach(() => {
 
 describe("POST /api/docs/protect — auth", () => {
   it("returns 401 when not authenticated", async () => {
-    vi.mocked(auth).mockResolvedValue(null);
+    vi.mocked(auth).mockResolvedValue(null as never);
     const res = await POST(makeReq({ category: "eng", slug: "my-doc" }));
     expect(res.status).toBe(401);
   });
