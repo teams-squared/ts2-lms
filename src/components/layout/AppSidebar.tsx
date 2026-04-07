@@ -3,45 +3,33 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useSession, signOut } from "next-auth/react";
-import { useEffect, useRef, useState } from "react";
+import { useRef, useState, useEffect } from "react";
 import Logo from "@/components/Logo";
-import { UserAvatar } from "@/components/UserAvatar";
-import { BookOpenIcon, ShieldIcon, ChevronRightIcon } from "@/components/icons";
+import { UserAvatar } from "@/components/ui";
+import {
+  BookOpenIcon,
+  ShieldIcon,
+  ChevronRightIcon,
+  HomeIcon,
+  SignOutIcon,
+  HamburgerIcon,
+  CloseIcon,
+} from "@/components/icons";
 import { posthog } from "@/lib/posthog-client";
+import { isNavActive } from "@/lib/navigation";
+import { useLocalStorage } from "@/hooks/useLocalStorage";
 
 const STORAGE_KEY = "sidebar-collapsed";
-
-const ROLE_STYLES = {
-  admin: {
-    badge: "bg-brand-100 text-brand-700",
-    dot: "bg-brand-500",
-    avatar: "bg-brand-200 text-brand-800",
-  },
-  manager: {
-    badge: "bg-blue-100 text-blue-700",
-    dot: "bg-blue-500",
-    avatar: "bg-blue-200 text-blue-800",
-  },
-  employee: {
-    badge: "bg-gray-100 text-gray-600",
-    dot: "bg-gray-400",
-    avatar: "bg-gray-200 text-gray-700",
-  },
-} as const;
-
-type RoleKey = keyof typeof ROLE_STYLES;
 
 export default function AppSidebar() {
   const { data: session, status } = useSession();
   const pathname = usePathname();
-  const [collapsed, setCollapsed] = useState(false);
+  const [collapsed, setCollapsed] = useLocalStorage(STORAGE_KEY, false);
   const [mounted, setMounted] = useState(false);
   const [drawerOpen, setDrawerOpen] = useState(false);
   const drawerRef = useRef<HTMLElement>(null);
 
   useEffect(() => {
-    const stored = localStorage.getItem(STORAGE_KEY);
-    if (stored === "true") setCollapsed(true);
     setMounted(true);
   }, []);
 
@@ -56,11 +44,7 @@ export default function AppSidebar() {
   }, [drawerOpen]);
 
   function toggle() {
-    setCollapsed((v) => {
-      const next = !v;
-      localStorage.setItem(STORAGE_KEY, String(next));
-      return next;
-    });
+    setCollapsed(!collapsed);
   }
 
   // Hide sidebar on auth pages
@@ -69,11 +53,7 @@ export default function AppSidebar() {
   // Don't render width-dependent UI until mounted (avoid hydration flash)
   const w = mounted ? (collapsed ? 60 : 220) : 220;
 
-  const isActive = (href: string) =>
-    href === "/" ? pathname === "/" : pathname.startsWith(href);
-
-  const role = (session?.user?.role as RoleKey) || "employee";
-  const roleStyle = ROLE_STYLES[role] ?? ROLE_STYLES.employee;
+  const isActive = (href: string) => isNavActive(href, pathname);
 
   function NavLink({
     href,
@@ -277,9 +257,7 @@ export default function AppSidebar() {
               className="flex items-center gap-2 px-3 py-1.5 overflow-hidden"
               title={collapsed ? (session.user?.name || session.user?.email || "") : undefined}
             >
-              <div className="w-6 h-6 rounded-full bg-brand-200 flex items-center justify-center flex-shrink-0 text-xs font-semibold text-brand-800">
-                {(session.user?.name || session.user?.email || "?")[0].toUpperCase()}
-              </div>
+              <UserAvatar name={session.user?.name} email={session.user?.email} />
               <div
                 className="transition-[opacity,width] duration-150 overflow-hidden whitespace-nowrap min-w-0"
                 style={
@@ -342,79 +320,5 @@ export default function AppSidebar() {
         </div>
       </aside>
     </>
-  );
-}
-
-function HomeIcon({ className }: { className?: string }) {
-  return (
-    <svg
-      xmlns="http://www.w3.org/2000/svg"
-      viewBox="0 0 24 24"
-      fill="none"
-      stroke="currentColor"
-      strokeWidth={1.5}
-      strokeLinecap="round"
-      strokeLinejoin="round"
-      className={className}
-    >
-      <path d="M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2z" />
-      <polyline points="9 22 9 12 15 12 15 22" />
-    </svg>
-  );
-}
-
-function SignOutIcon({ className }: { className?: string }) {
-  return (
-    <svg
-      xmlns="http://www.w3.org/2000/svg"
-      viewBox="0 0 24 24"
-      fill="none"
-      stroke="currentColor"
-      strokeWidth={1.5}
-      strokeLinecap="round"
-      strokeLinejoin="round"
-      className={className}
-    >
-      <path d="M9 21H5a2 2 0 01-2-2V5a2 2 0 012-2h4" />
-      <polyline points="16 17 21 12 16 7" />
-      <line x1="21" y1="12" x2="9" y2="12" />
-    </svg>
-  );
-}
-
-function HamburgerIcon({ className }: { className?: string }) {
-  return (
-    <svg
-      xmlns="http://www.w3.org/2000/svg"
-      viewBox="0 0 24 24"
-      fill="none"
-      stroke="currentColor"
-      strokeWidth={1.5}
-      strokeLinecap="round"
-      strokeLinejoin="round"
-      className={className}
-    >
-      <line x1="3" y1="6" x2="21" y2="6" />
-      <line x1="3" y1="12" x2="21" y2="12" />
-      <line x1="3" y1="18" x2="21" y2="18" />
-    </svg>
-  );
-}
-
-function CloseIcon({ className }: { className?: string }) {
-  return (
-    <svg
-      xmlns="http://www.w3.org/2000/svg"
-      viewBox="0 0 24 24"
-      fill="none"
-      stroke="currentColor"
-      strokeWidth={1.5}
-      strokeLinecap="round"
-      strokeLinejoin="round"
-      className={className}
-    >
-      <line x1="18" y1="6" x2="6" y2="18" />
-      <line x1="6" y1="6" x2="18" y2="18" />
-    </svg>
   );
 }

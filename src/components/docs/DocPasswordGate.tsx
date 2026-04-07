@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { LockIcon } from "@/components/icons";
+import { PasswordInput, Button } from "@/components/ui";
 
 interface DocPasswordGateProps {
   category: string;
@@ -75,8 +76,7 @@ export default function DocPasswordGate({
 
         {/* Password form */}
         <form onSubmit={handleSubmit} className="space-y-3">
-          <input
-            type="password"
+          <PasswordInput
             value={password}
             onChange={(e) => {
               setPassword(e.target.value);
@@ -84,24 +84,22 @@ export default function DocPasswordGate({
             }}
             placeholder="Enter password"
             autoFocus
-            className={`w-full px-4 py-2.5 rounded-lg border text-sm text-gray-900 placeholder-gray-400 outline-none transition-colors ${
+            className={
               error
-                ? "border-red-300 bg-red-50 focus:border-red-400 focus:ring-2 focus:ring-red-100"
-                : "border-gray-200 bg-white focus:border-brand-400 focus:ring-2 focus:ring-brand-100"
-            }`}
+                ? "border-red-300 bg-red-50 focus:border-red-400 focus:ring-red-100"
+                : ""
+            }
           />
 
-          {error && (
-            <p className="text-xs text-red-500 px-1">{error}</p>
-          )}
+          {error && <p className="text-xs text-red-500 px-1">{error}</p>}
 
-          <button
+          <Button
             type="submit"
             disabled={loading || !password}
-            className="w-full py-2.5 px-4 rounded-lg bg-brand-600 text-white text-sm font-medium hover:bg-brand-700 focus:outline-none focus:ring-2 focus:ring-brand-400 focus:ring-offset-1 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+            className="w-full py-2.5 justify-center focus:ring-offset-1"
           >
             {loading ? "Verifying…" : "Unlock Document"}
-          </button>
+          </Button>
         </form>
       </div>
     </div>

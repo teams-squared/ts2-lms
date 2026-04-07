@@ -182,6 +182,88 @@ export const CATEGORY_COLORS: Record<string, string> = {
 
 // More saturated accent colours for decorative strips/borders (400-level equivalents).
 // Use these instead of CATEGORY_COLORS wherever a colour strip needs to be visible
+// ─── Layout / navigation icons (moved from AppSidebar inline definitions) ────
+
+export function HomeIcon(props: IconProps) {
+  return (
+    <Icon {...props}>
+      <path d="m3 9 9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z" />
+      <polyline points="9 22 9 12 15 12 15 22" />
+    </Icon>
+  );
+}
+
+export function SignOutIcon(props: IconProps) {
+  return (
+    <Icon {...props}>
+      <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4" />
+      <polyline points="16 17 21 12 16 7" />
+      <line x1="21" y1="12" x2="9" y2="12" />
+    </Icon>
+  );
+}
+
+export function HamburgerIcon(props: IconProps) {
+  return (
+    <Icon {...props}>
+      <line x1="4" y1="6" x2="20" y2="6" />
+      <line x1="4" y1="12" x2="20" y2="12" />
+      <line x1="4" y1="18" x2="20" y2="18" />
+    </Icon>
+  );
+}
+
+export function CloseIcon(props: IconProps) {
+  return (
+    <Icon {...props}>
+      <line x1="18" y1="6" x2="6" y2="18" />
+      <line x1="6" y1="6" x2="18" y2="18" />
+    </Icon>
+  );
+}
+
+// ─── Chevron / utility icons (moved from DocSearch inline definitions) ────────
+
+export function ChevronUpIcon(props: IconProps) {
+  return (
+    <Icon {...props}>
+      <polyline points="18 15 12 9 6 15" />
+    </Icon>
+  );
+}
+
+export function ChevronDownIcon(props: IconProps) {
+  return (
+    <Icon {...props}>
+      <polyline points="6 9 12 15 18 9" />
+    </Icon>
+  );
+}
+
+/** Generic close / dismiss icon (same path as CloseIcon, aliased for semantic clarity). */
+export const XIcon = CloseIcon;
+
+// ─── Form icons (used by PasswordInput show/hide toggle) ─────────────────────
+
+export function EyeIcon(props: IconProps) {
+  return (
+    <Icon {...props}>
+      <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z" />
+      <circle cx="12" cy="12" r="3" />
+    </Icon>
+  );
+}
+
+export function EyeOffIcon(props: IconProps) {
+  return (
+    <Icon {...props}>
+      <path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94" />
+      <path d="M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19" />
+      <line x1="1" y1="1" x2="23" y2="23" />
+    </Icon>
+  );
+}
+
 // against a white background (e.g. card top border, doc-list left accent).
 export const CATEGORY_ACCENT_COLORS: Record<string, string> = {
   shield: "#a78bfa",   // violet-400

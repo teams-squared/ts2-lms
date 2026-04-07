@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { LockIcon } from "@/components/icons";
+import { PasswordInput, Button } from "@/components/ui";
 
 interface DocProtectionPanelProps {
   category: string;
@@ -83,6 +84,9 @@ export default function DocProtectionPanel({
   }
 
   const showForm = view === "add" || view === "change";
+  const inputErrorClass = error
+    ? "border-red-300 bg-red-50 focus:border-red-400 focus:ring-red-100"
+    : "";
 
   return (
     <div className="mt-10 pt-6 border-t border-gray-100">
@@ -144,52 +148,39 @@ export default function DocProtectionPanel({
           </p>
 
           <div className="space-y-2">
-            <input
-              type="password"
+            <PasswordInput
               value={password}
               onChange={(e) => { setPassword(e.target.value); setError(null); }}
               placeholder="New password (min. 8 characters)"
               autoFocus
-              className={`w-full px-3 py-2 rounded-lg border text-sm text-gray-900 placeholder-gray-400 outline-none transition-colors ${
-                error
-                  ? "border-red-300 bg-red-50 focus:border-red-400 focus:ring-2 focus:ring-red-100"
-                  : "border-gray-200 bg-white focus:border-brand-400 focus:ring-2 focus:ring-brand-100"
-              }`}
+              className={inputErrorClass}
             />
-            <input
-              type="password"
+            <PasswordInput
               value={confirm}
               onChange={(e) => { setConfirm(e.target.value); setError(null); }}
               placeholder="Confirm password"
-              className={`w-full px-3 py-2 rounded-lg border text-sm text-gray-900 placeholder-gray-400 outline-none transition-colors ${
-                error
-                  ? "border-red-300 bg-red-50 focus:border-red-400 focus:ring-2 focus:ring-red-100"
-                  : "border-gray-200 bg-white focus:border-brand-400 focus:ring-2 focus:ring-brand-100"
-              }`}
+              className={inputErrorClass}
             />
           </div>
 
           {error && <p className="text-xs text-red-500">{error}</p>}
 
           <div className="flex items-center gap-2 pt-1">
-            <button
+            <Button
               onClick={() => submit(password)}
               disabled={loading || !password || !confirm}
-              className="px-4 py-2 rounded-lg bg-brand-600 text-white text-xs font-medium hover:bg-brand-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+              className="text-xs px-4 py-2"
             >
-              {loading
-                ? "Saving…"
-                : view === "add"
-                ? "Set password"
-                : "Update password"}
-            </button>
-            <button
+              {loading ? "Saving…" : view === "add" ? "Set password" : "Update password"}
+            </Button>
+            <Button
+              variant="secondary"
               onClick={reset}
               disabled={loading}
-              className="px-4 py-2 rounded-lg text-xs font-medium text-gray-500 hover:text-gray-700 transition-colors"
+              className="text-xs px-4 py-2"
             >
               Cancel
-            </button>
+            </Button>
           </div>
         </div>
       )}
