@@ -1,6 +1,5 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { cookies } from "next/headers";
 import GithubSlugger from "github-slugger";
 import { auth } from "@/lib/auth";
 import {
@@ -60,15 +59,12 @@ export default async function DocPage({
   if (!doc) notFound();
   if (!hasAccess(userRole, doc.meta.minRole)) notFound();
 
-  // Password gate — check for a session unlock cookie whose value matches the
-  // current login's ID.  This ensures that unlock cookies left over from a
-  // previous login (which had a different loginId) do not carry over.
-  const cookieStore = await cookies();
-  const unlockCookie = cookieStore.get(`doc-unlock-${categorySlug}-${slug}`);
-  const loginId = session?.user?.loginId;
-  const isUnlocked =
-    !doc.meta.passwordProtected ||
-    (!!unlockCookie && !!loginId && unlockCookie.value === loginId);
+  // Password gate: check whether this document is in the session's unlockedDocs
+  // list.  That list lives inside the auth JWT, so it is automatically cleared
+  // when the user signs out — no separate cookie management needed.
+  const docKey = `${categorySlug}/${slug}`;
+  const unlockedDocs = session?.user?.unlockedDocs ?? [];
+  const isUnlocked = !doc.meta.passwordProtected || unlockedDocs.includes(docKey);
 
   const headings = extractHeadings(doc.content);
   const tocHeadings = headings.length >= 3 ? headings : [];

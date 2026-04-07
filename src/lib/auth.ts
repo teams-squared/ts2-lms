@@ -82,9 +82,6 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
     async jwt({ token, user }) {
       if (user) {
         // user is only present on initial sign-in, not on token refreshes.
-        // Generate a fresh loginId so that unlock cookies from a previous
-        // session are automatically invalidated on the next sign-in.
-        token.loginId = crypto.randomUUID();
         const role =
           (user as { role?: Role }).role ||
           (await getUserRole(user.email || ""));

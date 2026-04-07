@@ -13,9 +13,11 @@ declare module "next-auth" {
       email?: string | null;
       image?: string | null;
       role: Role;
-      /** Stable per-login identifier — regenerated on each sign-in so that
-       *  doc-unlock cookies from a previous session are automatically invalidated. */
-      loginId?: string;
+      /**
+       * Keys of docs unlocked this session, stored as "category/slug".
+       * Lives inside the auth JWT so it is automatically cleared on sign-out.
+       */
+      unlockedDocs?: string[];
     };
   }
 }
@@ -23,8 +25,8 @@ declare module "next-auth" {
 declare module "next-auth" {
   interface JWT {
     role?: Role;
-    /** See Session.user.loginId */
-    loginId?: string;
+    /** See Session.user.unlockedDocs */
+    unlockedDocs?: string[];
   }
 }
 
@@ -54,15 +56,8 @@ export const authConfig: NextAuthConfig = {
     async session({ session, token }) {
       if (session.user) {
         session.user.role = (token.role as Role) || "employee";
-        // Prefer the UUID stamped at sign-in time (new sessions).
-        // For sessions issued before loginId was introduced, derive a
-        // stable binding from sub + iat — both are always present in the
-        // JWT and change whenever a new token is issued (i.e. on sign-in).
-        // This is read directly from the decoded token on every request, so
-        // no write-back to the JWT cookie is needed.
-        session.user.loginId =
-          (token.loginId as string | undefined) ||
-          `${token.sub ?? token.email}:${token.iat}`;
+        session.user.unlockedDocs =
+          (token.unlockedDocs as string[] | undefined) ?? [];
       }
       return session;
     },

@@ -6,10 +6,12 @@ import { NextRequest } from "next/server";
 vi.mock("@/lib/auth", () => ({ auth: vi.fn() }));
 vi.mock("@/lib/docs", () => ({ getDocContent: vi.fn() }));
 vi.mock("bcryptjs", () => ({ default: { compare: vi.fn(), hash: vi.fn() } }));
+vi.mock("next-auth/jwt", () => ({ getToken: vi.fn(), encode: vi.fn() }));
 
 import { auth } from "@/lib/auth";
 import { getDocContent } from "@/lib/docs";
 import bcrypt from "bcryptjs";
+import { getToken, encode } from "next-auth/jwt";
 import { POST } from "@/app/api/docs/unlock/route";
 
 // ── Helpers ───────────────────────────────────────────────────────────────
@@ -23,9 +25,15 @@ function makeReq(body: unknown, { malformed = false } = {}) {
   });
 }
 
-const TEST_LOGIN_ID = "aaaabbbb-cccc-dddd-eeee-ffff00001111";
-const USER_SESSION = {
-  user: { email: "user@ts2.com", role: "employee", loginId: TEST_LOGIN_ID },
+const USER_SESSION = { user: { email: "user@ts2.com", role: "employee" } };
+
+// A realistic decoded JWT token (without unlockedDocs initially)
+const BASE_TOKEN = {
+  sub: "1",
+  email: "user@ts2.com",
+  role: "employee",
+  iat: 1712345678,
+  exp: 1712345678 + 30 * 24 * 60 * 60,
 };
 
 const PROTECTED_DOC = {
@@ -55,6 +63,8 @@ beforeEach(() => {
   vi.mocked(auth).mockResolvedValue(USER_SESSION as never);
   vi.mocked(getDocContent).mockResolvedValue(PROTECTED_DOC);
   vi.mocked(bcrypt.compare).mockResolvedValue(true as never);
+  vi.mocked(getToken).mockResolvedValue(BASE_TOKEN as never);
+  vi.mocked(encode).mockResolvedValue("updated-session-jwt" as never);
 });
 
 // ── Auth check ────────────────────────────────────────────────────────────
@@ -141,15 +151,13 @@ describe("POST /api/docs/unlock — document checks", () => {
   });
 });
 
-// ── LoginId binding ───────────────────────────────────────────────────────
+// ── Session read failure ──────────────────────────────────────────────────
 
-describe("POST /api/docs/unlock — loginId binding", () => {
-  it("returns 403 when session has no loginId", async () => {
-    vi.mocked(auth).mockResolvedValue({
-      user: { email: "user@ts2.com", role: "employee" },
-    } as never);
+describe("POST /api/docs/unlock — session token failure", () => {
+  it("returns 500 when getToken returns null", async () => {
+    vi.mocked(getToken).mockResolvedValue(null);
     const res = await POST(makeReq({ category: "eng", slug: "secret", password: "correct" }));
-    expect(res.status).toBe(403);
+    expect(res.status).toBe(500);
   });
 });
 
@@ -163,23 +171,52 @@ describe("POST /api/docs/unlock — happy path", () => {
     expect(body).toEqual({ success: true });
   });
 
-  it("sets an httpOnly session cookie with the correct name and loginId value", async () => {
+  it("adds the doc key to unlockedDocs when encoding the updated JWT", async () => {
+    await POST(makeReq({ category: "eng", slug: "secret", password: "correct" }));
+    expect(vi.mocked(encode)).toHaveBeenCalledWith(
+      expect.objectContaining({
+        token: expect.objectContaining({
+          unlockedDocs: expect.arrayContaining(["eng/secret"]),
+        }),
+      })
+    );
+  });
+
+  it("sets the session cookie to the newly encoded JWT value", async () => {
     const res = await POST(makeReq({ category: "eng", slug: "secret", password: "correct" }));
     const setCookie = res.headers.get("set-cookie") ?? "";
-    expect(setCookie).toContain(`doc-unlock-eng-secret=${TEST_LOGIN_ID}`);
+    expect(setCookie).toContain("authjs.session-token=updated-session-jwt");
     expect(setCookie).toContain("HttpOnly");
   });
 
-  it("sets SameSite=Strict on the cookie", async () => {
+  it("sets SameSite=Lax on the updated session cookie", async () => {
     const res = await POST(makeReq({ category: "eng", slug: "secret", password: "correct" }));
     const setCookie = res.headers.get("set-cookie") ?? "";
-    expect(setCookie.toLowerCase()).toContain("samesite=strict");
+    expect(setCookie.toLowerCase()).toContain("samesite=lax");
   });
 
-  it("does not set Max-Age (session cookie)", async () => {
+  it("preserves existing unlockedDocs when adding a new doc", async () => {
+    vi.mocked(getToken).mockResolvedValue({
+      ...BASE_TOKEN,
+      unlockedDocs: ["eng/other-doc"],
+    } as never);
+    await POST(makeReq({ category: "eng", slug: "secret", password: "correct" }));
+    expect(vi.mocked(encode)).toHaveBeenCalledWith(
+      expect.objectContaining({
+        token: expect.objectContaining({
+          unlockedDocs: expect.arrayContaining(["eng/other-doc", "eng/secret"]),
+        }),
+      })
+    );
+  });
+
+  it("skips re-encoding when the doc is already unlocked", async () => {
+    vi.mocked(getToken).mockResolvedValue({
+      ...BASE_TOKEN,
+      unlockedDocs: ["eng/secret"],
+    } as never);
     const res = await POST(makeReq({ category: "eng", slug: "secret", password: "correct" }));
-    const setCookie = res.headers.get("set-cookie") ?? "";
-    expect(setCookie.toLowerCase()).not.toContain("max-age");
-    expect(setCookie.toLowerCase()).not.toContain("expires");
+    expect(res.status).toBe(200);
+    expect(vi.mocked(encode)).not.toHaveBeenCalled();
   });
 });

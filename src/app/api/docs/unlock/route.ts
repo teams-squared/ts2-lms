@@ -2,10 +2,19 @@ import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@/lib/auth";
 import { getDocContent } from "@/lib/docs";
 import { hasAccess } from "@/lib/roles";
+import { encode, getToken } from "next-auth/jwt";
 import bcrypt from "bcryptjs";
 import type { Role } from "@/lib/types";
 
 const SAFE_SEGMENT = /^[a-zA-Z0-9_-]+$/;
+
+/**
+ * The name of the NextAuth session cookie, which differs between
+ * development (plain HTTP) and production (HTTPS with __Secure- prefix).
+ */
+function sessionCookieName(secure: boolean) {
+  return secure ? "__Secure-authjs.session-token" : "authjs.session-token";
+}
 
 export async function POST(req: NextRequest) {
   // Must be authenticated
@@ -57,23 +66,66 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: "Incorrect password" }, { status: 401 });
   }
 
-  // Bind the unlock cookie to the current login session.
-  // loginId is a UUID generated fresh on every sign-in (see auth.ts JWT callback).
-  // If the user signs out and back in, a new loginId is issued, making this cookie
-  // invalid even if it persists in the browser as a session cookie.
-  const loginId = session.user.loginId;
-  if (!loginId) {
-    // Should never happen for a valid session, but be defensive.
-    return NextResponse.json({ error: "Invalid session" }, { status: 403 });
+  // ── Grant access by writing the doc key into the session JWT ─────────────
+  //
+  // Storing the unlock inside the auth JWT means the grant is automatically
+  // revoked when the user signs out (the JWT cookie is deleted), without any
+  // separate cookie management or session-value matching.
+  //
+  // The JWT is JWE-encrypted (A256CBC-HS512), so we must use the same
+  // encode/getToken helpers that NextAuth uses internally.
+
+  const isSecure = process.env.NODE_ENV === "production";
+  const cookieName = sessionCookieName(isSecure);
+  const secret = process.env.AUTH_SECRET ?? process.env.NEXTAUTH_SECRET ?? "";
+
+  // Read the current JWT from the incoming request cookie
+  const currentToken = await getToken({ req, secret, secureCookie: isSecure });
+  if (!currentToken) {
+    return NextResponse.json({ error: "Failed to read session" }, { status: 500 });
   }
 
-  const cookieName = `doc-unlock-${category}-${slug}`;
+  const docKey = `${category}/${slug}`;
+  const alreadyUnlocked =
+    (currentToken.unlockedDocs as string[] | undefined)?.includes(docKey) ?? false;
+
+  if (alreadyUnlocked) {
+    // Nothing to update — tell the client so it can refresh
+    return NextResponse.json({ success: true });
+  }
+
+  const currentUnlocked =
+    (currentToken.unlockedDocs as string[] | undefined) ?? [];
+
+  const updatedToken = {
+    ...currentToken,
+    unlockedDocs: [...currentUnlocked, docKey],
+  };
+
+  // Preserve the session's original expiry so we don't accidentally extend it
+  const remainingTtl =
+    typeof currentToken.exp === "number"
+      ? currentToken.exp - Math.floor(Date.now() / 1000)
+      : 30 * 24 * 60 * 60; // 30 days fallback
+
+  const newJwt = await encode({
+    token: updatedToken,
+    secret,
+    salt: cookieName,
+    maxAge: Math.max(remainingTtl, 60), // at least 60 s
+  });
+
   const response = NextResponse.json({ success: true });
-  response.cookies.set(cookieName, loginId, {
+
+  // Overwrite the session cookie with the updated JWT.
+  // Options must match what NextAuth uses (see @auth/core/lib/utils/cookie.js):
+  //   httpOnly: true, sameSite: "lax", path: "/"
+  response.cookies.set(cookieName, newJwt, {
     httpOnly: true,
-    sameSite: "strict",
-    secure: process.env.NODE_ENV === "production",
-    path: `/docs/${category}/${slug}`,
+    sameSite: "lax",
+    path: "/",
+    secure: isSecure,
+    maxAge: Math.max(remainingTtl, 60),
   });
 
   return response;
