@@ -54,7 +54,15 @@ export const authConfig: NextAuthConfig = {
     async session({ session, token }) {
       if (session.user) {
         session.user.role = (token.role as Role) || "employee";
-        session.user.loginId = token.loginId as string | undefined;
+        // Prefer the UUID stamped at sign-in time (new sessions).
+        // For sessions issued before loginId was introduced, derive a
+        // stable binding from sub + iat — both are always present in the
+        // JWT and change whenever a new token is issued (i.e. on sign-in).
+        // This is read directly from the decoded token on every request, so
+        // no write-back to the JWT cookie is needed.
+        session.user.loginId =
+          (token.loginId as string | undefined) ||
+          `${token.sub ?? token.email}:${token.iat}`;
       }
       return session;
     },

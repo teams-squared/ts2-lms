@@ -90,13 +90,6 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
           (await getUserRole(user.email || ""));
         token.role = role;
       }
-      // Lazily backfill loginId for sessions that pre-date this field
-      // (e.g. tokens issued before the feature was deployed).  The JWT
-      // callback runs on every auth() call, so the value is written back
-      // into the cookie on the very next request and stays stable thereafter.
-      if (!token.loginId) {
-        token.loginId = crypto.randomUUID();
-      }
       return token;
     },
   },
