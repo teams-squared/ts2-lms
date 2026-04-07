@@ -4,7 +4,8 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useState } from "react";
 import type { Category, DocMeta } from "@/lib/types";
-import { CATEGORY_ICONS, CATEGORY_COLORS, FileTextIcon, ChevronRightIcon } from "@/components/icons";
+import { CATEGORY_ICONS, FileTextIcon, ChevronRightIcon } from "@/components/icons";
+import RecentlyViewed from "@/components/docs/RecentlyViewed";
 
 interface SidebarProps {
   categories: Category[];
@@ -184,6 +185,8 @@ export default function Sidebar({ categories, currentCategory, docs }: SidebarPr
             </ul>
           </div>
         )}
+
+        <RecentlyViewed />
       </div>
     </aside>
   );

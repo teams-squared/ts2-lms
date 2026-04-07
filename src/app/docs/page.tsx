@@ -1,3 +1,4 @@
+import { Suspense } from "react";
 import { auth } from "@/lib/auth";
 import {
   getTopLevelCategories,
@@ -6,10 +7,17 @@ import {
 } from "@/lib/docs";
 import SearchBar from "@/components/search/SearchBar";
 import CategoryCard from "@/components/docs/CategoryCard";
-import { CATEGORY_ICONS, CATEGORY_COLORS, BookOpenIcon, FileTextIcon } from "@/components/icons";
-import type { Role } from "@/lib/types";
+import TagFilter from "@/components/docs/TagFilter";
+import type { DocMeta, Role } from "@/lib/types";
 
-export default async function DocsPage() {
+export default async function DocsPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ [key: string]: string | string[] | undefined }>;
+}) {
+  const { tag: activeTag } = await searchParams;
+  const tagFilter = typeof activeTag === "string" ? activeTag : undefined;
+
   const session = await auth();
   const userRole = (session?.user?.role as Role) || "employee";
   const topLevel = await getTopLevelCategories(userRole);
@@ -24,12 +32,38 @@ export default async function DocsPage() {
             docs: await getDocsByCategory(sub.slug, userRole),
           }))
         );
-        return { cat, subcategories: subcatDocs, docs: [] };
+        return { cat, subcategories: subcatDocs, docs: [] as DocMeta[] };
       }
       const docs = await getDocsByCategory(cat.slug, userRole);
       return { cat, subcategories: [], docs };
     })
   );
+
+  // Collect all unique tags across all docs
+  const allDocs = sections.flatMap(({ subcategories, docs }) => [
+    ...docs,
+    ...subcategories.flatMap(({ docs: subDocs }) => subDocs),
+  ]);
+  const allTags = [...new Set(allDocs.flatMap((d) => d.tags ?? []))].sort();
+
+  // Apply tag filter
+  const filteredSections = tagFilter
+    ? sections
+        .map(({ cat, subcategories, docs }) => ({
+          cat,
+          docs: docs.filter((d) => d.tags?.includes(tagFilter)),
+          subcategories: subcategories
+            .map(({ sub, docs: subDocs }) => ({
+              sub,
+              docs: subDocs.filter((d) => d.tags?.includes(tagFilter)),
+            }))
+            .filter(({ docs: subDocs }) => subDocs.length > 0),
+        }))
+        .filter(
+          ({ docs, subcategories }) =>
+            docs.length > 0 || subcategories.length > 0
+        )
+    : sections;
 
   return (
     <div className="px-4 sm:px-6 lg:px-8 py-6 animate-fade-in">
@@ -49,11 +83,12 @@ export default async function DocsPage() {
         <SearchBar className="max-w-xl" />
       </div>
 
-      <div className="space-y-8">
-        {sections.map(({ cat, subcategories, docs }) => {
-          const SectionIcon = CATEGORY_ICONS[cat.icon] || FileTextIcon;
-          const sectionColor = CATEGORY_COLORS[cat.icon] || "#f0e6ff";
+      <Suspense fallback={null}>
+        <TagFilter tags={allTags} />
+      </Suspense>
 
+      <div className="space-y-6">
+        {filteredSections.map(({ cat, subcategories, docs }) => {
           if (subcategories.length > 0) {
             return (
               <div key={cat.slug}>
@@ -93,9 +128,11 @@ export default async function DocsPage() {
         })}
       </div>
 
-      {topLevel.length === 0 && (
+      {filteredSections.length === 0 && (
         <div className="text-center py-12 text-gray-400 text-sm">
-          No documentation categories available for your role.
+          {tagFilter
+            ? `No documents found with tag "${tagFilter}".`
+            : "No documentation categories available for your role."}
         </div>
       )}
     </div>

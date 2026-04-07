@@ -104,8 +104,8 @@ describe("Sidebar — nested categories (accordion)", () => {
 
 describe("Sidebar — documents section", () => {
   const docs = [
-    { slug: "intro", title: "Introduction", category: "getting-started", description: "", minRole: "employee" as const, order: 1, tags: [] },
-    { slug: "setup", title: "Setup Guide", category: "getting-started", description: "", minRole: "employee" as const, order: 2, tags: [] },
+    { slug: "intro", title: "Introduction", category: "getting-started", description: "", minRole: "employee" as const, order: 1, tags: [], updatedAt: "" },
+    { slug: "setup", title: "Setup Guide", category: "getting-started", description: "", minRole: "employee" as const, order: 2, tags: [], updatedAt: "" },
   ];
 
   it("renders doc list when currentCategory and docs are provided", () => {

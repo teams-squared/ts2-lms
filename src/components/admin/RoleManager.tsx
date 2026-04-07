@@ -26,9 +26,11 @@ export default function RoleManager() {
       if (res.ok) {
         const data = await res.json();
         setUsers(data);
+      } else {
+        showMessage("error", "Could not load role assignments");
       }
     } catch {
-      // ignore
+      showMessage("error", "Could not load role assignments");
     } finally {
       setLoading(false);
     }
@@ -73,6 +75,9 @@ export default function RoleManager() {
   }
 
   async function handleRemove(email: string) {
+    if (!window.confirm(`Remove elevated role from ${email}?\nThis takes effect on their next sign-in.`)) {
+      return;
+    }
     try {
       const res = await fetch("/api/roles", {
         method: "DELETE",

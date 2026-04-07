@@ -1,5 +1,4 @@
 import MicrosoftEntraID from "next-auth/providers/microsoft-entra-id";
-import Credentials from "next-auth/providers/credentials";
 import type { NextAuthConfig } from "next-auth";
 import type { Role } from "./types";
 
@@ -24,28 +23,6 @@ declare module "next-auth" {
   }
 }
 
-// Demo users for local development (when Azure AD is not configured)
-const DEMO_USERS = [
-  {
-    id: "1",
-    email: "admin@teamssquared.com",
-    name: "Admin User",
-    password: "admin123",
-  },
-  {
-    id: "2",
-    email: "manager@teamssquared.com",
-    name: "Manager User",
-    password: "manager123",
-  },
-  {
-    id: "3",
-    email: "employee@teamssquared.com",
-    name: "Employee User",
-    password: "employee123",
-  },
-];
-
 const providers: NextAuthConfig["providers"] = [];
 
 if (
@@ -62,35 +39,9 @@ if (
   );
 }
 
-providers.push(
-  Credentials({
-    name: "Email & Password",
-    credentials: {
-      email: { label: "Email", type: "email" },
-      password: { label: "Password", type: "password" },
-    },
-    async authorize(credentials) {
-      const email = credentials?.email as string;
-      const password = credentials?.password as string;
-      if (!email || !password) return null;
-
-      const user = DEMO_USERS.find((u) => u.email === email);
-      if (!user) return null;
-
-      if (password !== user.password) return null;
-
-      return {
-        id: user.id,
-        email: user.email,
-        name: user.name,
-      };
-    },
-  })
-);
-
-// Edge-safe config: no Node.js-only imports (fs, path, etc.)
+// Edge-safe config: no Node.js-only imports (fs, path, bcryptjs, etc.)
+// Credentials provider is added in auth.ts (Node.js context) where bcrypt is available.
 // The session callback maps JWT token fields to session — safe for Edge.
-// The jwt callback here only passes through existing token data.
 export const authConfig: NextAuthConfig = {
   providers,
   session: { strategy: "jwt" },

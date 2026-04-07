@@ -1,4 +1,4 @@
-import { describe, it, expect } from "vitest";
+import { describe, it, expect, vi } from "vitest";
 import { render, screen } from "@testing-library/react";
 import CategoryCard from "@/components/docs/CategoryCard";
 import { CATEGORY_COLORS } from "@/components/icons";

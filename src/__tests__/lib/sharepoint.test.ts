@@ -27,9 +27,14 @@ import {
   fetchDocContentFromSharePoint,
 } from "@/lib/sharepoint";
 
+type MockChain = Record<string, ReturnType<typeof vi.fn>>;
+
+function getMockClient() {
+  return vi.mocked(getGraphClient)() as unknown as MockChain;
+}
+
 function getMockGet() {
-  const client = (getGraphClient as ReturnType<typeof vi.fn>)();
-  return client.get as ReturnType<typeof vi.fn>;
+  return getMockClient().get;
 }
 
 beforeEach(() => {
@@ -37,7 +42,7 @@ beforeEach(() => {
   vi.clearAllMocks();
 
   // Re-wire the chain after clearAllMocks
-  const client = (getGraphClient as ReturnType<typeof vi.fn>)();
+  const client = getMockClient();
   client.api.mockReturnThis();
   client.select.mockReturnThis();
   client.responseType.mockReturnThis();
