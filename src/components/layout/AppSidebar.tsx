@@ -5,6 +5,7 @@ import { usePathname } from "next/navigation";
 import { useSession, signOut } from "next-auth/react";
 import { useEffect, useRef, useState } from "react";
 import Logo from "@/components/Logo";
+import { UserAvatar } from "@/components/UserAvatar";
 import { BookOpenIcon, ShieldIcon, ChevronRightIcon } from "@/components/icons";
 import { posthog } from "@/lib/posthog-client";
 
@@ -180,9 +181,7 @@ export default function AppSidebar() {
             {status === "authenticated" && (
               <div className="px-2 py-3 border-t border-brand-100/60 flex-shrink-0 space-y-1">
                 <div className="flex items-center gap-2 px-3 py-1.5">
-                  <div className="w-6 h-6 rounded-full bg-brand-200 flex items-center justify-center flex-shrink-0 text-xs font-semibold text-brand-800">
-                    {(session.user?.name || session.user?.email || "?")[0].toUpperCase()}
-                  </div>
+                  <UserAvatar name={session.user?.name} email={session.user?.email} />
                   <div className="min-w-0">
                     <p className="text-xs font-medium text-gray-700 truncate">
                       {session.user?.name || session.user?.email}
