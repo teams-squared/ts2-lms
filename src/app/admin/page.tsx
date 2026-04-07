@@ -1,5 +1,3 @@
-import { auth } from "@/lib/auth";
-import { redirect } from "next/navigation";
 import Link from "next/link";
 import { getAllDocs, getCategories } from "@/lib/docs";
 import { getAllElevatedUsers } from "@/lib/role-store";
@@ -7,11 +5,6 @@ import { LayoutGridIcon, FileTextIcon, UsersIcon } from "@/components/icons";
 import RoleManager from "@/components/admin/RoleManager";
 
 export default async function AdminPage() {
-  const session = await auth();
-  if (!session || session.user?.role !== "admin") {
-    redirect("/docs");
-  }
-
   const [docs, categories, elevatedUsers] = await Promise.all([
     getAllDocs(),
     getCategories(),
@@ -23,16 +16,7 @@ export default async function AdminPage() {
   );
 
   return (
-    <div className="px-4 sm:px-6 lg:px-8 py-6 animate-fade-in">
-      <div className="mb-6">
-        <h1 className="text-2xl font-bold text-gray-900 mb-1">
-          Admin Dashboard
-        </h1>
-        <p className="text-sm text-gray-500">
-          Manage roles, categories, and view portal statistics
-        </p>
-      </div>
-
+    <div>
       {/* Stats */}
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-8">
         <div className="p-4 rounded-lg border border-gray-200/60 bg-white shadow-card">
