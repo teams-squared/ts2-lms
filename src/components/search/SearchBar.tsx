@@ -170,7 +170,7 @@ export default function SearchBar({ className = "" }: SearchBarProps) {
                 setQuery("");
                 setSelectedIndex(-1);
               }}
-              className={`flex items-start gap-2.5 px-3 py-2 transition-colors border-b border-gray-50 last:border-0 border-l-2 ${
+              className={`flex items-start gap-2.5 px-3 py-2 transition-colors border-b border-gray-50 last:border-b-0 border-l-2 ${
                 idx === selectedIndex
                   ? "bg-brand-50 border-l-brand-400"
                   : "border-l-transparent hover:bg-gray-50 hover:border-l-brand-400"
