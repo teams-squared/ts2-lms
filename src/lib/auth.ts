@@ -8,10 +8,10 @@ import type { Role } from "./types";
 // NextAuth v5 requires AUTH_SECRET to sign session tokens.
 // In production, fail loudly rather than fall back to a known string.
 if (!process.env.AUTH_SECRET) {
-  if (process.env.NODE_ENV === "production" && !process.env.NEXTAUTH_SECRET) {
-    throw new Error("AUTH_SECRET (or NEXTAUTH_SECRET) environment variable is required in production.");
+  if (process.env.NODE_ENV === "production") {
+    throw new Error("AUTH_SECRET environment variable is required in production.");
   }
-  process.env.AUTH_SECRET = process.env.NEXTAUTH_SECRET || "dev-only-secret-change-in-production";
+  process.env.AUTH_SECRET = "dev-only-secret-change-in-production";
 }
 
 // Demo users for local development (when Azure AD is not configured).
