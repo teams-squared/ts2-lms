@@ -177,6 +177,21 @@ order: 1
     const docs = await getDocsByCategory("empty-category");
     expect(docs).toHaveLength(0);
   });
+
+  it("coerces unquoted YAML date in updatedAt to a string", async () => {
+    // gray-matter parses bare YAML dates (e.g. 2025-01-15) as Date objects.
+    // Our fix in docs.ts must stringify them before they reach JSX.
+    const MDX_BARE_DATE = `---
+title: Date Test
+updatedAt: 2025-01-15
+---
+Content.`;
+    mockFetchDocList.mockResolvedValue(["date-test.mdx"]);
+    mockFetchDocContent.mockResolvedValue(MDX_BARE_DATE);
+    const docs = await getDocsByCategory("some-category");
+    expect(typeof docs[0].updatedAt).toBe("string");
+    expect(docs[0].updatedAt).not.toBe("");
+  });
 });
 
 // ── getDocContent ──────────────────────────────────────────────────────────
@@ -202,5 +217,18 @@ The body content here.`;
     expect(result).not.toBeNull();
     expect(result?.meta.title).toBe("Security Basics");
     expect(result?.content).toContain("The body content here.");
+  });
+
+  it("coerces unquoted YAML date in updatedAt to a string", async () => {
+    const RAW_DATE = `---
+title: Date Doc
+updatedAt: 2025-06-20
+---
+Content.`;
+    mockFetchDocList.mockResolvedValue(["date-doc.mdx"]);
+    mockFetchDocContent.mockResolvedValue(RAW_DATE);
+    const result = await getDocContent("some-category", "date-doc");
+    expect(typeof result?.meta.updatedAt).toBe("string");
+    expect(result?.meta.updatedAt).not.toBe("");
   });
 });

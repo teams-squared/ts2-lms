@@ -8,7 +8,7 @@ export default defineConfig({
     environment: "happy-dom",
     globals: true,
     setupFiles: ["./src/__tests__/setup.ts"],
-    exclude: ["node_modules", "e2e/**"],
+    exclude: ["node_modules", "e2e/**", ".claude/**"],
     env: {
       SHAREPOINT_SITE_ID: "test-site-id-for-vitest",
       SHAREPOINT_TENANT_ID: "test-tenant-id-for-vitest",
