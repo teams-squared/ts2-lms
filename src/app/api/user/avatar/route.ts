@@ -1,47 +1,70 @@
 import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@/lib/auth";
-import { getGraphClient } from "@/lib/graph-client";
+import { ClientSecretCredential } from "@azure/identity";
 
-// 1×1 transparent PNG — returned when the user has no Entra photo or Graph returns an error.
-// The <img> onError handler will fire and the client falls back to initials.
-const TRANSPARENT_PNG = Buffer.from(
-  "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNkYPhfDwAChwGA60e6kgAAAABJRU5ErkJggg==",
-  "base64"
-);
+// Module-level credential so its internal token cache is reused across requests.
+let _credential: ClientSecretCredential | null = null;
+
+function getCredential(): ClientSecretCredential | null {
+  const tenantId  = process.env.SHAREPOINT_TENANT_ID;
+  const clientId  = process.env.SHAREPOINT_CLIENT_ID;
+  const secret    = process.env.SHAREPOINT_CLIENT_SECRET;
+  if (!tenantId || !clientId || !secret) return null;
+  if (!_credential) {
+    _credential = new ClientSecretCredential(tenantId, clientId, secret);
+  }
+  return _credential;
+}
 
 export async function GET(req: NextRequest) {
+  // Any authenticated user may request avatars (their own or others' in admin tables).
   const session = await auth();
   if (!session?.user) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    return new NextResponse(null, { status: 401 });
   }
 
   const email = req.nextUrl.searchParams.get("email");
   if (!email) {
-    return new NextResponse(TRANSPARENT_PNG, {
-      headers: { "Content-Type": "image/png", "Cache-Control": "public, max-age=300" },
-    });
+    return new NextResponse(null, { status: 400 });
+  }
+
+  const credential = getCredential();
+  if (!credential) {
+    // Graph credentials not configured — fall through to initials in the UI.
+    return new NextResponse(null, { status: 404 });
   }
 
   try {
-    const client = getGraphClient();
-    // getStream() returns a Node.js Readable — cast to BodyInit for NextResponse
-    const stream = await client
-      .api(`/users/${encodeURIComponent(email)}/photo/$value`)
-      .getStream();
+    const tokenResponse = await credential.getToken(
+      "https://graph.microsoft.com/.default"
+    );
 
-    return new NextResponse(stream as BodyInit, {
+    const photoRes = await fetch(
+      `https://graph.microsoft.com/v1.0/users/${encodeURIComponent(email)}/photo/$value`,
+      {
+        headers: { Authorization: `Bearer ${tokenResponse.token}` },
+        // Don't let Next.js cache the upstream fetch — caching is handled by
+        // our own Cache-Control response header below.
+        cache: "no-store",
+      }
+    );
+
+    if (!photoRes.ok) {
+      // 404 = no photo set; 403 = missing ProfilePhoto.Read.All permission.
+      // Either way return 404 so <img> onError fires and initials are shown.
+      return new NextResponse(null, { status: 404 });
+    }
+
+    const arrayBuffer = await photoRes.arrayBuffer();
+    const contentType = photoRes.headers.get("content-type") ?? "image/jpeg";
+
+    return new NextResponse(arrayBuffer, {
       headers: {
-        "Content-Type": "image/jpeg",
+        "Content-Type": contentType,
         "Cache-Control": "public, max-age=3600, stale-while-revalidate=86400",
       },
     });
   } catch {
-    // No Entra photo, user not found, or missing Graph permission (ProfilePhoto.Read.All)
-    return new NextResponse(TRANSPARENT_PNG, {
-      headers: {
-        "Content-Type": "image/png",
-        "Cache-Control": "public, max-age=300",
-      },
-    });
+    return new NextResponse(null, { status: 404 });
   }
 }
