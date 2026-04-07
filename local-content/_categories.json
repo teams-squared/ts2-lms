@@ -2,10 +2,79 @@
   {
     "slug": "getting-started",
     "title": "Getting Started",
-    "description": "Onboarding guides and first-day essentials for all new team members.",
+    "description": "Onboarding and introductory documents for new team members",
     "icon": "rocket",
     "minRole": "employee",
     "order": 1
+  },
+  {
+    "slug": "getting-started-guides",
+    "title": "Guides",
+    "description": "First-day reading, benefits, and team essentials",
+    "icon": "rocket",
+    "minRole": "employee",
+    "order": 1,
+    "parentCategory": "getting-started"
+  },
+  {
+    "slug": "security",
+    "title": "Cybersecurity",
+    "description": "Security policies and guidelines for all team members",
+    "icon": "shield",
+    "minRole": "employee",
+    "order": 2
+  },
+  {
+    "slug": "cybersecurity-onboarding",
+    "title": "Cybersecurity Onboarding",
+    "description": "Mandatory security onboarding course — complete this during your first week",
+    "icon": "shield",
+    "minRole": "employee",
+    "order": 1,
+    "parentCategory": "security"
+  },
+  {
+    "slug": "engineering",
+    "title": "Engineering",
+    "description": "Technical standards, guides, and development resources",
+    "icon": "code",
+    "minRole": "employee",
+    "order": 3
+  },
+  {
+    "slug": "engineering-standards",
+    "title": "Standards & Guidelines",
+    "description": "API design, database, and coding standards",
+    "icon": "code",
+    "minRole": "employee",
+    "order": 1,
+    "parentCategory": "engineering"
+  },
+  {
+    "slug": "engineering-playbooks",
+    "title": "Playbooks",
+    "description": "Step-by-step runbooks for deployments, incidents, and ops tasks",
+    "icon": "book",
+    "minRole": "employee",
+    "order": 2,
+    "parentCategory": "engineering"
+  },
+  {
+    "slug": "management",
+    "title": "Management",
+    "description": "Leadership policies, team management, and strategic documents",
+    "icon": "briefcase",
+    "minRole": "manager",
+    "order": 4
+  },
+  {
+    "slug": "management-guides",
+    "title": "Guides",
+    "description": "Hiring, performance reviews, and team leadership resources",
+    "icon": "briefcase",
+    "minRole": "manager",
+    "order": 1,
+    "parentCategory": "management"
   },
   {
     "slug": "hr-policies",
@@ -13,31 +82,6 @@
     "description": "Company policies, benefits, leave, and workplace guidelines.",
     "icon": "book",
     "minRole": "employee",
-    "order": 2
-  },
-  {
-    "slug": "engineering",
-    "title": "Engineering",
-    "description": "Technical standards, architecture decisions, and development workflows.",
-    "icon": "code",
-    "minRole": "employee",
-    "order": 3
-  },
-  {
-    "slug": "engineering-playbooks",
-    "title": "Engineering Playbooks",
-    "description": "Step-by-step runbooks for common engineering tasks and incidents.",
-    "icon": "book",
-    "minRole": "employee",
-    "order": 4,
-    "parentCategory": "engineering"
-  },
-  {
-    "slug": "management-guides",
-    "title": "Management Guides",
-    "description": "Resources for team leads and managers — performance, hiring, and planning.",
-    "icon": "briefcase",
-    "minRole": "manager",
     "order": 5
   },
   {
