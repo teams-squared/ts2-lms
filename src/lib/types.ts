@@ -10,6 +10,7 @@ export interface DocMeta {
   author?: string;
   tags?: string[];
   order?: number;
+  passwordProtected?: boolean;
 }
 
 export interface Category {

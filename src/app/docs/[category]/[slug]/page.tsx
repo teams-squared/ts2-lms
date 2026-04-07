@@ -114,10 +114,22 @@ export default async function DocPage({
               {doc.meta.updatedAt && (
                 <span>Updated {doc.meta.updatedAt}</span>
               )}
-              {doc.meta.minRole !== "employee" && (
-                <span className="px-1.5 py-0.5 rounded bg-amber-50 text-amber-600 font-medium">
-                  {doc.meta.minRole}+ only
-                </span>
+            </>
+          ) : (
+            <>
+              <DocPasswordGate
+                category={categorySlug}
+                slug={slug}
+                title={doc.meta.title}
+                description={doc.meta.description}
+              />
+              {/* Managers/admins can manage protection even when locked out */}
+              {hasAccess(userRole, "manager") && (
+                <DocProtectionPanel
+                  category={categorySlug}
+                  slug={slug}
+                  passwordProtected={!!doc.meta.passwordProtected}
+                />
               )}
               {doc.meta.tags && doc.meta.tags.length > 0 && (
                 <span className="flex flex-wrap gap-1.5">

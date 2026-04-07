@@ -9,6 +9,26 @@ import { BookOpenIcon, ShieldIcon, ChevronRightIcon } from "@/components/icons";
 
 const STORAGE_KEY = "sidebar-collapsed";
 
+const ROLE_STYLES = {
+  admin: {
+    badge: "bg-brand-100 text-brand-700",
+    dot: "bg-brand-500",
+    avatar: "bg-brand-200 text-brand-800",
+  },
+  manager: {
+    badge: "bg-blue-100 text-blue-700",
+    dot: "bg-blue-500",
+    avatar: "bg-blue-200 text-blue-800",
+  },
+  employee: {
+    badge: "bg-gray-100 text-gray-600",
+    dot: "bg-gray-400",
+    avatar: "bg-gray-200 text-gray-700",
+  },
+} as const;
+
+type RoleKey = keyof typeof ROLE_STYLES;
+
 export default function AppSidebar() {
   const { data: session } = useSession();
   const pathname = usePathname();
@@ -50,6 +70,9 @@ export default function AppSidebar() {
   const isActive = (href: string) =>
     href === "/" ? pathname === "/" : pathname.startsWith(href);
 
+  const role = (session?.user?.role as RoleKey) || "employee";
+  const roleStyle = ROLE_STYLES[role] ?? ROLE_STYLES.employee;
+
   function NavLink({
     href,
     icon: Icon,
@@ -71,8 +94,8 @@ export default function AppSidebar() {
         onClick={onNavigate}
         className={`flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium transition-colors focus:outline-none focus:ring-2 focus:ring-brand-400 ${
           active
-            ? "bg-brand-100 text-brand-800"
-            : "text-gray-600 hover:bg-white/60 hover:text-gray-900"
+            ? "border-l-[3px] border-brand-500 bg-brand-50 text-brand-700 pl-[9px] pr-3 rounded-r-lg"
+            : "border-l-[3px] border-transparent text-gray-600 hover:bg-white/60 hover:text-gray-900 px-3 rounded-lg"
         }`}
       >
         <Icon className="w-4 h-4 flex-shrink-0" />

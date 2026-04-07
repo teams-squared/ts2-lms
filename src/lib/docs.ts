@@ -62,7 +62,7 @@ export async function getDocsByCategory(
 export async function getDocContent(
   category: string,
   slug: string
-): Promise<{ meta: DocMeta; content: string } | null> {
+): Promise<{ meta: DocMeta; content: string; passwordHash?: string } | null> {
   const files = await fetchDocListFromSharePoint(category);
   const fileName = `${slug}.mdx`;
   if (!files.includes(fileName)) return null;

@@ -1,6 +1,7 @@
 import { getAllDocs } from "@/lib/docs";
 import { auth } from "@/lib/auth";
 import { NextResponse } from "next/server";
+import type { Role } from "@/lib/types";
 
 export async function GET() {
   const session = await auth();
