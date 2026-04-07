@@ -16,10 +16,15 @@
   "dependencies": {
     "@auth/core": "^0.41.0",
     "@azure/identity": "^4.13.1",
+    "@microsoft/applicationinsights-web": "^3.3.11",
     "@microsoft/microsoft-graph-client": "^3.0.7",
+    "@nevware21/ts-async": "^0.5.5",
+    "@nevware21/ts-utils": "^0.13.0",
+    "applicationinsights": "^3.14.0",
     "bcryptjs": "^3.0.3",
     "fuse.js": "^7.1.0",
     "gray-matter": "^4.0.3",
+    "highlight.js": "^11.11.1",
     "next": "16.2.1",
     "next-auth": "^5.0.0-beta.30",
     "next-mdx-remote": "^6.0.0",
@@ -27,6 +32,7 @@
     "react": "19.2.4",
     "react-dom": "19.2.4",
     "rehype-autolink-headings": "^7.1.0",
+    "rehype-highlight": "^7.0.2",
     "rehype-slug": "^6.0.0",
     "remark-gfm": "^4.0.1"
   },

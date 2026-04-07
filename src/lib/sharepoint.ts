@@ -1,5 +1,10 @@
 import { getGraphClient } from "./graph-client";
 import type { Category } from "./types";
+import {
+  fetchCategoriesFromLocal,
+  fetchDocListFromLocal,
+  fetchDocContentFromLocal,
+} from "./local-content";
 
 const DOCS_ROOT = encodeURIComponent(
   process.env.SHAREPOINT_DOCS_ROOT || "Docs for Portal"
@@ -76,7 +81,7 @@ async function withCache<T>(
  * TTL: 10 minutes.
  */
 export async function fetchCategoriesFromSharePoint(): Promise<Category[]> {
-  if (!isSharePointConfigured()) return [];
+  if (!isSharePointConfigured()) return fetchCategoriesFromLocal();
   return withCache("categories", TTL.categories, async () => {
     const client = getGraphClient();
     const path = `${getApiBase()}/${DOCS_ROOT}/_categories.json:/content`;
@@ -96,7 +101,7 @@ export async function fetchCategoriesFromSharePoint(): Promise<Category[]> {
 export async function fetchDocListFromSharePoint(
   categorySlug: string
 ): Promise<string[]> {
-  if (!isSharePointConfigured()) return [];
+  if (!isSharePointConfigured()) return fetchDocListFromLocal(categorySlug);
   return withCache(`doclist:${categorySlug}`, TTL.docList, async () => {
     const client = getGraphClient();
     try {
@@ -133,7 +138,7 @@ export async function fetchDocContentFromSharePoint(
   categorySlug: string,
   fileName: string
 ): Promise<string> {
-  if (!isSharePointConfigured()) return "";
+  if (!isSharePointConfigured()) return fetchDocContentFromLocal(categorySlug, fileName);
   return withCache(`content:${categorySlug}/${fileName}`, TTL.content, async () => {
     const client = getGraphClient();
     const response: Response = await client
@@ -147,6 +152,48 @@ export async function fetchDocContentFromSharePoint(
     }
     return response.text();
   });
+}
+
+/**
+ * Write raw MDX content back to a file in SharePoint via the Graph API.
+ * Requires the Azure AD app to have Files.ReadWrite.All (or Sites.ReadWrite.All)
+ * granted in the Azure portal.
+ *
+ * After a successful write, the in-memory cache entries for this document are
+ * cleared so the updated content is picked up on the next request.
+ */
+export async function writeDocContentToSharePoint(
+  categorySlug: string,
+  fileName: string,
+  content: string
+): Promise<void> {
+  if (!isSharePointConfigured()) {
+    throw new Error("SharePoint is not configured.");
+  }
+
+  const client = getGraphClient();
+  const path = `${getApiBase()}/${DOCS_ROOT}/${categorySlug}/${fileName}:/content`;
+
+  // PUT the raw content as a Buffer so the Graph SDK sends raw bytes
+  // rather than JSON-serialising the string (which would corrupt the MDX).
+  const body = Buffer.from(content, "utf-8");
+  const response: Response = await client
+    .api(path)
+    .header("Content-Type", "text/plain")
+    .responseType("raw" as never)
+    .put(body);
+
+  if (!response.ok) {
+    throw new Error(
+      `Failed to write ${categorySlug}/${fileName}: ${response.status} ${response.statusText}`
+    );
+  }
+
+  // Clear the entire in-memory cache so the next read picks up the new
+  // content. Targeted key deletes are insufficient when there is any risk
+  // of concurrent re-population (e.g. a page render racing the write).
+  // Password changes are rare, so wiping the full cache is acceptable.
+  cache.clear();
 }
 
 /**

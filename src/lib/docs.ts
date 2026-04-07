@@ -7,6 +7,25 @@ import {
   fetchDocContentFromSharePoint,
 } from "./sharepoint";
 
+function buildDocMeta(
+  data: Record<string, unknown>,
+  slug: string,
+  categorySlug: string
+): DocMeta {
+  return {
+    title: (data.title as string) || slug,
+    description: (data.description as string) || "",
+    slug,
+    category: categorySlug,
+    minRole: (data.minRole as Role) || "employee",
+    updatedAt: data.updatedAt ? String(data.updatedAt) : "",
+    author: data.author as string | undefined,
+    tags: (data.tags as string[]) || [],
+    order: (data.order as number) || 0,
+    passwordProtected: !!(data.password as string),
+  };
+}
+
 export async function getCategories(): Promise<Category[]> {
   return fetchCategoriesFromSharePoint();
 }
@@ -30,17 +49,7 @@ export async function getDocsByCategory(
       const raw = await fetchDocContentFromSharePoint(categorySlug, name);
       const { data } = matter(raw);
       const slug = name.replace(".mdx", "");
-      return {
-        title: data.title || slug,
-        description: data.description || "",
-        slug,
-        category: categorySlug,
-        minRole: data.minRole || "employee",
-        updatedAt: data.updatedAt ? String(data.updatedAt) : "",
-        author: data.author,
-        tags: data.tags || [],
-        order: data.order || 0,
-      } satisfies DocMeta;
+      return buildDocMeta(data, slug, categorySlug);
     })
   );
 
@@ -54,7 +63,7 @@ export async function getDocsByCategory(
 export async function getDocContent(
   category: string,
   slug: string
-): Promise<{ meta: DocMeta; content: string } | null> {
+): Promise<{ meta: DocMeta; content: string; passwordHash?: string } | null> {
   const files = await fetchDocListFromSharePoint(category);
   const fileName = `${slug}.mdx`;
   if (!files.includes(fileName)) return null;
@@ -63,25 +72,18 @@ export async function getDocContent(
   const { data, content } = matter(raw);
 
   return {
-    meta: {
-      title: data.title || slug,
-      description: data.description || "",
-      slug,
-      category,
-      minRole: data.minRole || "employee",
-      updatedAt: data.updatedAt ? String(data.updatedAt) : "",
-      author: data.author,
-      tags: data.tags || [],
-      order: data.order || 0,
-    },
+    meta: buildDocMeta(data, slug, category),
     content,
+    passwordHash: data.password as string | undefined,
   };
 }
 
-export async function getAllDocs(): Promise<DocMeta[]> {
-  const categories = await getCategories();
+export async function getAllDocs(userRole?: Role): Promise<DocMeta[]> {
+  const categories = userRole
+    ? await getAccessibleCategories(userRole)
+    : await getCategories();
   const results = await Promise.all(
-    categories.map((cat) => getDocsByCategory(cat.slug))
+    categories.map((cat) => getDocsByCategory(cat.slug, userRole))
   );
   return results.flat();
 }

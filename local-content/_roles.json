@@ -1,0 +1,5 @@
+{
+  "admins": ["admin@teamssquared.com", "sarah@teamssquared.com"],
+  "managers": ["manager@teamssquared.com", "carol@teamssquared.com"],
+  "defaultRole": "employee"
+}

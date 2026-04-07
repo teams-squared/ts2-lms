@@ -1,3 +1,4 @@
+import { Suspense } from "react";
 import { auth } from "@/lib/auth";
 import {
   getTopLevelCategories,
@@ -6,9 +7,18 @@ import {
 } from "@/lib/docs";
 import SearchBar from "@/components/search/SearchBar";
 import CategoryCard from "@/components/docs/CategoryCard";
-import type { Role } from "@/lib/types";
+import TagFilter from "@/components/docs/TagFilter";
+import { BookOpenIcon, CATEGORY_ICONS, CATEGORY_COLORS } from "@/components/icons";
+import type { DocMeta, Role } from "@/lib/types";
 
-export default async function DocsPage() {
+export default async function DocsPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ [key: string]: string | string[] | undefined }>;
+}) {
+  const { tag: activeTag } = await searchParams;
+  const tagFilter = typeof activeTag === "string" ? activeTag : undefined;
+
   const session = await auth();
   const userRole = (session?.user?.role as Role) || "employee";
   const topLevel = await getTopLevelCategories(userRole);
@@ -23,34 +33,79 @@ export default async function DocsPage() {
             docs: await getDocsByCategory(sub.slug, userRole),
           }))
         );
-        return { cat, subcategories: subcatDocs, docs: [] };
+        return { cat, subcategories: subcatDocs, docs: [] as DocMeta[] };
       }
       const docs = await getDocsByCategory(cat.slug, userRole);
       return { cat, subcategories: [], docs };
     })
   );
 
+  // Collect all unique tags across all docs
+  const allDocs = sections.flatMap(({ subcategories, docs }) => [
+    ...docs,
+    ...subcategories.flatMap(({ docs: subDocs }) => subDocs),
+  ]);
+  const allTags = [...new Set(allDocs.flatMap((d) => d.tags ?? []))].sort();
+
+  // Apply tag filter
+  const filteredSections = tagFilter
+    ? sections
+        .map(({ cat, subcategories, docs }) => ({
+          cat,
+          docs: docs.filter((d) => d.tags?.includes(tagFilter)),
+          subcategories: subcategories
+            .map(({ sub, docs: subDocs }) => ({
+              sub,
+              docs: subDocs.filter((d) => d.tags?.includes(tagFilter)),
+            }))
+            .filter(({ docs: subDocs }) => subDocs.length > 0),
+        }))
+        .filter(
+          ({ docs, subcategories }) =>
+            docs.length > 0 || subcategories.length > 0
+        )
+    : sections;
+
   return (
     <div className="px-4 sm:px-6 lg:px-8 py-6 animate-fade-in">
-      <div className="mb-6">
-        <h1 className="text-2xl font-bold text-gray-900 mb-1">
-          Documentation
-        </h1>
-        <p className="text-sm text-gray-500 mb-4">
-          Browse all available documentation by category
-        </p>
+      {/* Branded hero header */}
+      <div className="bg-brand-gradient rounded-xl px-6 py-7 mb-6">
+        <div className="flex items-center gap-3 mb-3">
+          <div className="w-10 h-10 rounded-xl bg-brand-100/60 flex items-center justify-center flex-shrink-0">
+            <BookOpenIcon className="w-5 h-5 text-brand-700" />
+          </div>
+          <div>
+            <h1 className="text-xl font-bold text-brand-900 leading-tight">Documentation</h1>
+            <p className="text-sm text-brand-700 mt-0.5">
+              Browse all available documentation by category
+            </p>
+          </div>
+        </div>
         <SearchBar className="max-w-xl" />
       </div>
 
+      <Suspense fallback={null}>
+        <TagFilter tags={allTags} />
+      </Suspense>
+
       <div className="space-y-6">
-        {sections.map(({ cat, subcategories, docs }) => {
+        {filteredSections.map(({ cat, subcategories, docs }) => {
+          const SectionIcon = CATEGORY_ICONS[cat.icon] ?? BookOpenIcon;
+          const sectionColor = CATEGORY_COLORS[cat.icon] ?? "#ede9fe";
           if (subcategories.length > 0) {
             return (
               <div key={cat.slug}>
-                <h2 className="text-xs font-semibold text-brand-600 uppercase tracking-wider mb-3 border-l-2 border-brand-400 pl-2">
-                  {cat.title}
-                </h2>
-                <div className="grid grid-cols-[repeat(auto-fit,minmax(260px,1fr))] gap-4">
+                <div className="flex items-center gap-2 mb-4">
+                  <span
+                    className="w-6 h-6 rounded flex items-center justify-center flex-shrink-0"
+                    style={{ backgroundColor: sectionColor }}
+                  >
+                    <SectionIcon className="w-3.5 h-3.5" style={{ color: "#4400FF" }} />
+                  </span>
+                  <h2 className="text-sm font-semibold text-gray-800">{cat.title}</h2>
+                  <div className="flex-1 h-px bg-gray-100 ml-1" />
+                </div>
+                <div className="grid grid-cols-[repeat(auto-fit,minmax(260px,1fr))] gap-5">
                   {subcategories.map(({ sub, docs: subDocs }) => (
                     <CategoryCard
                       key={sub.slug}
@@ -65,7 +120,7 @@ export default async function DocsPage() {
           }
 
           return (
-            <div key={cat.slug} className="grid grid-cols-[repeat(auto-fit,minmax(260px,1fr))] gap-4">
+            <div key={cat.slug} className="grid grid-cols-[repeat(auto-fit,minmax(260px,1fr))] gap-5">
               <CategoryCard
                 category={cat}
                 docCount={docs.length}
@@ -76,9 +131,11 @@ export default async function DocsPage() {
         })}
       </div>
 
-      {topLevel.length === 0 && (
+      {filteredSections.length === 0 && (
         <div className="text-center py-12 text-gray-400 text-sm">
-          No documentation categories available for your role.
+          {tagFilter
+            ? `No documents found with tag "${tagFilter}".`
+            : "No documentation categories available for your role."}
         </div>
       )}
     </div>

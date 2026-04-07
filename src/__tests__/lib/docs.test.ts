@@ -14,6 +14,7 @@ import {
   fetchDocContentFromSharePoint,
 } from "@/lib/sharepoint";
 import {
+  getAllDocs,
   getAccessibleCategories,
   getDocsByCategory,
   getDocContent,
@@ -191,6 +192,45 @@ Content.`;
     const docs = await getDocsByCategory("some-category");
     expect(typeof docs[0].updatedAt).toBe("string");
     expect(docs[0].updatedAt).not.toBe("");
+  });
+});
+
+// ── getAllDocs ─────────────────────────────────────────────────────────────
+describe("getAllDocs", () => {
+  const MDX_EMPLOYEE = `---\ntitle: Employee Doc\nminRole: employee\norder: 1\n---\n# Content`;
+  const MDX_ADMIN = `---\ntitle: Admin Doc\nminRole: admin\norder: 2\n---\n# Content`;
+
+  beforeEach(() => {
+    mockFetchDocList.mockResolvedValue(["employee-doc.mdx", "admin-doc.mdx"]);
+    mockFetchDocContent.mockImplementation((_cat, name) =>
+      Promise.resolve(name === "employee-doc.mdx" ? MDX_EMPLOYEE : MDX_ADMIN)
+    );
+  });
+
+  it("returns all docs across all categories when no role provided", async () => {
+    const docs = await getAllDocs();
+    // CATEGORIES has 5 entries, each with 2 docs = 10 total
+    expect(docs).toHaveLength(CATEGORIES.length * 2);
+  });
+
+  it("filters both categories and docs by employee role", async () => {
+    const docs = await getAllDocs("employee");
+    // employee can access: getting-started, cybersecurity, cybersecurity-onboarding (3 categories)
+    // each has 1 employee-accessible doc = 3 docs
+    expect(docs.every((d) => d.minRole === "employee")).toBe(true);
+    expect(docs).toHaveLength(3);
+  });
+
+  it("filters both categories and docs by manager role", async () => {
+    const docs = await getAllDocs("manager");
+    // manager can access: getting-started, management, cybersecurity, cybersecurity-onboarding (4 categories)
+    // each has 1 employee doc; management also has 1 admin doc filtered out = 4 docs
+    expect(docs).toHaveLength(4);
+  });
+
+  it("returns all docs for admin role", async () => {
+    const docs = await getAllDocs("admin");
+    expect(docs).toHaveLength(CATEGORIES.length * 2);
   });
 });
 

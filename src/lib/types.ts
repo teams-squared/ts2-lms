@@ -10,6 +10,7 @@ export interface DocMeta {
   author?: string;
   tags?: string[];
   order?: number;
+  passwordProtected?: boolean;
 }
 
 export interface Category {
@@ -19,4 +20,5 @@ export interface Category {
   icon: string;
   minRole: Role;
   parentCategory?: string;
+  order?: number;
 }

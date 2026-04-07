@@ -1,0 +1,80 @@
+---
+title: Deploy to Production
+description: Step-by-step runbook for deploying the main app to production safely.
+minRole: employee
+order: 1
+updatedAt: "2026-03-20"
+author: Platform Team
+tags: [deployment, production, runbook, engineering]
+---
+
+# Deploy to Production
+
+This runbook walks through a standard production deployment. Read it end-to-end before your first solo deploy.
+
+## Pre-deployment checklist
+
+- [ ] All CI checks are green on `main`
+- [ ] You've reviewed the diff since the last deploy (`git log --oneline prod..main`)
+- [ ] Any database migrations have been reviewed and are backwards-compatible
+- [ ] Feature flags are configured for gradual rollout if needed
+- [ ] You have someone available to roll back if necessary
+
+## Step 1 — Create a release tag
+
+```bash
+# Fetch latest
+git fetch origin && git checkout main && git pull
+
+# Create a semver tag — bump patch for fixes, minor for features
+git tag -a v2.14.3 -m "Release v2.14.3 — add role-based doc filtering"
+git push origin v2.14.3
+```
+
+This triggers the release pipeline in GitHub Actions automatically.
+
+## Step 2 — Monitor the pipeline
+
+Go to **GitHub → Actions → Release** and watch the workflow:
+
+1. `build` — compiles TypeScript, runs unit tests
+2. `integration` — spins up test DB and runs integration tests
+3. `deploy-staging` — deploys to staging and runs smoke tests
+4. **Manual approval gate** — you must approve before production deploy
+5. `deploy-production` — deploys to Render / Railway
+
+Each step typically takes 3–5 minutes. If any step fails, **do not approve the next step** — investigate first.
+
+## Step 3 — Run post-deploy checks
+
+```bash
+# Check the health endpoint
+curl -s https://api.teamssquared.com/health | jq .
+# Expected: { "status": "ok", "version": "v2.14.3" }
+
+# Verify key user journeys via synthetic monitoring
+pnpm ts2 smoke-test --env=production
+# ✓ login
+# ✓ load docs
+# ✓ search
+```
+
+## Rollback procedure
+
+If something is wrong, rollback immediately — don't try to fix forward under pressure:
+
+```bash
+# Find the previous good tag
+git tag --sort=-creatordate | head -5
+
+# Trigger a rollback deploy
+gh workflow run rollback.yml -f version=v2.14.2 --ref main
+```
+
+Rollback typically completes in under 2 minutes.
+
+## Post-deploy
+
+1. Post in `#deployments` Slack channel: `🚀 Deployed v2.14.3 to production`
+2. Close any Linear tickets that were included in this release
+3. Monitor error rates in Datadog for 15 minutes after deploy
