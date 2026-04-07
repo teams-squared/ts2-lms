@@ -16,7 +16,8 @@ const securityHeaders = [
       "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com",
       "font-src 'self' https://fonts.gstatic.com",
       "img-src 'self' data: blob:",
-      "connect-src 'self' https://us.i.posthog.com https://us-assets.i.posthog.com",
+      // us.i.posthog.com = event ingestion; us.posthog.com = feature flags & decide endpoint
+      "connect-src 'self' https://us.i.posthog.com https://us-assets.i.posthog.com https://us.posthog.com",
       // Allow PostHog dashboard embeds
       "frame-src 'self' https://us.posthog.com https://eu.posthog.com",
     ].join("; "),

@@ -60,23 +60,21 @@ export default async function DocPage({
   if (!doc) notFound();
   if (!hasAccess(userRole, doc.meta.minRole)) notFound();
 
-  // Password gate — check for a session unlock cookie
+  // Password gate — check for a session unlock cookie whose value matches the
+  // current login's ID.  This ensures that unlock cookies left over from a
+  // previous login (which had a different loginId) do not carry over.
   const cookieStore = await cookies();
   const unlockCookie = cookieStore.get(`doc-unlock-${categorySlug}-${slug}`);
-  const isUnlocked = !doc.meta.passwordProtected || !!unlockCookie;
+  const loginId = session?.user?.loginId;
+  const isUnlocked =
+    !doc.meta.passwordProtected ||
+    (!!unlockCookie && !!loginId && unlockCookie.value === loginId);
 
   const headings = extractHeadings(doc.content);
   const tocHeadings = headings.length >= 3 ? headings : [];
 
   return (
     <div className="px-4 sm:px-6 lg:px-8 py-6 animate-fade-in">
-      <DocViewTracker
-        title={doc.meta.title}
-        slug={slug}
-        category={categorySlug}
-        categoryTitle={category.title}
-        userRole={userRole}
-      />
       {/* Breadcrumb */}
       <nav className="flex items-center text-sm text-gray-500 mb-5">
         <Link href="/" className="hover:text-brand-600">
@@ -119,6 +117,14 @@ export default async function DocPage({
           <DocSearch />
           {isUnlocked ? (
             <>
+              {/* Only track views when the doc is actually accessible */}
+              <DocViewTracker
+                title={doc.meta.title}
+                slug={slug}
+                category={categorySlug}
+                categoryTitle={category.title}
+                userRole={userRole}
+              />
               <div className="mb-6 bg-brand-50/40 rounded-lg px-4 py-3">
                 <div className="flex items-start justify-between gap-2">
                   <h1 className="text-2xl font-bold text-gray-900 mb-1">

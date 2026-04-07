@@ -13,6 +13,9 @@ declare module "next-auth" {
       email?: string | null;
       image?: string | null;
       role: Role;
+      /** Stable per-login identifier — regenerated on each sign-in so that
+       *  doc-unlock cookies from a previous session are automatically invalidated. */
+      loginId?: string;
     };
   }
 }
@@ -20,6 +23,8 @@ declare module "next-auth" {
 declare module "next-auth" {
   interface JWT {
     role?: Role;
+    /** See Session.user.loginId */
+    loginId?: string;
   }
 }
 
@@ -49,6 +54,7 @@ export const authConfig: NextAuthConfig = {
     async session({ session, token }) {
       if (session.user) {
         session.user.role = (token.role as Role) || "employee";
+        session.user.loginId = token.loginId;
       }
       return session;
     },

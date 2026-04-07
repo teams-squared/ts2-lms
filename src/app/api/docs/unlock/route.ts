@@ -57,10 +57,19 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: "Incorrect password" }, { status: 401 });
   }
 
-  // Set an httpOnly session cookie (no maxAge = session cookie, cleared on browser close)
+  // Bind the unlock cookie to the current login session.
+  // loginId is a UUID generated fresh on every sign-in (see auth.ts JWT callback).
+  // If the user signs out and back in, a new loginId is issued, making this cookie
+  // invalid even if it persists in the browser as a session cookie.
+  const loginId = session.user.loginId;
+  if (!loginId) {
+    // Should never happen for a valid session, but be defensive.
+    return NextResponse.json({ error: "Invalid session" }, { status: 403 });
+  }
+
   const cookieName = `doc-unlock-${category}-${slug}`;
   const response = NextResponse.json({ success: true });
-  response.cookies.set(cookieName, "1", {
+  response.cookies.set(cookieName, loginId, {
     httpOnly: true,
     sameSite: "strict",
     secure: process.env.NODE_ENV === "production",

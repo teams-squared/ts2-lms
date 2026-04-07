@@ -23,7 +23,10 @@ function makeReq(body: unknown, { malformed = false } = {}) {
   });
 }
 
-const USER_SESSION = { user: { email: "user@ts2.com", role: "employee" } };
+const TEST_LOGIN_ID = "aaaabbbb-cccc-dddd-eeee-ffff00001111";
+const USER_SESSION = {
+  user: { email: "user@ts2.com", role: "employee", loginId: TEST_LOGIN_ID },
+};
 
 const PROTECTED_DOC = {
   meta: {
@@ -138,6 +141,18 @@ describe("POST /api/docs/unlock — document checks", () => {
   });
 });
 
+// ── LoginId binding ───────────────────────────────────────────────────────
+
+describe("POST /api/docs/unlock — loginId binding", () => {
+  it("returns 403 when session has no loginId", async () => {
+    vi.mocked(auth).mockResolvedValue({
+      user: { email: "user@ts2.com", role: "employee" },
+    } as never);
+    const res = await POST(makeReq({ category: "eng", slug: "secret", password: "correct" }));
+    expect(res.status).toBe(403);
+  });
+});
+
 // ── Happy path ────────────────────────────────────────────────────────────
 
 describe("POST /api/docs/unlock — happy path", () => {
@@ -148,10 +163,10 @@ describe("POST /api/docs/unlock — happy path", () => {
     expect(body).toEqual({ success: true });
   });
 
-  it("sets an httpOnly session cookie with the correct name", async () => {
+  it("sets an httpOnly session cookie with the correct name and loginId value", async () => {
     const res = await POST(makeReq({ category: "eng", slug: "secret", password: "correct" }));
     const setCookie = res.headers.get("set-cookie") ?? "";
-    expect(setCookie).toContain("doc-unlock-eng-secret=1");
+    expect(setCookie).toContain(`doc-unlock-eng-secret=${TEST_LOGIN_ID}`);
     expect(setCookie).toContain("HttpOnly");
   });
 
