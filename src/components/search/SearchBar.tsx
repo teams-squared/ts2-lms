@@ -6,6 +6,7 @@ import { useRouter } from "next/navigation";
 import Fuse from "fuse.js";
 import type { DocMeta } from "@/lib/types";
 import { SearchIcon, FileTextIcon } from "@/components/icons";
+import { trackBrowserEvent } from "@/lib/browser-telemetry";
 
 interface SearchBarProps {
   className?: string;
@@ -56,7 +57,18 @@ export default function SearchBar({ className = "" }: SearchBarProps) {
     });
 
     const found = fuse.search(query).map((r) => r.item);
-    setResults(found.slice(0, 8));
+    const sliced = found.slice(0, 8);
+    setResults(sliced);
+
+    // Debounced telemetry — only fire after the user pauses typing (800ms)
+    const timer = setTimeout(() => {
+      trackBrowserEvent("search", {
+        query: query.trim(),
+        resultCount: String(sliced.length),
+      });
+    }, 800);
+
+    return () => clearTimeout(timer);
   }, [query, docs]);
 
   // Reset selected index when results change
