@@ -61,7 +61,7 @@ export async function GET(req: NextRequest) {
       properties.category AS category,
       properties.category_title AS category_title,
       count() AS views,
-      count(distinct person.properties.email) AS unique_users,
+      count(distinct distinct_id) AS unique_users,
       max(timestamp) AS last_viewed
     FROM events
     WHERE event = 'document_viewed'
@@ -72,7 +72,7 @@ export async function GET(req: NextRequest) {
 
   const byUserQuery = `
     SELECT
-      person.properties.email AS email,
+      distinct_id AS email,
       person.properties.name AS name,
       count(distinct properties.doc_slug) AS unique_docs,
       count() AS total_views,
@@ -80,6 +80,7 @@ export async function GET(req: NextRequest) {
     FROM events
     WHERE event = 'document_viewed'
       AND timestamp > now() - INTERVAL ${days} DAY
+      AND person.properties.name IS NOT NULL
     GROUP BY email, name
     ORDER BY last_active DESC
   `;
