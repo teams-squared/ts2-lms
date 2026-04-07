@@ -5,6 +5,7 @@ import AppSidebar from "@/components/layout/AppSidebar";
 import NavigationProgress from "@/components/layout/NavigationProgress";
 import AppInsightsProvider from "@/components/providers/AppInsightsProvider";
 import "./globals.css";
+import "highlight.js/styles/github.css";
 
 const inter = Inter({
   subsets: ["latin"],
