@@ -20,7 +20,6 @@ import type { TocHeading } from "@/components/docs/TableOfContents";
 import DocPasswordGate from "@/components/docs/DocPasswordGate";
 import DocProtectionPanel from "@/components/docs/DocProtectionPanel";
 import { ChevronRightIcon, LockIcon } from "@/components/icons";
-import { trackEvent } from "@/lib/telemetry";
 import DocViewTracker from "@/components/telemetry/DocViewTracker";
 import type { Role } from "@/lib/types";
 
@@ -60,14 +59,6 @@ export default async function DocPage({
   if (!category) notFound();
   if (!doc) notFound();
   if (!hasAccess(userRole, doc.meta.minRole)) notFound();
-
-  // Track the doc view — fire-and-forget, never block render
-  trackEvent("doc_view", {
-    category: categorySlug,
-    slug,
-    userEmail: session?.user?.email ?? "unknown",
-    userRole,
-  });
 
   // Password gate — check for a session unlock cookie
   const cookieStore = await cookies();

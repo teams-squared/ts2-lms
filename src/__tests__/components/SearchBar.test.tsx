@@ -35,10 +35,6 @@ vi.mock("@/lib/posthog-client", () => ({
   posthog: { capture: vi.fn() },
 }));
 
-vi.mock("@/lib/browser-telemetry", () => ({
-  trackBrowserEvent: vi.fn(),
-}));
-
 import { posthog } from "@/lib/posthog-client";
 const mockCapture = vi.mocked(posthog.capture);
 

@@ -3,7 +3,6 @@ import Credentials from "next-auth/providers/credentials";
 import bcrypt from "bcryptjs";
 import { authConfig } from "./auth.config";
 import { getUserRole } from "./roles";
-import { trackEvent } from "./telemetry";
 import type { Role } from "./types";
 
 // NextAuth v5 reads AUTH_SECRET; fall back to NEXTAUTH_SECRET or a dev-only placeholder
@@ -90,13 +89,6 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
           (user as { role?: Role }).role ||
           (await getUserRole(user.email || ""));
         token.role = role;
-
-        // Track sign-in event — fire-and-forget, never block auth
-        trackEvent("sign_in", {
-          email: user.email ?? "unknown",
-          role: role ?? "employee",
-          timestamp: new Date().toISOString(),
-        });
       }
       return token;
     },

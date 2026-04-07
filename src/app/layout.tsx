@@ -3,7 +3,6 @@ import { Inter } from "next/font/google";
 import Providers from "@/components/auth/Providers";
 import AppSidebar from "@/components/layout/AppSidebar";
 import NavigationProgress from "@/components/layout/NavigationProgress";
-import AppInsightsProvider from "@/components/providers/AppInsightsProvider";
 import "./globals.css";
 import "highlight.js/styles/github.css";
 
@@ -26,7 +25,6 @@ export default function RootLayout({
     <html lang="en" className={`${inter.variable} h-full antialiased`}>
       <body className="min-h-full flex flex-row">
         <Providers>
-          <AppInsightsProvider />
           <AppSidebar />
           <div className="flex-1 flex flex-col min-w-0 h-screen overflow-y-auto pt-14 md:pt-0">
             <NavigationProgress />
