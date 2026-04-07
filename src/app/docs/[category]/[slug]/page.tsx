@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
+import { cookies } from "next/headers";
 import GithubSlugger from "github-slugger";
 import { auth } from "@/lib/auth";
 import {
@@ -16,7 +17,9 @@ import CopyLinkButton from "@/components/docs/CopyLinkButton";
 import { DocVisitRecorder } from "@/components/docs/RecentlyViewed";
 import TableOfContents from "@/components/docs/TableOfContents";
 import type { TocHeading } from "@/components/docs/TableOfContents";
-import { ChevronRightIcon } from "@/components/icons";
+import DocPasswordGate from "@/components/docs/DocPasswordGate";
+import DocProtectionPanel from "@/components/docs/DocProtectionPanel";
+import { ChevronRightIcon, LockIcon } from "@/components/icons";
 import type { Role } from "@/lib/types";
 
 function extractHeadings(mdx: string): TocHeading[] {
@@ -55,6 +58,11 @@ export default async function DocPage({
   if (!category) notFound();
   if (!doc) notFound();
   if (!hasAccess(userRole, doc.meta.minRole)) notFound();
+
+  // Password gate — check for a session unlock cookie
+  const cookieStore = await cookies();
+  const unlockCookie = cookieStore.get(`doc-unlock-${categorySlug}-${slug}`);
+  const isUnlocked = !doc.meta.passwordProtected || !!unlockCookie;
 
   const headings = extractHeadings(doc.content);
   const tocHeadings = headings.length >= 3 ? headings : [];
@@ -101,18 +109,66 @@ export default async function DocPage({
 
         <article className="flex-1 min-w-0 max-w-3xl">
           <DocSearch />
-          <div className="mb-6 bg-brand-50/40 rounded-lg px-4 py-3">
-            <div className="flex items-start justify-between gap-2">
-              <h1 className="text-2xl font-bold text-gray-900 mb-1">
-                {doc.meta.title}
-              </h1>
-              <CopyLinkButton />
-            </div>
-            <p className="text-sm text-gray-500">{doc.meta.description}</p>
-            <div className="flex flex-wrap items-center gap-3 mt-2 text-xs text-gray-400">
-              {doc.meta.author && <span>By {doc.meta.author}</span>}
-              {doc.meta.updatedAt && (
-                <span>Updated {doc.meta.updatedAt}</span>
+          {isUnlocked ? (
+            <>
+              <div className="mb-6 bg-brand-50/40 rounded-lg px-4 py-3">
+                <div className="flex items-start justify-between gap-2">
+                  <h1 className="text-2xl font-bold text-gray-900 mb-1">
+                    {doc.meta.title}
+                  </h1>
+                  <CopyLinkButton />
+                </div>
+                <p className="text-sm text-gray-500">{doc.meta.description}</p>
+                <div className="flex flex-wrap items-center gap-3 mt-2 text-xs text-gray-400">
+                  {doc.meta.author && <span>By {doc.meta.author}</span>}
+                  {doc.meta.updatedAt && (
+                    <span>Updated {doc.meta.updatedAt}</span>
+                  )}
+                  {doc.meta.minRole !== "employee" && (
+                    <span className="px-1.5 py-0.5 rounded bg-amber-50 text-amber-600 font-medium">
+                      {doc.meta.minRole}+ only
+                    </span>
+                  )}
+                  {doc.meta.passwordProtected && (
+                    <span className="flex items-center gap-1 px-1.5 py-0.5 rounded bg-brand-50 text-brand-600 font-medium">
+                      <LockIcon className="w-3 h-3" />
+                      Password protected
+                    </span>
+                  )}
+                  {doc.meta.tags && doc.meta.tags.length > 0 && (
+                    <span className="flex flex-wrap gap-1.5">
+                      {doc.meta.tags.map((tag) => (
+                        <Link
+                          key={tag}
+                          href={`/docs?tag=${encodeURIComponent(tag)}`}
+                          className="px-2 py-0.5 rounded-full bg-brand-50 text-brand-600 font-medium hover:bg-brand-100 transition-colors"
+                        >
+                          {tag}
+                        </Link>
+                      ))}
+                    </span>
+                  )}
+                </div>
+              </div>
+
+              <DocVisitRecorder
+                title={doc.meta.title}
+                href={`/docs/${categorySlug}/${slug}`}
+              />
+              <div
+                id="doc-content"
+                className="prose prose-sm prose-gray max-w-none prose-headings:scroll-mt-16 prose-a:text-brand-600 prose-a:no-underline hover:prose-a:underline prose-code:before:content-none prose-code:after:content-none"
+              >
+                <DocRenderer source={doc.content} />
+              </div>
+
+              {/* Password management — managers and admins only */}
+              {hasAccess(userRole, "manager") && (
+                <DocProtectionPanel
+                  category={categorySlug}
+                  slug={slug}
+                  passwordProtected={!!doc.meta.passwordProtected}
+                />
               )}
             </>
           ) : (
@@ -123,7 +179,7 @@ export default async function DocPage({
                 title={doc.meta.title}
                 description={doc.meta.description}
               />
-              {/* Managers/admins can manage protection even when locked out */}
+              {/* Managers/admins can remove protection without knowing the password */}
               {hasAccess(userRole, "manager") && (
                 <DocProtectionPanel
                   category={categorySlug}
@@ -131,29 +187,8 @@ export default async function DocPage({
                   passwordProtected={!!doc.meta.passwordProtected}
                 />
               )}
-              {doc.meta.tags && doc.meta.tags.length > 0 && (
-                <span className="flex flex-wrap gap-1.5">
-                  {doc.meta.tags.map((tag) => (
-                    <Link
-                      key={tag}
-                      href={`/docs?tag=${encodeURIComponent(tag)}`}
-                      className="px-2 py-0.5 rounded-full bg-brand-50 text-brand-600 font-medium hover:bg-brand-100 transition-colors"
-                    >
-                      {tag}
-                    </Link>
-                  ))}
-                </span>
-              )}
-            </div>
-          </div>
-
-          <DocVisitRecorder
-            title={doc.meta.title}
-            href={`/docs/${categorySlug}/${slug}`}
-          />
-          <div id="doc-content" className="prose prose-sm prose-gray max-w-none prose-headings:scroll-mt-16 prose-a:text-brand-600 prose-a:no-underline hover:prose-a:underline prose-code:before:content-none prose-code:after:content-none">
-            <DocRenderer source={doc.content} />
-          </div>
+            </>
+          )}
         </article>
 
         <TableOfContents headings={tocHeadings} />

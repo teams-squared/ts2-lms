@@ -8,6 +8,7 @@ import {
 import SearchBar from "@/components/search/SearchBar";
 import CategoryCard from "@/components/docs/CategoryCard";
 import TagFilter from "@/components/docs/TagFilter";
+import { BookOpenIcon, CATEGORY_ICONS, CATEGORY_COLORS } from "@/components/icons";
 import type { DocMeta, Role } from "@/lib/types";
 
 export default async function DocsPage({
@@ -89,6 +90,8 @@ export default async function DocsPage({
 
       <div className="space-y-6">
         {filteredSections.map(({ cat, subcategories, docs }) => {
+          const SectionIcon = CATEGORY_ICONS[cat.icon] ?? BookOpenIcon;
+          const sectionColor = CATEGORY_COLORS[cat.icon] ?? "#ede9fe";
           if (subcategories.length > 0) {
             return (
               <div key={cat.slug}>

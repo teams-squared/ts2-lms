@@ -22,6 +22,7 @@ function buildDocMeta(
     author: data.author as string | undefined,
     tags: (data.tags as string[]) || [],
     order: (data.order as number) || 0,
+    passwordProtected: !!(data.password as string),
   };
 }
 
@@ -70,7 +71,11 @@ export async function getDocContent(
   const raw = await fetchDocContentFromSharePoint(category, fileName);
   const { data, content } = matter(raw);
 
-  return { meta: buildDocMeta(data, slug, category), content };
+  return {
+    meta: buildDocMeta(data, slug, category),
+    content,
+    passwordHash: data.password as string | undefined,
+  };
 }
 
 export async function getAllDocs(userRole?: Role): Promise<DocMeta[]> {
