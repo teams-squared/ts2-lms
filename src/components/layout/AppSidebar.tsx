@@ -31,7 +31,7 @@ const ROLE_STYLES = {
 type RoleKey = keyof typeof ROLE_STYLES;
 
 export default function AppSidebar() {
-  const { data: session } = useSession();
+  const { data: session, status } = useSession();
   const pathname = usePathname();
   const [collapsed, setCollapsed] = useState(false);
   const [mounted, setMounted] = useState(false);
@@ -158,7 +158,7 @@ export default function AppSidebar() {
                 label="Home"
                 onNavigate={() => setDrawerOpen(false)}
               />
-              {session && (
+              {status === "authenticated" && (
                 <NavLink
                   href="/docs"
                   icon={BookOpenIcon}
@@ -166,7 +166,7 @@ export default function AppSidebar() {
                   onNavigate={() => setDrawerOpen(false)}
                 />
               )}
-              {session?.user?.role === "admin" && (
+              {status === "authenticated" && session?.user?.role === "admin" && (
                 <NavLink
                   href="/admin"
                   icon={ShieldIcon}
@@ -177,7 +177,7 @@ export default function AppSidebar() {
             </div>
 
             {/* User section */}
-            {session && (
+            {status === "authenticated" && (
               <div className="px-2 py-3 border-t border-brand-100/60 flex-shrink-0 space-y-1">
                 <div className="flex items-center gap-2 px-3 py-1.5">
                   <div className="w-6 h-6 rounded-full bg-brand-200 flex items-center justify-center flex-shrink-0 text-xs font-semibold text-brand-800">
@@ -253,7 +253,7 @@ export default function AppSidebar() {
             label="Home"
             showLabel={!collapsed || !mounted}
           />
-          {session && (
+          {status === "authenticated" && (
             <NavLink
               href="/docs"
               icon={BookOpenIcon}
@@ -261,7 +261,7 @@ export default function AppSidebar() {
               showLabel={!collapsed || !mounted}
             />
           )}
-          {session?.user?.role === "admin" && (
+          {status === "authenticated" && session?.user?.role === "admin" && (
             <NavLink
               href="/admin"
               icon={ShieldIcon}
@@ -272,7 +272,7 @@ export default function AppSidebar() {
         </nav>
 
         {/* User section */}
-        {session && (
+        {status === "authenticated" && (
           <div className="px-2 py-3 border-t border-brand-100/60 flex-shrink-0 space-y-1">
             <div
               className="flex items-center gap-2 px-3 py-1.5 overflow-hidden"
