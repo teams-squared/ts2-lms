@@ -11,6 +11,7 @@ import { hasAccess } from "@/lib/roles";
 import Sidebar from "@/components/layout/Sidebar";
 import DocRenderer from "@/components/docs/DocRenderer";
 import DocSearch from "@/components/docs/DocSearch";
+import DocViewTracker from "@/components/telemetry/DocViewTracker";
 import { ChevronRightIcon } from "@/components/icons";
 import type { Role } from "@/lib/types";
 
@@ -40,6 +41,13 @@ export default async function DocPage({
 
   return (
     <div className="px-4 sm:px-6 lg:px-8 py-6 animate-fade-in">
+      <DocViewTracker
+        title={doc.meta.title}
+        slug={slug}
+        category={categorySlug}
+        categoryTitle={category.title}
+        userRole={userRole}
+      />
       {/* Breadcrumb */}
       <nav className="flex items-center text-sm text-gray-500 mb-5">
         <Link href="/" className="hover:text-brand-600">

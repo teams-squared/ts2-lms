@@ -5,6 +5,7 @@ import Link from "next/link";
 import Fuse from "fuse.js";
 import type { DocMeta } from "@/lib/types";
 import { SearchIcon, FileTextIcon } from "@/components/icons";
+import { posthog } from "@/lib/posthog-client";
 
 interface SearchBarProps {
   className?: string;
@@ -38,6 +39,18 @@ export default function SearchBar({ className = "" }: SearchBarProps) {
     const found = fuse.search(query).map((r) => r.item);
     setResults(found.slice(0, 8));
   }, [query, docs]);
+
+  useEffect(() => {
+    if (!query.trim()) return;
+    const timer = setTimeout(() => {
+      posthog.capture("search_performed", {
+        query: query.trim(),
+        result_count: results.length,
+        has_results: results.length > 0,
+      });
+    }, 1000);
+    return () => clearTimeout(timer);
+  }, [query, results]);
 
   useEffect(() => {
     function handleClickOutside(e: MouseEvent) {

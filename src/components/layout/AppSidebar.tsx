@@ -6,6 +6,7 @@ import { useSession, signOut } from "next-auth/react";
 import { useEffect, useState } from "react";
 import Logo from "@/components/Logo";
 import { BookOpenIcon, ShieldIcon, ChevronRightIcon } from "@/components/icons";
+import { posthog } from "@/lib/posthog-client";
 
 const STORAGE_KEY = "sidebar-collapsed";
 
@@ -142,7 +143,11 @@ export default function AppSidebar() {
             </div>
           </div>
           <button
-            onClick={() => signOut({ callbackUrl: "/" })}
+            onClick={() => {
+              posthog.capture("user_logged_out");
+              posthog.reset();
+              signOut({ callbackUrl: "/" });
+            }}
             title={collapsed ? "Sign Out" : undefined}
             className="flex items-center gap-3 w-full px-3 py-2 rounded-lg text-sm text-gray-500 hover:text-gray-700 hover:bg-white/60 transition-colors"
           >

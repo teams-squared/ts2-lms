@@ -3,6 +3,7 @@
 import { signIn } from "next-auth/react";
 import { useState } from "react";
 import { useSearchParams } from "next/navigation";
+import { posthog } from "@/lib/posthog-client";
 
 export default function LoginForm({
   hasMicrosoftProvider,
@@ -32,6 +33,7 @@ export default function LoginForm({
       setError("Invalid email or password");
       setLoading(false);
     } else if (result?.url) {
+      posthog.capture("user_logged_in", { method: "credentials" });
       window.location.href = result.url;
     }
   };
