@@ -147,7 +147,7 @@ export default function SearchBar({ className = "" }: SearchBarProps) {
           id="search-listbox"
           role="listbox"
           aria-label="Search results"
-          className="absolute top-full mt-1.5 w-full bg-white rounded-lg border border-gray-200 shadow-lg overflow-hidden z-50"
+          className="absolute top-full mt-1.5 w-full bg-white rounded-lg border border-gray-200 shadow-lg overflow-hidden z-50 text-left"
         >
           {loading && (
             <div className="px-4 py-3 text-sm text-gray-400">
