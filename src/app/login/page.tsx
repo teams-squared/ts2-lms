@@ -8,6 +8,7 @@ export default function LoginPage() {
     process.env.AZURE_AD_CLIENT_SECRET &&
     process.env.AZURE_AD_TENANT_ID
   );
+  const isProduction = process.env.NODE_ENV === "production";
 
   return (
     <div className="min-h-[calc(100vh-8rem)] flex items-center justify-center bg-brand-gradient px-4">
@@ -23,10 +24,10 @@ export default function LoginPage() {
         </div>
 
         <Suspense fallback={<div className="text-center text-sm text-gray-400">Loading...</div>}>
-          <LoginForm hasMicrosoftProvider={hasMicrosoftProvider} />
+          <LoginForm hasMicrosoftProvider={hasMicrosoftProvider} isProduction={isProduction} />
         </Suspense>
 
-        {!hasMicrosoftProvider && (
+        {!hasMicrosoftProvider && !isProduction && (
           <div className="mt-5 p-3 rounded-lg bg-blue-50 text-blue-700 text-xs">
             <strong>Demo accounts:</strong>
             <br />

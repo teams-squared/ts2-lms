@@ -7,8 +7,10 @@ import { posthog } from "@/lib/posthog-client";
 
 export default function LoginForm({
   hasMicrosoftProvider,
+  isProduction,
 }: {
   hasMicrosoftProvider: boolean;
+  isProduction: boolean;
 }) {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -58,20 +60,23 @@ export default function LoginForm({
             Sign in with Microsoft
           </button>
 
-          <div className="relative">
-            <div className="absolute inset-0 flex items-center">
-              <div className="w-full border-t border-gray-200" />
+          {!isProduction && (
+            <div className="relative">
+              <div className="absolute inset-0 flex items-center">
+                <div className="w-full border-t border-gray-200" />
+              </div>
+              <div className="relative flex justify-center text-sm">
+                <span className="px-2 bg-white text-gray-400">
+                  or sign in with email
+                </span>
+              </div>
             </div>
-            <div className="relative flex justify-center text-sm">
-              <span className="px-2 bg-white text-gray-400">
-                or sign in with email
-              </span>
-            </div>
-          </div>
+          )}
         </>
       )}
 
-      {/* Credentials form */}
+      {/* Credentials form — dev only */}
+      {!isProduction && (
       <form onSubmit={handleCredentialLogin} className="space-y-4">
         {error && (
           <div className="p-3 rounded-lg bg-red-50 text-red-600 text-sm">
@@ -123,6 +128,7 @@ export default function LoginForm({
           {loading ? "Signing in..." : "Sign In"}
         </button>
       </form>
+      )}
     </div>
   );
 }
