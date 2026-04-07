@@ -34,12 +34,12 @@ describe("CategoryCard", () => {
 
   it("shows doc count when no titles provided", () => {
     render(<CategoryCard category={BASE_CATEGORY} docCount={5} />);
-    expect(screen.getByText("5 documents")).toBeInTheDocument();
+    expect(screen.getByText(/5\s+docs/)).toBeInTheDocument();
   });
 
-  it("uses singular 'document' for count of 1", () => {
+  it("uses singular 'doc' for count of 1", () => {
     render(<CategoryCard category={BASE_CATEGORY} docCount={1} />);
-    expect(screen.getByText("1 document")).toBeInTheDocument();
+    expect(screen.getByText(/1\s+doc/)).toBeInTheDocument();
   });
 
   it("shows up to 5 doc titles", () => {
@@ -64,15 +64,17 @@ describe("CategoryCard", () => {
 
   it("applies the correct icon background color for rocket", () => {
     const { container } = render(<CategoryCard category={BASE_CATEGORY} docCount={0} />);
-    // React renders inline style as background-color in HTML
-    const iconWrapper = container.querySelector('[style*="background-color"]') as HTMLElement;
+    // The first inline-style element is the accent strip; the second is the icon container.
+    const allStyled = container.querySelectorAll<HTMLElement>('[style*="background-color"]');
+    const iconWrapper = allStyled[1]; // index 1 = icon bg (index 0 = accent strip)
     expect(iconWrapper?.style.backgroundColor).toBe(CATEGORY_COLORS["rocket"]);
   });
 
   it("falls back to default color for unknown icon", () => {
     const cat = { ...BASE_CATEGORY, icon: "unknown-icon" };
     const { container } = render(<CategoryCard category={cat} docCount={0} />);
-    const iconWrapper = container.querySelector('[style*="background-color"]') as HTMLElement;
+    const allStyled = container.querySelectorAll<HTMLElement>('[style*="background-color"]');
+    const iconWrapper = allStyled[1];
     expect(iconWrapper?.style.backgroundColor).toBe("#f0e6ff");
   });
 });
