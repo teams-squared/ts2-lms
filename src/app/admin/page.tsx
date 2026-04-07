@@ -1,32 +1,22 @@
-import { auth } from "@/lib/auth";
-import { redirect } from "next/navigation";
 import Link from "next/link";
-import categories from "@/content/_categories.json";
-import { getAllDocs } from "@/lib/docs";
+import { getAllDocs, getCategories } from "@/lib/docs";
 import { getAllElevatedUsers } from "@/lib/role-store";
 import { LayoutGridIcon, FileTextIcon, UsersIcon } from "@/components/icons";
 import RoleManager from "@/components/admin/RoleManager";
 
 export default async function AdminPage() {
-  const session = await auth();
-  if (!session || session.user?.role !== "admin") {
-    redirect("/docs");
-  }
+  const [docs, categories, elevatedUsers] = await Promise.all([
+    getAllDocs(),
+    getCategories(),
+    getAllElevatedUsers(),
+  ]);
 
-  const docs = getAllDocs();
-  const elevatedUsers = await getAllElevatedUsers();
+  const categoryTitleMap = Object.fromEntries(
+    categories.map((c) => [c.slug, c.title])
+  );
 
   return (
-    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-      <div className="mb-6">
-        <h1 className="text-2xl font-bold text-gray-900 mb-1">
-          Admin Dashboard
-        </h1>
-        <p className="text-sm text-gray-500">
-          Manage roles, categories, and view portal statistics
-        </p>
-      </div>
-
+    <div>
       {/* Stats */}
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-8">
         <div className="p-4 rounded-lg border border-gray-200/60 bg-white shadow-card">
@@ -147,7 +137,12 @@ export default async function AdminPage() {
                     </Link>
                   </td>
                   <td className="px-4 py-2.5 text-sm text-gray-600">
-                    {doc.category}
+                    <Link
+                      href={`/docs/${doc.category}`}
+                      className="hover:text-brand-600"
+                    >
+                      {categoryTitleMap[doc.category] ?? doc.category}
+                    </Link>
                   </td>
                   <td className="px-4 py-2.5">
                     <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-brand-50 text-brand-700">

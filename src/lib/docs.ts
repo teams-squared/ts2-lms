@@ -1,48 +1,57 @@
-import fs from "fs";
-import path from "path";
 import matter from "gray-matter";
 import type { Category, DocMeta, Role } from "./types";
 import { hasAccess } from "./roles";
+import {
+  fetchCategoriesFromSharePoint,
+  fetchDocListFromSharePoint,
+  fetchDocContentFromSharePoint,
+} from "./sharepoint";
 
-const CONTENT_DIR = path.join(process.cwd(), "src", "content");
-
-export function getCategories(): Category[] {
-  const filePath = path.join(CONTENT_DIR, "_categories.json");
-  const raw = fs.readFileSync(filePath, "utf-8");
-  return JSON.parse(raw);
+function buildDocMeta(
+  data: Record<string, unknown>,
+  slug: string,
+  categorySlug: string
+): DocMeta {
+  return {
+    title: (data.title as string) || slug,
+    description: (data.description as string) || "",
+    slug,
+    category: categorySlug,
+    minRole: (data.minRole as Role) || "employee",
+    updatedAt: data.updatedAt ? String(data.updatedAt) : "",
+    author: data.author as string | undefined,
+    tags: (data.tags as string[]) || [],
+    order: (data.order as number) || 0,
+    passwordProtected: !!(data.password as string),
+  };
 }
 
-export function getAccessibleCategories(userRole: Role): Category[] {
-  return getCategories().filter((cat) => hasAccess(userRole, cat.minRole));
+export async function getCategories(): Promise<Category[]> {
+  return fetchCategoriesFromSharePoint();
 }
 
-export function getDocsByCategory(
+export async function getAccessibleCategories(
+  userRole: Role
+): Promise<Category[]> {
+  const categories = await getCategories();
+  return categories.filter((cat) => hasAccess(userRole, cat.minRole));
+}
+
+export async function getDocsByCategory(
   categorySlug: string,
   userRole?: Role
-): DocMeta[] {
-  const categoryDir = path.join(CONTENT_DIR, categorySlug);
-  if (!fs.existsSync(categoryDir)) return [];
+): Promise<DocMeta[]> {
+  const files = await fetchDocListFromSharePoint(categorySlug);
+  if (files.length === 0) return [];
 
-  const files = fs
-    .readdirSync(categoryDir)
-    .filter((f) => f.endsWith(".mdx"));
-
-  const docs: DocMeta[] = files.map((file) => {
-    const filePath = path.join(categoryDir, file);
-    const raw = fs.readFileSync(filePath, "utf-8");
-    const { data } = matter(raw);
-    return {
-      title: data.title || file.replace(".mdx", ""),
-      description: data.description || "",
-      slug: file.replace(".mdx", ""),
-      category: categorySlug,
-      minRole: data.minRole || "employee",
-      updatedAt: data.updatedAt || "",
-      author: data.author,
-      tags: data.tags || [],
-      order: data.order || 0,
-    };
-  });
+  const docs: DocMeta[] = await Promise.all(
+    files.map(async (name) => {
+      const raw = await fetchDocContentFromSharePoint(categorySlug, name);
+      const { data } = matter(raw);
+      const slug = name.replace(".mdx", "");
+      return buildDocMeta(data, slug, categorySlug);
+    })
+  );
 
   const filtered = userRole
     ? docs.filter((doc) => hasAccess(userRole, doc.minRole))
@@ -51,44 +60,52 @@ export function getDocsByCategory(
   return filtered.sort((a, b) => (a.order || 0) - (b.order || 0));
 }
 
-export function getDocContent(
+export async function getDocContent(
   category: string,
   slug: string
-): { meta: DocMeta; content: string } | null {
-  const filePath = path.join(CONTENT_DIR, category, `${slug}.mdx`);
-  if (!fs.existsSync(filePath)) return null;
+): Promise<{ meta: DocMeta; content: string; passwordHash?: string } | null> {
+  const files = await fetchDocListFromSharePoint(category);
+  const fileName = `${slug}.mdx`;
+  if (!files.includes(fileName)) return null;
 
-  const raw = fs.readFileSync(filePath, "utf-8");
+  const raw = await fetchDocContentFromSharePoint(category, fileName);
   const { data, content } = matter(raw);
 
   return {
-    meta: {
-      title: data.title || slug,
-      description: data.description || "",
-      slug,
-      category,
-      minRole: data.minRole || "employee",
-      updatedAt: data.updatedAt || "",
-      author: data.author,
-      tags: data.tags || [],
-      order: data.order || 0,
-    },
+    meta: buildDocMeta(data, slug, category),
     content,
+    passwordHash: data.password as string | undefined,
   };
 }
 
-export function getAllDocs(): DocMeta[] {
-  const categories = getCategories();
-  const allDocs: DocMeta[] = [];
-
-  for (const cat of categories) {
-    const docs = getDocsByCategory(cat.slug);
-    allDocs.push(...docs);
-  }
-
-  return allDocs;
+export async function getAllDocs(userRole?: Role): Promise<DocMeta[]> {
+  const categories = userRole
+    ? await getAccessibleCategories(userRole)
+    : await getCategories();
+  const results = await Promise.all(
+    categories.map((cat) => getDocsByCategory(cat.slug, userRole))
+  );
+  return results.flat();
 }
 
-export function getCategoryBySlug(slug: string): Category | undefined {
-  return getCategories().find((cat) => cat.slug === slug);
+export async function getCategoryBySlug(
+  slug: string
+): Promise<Category | undefined> {
+  const categories = await getCategories();
+  return categories.find((cat) => cat.slug === slug);
+}
+
+export async function getTopLevelCategories(
+  userRole: Role
+): Promise<Category[]> {
+  const categories = await getAccessibleCategories(userRole);
+  return categories.filter((cat) => !cat.parentCategory);
+}
+
+export async function getSubcategoriesOf(
+  parentSlug: string,
+  userRole: Role
+): Promise<Category[]> {
+  const categories = await getAccessibleCategories(userRole);
+  return categories.filter((cat) => cat.parentCategory === parentSlug);
 }

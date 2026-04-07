@@ -8,7 +8,16 @@ export interface RoleConfig {
   defaultRole: string;
 }
 
-const ROLES_FILE = path.join(process.cwd(), "src", "content", "_roles.json");
+const BUNDLED_ROLES_FILE = path.join(process.cwd(), "src", "content", "_roles.json");
+const ROLES_FILE = process.env.ROLES_DATA_DIR
+  ? path.join(process.env.ROLES_DATA_DIR, "_roles.json")
+  : BUNDLED_ROLES_FILE;
+
+// Seed persistent volume from bundled default on first boot
+if (process.env.ROLES_DATA_DIR && !fs.existsSync(ROLES_FILE)) {
+  fs.mkdirSync(process.env.ROLES_DATA_DIR, { recursive: true });
+  fs.copyFileSync(BUNDLED_ROLES_FILE, ROLES_FILE);
+}
 
 export async function getRoleConfig(): Promise<RoleConfig> {
   const raw = fs.readFileSync(ROLES_FILE, "utf-8");

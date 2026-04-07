@@ -5,10 +5,12 @@ import {
   getAccessibleCategories,
   getDocsByCategory,
   getCategoryBySlug,
+  getSubcategoriesOf,
 } from "@/lib/docs";
 import { hasAccess } from "@/lib/roles";
 import Sidebar from "@/components/layout/Sidebar";
-import { ChevronRightIcon, FileTextIcon } from "@/components/icons";
+import CategoryCard from "@/components/docs/CategoryCard";
+import { CATEGORY_ICONS, CATEGORY_COLORS, CATEGORY_ACCENT_COLORS, ChevronRightIcon, FileTextIcon, LockIcon } from "@/components/icons";
 import type { Role } from "@/lib/types";
 
 export default async function CategoryPage({
@@ -20,25 +22,96 @@ export default async function CategoryPage({
   const session = await auth();
   const userRole = (session?.user?.role as Role) || "employee";
 
-  const category = getCategoryBySlug(categorySlug);
+  const category = await getCategoryBySlug(categorySlug);
   if (!category) notFound();
   if (!hasAccess(userRole, category.minRole)) notFound();
 
-  const categories = getAccessibleCategories(userRole);
-  const docs = getDocsByCategory(categorySlug, userRole);
+  const [categories, subcategories, docs] = await Promise.all([
+    getAccessibleCategories(userRole),
+    getSubcategoriesOf(categorySlug, userRole),
+    getDocsByCategory(categorySlug, userRole),
+  ]);
+
+  const CatIcon = CATEGORY_ICONS[category.icon] || FileTextIcon;
+  const catColor = CATEGORY_COLORS[category.icon] || "#f0e6ff";
+  const catAccent = CATEGORY_ACCENT_COLORS[category.icon] || "#a78bfa";
+
+  // Parent category: has subcategories but no docs directly
+  if (subcategories.length > 0 && docs.length === 0) {
+    const subcatDocs = await Promise.all(
+      subcategories.map(async (sub) => ({
+        sub,
+        docs: await getDocsByCategory(sub.slug, userRole),
+      }))
+    );
+
+    return (
+      <div className="px-4 sm:px-6 lg:px-8 py-6 animate-fade-in">
+        <nav className="flex items-center text-sm text-gray-500 mb-5">
+          <Link href="/" className="hover:text-brand-600">Home</Link>
+          <ChevronRightIcon className="w-3.5 h-3.5 mx-1.5 text-gray-300" />
+          <Link href="/docs" className="hover:text-brand-600">Docs</Link>
+          <ChevronRightIcon className="w-3.5 h-3.5 mx-1.5 text-gray-300" />
+          <span className="text-gray-900 font-medium">{category.title}</span>
+        </nav>
+
+        <div className="flex gap-8">
+          <Sidebar categories={categories} currentCategory={categorySlug} />
+
+          <div className="flex-1 min-w-0">
+            {/* Rich category header */}
+            <div className="flex items-center gap-3 mb-6 pb-5 border-b border-gray-100">
+              <div
+                className="w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0"
+                style={{ backgroundColor: catColor }}
+              >
+                <CatIcon className="w-5 h-5" style={{ color: "#4400FF" }} />
+              </div>
+              <div>
+                <h1 className="text-xl font-bold text-gray-900">{category.title}</h1>
+                <p className="text-sm text-gray-500">{category.description}</p>
+              </div>
+            </div>
+
+            <div className="grid grid-cols-[repeat(auto-fit,minmax(260px,1fr))] gap-5">
+              {subcatDocs.map(({ sub, docs: subDocs }) => (
+                <CategoryCard
+                  key={sub.slug}
+                  category={sub}
+                  docCount={subDocs.length}
+                  docTitles={subDocs.map((d) => d.title)}
+                />
+              ))}
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  // Regular category: has docs
+  const parentTitle = category.parentCategory
+    ? (await getCategoryBySlug(category.parentCategory))?.title
+    : null;
 
   return (
-    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-      {/* Breadcrumb */}
+    <div className="px-4 sm:px-6 lg:px-8 py-6 animate-fade-in">
       <nav className="flex items-center text-sm text-gray-500 mb-5">
-        <Link href="/" className="hover:text-brand-600">
-          Home
-        </Link>
+        <Link href="/" className="hover:text-brand-600">Home</Link>
         <ChevronRightIcon className="w-3.5 h-3.5 mx-1.5 text-gray-300" />
-        <Link href="/docs" className="hover:text-brand-600">
-          Docs
-        </Link>
+        <Link href="/docs" className="hover:text-brand-600">Docs</Link>
         <ChevronRightIcon className="w-3.5 h-3.5 mx-1.5 text-gray-300" />
+        {category.parentCategory && parentTitle && (
+          <>
+            <Link
+              href={`/docs/${category.parentCategory}`}
+              className="hover:text-brand-600"
+            >
+              {parentTitle}
+            </Link>
+            <ChevronRightIcon className="w-3.5 h-3.5 mx-1.5 text-gray-300" />
+          </>
+        )}
         <span className="text-gray-900 font-medium">{category.title}</span>
       </nav>
 
@@ -50,10 +123,19 @@ export default async function CategoryPage({
         />
 
         <div className="flex-1 min-w-0">
-          <h1 className="text-2xl font-bold text-gray-900 mb-1">
-            {category.title}
-          </h1>
-          <p className="text-sm text-gray-500 mb-5">{category.description}</p>
+          {/* Rich category header */}
+          <div className="flex items-center gap-3 mb-6 pb-5 border-b border-gray-100">
+            <div
+              className="w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0"
+              style={{ backgroundColor: catColor }}
+            >
+              <CatIcon className="w-5 h-5" style={{ color: "#4400FF" }} />
+            </div>
+            <div>
+              <h1 className="text-xl font-bold text-gray-900">{category.title}</h1>
+              <p className="text-sm text-gray-500">{category.description}</p>
+            </div>
+          </div>
 
           {docs.length > 0 ? (
             <div className="space-y-2">
@@ -61,34 +143,59 @@ export default async function CategoryPage({
                 <Link
                   key={doc.slug}
                   href={`/docs/${categorySlug}/${doc.slug}`}
-                  className="flex items-start gap-3 px-4 py-3 rounded-lg border border-gray-200/60 bg-white shadow-card hover:shadow-card-hover hover:border-brand-300 border-l-2 border-l-transparent hover:border-l-brand-500 transition-all group"
+                  className="flex items-stretch rounded-lg border border-gray-200/60 bg-white shadow-card hover:shadow-card-hover hover:border-brand-300 transition-all duration-150 group overflow-hidden"
                 >
-                  <FileTextIcon className="w-4 h-4 text-gray-300 mt-0.5 flex-shrink-0 group-hover:text-brand-400" />
-                  <div className="min-w-0 flex-1">
-                    <h3 className="text-sm font-semibold text-gray-900 group-hover:text-brand-600 transition-colors">
-                      {doc.title}
-                    </h3>
-                    <p className="text-xs text-gray-500 mt-0.5">
-                      {doc.description}
-                    </p>
-                    <div className="flex items-center gap-3 mt-1.5 text-xs text-gray-400">
-                      {doc.author && <span>By {doc.author}</span>}
-                      {doc.updatedAt && (
-                        <span>Updated {doc.updatedAt}</span>
-                      )}
-                      {doc.tags && doc.tags.length > 0 && (
-                        <div className="flex gap-1">
-                          {doc.tags.map((tag) => (
-                            <span
-                              key={tag}
-                              className="px-1.5 py-0.5 rounded bg-gray-100 text-gray-500"
-                            >
-                              {tag}
+                  {/* Left category color accent */}
+                  <div className="w-1 flex-shrink-0" style={{ backgroundColor: catAccent }} />
+
+                  <div className="flex items-start gap-3 px-4 py-3 flex-1 min-w-0">
+                    <FileTextIcon className="w-4 h-4 text-gray-300 mt-0.5 flex-shrink-0 group-hover:text-brand-400 transition-colors" />
+                    <div className="min-w-0 flex-1">
+                      <h3 className="text-sm font-semibold text-gray-900 group-hover:text-brand-600 transition-colors">
+                        {doc.title}
+                      </h3>
+                      <p className="text-xs text-gray-500 mt-0.5 line-clamp-2">
+                        {doc.description}
+                      </p>
+                      <div className="flex items-center gap-2 mt-2 flex-wrap">
+                        {doc.author && (
+                          <span className="inline-flex items-center gap-1 text-xs text-gray-500">
+                            <span className="w-4 h-4 rounded-full bg-gray-200 text-gray-600 text-[9px] font-semibold flex items-center justify-center flex-shrink-0">
+                              {doc.author[0].toUpperCase()}
                             </span>
-                          ))}
-                        </div>
-                      )}
+                            {doc.author}
+                          </span>
+                        )}
+                        {doc.updatedAt && (
+                          <span className="text-xs text-gray-400">{doc.updatedAt}</span>
+                        )}
+                        {doc.minRole !== "employee" && (
+                          <span className="flex items-center gap-0.5 text-[10px] text-amber-600 bg-amber-50 px-1.5 py-0.5 rounded-full">
+                            <LockIcon className="w-2.5 h-2.5" />
+                            {doc.minRole}
+                          </span>
+                        )}
+                        {doc.passwordProtected && (
+                          <span className="flex items-center gap-0.5 text-[10px] text-brand-600 bg-brand-50 px-1.5 py-0.5 rounded-full">
+                            <LockIcon className="w-2.5 h-2.5" />
+                            password
+                          </span>
+                        )}
+                        {doc.tags && doc.tags.length > 0 && (
+                          <div className="flex gap-1">
+                            {doc.tags.map((tag) => (
+                              <span
+                                key={tag}
+                                className="px-1.5 py-0.5 rounded bg-gray-100 text-gray-500 text-[10px]"
+                              >
+                                {tag}
+                              </span>
+                            ))}
+                          </div>
+                        )}
+                      </div>
                     </div>
+                    <ChevronRightIcon className="w-4 h-4 text-gray-300 group-hover:text-brand-400 mt-0.5 flex-shrink-0 transition-colors" />
                   </div>
                 </Link>
               ))}

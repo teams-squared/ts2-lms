@@ -1,7 +1,10 @@
 import Link from "next/link";
 import { auth } from "@/lib/auth";
-import { getAccessibleCategories, getDocsByCategory } from "@/lib/docs";
-import Logo from "@/components/Logo";
+import {
+  getTopLevelCategories,
+  getDocsByCategory,
+  getSubcategoriesOf,
+} from "@/lib/docs";
 import SearchBar from "@/components/search/SearchBar";
 import CategoryCard from "@/components/docs/CategoryCard";
 import { BookOpenIcon, SearchIcon, LockIcon } from "@/components/icons";
@@ -10,14 +13,30 @@ import type { Role } from "@/lib/types";
 export default async function HomePage() {
   const session = await auth();
   const userRole = (session?.user?.role as Role) || "employee";
-  const categories = session ? getAccessibleCategories(userRole) : [];
+  const topLevel = session ? await getTopLevelCategories(userRole) : [];
+
+  const categoryDocs = session
+    ? await Promise.all(
+        topLevel.map(async (cat) => {
+          const directDocs = await getDocsByCategory(cat.slug, userRole);
+          if (directDocs.length > 0) {
+            return { cat, docs: directDocs };
+          }
+          // Parent category — aggregate docs across subcategories
+          const subcategories = await getSubcategoriesOf(cat.slug, userRole);
+          const subDocs = await Promise.all(
+            subcategories.map((sub) => getDocsByCategory(sub.slug, userRole))
+          );
+          return { cat, docs: subDocs.flat() };
+        })
+      )
+    : [];
 
   return (
     <div>
       {/* Hero section */}
-      <section className="bg-brand-gradient py-12 px-4">
+      <section className="bg-brand-gradient py-10 px-4">
         <div className="max-w-4xl mx-auto text-center">
-          <Logo size={52} showText={false} className="justify-center mb-4" />
           <h1 className="text-3xl sm:text-4xl font-bold text-gray-900 mb-3">
             Teams Squared{" "}
             <span style={{ color: "#4400FF" }}>Documentation</span>
@@ -40,23 +59,20 @@ export default async function HomePage() {
       </section>
 
       {/* Categories grid */}
-      {session && categories.length > 0 && (
+      {session && categoryDocs.length > 0 && (
         <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10">
           <h2 className="text-xl font-bold text-gray-900 mb-5">
             Browse by Category
           </h2>
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-            {categories.map((cat) => {
-              const docs = getDocsByCategory(cat.slug, userRole);
-              return (
-                <CategoryCard
-                  key={cat.slug}
-                  category={cat}
-                  docCount={docs.length}
-                  docTitles={docs.map((d) => d.title)}
-                />
-              );
-            })}
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+            {categoryDocs.map(({ cat, docs }) => (
+              <CategoryCard
+                key={cat.slug}
+                category={cat}
+                docCount={docs.length}
+                docTitles={docs.map((d) => d.title)}
+              />
+            ))}
           </div>
         </section>
       )}

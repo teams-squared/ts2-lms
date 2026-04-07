@@ -1,0 +1,87 @@
+---
+title: Database Guidelines
+description: Standards for database design, migrations, and query performance at Teams Squared.
+author: Engineering Team
+date: 2026-03-01
+tags: [database, postgres, sql, engineering]
+---
+
+# Database Guidelines
+
+This document covers database conventions used across Teams Squared's backend services.
+
+## Technology Stack
+
+Our primary database is **PostgreSQL 16**. We use **Prisma** as the ORM.
+
+## Naming Conventions
+
+| Object | Convention | Example |
+|--------|-----------|---------|
+| Tables | `snake_case`, plural | `user_sessions` |
+| Columns | `snake_case` | `created_at` |
+| Indexes | `idx_<table>_<column>` | `idx_users_email` |
+| Foreign keys | `fk_<table>_<ref>` | `fk_posts_user_id` |
+
+## Schema Migrations
+
+All schema changes must go through Prisma migrations. Never modify the database directly in production.
+
+```bash
+# Create a new migration
+npx prisma migrate dev --name add_user_preferences
+
+# Apply migrations in CI/CD
+npx prisma migrate deploy
+
+# Reset dev database (NEVER in production)
+npx prisma migrate reset
+```
+
+## Query Performance
+
+### Always use indexes for frequent queries
+
+```sql
+-- Add index for common lookup
+CREATE INDEX CONCURRENTLY idx_documents_category_id
+  ON documents(category_id)
+  WHERE deleted_at IS NULL;
+```
+
+### Use EXPLAIN ANALYZE for slow queries
+
+```sql
+EXPLAIN ANALYZE
+SELECT d.*, c.title AS category_title
+FROM documents d
+JOIN categories c ON c.id = d.category_id
+WHERE d.user_id = $1
+ORDER BY d.updated_at DESC
+LIMIT 20;
+```
+
+### N+1 query prevention
+
+```typescript
+// Bad: causes N+1
+const docs = await prisma.document.findMany();
+for (const doc of docs) {
+  const category = await prisma.category.findUnique({ where: { id: doc.categoryId } });
+}
+
+// Good: single query with include
+const docs = await prisma.document.findMany({
+  include: { category: true }
+});
+```
+
+## Backup & Recovery
+
+- Automated daily snapshots retained for 30 days
+- Point-in-time recovery available up to 7 days
+- RTO target: 4 hours | RPO target: 1 hour
+
+## Connection Pooling
+
+Use **PgBouncer** in transaction mode. Max pool size per service: **10 connections**.

@@ -31,8 +31,13 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: "Forbidden" }, { status: 403 });
   }
 
-  const body = await request.json();
-  const { email, role } = body as { email: string; role: Role };
+  let body: { email?: string; role?: Role };
+  try {
+    body = await request.json();
+  } catch {
+    return NextResponse.json({ error: "Invalid JSON" }, { status: 400 });
+  }
+  const { email, role } = body;
 
   if (!email || !role || !["admin", "manager", "employee"].includes(role)) {
     return NextResponse.json(
@@ -51,13 +56,18 @@ export async function DELETE(request: Request) {
     return NextResponse.json({ error: "Forbidden" }, { status: 403 });
   }
 
-  const body = await request.json();
-  const { email } = body as { email: string };
+  let body: { email?: string };
+  try {
+    body = await request.json();
+  } catch {
+    return NextResponse.json({ error: "Invalid JSON" }, { status: 400 });
+  }
+  const { email } = body;
 
   if (!email) {
     return NextResponse.json({ error: "Email required" }, { status: 400 });
   }
 
-  await removeUserRole(email);
+  await removeUserRole(email.toLowerCase().trim());
   return NextResponse.json({ success: true });
 }

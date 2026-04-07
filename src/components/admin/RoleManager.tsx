@@ -2,7 +2,8 @@
 
 import { useState, useEffect } from "react";
 import type { Role } from "@/lib/types";
-import { UsersIcon } from "@/components/icons";
+import { Input, Select, Button } from "@/components/ui";
+import { useMessage } from "@/hooks/useMessage";
 
 interface RoleUser {
   email: string;
@@ -15,10 +16,7 @@ export default function RoleManager() {
   const [newEmail, setNewEmail] = useState("");
   const [newRole, setNewRole] = useState<Role>("manager");
   const [saving, setSaving] = useState(false);
-  const [message, setMessage] = useState<{
-    type: "success" | "error";
-    text: string;
-  } | null>(null);
+  const { message, showMessage } = useMessage(3000);
 
   async function fetchUsers() {
     try {
@@ -26,9 +24,11 @@ export default function RoleManager() {
       if (res.ok) {
         const data = await res.json();
         setUsers(data);
+      } else {
+        showMessage("error", "Could not load role assignments");
       }
     } catch {
-      // ignore
+      showMessage("error", "Could not load role assignments");
     } finally {
       setLoading(false);
     }
@@ -37,11 +37,6 @@ export default function RoleManager() {
   useEffect(() => {
     fetchUsers();
   }, []);
-
-  function showMessage(type: "success" | "error", text: string) {
-    setMessage({ type, text });
-    setTimeout(() => setMessage(null), 3000);
-  }
 
   async function handleAdd(e: React.FormEvent) {
     e.preventDefault();
@@ -73,6 +68,13 @@ export default function RoleManager() {
   }
 
   async function handleRemove(email: string) {
+    if (
+      !window.confirm(
+        `Remove elevated role from ${email}?\nThis takes effect on their next sign-in.`
+      )
+    ) {
+      return;
+    }
     try {
       const res = await fetch("/api/roles", {
         method: "DELETE",
@@ -94,9 +96,7 @@ export default function RoleManager() {
   return (
     <div>
       <div className="flex items-center justify-between mb-3">
-        <h2 className="text-lg font-semibold text-gray-900">
-          Role Management
-        </h2>
+        <h2 className="text-lg font-semibold text-gray-900">Role Management</h2>
         {message && (
           <div
             className={`text-xs px-3 py-1 rounded-full ${
@@ -141,9 +141,7 @@ export default function RoleManager() {
             ) : (
               users.map((user) => (
                 <tr key={user.email}>
-                  <td className="px-4 py-2.5 text-sm text-gray-900">
-                    {user.email}
-                  </td>
+                  <td className="px-4 py-2.5 text-sm text-gray-900">{user.email}</td>
                   <td className="px-4 py-2.5">
                     <span
                       className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium ${
@@ -170,33 +168,26 @@ export default function RoleManager() {
             {/* Add user row */}
             <tr className="bg-gray-50/50">
               <td className="px-4 py-2" colSpan={3}>
-                <form
-                  onSubmit={handleAdd}
-                  className="flex items-center gap-2"
-                >
-                  <input
+                <form onSubmit={handleAdd} className="flex items-center gap-2">
+                  <Input
                     type="email"
                     value={newEmail}
                     onChange={(e) => setNewEmail(e.target.value)}
                     placeholder="user@teamssquared.com"
                     required
-                    className="flex-1 px-3 py-1.5 rounded-lg border border-gray-200 text-sm focus:outline-none focus:ring-2 focus:ring-brand-500 focus:border-transparent"
+                    className="flex-1 py-1.5"
                   />
-                  <select
+                  <Select
                     value={newRole}
                     onChange={(e) => setNewRole(e.target.value as Role)}
-                    className="px-3 py-1.5 rounded-lg border border-gray-200 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-brand-500"
+                    className="py-1.5"
                   >
                     <option value="manager">Manager</option>
                     <option value="admin">Admin</option>
-                  </select>
-                  <button
-                    type="submit"
-                    disabled={saving}
-                    className="px-3 py-1.5 rounded-lg bg-brand-600 text-white text-sm font-medium hover:bg-brand-700 disabled:opacity-50 transition-colors"
-                  >
+                  </Select>
+                  <Button type="submit" disabled={saving} className="py-1.5">
                     {saving ? "..." : "Add"}
-                  </button>
+                  </Button>
                 </form>
               </td>
             </tr>
