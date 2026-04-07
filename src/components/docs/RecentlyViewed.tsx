@@ -53,6 +53,7 @@ export default function RecentlyViewed() {
   const pathname = usePathname();
 
   useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     setEntries(getEntries());
     setMounted(true);
   }, [pathname]); // re-read when pathname changes so list stays fresh

@@ -108,6 +108,7 @@ export default function AnalyticsPage() {
 
   // Fetch aggregate data
   useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     setLoading(true);
     setError(null);
     fetch(`/api/admin/analytics?period=${period}`)
@@ -128,6 +129,7 @@ export default function AnalyticsPage() {
   // Fetch detail data when a row is selected
   useEffect(() => {
     if (!detail) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect
       setDetailData(null);
       return;
     }

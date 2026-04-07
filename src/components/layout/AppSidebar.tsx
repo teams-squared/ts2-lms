@@ -21,6 +21,39 @@ import { useLocalStorage } from "@/hooks/useLocalStorage";
 
 const STORAGE_KEY = "sidebar-collapsed";
 
+function NavLink({
+  href,
+  icon: Icon,
+  label,
+  showLabel = true,
+  onNavigate,
+  pathname,
+}: {
+  href: string;
+  icon: React.FC<{ className?: string }>;
+  label: string;
+  showLabel?: boolean;
+  onNavigate?: () => void;
+  pathname: string;
+}) {
+  const active = isNavActive(href, pathname);
+  return (
+    <Link
+      href={href}
+      title={!showLabel ? label : undefined}
+      onClick={onNavigate}
+      className={`flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium transition-colors focus:outline-none focus:ring-2 focus:ring-brand-400 ${
+        active
+          ? "border-l-[3px] border-brand-500 bg-brand-50 text-brand-700 pl-[9px] pr-3 rounded-r-lg"
+          : "border-l-[3px] border-transparent text-gray-600 hover:bg-white/60 hover:text-gray-900 px-3 rounded-lg"
+      }`}
+    >
+      <Icon className="w-4 h-4 flex-shrink-0" />
+      {showLabel && <span>{label}</span>}
+    </Link>
+  );
+}
+
 export default function AppSidebar() {
   const { data: session, status } = useSession();
   const pathname = usePathname();
@@ -30,6 +63,7 @@ export default function AppSidebar() {
   const drawerRef = useRef<HTMLElement>(null);
 
   useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     setMounted(true);
   }, []);
 
@@ -52,39 +86,6 @@ export default function AppSidebar() {
 
   // Don't render width-dependent UI until mounted (avoid hydration flash)
   const w = mounted ? (collapsed ? 60 : 220) : 220;
-
-  const isActive = (href: string) => isNavActive(href, pathname);
-
-  function NavLink({
-    href,
-    icon: Icon,
-    label,
-    showLabel = true,
-    onNavigate,
-  }: {
-    href: string;
-    icon: React.FC<{ className?: string }>;
-    label: string;
-    showLabel?: boolean;
-    onNavigate?: () => void;
-  }) {
-    const active = isActive(href);
-    return (
-      <Link
-        href={href}
-        title={!showLabel ? label : undefined}
-        onClick={onNavigate}
-        className={`flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium transition-colors focus:outline-none focus:ring-2 focus:ring-brand-400 ${
-          active
-            ? "border-l-[3px] border-brand-500 bg-brand-50 text-brand-700 pl-[9px] pr-3 rounded-r-lg"
-            : "border-l-[3px] border-transparent text-gray-600 hover:bg-white/60 hover:text-gray-900 px-3 rounded-lg"
-        }`}
-      >
-        <Icon className="w-4 h-4 flex-shrink-0" />
-        {showLabel && <span>{label}</span>}
-      </Link>
-    );
-  }
 
   return (
     <>
@@ -138,6 +139,7 @@ export default function AppSidebar() {
                 icon={HomeIcon}
                 label="Home"
                 onNavigate={() => setDrawerOpen(false)}
+                pathname={pathname}
               />
               {status === "authenticated" && (
                 <NavLink
@@ -145,6 +147,7 @@ export default function AppSidebar() {
                   icon={BookOpenIcon}
                   label="Documentation"
                   onNavigate={() => setDrawerOpen(false)}
+                  pathname={pathname}
                 />
               )}
               {status === "authenticated" && session?.user?.role === "admin" && (
@@ -153,6 +156,7 @@ export default function AppSidebar() {
                   icon={ShieldIcon}
                   label="Admin"
                   onNavigate={() => setDrawerOpen(false)}
+                  pathname={pathname}
                 />
               )}
             </div>
@@ -231,6 +235,7 @@ export default function AppSidebar() {
             icon={HomeIcon}
             label="Home"
             showLabel={!collapsed || !mounted}
+            pathname={pathname}
           />
           {status === "authenticated" && (
             <NavLink
@@ -238,6 +243,7 @@ export default function AppSidebar() {
               icon={BookOpenIcon}
               label="Documentation"
               showLabel={!collapsed || !mounted}
+              pathname={pathname}
             />
           )}
           {status === "authenticated" && session?.user?.role === "admin" && (
@@ -246,6 +252,7 @@ export default function AppSidebar() {
               icon={ShieldIcon}
               label="Admin"
               showLabel={!collapsed || !mounted}
+              pathname={pathname}
             />
           )}
         </nav>

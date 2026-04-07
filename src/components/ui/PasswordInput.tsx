@@ -4,7 +4,7 @@ import { useState } from "react";
 import type { InputHTMLAttributes } from "react";
 import { EyeIcon, EyeOffIcon } from "@/components/icons";
 
-interface Props extends Omit<InputHTMLAttributes<HTMLInputElement>, "type"> {}
+type Props = Omit<InputHTMLAttributes<HTMLInputElement>, "type">;
 
 export function PasswordInput({ className = "", ...props }: Props) {
   const [show, setShow] = useState(false);

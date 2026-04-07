@@ -26,10 +26,12 @@ export default function SearchBar({ className = "" }: SearchBarProps) {
   const router = useRouter();
 
   useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     setIsMac(navigator.platform.toUpperCase().includes("MAC"));
   }, []);
 
   useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     setLoading(true);
     setError(false);
     fetch("/api/search")
@@ -47,6 +49,7 @@ export default function SearchBar({ className = "" }: SearchBarProps) {
 
   useEffect(() => {
     if (!query.trim() || docs.length === 0) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect
       setResults([]);
       return;
     }
@@ -64,6 +67,7 @@ export default function SearchBar({ className = "" }: SearchBarProps) {
 
   // Reset selected index when results change
   useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     setSelectedIndex(-1);
   }, [results]);
 

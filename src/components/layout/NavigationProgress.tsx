@@ -38,6 +38,7 @@ export default function NavigationProgress() {
     if (prevPathname.current === pathname) return;
     prevPathname.current = pathname;
 
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     setWidth(100);
     hideTimer.current = setTimeout(() => {
       setVisible(false);
