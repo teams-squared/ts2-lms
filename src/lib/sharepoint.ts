@@ -197,6 +197,97 @@ export async function writeDocContentToSharePoint(
 }
 
 /**
+ * Ensure a category folder exists in SharePoint.
+ * Creates the folder if absent; silently succeeds if it already exists.
+ * Call this before writing a file to a category for the first time.
+ */
+export async function ensureCategoryFolder(categorySlug: string): Promise<void> {
+  if (!isSharePointConfigured()) {
+    throw new Error("SharePoint is not configured.");
+  }
+  const client = getGraphClient();
+  const path = `${getApiBase()}/${DOCS_ROOT}:/children`;
+  try {
+    await client.api(path).post({
+      name: categorySlug,
+      folder: {},
+      "@microsoft.graph.conflictBehavior": "fail",
+    });
+  } catch (e: unknown) {
+    // 409 Conflict means the folder already exists — that's fine.
+    const status = (e as { statusCode?: number })?.statusCode;
+    if (status !== 409) throw e;
+  }
+}
+
+/**
+ * Permanently delete an MDX document from SharePoint.
+ * Clears the in-memory cache after a successful delete.
+ */
+export async function deleteDocFromSharePoint(
+  categorySlug: string,
+  fileName: string
+): Promise<void> {
+  if (!isSharePointConfigured()) {
+    throw new Error("SharePoint is not configured.");
+  }
+  const client = getGraphClient();
+  // Path-based addressing: root:/{path}: — trailing colon references the item itself.
+  const path = `${getApiBase()}/${DOCS_ROOT}/${categorySlug}/${fileName}:`;
+  const response: Response = await client
+    .api(path)
+    .responseType("raw" as never)
+    .delete();
+
+  // Graph API returns 204 No Content on successful delete.
+  if (!response.ok) {
+    throw new Error(
+      `Failed to delete ${categorySlug}/${fileName}: ${response.status} ${response.statusText}`
+    );
+  }
+  clearCache();
+}
+
+/**
+ * Move (and optionally rename) an MDX document to a different category folder.
+ * Fetches the source item's Drive ID and item ID first, then PATCHes via the
+ * items endpoint (path-based PATCH is not supported for move operations).
+ * Clears the in-memory cache after a successful move.
+ */
+export async function moveDocInSharePoint(
+  fromCategory: string,
+  fromFile: string,
+  toCategory: string,
+  toFile: string
+): Promise<void> {
+  if (!isSharePointConfigured()) {
+    throw new Error("SharePoint is not configured.");
+  }
+  const client = getGraphClient();
+
+  // Step 1: Resolve the source item's ID and its drive ID.
+  const sourcePath = `${getApiBase()}/${DOCS_ROOT}/${fromCategory}/${fromFile}`;
+  const item = (await client
+    .api(sourcePath)
+    .select("id,parentReference")
+    .get()) as { id: string; parentReference: { driveId: string } };
+
+  const driveId = item.parentReference.driveId;
+  const docsRoot = decodeURIComponent(DOCS_ROOT);
+
+  // Step 2: PATCH to move — must use the /drives/{id}/items/{id} endpoint.
+  await client.api(`/drives/${driveId}/items/${item.id}`).patch({
+    parentReference: {
+      driveId,
+      path: `/drives/${driveId}/root:/${docsRoot}/${toCategory}`,
+    },
+    name: toFile,
+  });
+
+  clearCache();
+}
+
+/**
  * Pre-populate the in-memory cache on process start so the first real user
  * request hits warm cache instead of cold SharePoint API calls.
  * Fire-and-forget: errors are logged but never thrown.
