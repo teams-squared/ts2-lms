@@ -46,7 +46,12 @@ export async function POST(request: Request) {
     );
   }
 
-  await setUserRole(email.toLowerCase().trim(), role);
+  try {
+    await setUserRole(email.toLowerCase().trim(), role);
+  } catch (err) {
+    console.error("[roles] setUserRole failed:", err);
+    return NextResponse.json({ error: "Failed to save role" }, { status: 502 });
+  }
   return NextResponse.json({ success: true });
 }
 
@@ -68,6 +73,11 @@ export async function DELETE(request: Request) {
     return NextResponse.json({ error: "Email required" }, { status: 400 });
   }
 
-  await removeUserRole(email.toLowerCase().trim());
+  try {
+    await removeUserRole(email.toLowerCase().trim());
+  } catch (err) {
+    console.error("[roles] removeUserRole failed:", err);
+    return NextResponse.json({ error: "Failed to remove role" }, { status: 502 });
+  }
   return NextResponse.json({ success: true });
 }

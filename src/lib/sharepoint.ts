@@ -1,5 +1,5 @@
 import { getGraphClient } from "./graph-client";
-import type { Category } from "./types";
+import type { Category, RoleConfig } from "./types";
 import {
   fetchCategoriesFromLocal,
   fetchDocListFromLocal,
@@ -51,6 +51,7 @@ const TTL = {
   categories: 60 * 60 * 1000,  // 60 min
   docList:    30 * 60 * 1000,  // 30 min
   content:    30 * 60 * 1000,  // 30 min
+  roles:       5 * 60 * 1000,  //  5 min
 } as const;
 
 /** Wipe the entire in-memory cache. Called by the revalidate API route. */
@@ -344,6 +345,61 @@ export async function moveDocInSharePoint(
       expiresAt: dstEntry.expiresAt,
     });
   }
+}
+
+/** True when all required SharePoint env vars are present. */
+export function isSharePointAvailable(): boolean {
+  return isSharePointConfigured();
+}
+
+/**
+ * Fetch the role configuration (_roles.json) from SharePoint.
+ * Returns null when SharePoint is not configured or the file does not exist
+ * yet (e.g. first boot before any admin has saved roles).
+ */
+export async function fetchRolesFromSharePoint(): Promise<RoleConfig | null> {
+  if (!isSharePointConfigured()) return null;
+  return withCache<RoleConfig | null>("roles", TTL.roles, async () => {
+    const client = getGraphClient();
+    const apiPath = `${getApiBase()}/${DOCS_ROOT}/_roles.json:/content`;
+    try {
+      const response: Response = await client
+        .api(apiPath)
+        .responseType("raw" as never)
+        .get();
+      if (!response.ok) return null;
+      const text = await response.text();
+      return JSON.parse(text) as RoleConfig;
+    } catch (e) {
+      if ((e as { statusCode?: number })?.statusCode === 404) return null;
+      throw e;
+    }
+  });
+}
+
+/**
+ * Persist the role configuration to _roles.json in SharePoint.
+ * Creates the file if it does not exist; overwrites it if it does.
+ * Clears the in-memory roles cache so the next read reflects the new state.
+ */
+export async function writeRolesToSharePoint(config: RoleConfig): Promise<void> {
+  if (!isSharePointConfigured()) {
+    throw new Error("SharePoint is not configured.");
+  }
+  const client = getGraphClient();
+  const apiPath = `${getApiBase()}/${DOCS_ROOT}/_roles.json:/content`;
+  const body = Buffer.from(JSON.stringify(config, null, 2) + "\n", "utf-8");
+  const response: Response = await client
+    .api(apiPath)
+    .header("Content-Type", "application/json")
+    .responseType("raw" as never)
+    .put(body);
+  if (!response.ok) {
+    throw new Error(
+      `Failed to write _roles.json to SharePoint: ${response.status} ${response.statusText}`
+    );
+  }
+  cache.delete("roles");
 }
 
 /**

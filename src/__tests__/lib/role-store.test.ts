@@ -1,8 +1,19 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
 
-// Mock fs and path so role-store.ts never touches the real filesystem.
-// The module-level bootstrap code (existsSync / copyFileSync) also runs on
-// import, so we stub it out first.
+// ---------------------------------------------------------------------------
+// Mock SharePoint so role-store never hits the real Graph API in tests.
+// Default: SharePoint unavailable → local-file path is exercised.
+// Individual tests can override these to test the SharePoint path.
+// ---------------------------------------------------------------------------
+vi.mock("@/lib/sharepoint", () => ({
+  isSharePointAvailable: vi.fn(() => false),
+  fetchRolesFromSharePoint: vi.fn(async () => null),
+  writeRolesToSharePoint: vi.fn(async () => undefined),
+}));
+
+// Mock fs so role-store never touches the real filesystem.
+// The module-level bootstrap (existsSync / copyFileSync) also runs on import,
+// so we stub it out first.
 vi.mock("fs", () => ({
   default: {
     existsSync: vi.fn(() => true),   // pretend file already exists → skip copy
@@ -19,6 +30,7 @@ vi.mock("fs", () => ({
 }));
 
 import fs from "fs";
+import * as sharepoint from "@/lib/sharepoint";
 import {
   getRoleConfig,
   setUserRole,
@@ -28,6 +40,9 @@ import {
 
 const mockReadFileSync = vi.mocked(fs.readFileSync);
 const mockWriteFileSync = vi.mocked(fs.writeFileSync);
+const mockIsSharePointAvailable = vi.mocked(sharepoint.isSharePointAvailable);
+const mockFetchRoles = vi.mocked(sharepoint.fetchRolesFromSharePoint);
+const mockWriteRoles = vi.mocked(sharepoint.writeRolesToSharePoint);
 
 function seedConfig(admins: string[] = [], managers: string[] = []) {
   const config = { admins, managers, defaultRole: "employee" };
@@ -36,6 +51,10 @@ function seedConfig(admins: string[] = [], managers: string[] = []) {
 
 beforeEach(() => {
   vi.clearAllMocks();
+  // Default: SharePoint not available → use local file
+  mockIsSharePointAvailable.mockReturnValue(false);
+  mockFetchRoles.mockResolvedValue(null);
+  mockWriteRoles.mockResolvedValue(undefined);
   seedConfig();
 });
 
@@ -132,5 +151,50 @@ describe("getAllElevatedUsers", () => {
     seedConfig(["alice@example.com"], ["bob@example.com"]);
     const users = await getAllElevatedUsers();
     expect(users).toHaveLength(2);
+  });
+});
+
+// ── SharePoint path ────────────────────────────────────────────────────────
+describe("SharePoint integration", () => {
+  const spConfig = {
+    admins: ["sp-admin@example.com"],
+    managers: ["sp-manager@example.com"],
+    defaultRole: "employee",
+  };
+
+  beforeEach(() => {
+    mockIsSharePointAvailable.mockReturnValue(true);
+    mockFetchRoles.mockResolvedValue(spConfig);
+  });
+
+  it("getRoleConfig reads from SharePoint when available", async () => {
+    const config = await getRoleConfig();
+    expect(config.admins).toContain("sp-admin@example.com");
+    expect(mockFetchRoles).toHaveBeenCalledTimes(1);
+    expect(mockReadFileSync).not.toHaveBeenCalled();
+  });
+
+  it("setUserRole writes to SharePoint and does not touch the local file", async () => {
+    await setUserRole("new@example.com", "admin");
+    expect(mockWriteRoles).toHaveBeenCalledTimes(1);
+    const saved = mockWriteRoles.mock.calls[0][0];
+    expect(saved.admins).toContain("new@example.com");
+    expect(mockWriteFileSync).not.toHaveBeenCalled();
+  });
+
+  it("removeUserRole writes to SharePoint and does not touch the local file", async () => {
+    await removeUserRole("sp-admin@example.com");
+    expect(mockWriteRoles).toHaveBeenCalledTimes(1);
+    const saved = mockWriteRoles.mock.calls[0][0];
+    expect(saved.admins).not.toContain("sp-admin@example.com");
+    expect(mockWriteFileSync).not.toHaveBeenCalled();
+  });
+
+  it("falls back to local file when _roles.json does not exist in SharePoint yet", async () => {
+    mockFetchRoles.mockResolvedValue(null); // file not in SP yet
+    seedConfig(["local-admin@example.com"], []);
+    const config = await getRoleConfig();
+    expect(config.admins).toContain("local-admin@example.com");
+    expect(mockReadFileSync).toHaveBeenCalledTimes(1);
   });
 });

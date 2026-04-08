@@ -1,5 +1,11 @@
 export type Role = "admin" | "manager" | "employee";
 
+export interface RoleConfig {
+  admins: string[];
+  managers: string[];
+  defaultRole: string;
+}
+
 export interface DocMeta {
   title: string;
   description: string;
