@@ -62,7 +62,7 @@ export default function RecentlyViewed() {
 
   return (
     <div>
-      <h3 className="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-2">
+      <h3 className="text-[10px] font-semibold text-gray-400 dark:text-gray-600 uppercase tracking-widest mb-2 px-3">
         Recently Viewed
       </h3>
       <ul className="space-y-0.5">
@@ -74,8 +74,8 @@ export default function RecentlyViewed() {
                 href={entry.href}
                 className={`block px-3 py-1.5 rounded-lg text-sm transition-colors truncate ${
                   isActive
-                    ? "bg-brand-50 text-brand-700 font-medium"
-                    : "text-gray-600 hover:bg-gray-50 hover:text-gray-900"
+                    ? "bg-brand-50 dark:bg-[#1a0d2e] text-brand-700 dark:text-brand-300 font-medium"
+                    : "text-gray-600 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-[#1e1e28] hover:text-gray-900 dark:hover:text-gray-200"
                 }`}
                 title={entry.title}
               >

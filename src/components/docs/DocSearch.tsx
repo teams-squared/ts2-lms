@@ -114,9 +114,9 @@ export default function DocSearch() {
   const noMatches = query.trim() !== "" && matchCount === 0;
 
   return (
-    <div className="sticky top-0 z-10 flex items-center gap-2 py-2 mb-3 bg-[#f8f9fb]">
+    <div className="sticky top-0 z-10 flex items-center gap-2 py-2 mb-3 bg-[#f5f5f8] dark:bg-[#0f0f14]">
       <div className="relative">
-        <SearchIcon className="absolute left-2.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-gray-400 pointer-events-none" />
+        <SearchIcon className="absolute left-2.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-gray-400 dark:text-gray-600 pointer-events-none" />
         <input
           type="text"
           placeholder="Search in document…"
@@ -126,37 +126,37 @@ export default function DocSearch() {
             if (e.key === "Enter") navigate(e.shiftKey ? -1 : 1);
             if (e.key === "Escape") setQuery("");
           }}
-          className={`pl-8 pr-3 py-1.5 text-sm rounded-lg border bg-white focus:outline-none focus:ring-1 transition-colors w-56 ${
+          className={`pl-8 pr-3 py-1.5 text-sm rounded-lg border bg-white dark:bg-[#1e1e28] text-gray-900 dark:text-gray-100 placeholder-gray-400 dark:placeholder-gray-600 focus:outline-none focus:ring-1 transition-colors w-56 ${
             noMatches
-              ? "border-red-300 focus:border-red-400 focus:ring-red-100"
-              : "border-gray-200 focus:border-brand-400 focus:ring-brand-100"
+              ? "border-red-300 dark:border-red-700 focus:border-red-400 focus:ring-red-100"
+              : "border-gray-200 dark:border-[#3a3a48] focus:border-brand-400 focus:ring-brand-100"
           }`}
         />
       </div>
 
       {matchCount > 0 && (
         <>
-          <span className="text-xs text-gray-400 tabular-nums whitespace-nowrap">
+          <span className="text-xs text-gray-400 dark:text-gray-600 tabular-nums whitespace-nowrap">
             {currentMatch} / {matchCount}
           </span>
           <button
             onClick={() => navigate(-1)}
             title="Previous match (Shift+Enter)"
-            className="p-1 rounded hover:bg-gray-100 text-gray-500 hover:text-gray-700 transition-colors"
+            className="p-1 rounded hover:bg-gray-100 dark:hover:bg-[#26262e] text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200 transition-colors"
           >
             <ChevronUpIcon className="w-3.5 h-3.5" />
           </button>
           <button
             onClick={() => navigate(1)}
             title="Next match (Enter)"
-            className="p-1 rounded hover:bg-gray-100 text-gray-500 hover:text-gray-700 transition-colors"
+            className="p-1 rounded hover:bg-gray-100 dark:hover:bg-[#26262e] text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200 transition-colors"
           >
             <ChevronDownIcon className="w-3.5 h-3.5" />
           </button>
           <button
             onClick={() => setQuery("")}
             title="Clear search"
-            className="p-1 rounded hover:bg-gray-100 text-gray-400 hover:text-gray-600 transition-colors"
+            className="p-1 rounded hover:bg-gray-100 dark:hover:bg-[#26262e] text-gray-400 dark:text-gray-600 hover:text-gray-600 dark:hover:text-gray-400 transition-colors"
           >
             <XIcon className="w-3.5 h-3.5" />
           </button>
@@ -164,7 +164,7 @@ export default function DocSearch() {
       )}
 
       {noMatches && (
-        <span className="text-xs text-red-400">No matches</span>
+        <span className="text-xs text-red-400 dark:text-red-500">No matches</span>
       )}
     </div>
   );

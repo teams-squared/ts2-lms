@@ -33,7 +33,7 @@ export default async function CategoryPage({
   ]);
 
   const CatIcon = CATEGORY_ICONS[category.icon] || FileTextIcon;
-  const catColor = CATEGORY_COLORS[category.icon] || "#f0e6ff";
+  const catColor = CATEGORY_COLORS[category.icon] || "var(--cat-shield)";
   const catAccent = CATEGORY_ACCENT_COLORS[category.icon] || "#a78bfa";
 
   // Parent category: has subcategories but no docs directly
@@ -47,12 +47,12 @@ export default async function CategoryPage({
 
     return (
       <div className="px-4 sm:px-6 lg:px-8 py-6 animate-fade-in">
-        <nav className="flex items-center text-sm text-gray-500 mb-5">
-          <Link href="/" className="hover:text-brand-600">Home</Link>
-          <ChevronRightIcon className="w-3.5 h-3.5 mx-1.5 text-gray-300" />
-          <Link href="/docs" className="hover:text-brand-600">Docs</Link>
-          <ChevronRightIcon className="w-3.5 h-3.5 mx-1.5 text-gray-300" />
-          <span className="text-gray-900 font-medium">{category.title}</span>
+        <nav className="flex items-center text-sm text-gray-500 dark:text-gray-400 mb-5">
+          <Link href="/" className="hover:text-brand-600 dark:hover:text-brand-400">Home</Link>
+          <ChevronRightIcon className="w-3.5 h-3.5 mx-1.5 text-gray-300 dark:text-gray-600" />
+          <Link href="/docs" className="hover:text-brand-600 dark:hover:text-brand-400">Docs</Link>
+          <ChevronRightIcon className="w-3.5 h-3.5 mx-1.5 text-gray-300 dark:text-gray-600" />
+          <span className="text-gray-900 dark:text-gray-200 font-medium">{category.title}</span>
         </nav>
 
         <div className="flex gap-8">
@@ -60,16 +60,16 @@ export default async function CategoryPage({
 
           <div className="flex-1 min-w-0">
             {/* Rich category header */}
-            <div className="flex items-center gap-3 mb-6 pb-5 border-b border-gray-100">
+            <div className="flex items-center gap-3 mb-6 pb-5 border-b border-gray-100 dark:border-[#26262e]">
               <div
                 className="w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0"
                 style={{ backgroundColor: catColor }}
               >
-                <CatIcon className="w-5 h-5" style={{ color: "#4400FF" }} />
+                <CatIcon className="w-5 h-5" style={{ color: "var(--icon-fg)" }} />
               </div>
               <div>
-                <h1 className="text-xl font-bold text-gray-900">{category.title}</h1>
-                <p className="text-sm text-gray-500">{category.description}</p>
+                <h1 className="text-xl font-bold text-gray-900 dark:text-gray-100">{category.title}</h1>
+                <p className="text-sm text-gray-500 dark:text-gray-400">{category.description}</p>
               </div>
             </div>
 
@@ -96,23 +96,23 @@ export default async function CategoryPage({
 
   return (
     <div className="px-4 sm:px-6 lg:px-8 py-6 animate-fade-in">
-      <nav className="flex items-center text-sm text-gray-500 mb-5">
-        <Link href="/" className="hover:text-brand-600">Home</Link>
-        <ChevronRightIcon className="w-3.5 h-3.5 mx-1.5 text-gray-300" />
-        <Link href="/docs" className="hover:text-brand-600">Docs</Link>
-        <ChevronRightIcon className="w-3.5 h-3.5 mx-1.5 text-gray-300" />
+      <nav className="flex items-center text-sm text-gray-500 dark:text-gray-400 mb-5">
+        <Link href="/" className="hover:text-brand-600 dark:hover:text-brand-400">Home</Link>
+        <ChevronRightIcon className="w-3.5 h-3.5 mx-1.5 text-gray-300 dark:text-gray-600" />
+        <Link href="/docs" className="hover:text-brand-600 dark:hover:text-brand-400">Docs</Link>
+        <ChevronRightIcon className="w-3.5 h-3.5 mx-1.5 text-gray-300 dark:text-gray-600" />
         {category.parentCategory && parentTitle && (
           <>
             <Link
               href={`/docs/${category.parentCategory}`}
-              className="hover:text-brand-600"
+              className="hover:text-brand-600 dark:hover:text-brand-400"
             >
               {parentTitle}
             </Link>
-            <ChevronRightIcon className="w-3.5 h-3.5 mx-1.5 text-gray-300" />
+            <ChevronRightIcon className="w-3.5 h-3.5 mx-1.5 text-gray-300 dark:text-gray-600" />
           </>
         )}
-        <span className="text-gray-900 font-medium">{category.title}</span>
+        <span className="text-gray-900 dark:text-gray-200 font-medium">{category.title}</span>
       </nav>
 
       <div className="flex gap-8">
@@ -124,16 +124,16 @@ export default async function CategoryPage({
 
         <div className="flex-1 min-w-0">
           {/* Rich category header */}
-          <div className="flex items-center gap-3 mb-6 pb-5 border-b border-gray-100">
+          <div className="flex items-center gap-3 mb-6 pb-5 border-b border-gray-100 dark:border-[#26262e]">
             <div
               className="w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0"
               style={{ backgroundColor: catColor }}
             >
-              <CatIcon className="w-5 h-5" style={{ color: "#4400FF" }} />
+              <CatIcon className="w-5 h-5" style={{ color: "var(--icon-fg)" }} />
             </div>
             <div>
-              <h1 className="text-xl font-bold text-gray-900">{category.title}</h1>
-              <p className="text-sm text-gray-500">{category.description}</p>
+              <h1 className="text-xl font-bold text-gray-900 dark:text-gray-100">{category.title}</h1>
+              <p className="text-sm text-gray-500 dark:text-gray-400">{category.description}</p>
             </div>
           </div>
 
@@ -143,40 +143,40 @@ export default async function CategoryPage({
                 <Link
                   key={doc.slug}
                   href={`/docs/${categorySlug}/${doc.slug}`}
-                  className="flex items-stretch rounded-lg border border-gray-200/60 bg-white shadow-card hover:shadow-card-hover hover:border-brand-300 transition-all duration-150 group overflow-hidden"
+                  className="flex items-stretch rounded-lg border border-gray-200/60 dark:border-[#2e2e3a] bg-white dark:bg-[#1c1c24] shadow-card hover:shadow-card-hover hover:border-brand-300 dark:hover:border-brand-700 transition-all duration-150 group overflow-hidden"
                 >
                   {/* Left category color accent */}
                   <div className="w-1 flex-shrink-0" style={{ backgroundColor: catAccent }} />
 
                   <div className="flex items-start gap-3 px-4 py-3 flex-1 min-w-0">
-                    <FileTextIcon className="w-4 h-4 text-gray-300 mt-0.5 flex-shrink-0 group-hover:text-brand-400 transition-colors" />
+                    <FileTextIcon className="w-4 h-4 text-gray-300 dark:text-gray-600 mt-0.5 flex-shrink-0 group-hover:text-brand-400 transition-colors" />
                     <div className="min-w-0 flex-1">
-                      <h3 className="text-sm font-semibold text-gray-900 group-hover:text-brand-600 transition-colors">
+                      <h3 className="text-sm font-semibold text-gray-900 dark:text-gray-100 group-hover:text-brand-600 dark:group-hover:text-brand-400 transition-colors">
                         {doc.title}
                       </h3>
-                      <p className="text-xs text-gray-500 mt-0.5 line-clamp-2">
+                      <p className="text-xs text-gray-500 dark:text-gray-400 mt-0.5 line-clamp-2">
                         {doc.description}
                       </p>
                       <div className="flex items-center gap-2 mt-2 flex-wrap">
                         {doc.author && (
-                          <span className="inline-flex items-center gap-1 text-xs text-gray-500">
-                            <span className="w-4 h-4 rounded-full bg-gray-200 text-gray-600 text-[9px] font-semibold flex items-center justify-center flex-shrink-0">
+                          <span className="inline-flex items-center gap-1 text-xs text-gray-500 dark:text-gray-400">
+                            <span className="w-4 h-4 rounded-full bg-gray-200 dark:bg-[#2e2e3a] text-gray-600 dark:text-gray-400 text-[9px] font-semibold flex items-center justify-center flex-shrink-0">
                               {doc.author[0].toUpperCase()}
                             </span>
                             {doc.author}
                           </span>
                         )}
                         {doc.updatedAt && (
-                          <span className="text-xs text-gray-400">{doc.updatedAt}</span>
+                          <span className="text-xs text-gray-400 dark:text-gray-600">{doc.updatedAt}</span>
                         )}
                         {doc.minRole !== "employee" && (
-                          <span className="flex items-center gap-0.5 text-[10px] text-amber-600 bg-amber-50 px-1.5 py-0.5 rounded-full">
+                          <span className="flex items-center gap-0.5 text-[10px] text-amber-600 dark:text-amber-400 bg-amber-50 dark:bg-amber-950/30 px-1.5 py-0.5 rounded-full">
                             <LockIcon className="w-2.5 h-2.5" />
                             {doc.minRole}
                           </span>
                         )}
                         {doc.passwordProtected && (
-                          <span className="flex items-center gap-0.5 text-[10px] text-brand-600 bg-brand-50 px-1.5 py-0.5 rounded-full">
+                          <span className="flex items-center gap-0.5 text-[10px] text-brand-600 dark:text-brand-400 bg-brand-50 dark:bg-[#1a0d2e] px-1.5 py-0.5 rounded-full">
                             <LockIcon className="w-2.5 h-2.5" />
                             password
                           </span>
@@ -186,7 +186,7 @@ export default async function CategoryPage({
                             {doc.tags.map((tag) => (
                               <span
                                 key={tag}
-                                className="px-1.5 py-0.5 rounded bg-gray-100 text-gray-500 text-[10px]"
+                                className="px-1.5 py-0.5 rounded bg-gray-100 dark:bg-[#2e2e3a] text-gray-500 dark:text-gray-400 text-[10px]"
                               >
                                 {tag}
                               </span>
@@ -195,13 +195,13 @@ export default async function CategoryPage({
                         )}
                       </div>
                     </div>
-                    <ChevronRightIcon className="w-4 h-4 text-gray-300 group-hover:text-brand-400 mt-0.5 flex-shrink-0 transition-colors" />
+                    <ChevronRightIcon className="w-4 h-4 text-gray-300 dark:text-gray-600 group-hover:text-brand-400 mt-0.5 flex-shrink-0 transition-colors" />
                   </div>
                 </Link>
               ))}
             </div>
           ) : (
-            <div className="text-center py-12 text-gray-400 text-sm">
+            <div className="text-center py-12 text-gray-400 dark:text-gray-600 text-sm">
               No documents in this category yet.
             </div>
           )}

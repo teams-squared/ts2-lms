@@ -60,9 +60,7 @@ export default function SearchBar({ className = "" }: SearchBarProps) {
     });
 
     const found = fuse.search(query).map((r) => r.item);
-    const sliced = found.slice(0, 8);
-    setResults(sliced);
-
+    setResults(found.slice(0, 8));
   }, [query, docs]);
 
   // Reset selected index when results change
@@ -71,7 +69,7 @@ export default function SearchBar({ className = "" }: SearchBarProps) {
     setSelectedIndex(-1);
   }, [results]);
 
-  // Click-outside to close
+  // Posthog analytics
   useEffect(() => {
     if (!query.trim()) return;
     const timer = setTimeout(() => {
@@ -84,6 +82,7 @@ export default function SearchBar({ className = "" }: SearchBarProps) {
     return () => clearTimeout(timer);
   }, [query, results]);
 
+  // Click-outside to close
   useEffect(() => {
     function handleClickOutside(e: MouseEvent) {
       if (ref.current && !ref.current.contains(e.target as Node)) {
@@ -135,7 +134,7 @@ export default function SearchBar({ className = "" }: SearchBarProps) {
   return (
     <div ref={ref} className={`relative ${className}`}>
       <div className="relative">
-        <SearchIcon className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+        <SearchIcon className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400 dark:text-gray-500 pointer-events-none" />
         <input
           ref={inputRef}
           type="text"
@@ -152,10 +151,10 @@ export default function SearchBar({ className = "" }: SearchBarProps) {
           onFocus={() => setIsOpen(true)}
           onKeyDown={handleInputKeyDown}
           placeholder="Search documentation..."
-          className="w-full pl-10 pr-20 py-2.5 rounded-lg border border-gray-200 bg-white text-sm focus:outline-none focus:ring-2 focus:ring-brand-500 focus:border-transparent shadow-card transition-shadow"
+          className="w-full pl-10 pr-20 py-2.5 rounded-xl border border-gray-200 dark:border-[#3a3a48] bg-white dark:bg-[#1c1c24] text-sm text-gray-900 dark:text-gray-100 placeholder-gray-400 dark:placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-brand-500 focus:border-transparent shadow-card transition-all"
         />
         {!query && (
-          <kbd className="absolute right-3 top-1/2 -translate-y-1/2 hidden sm:flex items-center gap-0.5 px-1.5 py-0.5 rounded border border-gray-200 bg-gray-50 text-[10px] text-gray-400 font-mono pointer-events-none">
+          <kbd className="absolute right-3 top-1/2 -translate-y-1/2 hidden sm:flex items-center gap-0.5 px-1.5 py-0.5 rounded border border-gray-200 dark:border-[#3a3a48] bg-gray-50 dark:bg-[#26262e] text-[10px] text-gray-400 dark:text-gray-600 font-mono pointer-events-none">
             {isMac ? "⌘K" : "Ctrl K"}
           </kbd>
         )}
@@ -166,10 +165,10 @@ export default function SearchBar({ className = "" }: SearchBarProps) {
           id="search-listbox"
           role="listbox"
           aria-label="Search results"
-          className="absolute top-full mt-1.5 w-full bg-white rounded-lg border border-gray-200 shadow-lg overflow-hidden z-50 text-left"
+          className="absolute top-full mt-2 w-full bg-white dark:bg-[#1c1c24] rounded-xl border border-gray-200 dark:border-[#2e2e3a] shadow-elevated overflow-hidden z-50 text-left"
         >
           {loading && (
-            <div className="px-4 py-3 text-sm text-gray-400">
+            <div className="px-4 py-3 text-sm text-gray-400 dark:text-gray-600">
               Loading search index…
             </div>
           )}
@@ -189,18 +188,18 @@ export default function SearchBar({ className = "" }: SearchBarProps) {
                 setQuery("");
                 setSelectedIndex(-1);
               }}
-              className={`flex items-start gap-2.5 px-3 py-2 transition-colors border-b border-gray-50 last:border-b-0 border-l-2 ${
+              className={`flex items-start gap-2.5 px-3 py-2.5 transition-colors border-b border-gray-50 dark:border-[#26262e] last:border-b-0 border-l-2 ${
                 idx === selectedIndex
-                  ? "bg-brand-50 border-l-brand-400"
-                  : "border-l-transparent hover:bg-gray-50 hover:border-l-brand-400"
+                  ? "bg-brand-50 dark:bg-[#1a0d2e] border-l-brand-400"
+                  : "border-l-transparent hover:bg-gray-50 dark:hover:bg-[#22222e] hover:border-l-brand-300"
               }`}
             >
-              <FileTextIcon className="w-4 h-4 text-gray-300 mt-0.5 flex-shrink-0" />
+              <FileTextIcon className="w-4 h-4 text-gray-300 dark:text-gray-600 mt-0.5 flex-shrink-0" />
               <div className="min-w-0">
-                <div className="text-sm font-medium text-gray-900 truncate">
+                <div className="text-sm font-medium text-gray-900 dark:text-gray-100 truncate">
                   {doc.title}
                 </div>
-                <div className="text-xs text-gray-500 truncate">
+                <div className="text-xs text-gray-500 dark:text-gray-500 truncate">
                   {doc.description}
                 </div>
               </div>

@@ -49,7 +49,7 @@ function NodeItem({ node, currentCategory, depth }: NodeItemProps) {
   const [open, setOpen] = useState(defaultOpen);
 
   const Icon = CATEGORY_ICONS[category.icon] || FileTextIcon;
-  const iconBg = CATEGORY_COLORS[category.icon] || "#f0e6ff";
+  const iconBg = CATEGORY_COLORS[category.icon] || "var(--cat-shield)";
   const indent = depth * 12;
 
   if (hasChildren) {
@@ -57,7 +57,7 @@ function NodeItem({ node, currentCategory, depth }: NodeItemProps) {
       <li className="relative">
         <button
           onClick={() => setOpen((v) => !v)}
-          className="w-full flex items-center gap-2 py-1.5 rounded-lg text-sm font-medium text-gray-700 hover:bg-gray-50 hover:text-gray-900 transition-colors"
+          className="w-full flex items-center gap-2 py-1.5 rounded-lg text-sm font-medium text-gray-700 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-[#1e1e28] hover:text-gray-900 dark:hover:text-gray-200 transition-colors"
           style={{ paddingLeft: `${12 + indent}px`, paddingRight: "12px" }}
         >
           {depth === 0 ? (
@@ -65,12 +65,12 @@ function NodeItem({ node, currentCategory, depth }: NodeItemProps) {
               className="w-5 h-5 rounded flex items-center justify-center flex-shrink-0"
               style={{ backgroundColor: iconBg }}
             >
-              <Icon className="w-3 h-3 flex-shrink-0" style={{ color: "#4400FF" }} />
+              <Icon className="w-3 h-3 flex-shrink-0" style={{ color: "var(--icon-fg)" }} />
             </span>
           ) : null}
           <span className="flex-1 text-left">{category.title}</span>
           <ChevronRightIcon
-            className="w-3.5 h-3.5 flex-shrink-0 text-gray-400 transition-transform duration-150"
+            className="w-3.5 h-3.5 flex-shrink-0 text-gray-400 dark:text-gray-600 transition-transform duration-150"
             style={{ transform: open ? "rotate(90deg)" : "rotate(0deg)" }}
           />
         </button>
@@ -78,7 +78,7 @@ function NodeItem({ node, currentCategory, depth }: NodeItemProps) {
         {/* Tree connector line */}
         {open && (
           <span
-            className="absolute w-px bg-gray-300"
+            className="absolute w-px bg-gray-200 dark:bg-[#2e2e3a]"
             style={{
               left: `${12 + indent + (depth === 0 ? 10 : 6)}px`,
               top: "32px",
@@ -114,8 +114,8 @@ function NodeItem({ node, currentCategory, depth }: NodeItemProps) {
         href={`/docs/${category.slug}`}
         className={`flex items-center gap-2 py-1.5 rounded-r-lg text-sm transition-colors ${
           isActive
-            ? "bg-brand-50 text-brand-700 font-medium border-l-[3px] border-brand-500"
-            : "text-gray-600 hover:bg-gray-50 hover:text-gray-900 border-l-[3px] border-transparent"
+            ? "bg-brand-50 dark:bg-[#1a0d2e] text-brand-700 dark:text-brand-300 font-medium border-l-[3px] border-brand-500"
+            : "text-gray-600 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-[#1e1e28] hover:text-gray-900 dark:hover:text-gray-200 border-l-[3px] border-transparent"
         }`}
         style={{ paddingLeft: `${12 + indent - (isActive ? 1 : 0)}px`, paddingRight: "12px" }}
       >
@@ -124,7 +124,7 @@ function NodeItem({ node, currentCategory, depth }: NodeItemProps) {
             className="w-5 h-5 rounded flex items-center justify-center flex-shrink-0"
             style={{ backgroundColor: iconBg }}
           >
-            <Icon className="w-3 h-3 flex-shrink-0" style={{ color: "#4400FF" }} />
+            <Icon className="w-3 h-3 flex-shrink-0" style={{ color: "var(--icon-fg)" }} />
           </span>
         ) : null}
         <span>{category.title}</span>
@@ -139,9 +139,9 @@ export default function Sidebar({ categories, currentCategory, docs }: SidebarPr
 
   return (
     <aside className="w-56 flex-shrink-0 hidden md:block">
-      <div className="sticky top-16 space-y-4 pr-4">
+      <div className="sticky top-16 space-y-5 pr-4">
         <div>
-          <h3 className="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-2">
+          <h3 className="text-[10px] font-semibold text-gray-400 dark:text-gray-600 uppercase tracking-widest mb-2 px-3">
             Categories
           </h3>
           <ul className="space-y-0.5">
@@ -158,7 +158,7 @@ export default function Sidebar({ categories, currentCategory, docs }: SidebarPr
 
         {currentCategory && docs && docs.length > 0 && (
           <div>
-            <h3 className="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-2">
+            <h3 className="text-[10px] font-semibold text-gray-400 dark:text-gray-600 uppercase tracking-widest mb-2 px-3">
               In This Section
             </h3>
             <ul className="space-y-0.5">
@@ -171,12 +171,12 @@ export default function Sidebar({ categories, currentCategory, docs }: SidebarPr
                       href={docPath}
                       className={`flex items-center gap-2 py-1.5 rounded-r-lg text-sm transition-colors ${
                         isActive
-                          ? "bg-brand-50 text-brand-700 font-medium border-l-[3px] border-brand-500"
-                          : "text-gray-600 hover:bg-gray-50 hover:text-gray-900 border-l-[3px] border-transparent"
+                          ? "bg-brand-50 dark:bg-[#1a0d2e] text-brand-700 dark:text-brand-300 font-medium border-l-[3px] border-brand-500"
+                          : "text-gray-600 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-[#1e1e28] hover:text-gray-900 dark:hover:text-gray-200 border-l-[3px] border-transparent"
                       }`}
                       style={{ paddingLeft: `${12 - (isActive ? 1 : 0)}px`, paddingRight: "12px" }}
                     >
-                      <FileTextIcon className="w-3.5 h-3.5 flex-shrink-0 text-gray-400" />
+                      <FileTextIcon className="w-3.5 h-3.5 flex-shrink-0 text-gray-400 dark:text-gray-600" />
                       <span className="truncate">{doc.title}</span>
                     </Link>
                   </li>

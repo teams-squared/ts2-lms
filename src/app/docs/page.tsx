@@ -40,14 +40,12 @@ export default async function DocsPage({
     })
   );
 
-  // Collect all unique tags across all docs
   const allDocs = sections.flatMap(({ subcategories, docs }) => [
     ...docs,
     ...subcategories.flatMap(({ docs: subDocs }) => subDocs),
   ]);
   const allTags = [...new Set(allDocs.flatMap((d) => d.tags ?? []))].sort();
 
-  // Apply tag filter
   const filteredSections = tagFilter
     ? sections
         .map(({ cat, subcategories, docs }) => ({
@@ -68,15 +66,15 @@ export default async function DocsPage({
 
   return (
     <div className="px-4 sm:px-6 lg:px-8 py-6 animate-fade-in">
-      {/* Branded hero header */}
-      <div className="bg-brand-gradient rounded-xl px-6 py-7 mb-6">
-        <div className="flex items-center gap-3 mb-3">
-          <div className="w-10 h-10 rounded-xl bg-brand-100/60 flex items-center justify-center flex-shrink-0">
-            <BookOpenIcon className="w-5 h-5 text-brand-700" />
+      {/* Header */}
+      <div className="bg-brand-gradient rounded-2xl px-6 py-7 mb-6">
+        <div className="flex items-center gap-3 mb-4">
+          <div className="w-10 h-10 rounded-xl bg-white/50 dark:bg-white/10 flex items-center justify-center flex-shrink-0">
+            <BookOpenIcon className="w-5 h-5 text-brand-700 dark:text-brand-400" />
           </div>
           <div>
-            <h1 className="text-xl font-bold text-brand-900 leading-tight">Documentation</h1>
-            <p className="text-sm text-brand-700 mt-0.5">
+            <h1 className="text-xl font-bold text-gray-900 dark:text-gray-100 leading-tight">Documentation</h1>
+            <p className="text-sm text-gray-500 dark:text-gray-400 mt-0.5">
               Browse all available documentation by category
             </p>
           </div>
@@ -88,24 +86,24 @@ export default async function DocsPage({
         <TagFilter tags={allTags} />
       </Suspense>
 
-      <div className="space-y-6">
+      <div className="space-y-8">
         {filteredSections.map(({ cat, subcategories, docs }) => {
           const SectionIcon = CATEGORY_ICONS[cat.icon] ?? BookOpenIcon;
-          const sectionColor = CATEGORY_COLORS[cat.icon] ?? "#ede9fe";
+          const sectionColor = CATEGORY_COLORS[cat.icon] ?? "var(--cat-shield)";
           if (subcategories.length > 0) {
             return (
               <div key={cat.slug}>
-                <div className="flex items-center gap-2 mb-4">
+                <div className="flex items-center gap-2.5 mb-4">
                   <span
-                    className="w-6 h-6 rounded flex items-center justify-center flex-shrink-0"
+                    className="w-6 h-6 rounded-lg flex items-center justify-center flex-shrink-0"
                     style={{ backgroundColor: sectionColor }}
                   >
-                    <SectionIcon className="w-3.5 h-3.5" style={{ color: "#4400FF" }} />
+                    <SectionIcon className="w-3.5 h-3.5" style={{ color: "var(--icon-fg)" }} />
                   </span>
-                  <h2 className="text-sm font-semibold text-gray-800">{cat.title}</h2>
-                  <div className="flex-1 h-px bg-gray-100 ml-1" />
+                  <h2 className="text-sm font-semibold text-gray-800 dark:text-gray-200">{cat.title}</h2>
+                  <div className="flex-1 h-px bg-gray-100 dark:bg-[#26262e] ml-1" />
                 </div>
-                <div className="grid grid-cols-[repeat(auto-fit,minmax(260px,1fr))] gap-5">
+                <div className="grid grid-cols-[repeat(auto-fill,minmax(260px,1fr))] gap-4">
                   {subcategories.map(({ sub, docs: subDocs }) => (
                     <CategoryCard
                       key={sub.slug}
@@ -120,7 +118,7 @@ export default async function DocsPage({
           }
 
           return (
-            <div key={cat.slug} className="grid grid-cols-[repeat(auto-fit,minmax(260px,1fr))] gap-5">
+            <div key={cat.slug} className="grid grid-cols-[repeat(auto-fill,minmax(260px,1fr))] gap-4">
               <CategoryCard
                 category={cat}
                 docCount={docs.length}
@@ -132,7 +130,7 @@ export default async function DocsPage({
       </div>
 
       {filteredSections.length === 0 && (
-        <div className="text-center py-12 text-gray-400 text-sm">
+        <div className="text-center py-16 text-gray-400 dark:text-gray-600 text-sm">
           {tagFilter
             ? `No documents found with tag "${tagFilter}".`
             : "No documentation categories available for your role."}

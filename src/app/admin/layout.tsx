@@ -14,11 +14,11 @@ export default async function AdminLayout({
 
   return (
     <div className="px-4 sm:px-6 lg:px-8 py-6 animate-fade-in">
-      <div className="mb-4">
-        <h1 className="text-2xl font-bold text-gray-900 mb-1">
+      <div className="mb-5">
+        <h1 className="text-2xl font-bold text-gray-900 dark:text-gray-100 tracking-tight mb-1">
           Admin Dashboard
         </h1>
-        <p className="text-sm text-gray-500">
+        <p className="text-sm text-gray-500 dark:text-gray-400">
           Manage roles, categories, and view portal statistics
         </p>
       </div>

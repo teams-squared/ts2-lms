@@ -36,7 +36,6 @@ export default function DocPasswordGate({
       });
 
       if (res.ok) {
-        // Cookie is now set — re-run the server component to reveal content
         router.refresh();
       } else {
         const data = await res.json().catch(() => ({}));
@@ -56,25 +55,23 @@ export default function DocPasswordGate({
   return (
     <div className="flex flex-col items-center justify-center py-20 px-4">
       <div className="w-full max-w-sm">
-        {/* Lock icon */}
+        {/* Icon */}
         <div className="flex justify-center mb-5">
-          <div className="w-14 h-14 rounded-2xl bg-brand-50 border border-brand-100 flex items-center justify-center">
-            <LockIcon className="w-7 h-7 text-brand-500" />
+          <div className="w-14 h-14 rounded-2xl bg-brand-50 dark:bg-[#1a0d2e] border border-brand-100 dark:border-brand-900/50 flex items-center justify-center shadow-sm">
+            <LockIcon className="w-7 h-7 text-brand-500 dark:text-brand-400" />
           </div>
         </div>
 
-        {/* Doc info */}
         <div className="text-center mb-6">
-          <h2 className="text-lg font-semibold text-gray-900">{title}</h2>
+          <h2 className="text-lg font-semibold text-gray-900 dark:text-gray-100">{title}</h2>
           {description && (
-            <p className="text-sm text-gray-500 mt-1">{description}</p>
+            <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">{description}</p>
           )}
-          <p className="text-sm text-gray-400 mt-3">
+          <p className="text-sm text-gray-400 dark:text-gray-600 mt-3">
             This document is password protected. Enter the password to continue.
           </p>
         </div>
 
-        {/* Password form */}
         <form onSubmit={handleSubmit} className="space-y-3">
           <PasswordInput
             value={password}
@@ -86,17 +83,17 @@ export default function DocPasswordGate({
             autoFocus
             className={
               error
-                ? "border-red-300 bg-red-50 focus:border-red-400 focus:ring-red-100"
+                ? "border-red-300 dark:border-red-700 bg-red-50 dark:bg-red-950/20 focus:border-red-400 focus:ring-red-100"
                 : ""
             }
           />
 
-          {error && <p className="text-xs text-red-500 px-1">{error}</p>}
+          {error && <p className="text-xs text-red-500 dark:text-red-400 px-1">{error}</p>}
 
           <Button
             type="submit"
             disabled={loading || !password}
-            className="w-full py-2.5 justify-center focus:ring-offset-1"
+            className="w-full py-2.5 justify-center"
           >
             {loading ? "Verifying…" : "Unlock Document"}
           </Button>

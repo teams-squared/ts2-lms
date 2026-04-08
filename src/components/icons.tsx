@@ -172,12 +172,12 @@ export const CATEGORY_ICONS: Record<string, React.FC<IconProps>> = {
 };
 
 export const CATEGORY_COLORS: Record<string, string> = {
-  shield: "#ede9fe",
-  rocket: "#ecfdf5",
-  code: "#fffbeb",
-  briefcase: "#fff1f2",
-  book: "#eff6ff",
-  gear: "#f0fdf4",
+  shield:    "var(--cat-shield)",
+  rocket:    "var(--cat-rocket)",
+  code:      "var(--cat-code)",
+  briefcase: "var(--cat-briefcase)",
+  book:      "var(--cat-book)",
+  gear:      "var(--cat-gear)",
 };
 
 // More saturated accent colours for decorative strips/borders (400-level equivalents).
@@ -260,6 +260,23 @@ export function EyeOffIcon(props: IconProps) {
       <path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94" />
       <path d="M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19" />
       <line x1="1" y1="1" x2="23" y2="23" />
+    </Icon>
+  );
+}
+
+export function SunIcon(props: IconProps) {
+  return (
+    <Icon {...props}>
+      <circle cx="12" cy="12" r="4" />
+      <path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M6.34 17.66l-1.41 1.41M19.07 4.93l-1.41 1.41" />
+    </Icon>
+  );
+}
+
+export function MoonIcon(props: IconProps) {
+  return (
+    <Icon {...props}>
+      <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z" />
     </Icon>
   );
 }

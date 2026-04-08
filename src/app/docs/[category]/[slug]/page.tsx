@@ -59,9 +59,6 @@ export default async function DocPage({
   if (!doc) notFound();
   if (!hasAccess(userRole, doc.meta.minRole)) notFound();
 
-  // Password gate: check whether this document is in the session's unlockedDocs
-  // list.  That list lives inside the auth JWT, so it is automatically cleared
-  // when the user signs out — no separate cookie management needed.
   const docKey = `${categorySlug}/${slug}`;
   const unlockedDocs = session?.user?.unlockedDocs ?? [];
   const isUnlocked = !doc.meta.passwordProtected || unlockedDocs.includes(docKey);
@@ -72,34 +69,34 @@ export default async function DocPage({
   return (
     <div className="px-4 sm:px-6 lg:px-8 py-6 animate-fade-in">
       {/* Breadcrumb */}
-      <nav className="flex items-center text-sm text-gray-500 mb-5">
-        <Link href="/" className="hover:text-brand-600">
+      <nav className="flex items-center flex-wrap text-xs text-gray-400 dark:text-gray-600 mb-6 gap-y-1">
+        <Link href="/" className="hover:text-brand-500 dark:hover:text-brand-400 transition-colors">
           Home
         </Link>
-        <ChevronRightIcon className="w-3.5 h-3.5 mx-1.5 text-gray-300" />
-        <Link href="/docs" className="hover:text-brand-600">
+        <ChevronRightIcon className="w-3 h-3 mx-1.5 flex-shrink-0" />
+        <Link href="/docs" className="hover:text-brand-500 dark:hover:text-brand-400 transition-colors">
           Docs
         </Link>
-        <ChevronRightIcon className="w-3.5 h-3.5 mx-1.5 text-gray-300" />
+        <ChevronRightIcon className="w-3 h-3 mx-1.5 flex-shrink-0" />
         {parentCategory && (
           <>
             <Link
               href={`/docs/${parentCategory.slug}`}
-              className="hover:text-brand-600"
+              className="hover:text-brand-500 dark:hover:text-brand-400 transition-colors"
             >
               {parentCategory.title}
             </Link>
-            <ChevronRightIcon className="w-3.5 h-3.5 mx-1.5 text-gray-300" />
+            <ChevronRightIcon className="w-3 h-3 mx-1.5 flex-shrink-0" />
           </>
         )}
         <Link
           href={`/docs/${categorySlug}`}
-          className="hover:text-brand-600"
+          className="hover:text-brand-500 dark:hover:text-brand-400 transition-colors"
         >
           {category.title}
         </Link>
-        <ChevronRightIcon className="w-3.5 h-3.5 mx-1.5 text-gray-300" />
-        <span className="text-gray-900 font-medium">{doc.meta.title}</span>
+        <ChevronRightIcon className="w-3 h-3 mx-1.5 flex-shrink-0" />
+        <span className="text-gray-700 dark:text-gray-300 font-medium">{doc.meta.title}</span>
       </nav>
 
       <div className="flex gap-8">
@@ -113,7 +110,6 @@ export default async function DocPage({
           <DocSearch />
           {isUnlocked ? (
             <>
-              {/* Only track views when the doc is actually accessible */}
               <DocViewTracker
                 title={doc.meta.title}
                 slug={slug}
@@ -121,26 +117,32 @@ export default async function DocPage({
                 categoryTitle={category.title}
                 userRole={userRole}
               />
-              <div className="mb-6 bg-brand-50/40 rounded-lg px-4 py-3">
-                <div className="flex items-start justify-between gap-2">
-                  <h1 className="text-2xl font-bold text-gray-900 mb-1">
+
+              {/* Doc header */}
+              <div className="mb-6 rounded-xl border border-gray-100 dark:border-[#2e2e3a] bg-white dark:bg-[#1c1c24] px-5 py-4 shadow-card">
+                <div className="flex items-start justify-between gap-3 mb-1.5">
+                  <h1 className="text-2xl font-bold text-gray-900 dark:text-gray-100 leading-tight tracking-tight">
                     {doc.meta.title}
                   </h1>
                   <CopyLinkButton />
                 </div>
-                <p className="text-sm text-gray-500">{doc.meta.description}</p>
-                <div className="flex flex-wrap items-center gap-3 mt-2 text-xs text-gray-400">
-                  {doc.meta.author && <span>By {doc.meta.author}</span>}
+                {doc.meta.description && (
+                  <p className="text-sm text-gray-500 dark:text-gray-400 leading-relaxed">{doc.meta.description}</p>
+                )}
+                <div className="flex flex-wrap items-center gap-2.5 mt-3 text-xs text-gray-400 dark:text-gray-600">
+                  {doc.meta.author && (
+                    <span className="flex items-center gap-1">By {doc.meta.author}</span>
+                  )}
                   {doc.meta.updatedAt && (
                     <span>Updated {doc.meta.updatedAt}</span>
                   )}
                   {doc.meta.minRole !== "employee" && (
-                    <span className="px-1.5 py-0.5 rounded bg-amber-50 text-amber-600 font-medium">
+                    <span className="px-2 py-0.5 rounded-full bg-amber-50 dark:bg-amber-950/40 text-amber-600 dark:text-amber-400 font-medium border border-amber-100 dark:border-amber-900/50">
                       {doc.meta.minRole}+ only
                     </span>
                   )}
                   {doc.meta.passwordProtected && (
-                    <span className="flex items-center gap-1 px-1.5 py-0.5 rounded bg-brand-50 text-brand-600 font-medium">
+                    <span className="flex items-center gap-1 px-2 py-0.5 rounded-full bg-brand-50 dark:bg-[#1a0d2e] text-brand-600 dark:text-brand-400 font-medium border border-brand-100 dark:border-brand-900/50">
                       <LockIcon className="w-3 h-3" />
                       Password protected
                     </span>
@@ -151,7 +153,7 @@ export default async function DocPage({
                         <Link
                           key={tag}
                           href={`/docs?tag=${encodeURIComponent(tag)}`}
-                          className="px-2 py-0.5 rounded-full bg-brand-50 text-brand-600 font-medium hover:bg-brand-100 transition-colors"
+                          className="px-2 py-0.5 rounded-full bg-gray-100 dark:bg-[#26262e] text-gray-600 dark:text-gray-400 hover:bg-brand-50 dark:hover:bg-[#1a0d2e] hover:text-brand-600 dark:hover:text-brand-400 transition-colors"
                         >
                           {tag}
                         </Link>
@@ -167,12 +169,11 @@ export default async function DocPage({
               />
               <div
                 id="doc-content"
-                className="prose prose-sm prose-gray max-w-none prose-headings:scroll-mt-16 prose-a:text-brand-600 prose-a:no-underline hover:prose-a:underline prose-code:before:content-none prose-code:after:content-none"
+                className="prose prose-sm prose-gray dark:prose-invert max-w-none prose-headings:scroll-mt-16 prose-a:text-brand-600 dark:prose-a:text-brand-400 prose-a:no-underline hover:prose-a:underline prose-code:before:content-none prose-code:after:content-none"
               >
                 <DocRenderer source={doc.content} />
               </div>
 
-              {/* Password management — managers and admins only */}
               {hasAccess(userRole, "manager") && (
                 <DocProtectionPanel
                   category={categorySlug}
@@ -189,7 +190,6 @@ export default async function DocPage({
                 title={doc.meta.title}
                 description={doc.meta.description}
               />
-              {/* Managers/admins can remove protection without knowing the password */}
               {hasAccess(userRole, "manager") && (
                 <DocProtectionPanel
                   category={categorySlug}

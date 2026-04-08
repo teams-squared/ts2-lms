@@ -75,6 +75,6 @@ describe("CategoryCard", () => {
     const { container } = render(<CategoryCard category={cat} docCount={0} />);
     const allStyled = container.querySelectorAll<HTMLElement>('[style*="background-color"]');
     const iconWrapper = allStyled[1];
-    expect(iconWrapper?.style.backgroundColor).toBe("#f0e6ff");
+    expect(iconWrapper?.style.backgroundColor).toBe("var(--cat-shield)");
   });
 });

@@ -96,13 +96,13 @@ export default function RoleManager() {
   return (
     <div>
       <div className="flex items-center justify-between mb-3">
-        <h2 className="text-lg font-semibold text-gray-900">Role Management</h2>
+        <h2 className="text-sm font-semibold text-gray-900 dark:text-gray-100">Role Management</h2>
         {message && (
           <div
             className={`text-xs px-3 py-1 rounded-full ${
               message.type === "success"
-                ? "bg-green-50 text-green-700"
-                : "bg-red-50 text-red-700"
+                ? "bg-green-50 dark:bg-green-950/30 text-green-700 dark:text-green-400"
+                : "bg-red-50 dark:bg-red-950/30 text-red-700 dark:text-red-400"
             }`}
           >
             {message.text}
@@ -110,44 +110,40 @@ export default function RoleManager() {
         )}
       </div>
 
-      <div className="rounded-lg border border-gray-200/60 bg-white shadow-card overflow-hidden">
-        <table className="min-w-full divide-y divide-gray-100">
-          <thead className="bg-gray-50">
+      <div className="rounded-xl border border-gray-200/80 dark:border-[#2e2e3a] bg-white dark:bg-[#1c1c24] shadow-card overflow-hidden">
+        <table className="min-w-full divide-y divide-gray-100 dark:divide-[#26262e]">
+          <thead className="bg-gray-50 dark:bg-[#18181e]">
             <tr>
-              <th className="px-4 py-2.5 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                Email
-              </th>
-              <th className="px-4 py-2.5 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                Role
-              </th>
-              <th className="px-4 py-2.5 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
-                Actions
-              </th>
+              {["Email", "Role", "Actions"].map((h, i) => (
+                <th key={h} className={`px-4 py-2.5 text-xs font-medium text-gray-500 dark:text-gray-500 uppercase tracking-wider ${i === 2 ? "text-right" : "text-left"}`}>
+                  {h}
+                </th>
+              ))}
             </tr>
           </thead>
-          <tbody className="divide-y divide-gray-50">
+          <tbody className="divide-y divide-gray-50 dark:divide-[#22222e]">
             {loading ? (
               <tr>
-                <td colSpan={3} className="px-4 py-6 text-center text-sm text-gray-400">
-                  Loading...
+                <td colSpan={3} className="px-4 py-6 text-center text-sm text-gray-400 dark:text-gray-600">
+                  Loading…
                 </td>
               </tr>
             ) : users.length === 0 ? (
               <tr>
-                <td colSpan={3} className="px-4 py-6 text-center text-sm text-gray-400">
+                <td colSpan={3} className="px-4 py-6 text-center text-sm text-gray-400 dark:text-gray-600">
                   No elevated role assignments
                 </td>
               </tr>
             ) : (
               users.map((user) => (
-                <tr key={user.email}>
-                  <td className="px-4 py-2.5 text-sm text-gray-900">{user.email}</td>
+                <tr key={user.email} className="hover:bg-gray-50/50 dark:hover:bg-[#1e1e28] transition-colors">
+                  <td className="px-4 py-2.5 text-sm text-gray-900 dark:text-gray-200">{user.email}</td>
                   <td className="px-4 py-2.5">
                     <span
                       className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium ${
                         user.role === "admin"
-                          ? "bg-red-50 text-red-700"
-                          : "bg-amber-50 text-amber-700"
+                          ? "bg-red-50 dark:bg-red-950/30 text-red-700 dark:text-red-400"
+                          : "bg-amber-50 dark:bg-amber-950/30 text-amber-700 dark:text-amber-400"
                       }`}
                     >
                       {user.role}
@@ -156,7 +152,7 @@ export default function RoleManager() {
                   <td className="px-4 py-2.5 text-right">
                     <button
                       onClick={() => handleRemove(user.email)}
-                      className="text-xs text-gray-400 hover:text-red-600 transition-colors"
+                      className="text-xs text-gray-400 dark:text-gray-600 hover:text-red-600 dark:hover:text-red-400 transition-colors"
                     >
                       Remove
                     </button>
@@ -166,7 +162,7 @@ export default function RoleManager() {
             )}
 
             {/* Add user row */}
-            <tr className="bg-gray-50/50">
+            <tr className="bg-gray-50/50 dark:bg-[#18181e]">
               <td className="px-4 py-2" colSpan={3}>
                 <form onSubmit={handleAdd} className="flex items-center gap-2">
                   <Input
@@ -186,7 +182,7 @@ export default function RoleManager() {
                     <option value="admin">Admin</option>
                   </Select>
                   <Button type="submit" disabled={saving} className="py-1.5">
-                    {saving ? "..." : "Add"}
+                    {saving ? "…" : "Add"}
                   </Button>
                 </form>
               </td>
@@ -195,8 +191,8 @@ export default function RoleManager() {
         </table>
       </div>
 
-      <p className="mt-2 text-xs text-gray-400">
-        Users not listed here default to the <strong>employee</strong> role.
+      <p className="mt-2 text-xs text-gray-400 dark:text-gray-600">
+        Users not listed here default to the <strong className="text-gray-500 dark:text-gray-500">employee</strong> role.
         Role changes take effect on the user&apos;s next sign-in.
       </p>
     </div>

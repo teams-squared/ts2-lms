@@ -1,9 +1,12 @@
 @import "tailwindcss";
-
 @plugin "@tailwindcss/typography";
 
+/* ── Dark mode: activated by the .dark class on <html> (next-themes) ─────── */
+@variant dark (&:where(.dark, .dark *));
+
 @theme inline {
-  --color-brand-50: #f0e6ff;
+  /* Brand palette */
+  --color-brand-50:  #f0e6ff;
   --color-brand-100: #d4b3ff;
   --color-brand-200: #b880ff;
   --color-brand-300: #9c4dff;
@@ -13,58 +16,121 @@
   --color-brand-700: #3600cc;
   --color-brand-800: #280099;
   --color-brand-900: #1a0066;
+  --color-brand-950: #0d0033;
 
   --font-sans: "Inter", system-ui, sans-serif;
   --font-mono: var(--font-geist-mono);
 }
 
+/* ── Category icon-bg CSS variables (toggled light ↔ dark) ────────────────── */
+:root {
+  --cat-shield:    #ede9fe;
+  --cat-rocket:    #ecfdf5;
+  --cat-code:      #fffbeb;
+  --cat-briefcase: #fff1f2;
+  --cat-book:      #eff6ff;
+  --cat-gear:      #f0fdf4;
+  /* Icon foreground — lighter in dark mode for contrast */
+  --icon-fg: #4400FF;
+}
+.dark {
+  --cat-shield:    #1e1535;
+  --cat-rocket:    #0d1f18;
+  --cat-code:      #1c170a;
+  --cat-briefcase: #200d10;
+  --cat-book:      #0d1525;
+  --cat-gear:      #0d1f12;
+  --icon-fg: #9d78ff;
+}
+
+/* ── Base ──────────────────────────────────────────────────────────────────── */
 body {
-  background: #f8f9fb;
+  background: #f5f5f8;
   color: #171717;
   font-family: var(--font-sans);
 }
+.dark body {
+  background: #0f0f14;
+  color: #ededf3;
+}
 
+/* ── Animation ─────────────────────────────────────────────────────────────── */
 @keyframes fadeInUp {
-  from {
-    opacity: 0;
-    transform: translateY(6px);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
+  from { opacity: 0; transform: translateY(6px); }
+  to   { opacity: 1; transform: translateY(0);   }
 }
+.animate-fade-in { animation: fadeInUp .2s ease-out forwards; }
 
-.animate-fade-in {
-  animation: fadeInUp 0.2s ease-out forwards;
-}
-
+/* ── Background gradients ──────────────────────────────────────────────────── */
 .bg-brand-gradient {
-  background: radial-gradient(ellipse at center, white 40%, #f0e6ff 85%, #d4b3ff 100%);
+  background: radial-gradient(ellipse at 50% -20%, #ddd6fe 0%, #ede9fe 35%, #f3f0ff 65%, #f5f5f8 100%);
 }
-
 .bg-brand-gradient-subtle {
-  background: radial-gradient(ellipse at center, white 60%, #f0e6ff 100%);
+  background: radial-gradient(ellipse at center, #ffffff 60%, #f0e6ff 100%);
+}
+.dark .bg-brand-gradient {
+  background: radial-gradient(ellipse at 50% -20%, #1c1030 0%, #17112b 35%, #130f22 65%, #0f0f14 100%);
+}
+.dark .bg-brand-gradient-subtle {
+  background: radial-gradient(ellipse at center, #18161e 60%, #1a1028 100%);
 }
 
+/* ── Shadows ───────────────────────────────────────────────────────────────── */
 .shadow-card {
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04), 0 1px 2px rgba(0, 0, 0, 0.06);
+  box-shadow: 0 1px 2px rgba(0,0,0,.05), 0 1px 4px rgba(0,0,0,.06);
 }
-
 .shadow-card-hover {
-  box-shadow: 0 4px 12px rgba(68, 0, 255, 0.08), 0 1px 3px rgba(0, 0, 0, 0.06);
+  box-shadow: 0 4px 16px rgba(68,0,255,.10), 0 2px 6px rgba(0,0,0,.07);
+}
+.shadow-elevated {
+  box-shadow: 0 8px 32px rgba(0,0,0,.10), 0 2px 8px rgba(0,0,0,.07);
+}
+.dark .shadow-card {
+  box-shadow: 0 1px 2px rgba(0,0,0,.35), 0 1px 4px rgba(0,0,0,.25);
+}
+.dark .shadow-card-hover {
+  box-shadow: 0 4px 16px rgba(130,0,255,.20), 0 2px 6px rgba(0,0,0,.45);
+}
+.dark .shadow-elevated {
+  box-shadow: 0 8px 32px rgba(0,0,0,.50), 0 2px 8px rgba(0,0,0,.35);
 }
 
+/* ── Search highlights ─────────────────────────────────────────────────────── */
 mark.search-highlight {
   background: #fef08a;
   color: inherit;
   border-radius: 2px;
   padding: 0 1px;
 }
-
 mark.search-highlight-current {
   background: #f59e0b;
   color: #1c1917;
   border-radius: 2px;
   padding: 0 1px;
 }
+.dark mark.search-highlight {
+  background: #713f12;
+  color: #fef9c3;
+}
+.dark mark.search-highlight-current {
+  background: #92400e;
+  color: #fef3c7;
+}
+
+/* ── Syntax highlighting — dark mode overrides ────────────────────────────── */
+.dark .hljs                              { background: #161b22 !important; color: #e6edf3 !important; }
+.dark .hljs-keyword,
+.dark .hljs-selector-tag,
+.dark .hljs-meta                         { color: #ff7b72 !important; }
+.dark .hljs-string,
+.dark .hljs-title,
+.dark .hljs-name                         { color: #a5d6ff !important; }
+.dark .hljs-comment                      { color: #8b949e !important; font-style: italic; }
+.dark .hljs-attr,
+.dark .hljs-variable,
+.dark .hljs-template-variable            { color: #79c0ff !important; }
+.dark .hljs-number,
+.dark .hljs-literal                      { color: #f8c8c8 !important; }
+.dark .hljs-built_in                     { color: #ffa657 !important; }
+.dark .hljs-type                         { color: #ffa198 !important; }
+.dark pre                                { border-color: #30363d !important; }
