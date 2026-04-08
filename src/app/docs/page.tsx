@@ -106,10 +106,10 @@ export default async function DocsPage({
                 <div className="flex-1 h-px bg-gray-100 dark:bg-[#26262e] mx-2" />
                 <Link
                   href={`/docs/${cat.slug}`}
-                  className="flex items-center gap-1 text-xs text-gray-400 dark:text-gray-500 hover:text-brand-600 dark:hover:text-brand-400 transition-colors flex-none"
+                  className="flex items-center gap-0.5 text-xs font-medium text-brand-600 dark:text-brand-400 hover:text-brand-700 dark:hover:text-brand-300 transition-colors flex-none"
                 >
                   See all ({docs.length})
-                  <ChevronRightIcon className="w-3 h-3" />
+                  <ChevronRightIcon className="w-3.5 h-3.5" />
                 </Link>
               </div>
 

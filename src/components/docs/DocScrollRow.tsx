@@ -31,7 +31,6 @@ export default function DocScrollRow({ docs, accentColor }: Props) {
 
   useEffect(() => {
     syncArrows();
-    // Re-check after layout settles (fonts / images may shift widths).
     const id = setTimeout(syncArrows, 100);
     return () => clearTimeout(id);
   }, [docs, syncArrows]);
@@ -50,7 +49,7 @@ export default function DocScrollRow({ docs, accentColor }: Props) {
         onClick={() => scroll("left")}
         aria-label="Scroll left"
         className={[
-          "absolute left-0 top-1/2 -translate-y-1/2 -translate-x-4 z-10",
+          "absolute left-0 top-1/2 -translate-y-1/2 -translate-x-4 z-20",
           "w-8 h-8 rounded-full bg-white dark:bg-[#1c1c24]",
           "border border-gray-200 dark:border-[#2e2e3a] shadow-md",
           "flex items-center justify-center",
@@ -77,18 +76,18 @@ export default function DocScrollRow({ docs, accentColor }: Props) {
             {/* Top accent bar */}
             <div className="h-0.5 w-full flex-none" style={{ backgroundColor: accentColor }} />
 
-            <div className="p-4 flex flex-col flex-1 min-h-0">
+            <div className="p-5 flex flex-col flex-1">
               {/* Title row */}
-              <div className="flex items-start gap-2 mb-2">
+              <div className="flex items-start gap-2 mb-2.5">
                 <FileTextIcon className="w-3.5 h-3.5 text-gray-300 dark:text-gray-600 mt-0.5 flex-none group-hover:text-brand-400 transition-colors" />
                 <h3 className="text-sm font-semibold text-gray-900 dark:text-gray-100 group-hover:text-brand-600 dark:group-hover:text-brand-400 transition-colors line-clamp-2 leading-snug">
                   {doc.title}
                 </h3>
               </div>
 
-              {/* Description */}
+              {/* Description — 3 lines so more content is visible */}
               {doc.description && (
-                <p className="text-xs text-gray-500 dark:text-gray-400 line-clamp-2 leading-relaxed mb-3 flex-1">
+                <p className="text-xs text-gray-500 dark:text-gray-400 line-clamp-3 leading-relaxed mb-4 flex-1">
                   {doc.description}
                 </p>
               )}
@@ -125,12 +124,26 @@ export default function DocScrollRow({ docs, accentColor }: Props) {
         ))}
       </div>
 
+      {/* Edge fade — left. Matches the page background so cards appear to dissolve into it. */}
+      <div
+        aria-hidden="true"
+        className="absolute left-0 inset-y-0 w-16 pointer-events-none z-10 transition-opacity duration-200 bg-gradient-to-r from-[#f5f5f8] dark:from-[#0f0f14] to-transparent"
+        style={{ opacity: canLeft ? 1 : 0 }}
+      />
+
+      {/* Edge fade — right */}
+      <div
+        aria-hidden="true"
+        className="absolute right-0 inset-y-0 w-16 pointer-events-none z-10 transition-opacity duration-200 bg-gradient-to-l from-[#f5f5f8] dark:from-[#0f0f14] to-transparent"
+        style={{ opacity: canRight ? 1 : 0 }}
+      />
+
       {/* Right arrow */}
       <button
         onClick={() => scroll("right")}
         aria-label="Scroll right"
         className={[
-          "absolute right-0 top-1/2 -translate-y-1/2 translate-x-4 z-10",
+          "absolute right-0 top-1/2 -translate-y-1/2 translate-x-4 z-20",
           "w-8 h-8 rounded-full bg-white dark:bg-[#1c1c24]",
           "border border-gray-200 dark:border-[#2e2e3a] shadow-md",
           "flex items-center justify-center",
