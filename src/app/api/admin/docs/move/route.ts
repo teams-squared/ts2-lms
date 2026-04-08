@@ -73,9 +73,11 @@ export async function PATCH(req: NextRequest) {
     return NextResponse.json({ error: "Operation failed — check server logs" }, { status: 502 });
   }
 
+  revalidatePath("/admin/content");
   revalidatePath(`/docs/${fromCategory}`);
   if (toCategory !== fromCategory) revalidatePath(`/docs/${toCategory}`);
   revalidatePath("/docs");
+  revalidatePath("/");
 
   return NextResponse.json({ ok: true });
 }

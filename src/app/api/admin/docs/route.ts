@@ -64,8 +64,10 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: "Upload failed — check server logs" }, { status: 502 });
   }
 
+  revalidatePath("/admin/content");
   revalidatePath(`/docs/${category}`);
   revalidatePath("/docs");
+  revalidatePath("/");
   return NextResponse.json({ slug, category }, { status: 201 });
 }
 
@@ -99,7 +101,9 @@ export async function DELETE(req: NextRequest) {
     return NextResponse.json({ error: "Delete failed — check server logs" }, { status: 502 });
   }
 
+  revalidatePath("/admin/content");
   revalidatePath(`/docs/${category}`);
   revalidatePath("/docs");
+  revalidatePath("/");
   return new NextResponse(null, { status: 204 });
 }
