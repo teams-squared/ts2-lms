@@ -58,6 +58,52 @@ export function clearCache(): void {
   cache.clear();
 }
 
+/**
+ * Write-through cache update after a successful file write.
+ * Caches the content immediately (we already have it) and injects the file
+ * name into the doclist for its category if that list is already cached.
+ * This means uploads appear instantly in listings without waiting for
+ * SharePoint's /children endpoint to reflect the new file.
+ */
+function writeThroughCache(
+  categorySlug: string,
+  fileName: string,
+  content: string
+): void {
+  cache.set(`content:${categorySlug}/${fileName}`, {
+    value: content,
+    expiresAt: Date.now() + TTL.content,
+  });
+
+  const listKey = `doclist:${categorySlug}`;
+  const listEntry = cache.get(listKey) as CacheEntry<string[]> | undefined;
+  if (listEntry && Date.now() < listEntry.expiresAt) {
+    if (!listEntry.value.includes(fileName)) {
+      cache.set(listKey, {
+        value: [...listEntry.value, fileName],
+        expiresAt: listEntry.expiresAt,
+      });
+    }
+  }
+}
+
+/**
+ * Remove a single file from the doclist and content caches without
+ * touching any other cached entries.
+ */
+function evictFromCache(categorySlug: string, fileName: string): void {
+  cache.delete(`content:${categorySlug}/${fileName}`);
+
+  const listKey = `doclist:${categorySlug}`;
+  const listEntry = cache.get(listKey) as CacheEntry<string[]> | undefined;
+  if (listEntry && Date.now() < listEntry.expiresAt) {
+    cache.set(listKey, {
+      value: listEntry.value.filter((f) => f !== fileName),
+      expiresAt: listEntry.expiresAt,
+    });
+  }
+}
+
 async function withCache<T>(
   key: string,
   ttlMs: number,
@@ -189,11 +235,10 @@ export async function writeDocContentToSharePoint(
     );
   }
 
-  // Clear the entire in-memory cache so the next read picks up the new
-  // content. Targeted key deletes are insufficient when there is any risk
-  // of concurrent re-population (e.g. a page render racing the write).
-  // Password changes are rare, so wiping the full cache is acceptable.
-  cache.clear();
+  // Write the new content and file name directly into the cache so the
+  // document appears in listings immediately, bypassing SharePoint's
+  // eventual-consistency delay on its /children listing endpoint.
+  writeThroughCache(categorySlug, fileName, content);
 }
 
 /**
@@ -245,7 +290,7 @@ export async function deleteDocFromSharePoint(
       `Failed to delete ${categorySlug}/${fileName}: ${response.status} ${response.statusText}`
     );
   }
-  clearCache();
+  evictFromCache(categorySlug, fileName);
 }
 
 /**
@@ -284,7 +329,21 @@ export async function moveDocInSharePoint(
     name: toFile,
   });
 
-  clearCache();
+  // Remove the file from the source category cache.
+  evictFromCache(fromCategory, fromFile);
+
+  // Inject the file into the destination doclist cache if it is already warm.
+  // Content at the new path is intentionally not pre-cached — it will be
+  // fetched from SharePoint on first access (the file is guaranteed to be
+  // there by then since the PATCH succeeded).
+  const dstKey = `doclist:${toCategory}`;
+  const dstEntry = cache.get(dstKey) as CacheEntry<string[]> | undefined;
+  if (dstEntry && Date.now() < dstEntry.expiresAt && !dstEntry.value.includes(toFile)) {
+    cache.set(dstKey, {
+      value: [...dstEntry.value, toFile],
+      expiresAt: dstEntry.expiresAt,
+    });
+  }
 }
 
 /**

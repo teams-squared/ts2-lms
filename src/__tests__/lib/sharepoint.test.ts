@@ -171,18 +171,42 @@ describe("writeDocContentToSharePoint", () => {
     expect(client.header).toHaveBeenCalledWith("Content-Type", "text/plain");
   });
 
-  it("clears the entire cache after a successful write", async () => {
-    // Warm the cache with one categories fetch
-    getMockClient().get
-      .mockResolvedValueOnce({ ok: true, text: async () => "[]" }) // categories fetch
-      .mockResolvedValueOnce({ ok: true, text: async () => "[]" }); // post-write fetch
+  it("caches the written content so fetchDocContentFromSharePoint hits without a network call", async () => {
+    const content = "# My Doc\nBody.";
+    await writeDocContentToSharePoint("engineering", "setup.mdx", content);
+    // The content is now in the cache — fetchDocContentFromSharePoint should
+    // return it without calling the Graph API.
+    const result = await fetchDocContentFromSharePoint("engineering", "setup.mdx");
+    expect(result).toBe(content);
+    // PUT (1) — no extra GET calls
+    expect(getMockClient().get).toHaveBeenCalledTimes(0);
+  });
 
-    await fetchCategoriesFromSharePoint(); // populates cache
-    await writeDocContentToSharePoint("engineering", "setup.mdx", "content"); // clears cache
-    await fetchCategoriesFromSharePoint(); // should call fetcher again
+  it("injects the new file into a warm doclist so fetchDocListFromSharePoint hits without a network call", async () => {
+    // Warm the doclist with one existing file
+    getMockClient().get.mockResolvedValueOnce({ value: [{ name: "existing.mdx" }] });
+    await fetchDocListFromSharePoint("engineering");
 
-    // get should have been called twice (once before write, once after)
-    expect(getMockClient().get).toHaveBeenCalledTimes(2);
+    // Write a new file — should update the cached list
+    await writeDocContentToSharePoint("engineering", "new-doc.mdx", "# New");
+
+    // The doclist should now include both files without a network call
+    const list = await fetchDocListFromSharePoint("engineering");
+    expect(list).toContain("existing.mdx");
+    expect(list).toContain("new-doc.mdx");
+    // Only 1 get call (the initial warm), not 2
+    expect(getMockClient().get).toHaveBeenCalledTimes(1);
+  });
+
+  it("does not evict unrelated cache entries (categories stay warm)", async () => {
+    getMockClient().get.mockResolvedValueOnce({ ok: true, text: async () => "[]" });
+    await fetchCategoriesFromSharePoint(); // warm categories
+
+    await writeDocContentToSharePoint("engineering", "setup.mdx", "content");
+
+    // categories cache untouched — no extra get call
+    await fetchCategoriesFromSharePoint();
+    expect(getMockClient().get).toHaveBeenCalledTimes(1);
   });
 
   it("throws a descriptive error when the Graph API returns non-ok", async () => {
@@ -230,15 +254,25 @@ describe("deleteDocFromSharePoint", () => {
     expect(client.delete).toHaveBeenCalledTimes(1);
   });
 
-  it("clears the cache after a successful delete", async () => {
+  it("removes the deleted file from the doclist cache and leaves other entries warm", async () => {
+    // Warm doclist with two files and categories
     getMockClient().get
-      .mockResolvedValueOnce({ ok: true, text: async () => "[]" })
+      .mockResolvedValueOnce({ value: [{ name: "setup.mdx" }, { name: "other.mdx" }] })
       .mockResolvedValueOnce({ ok: true, text: async () => "[]" });
+    await fetchDocListFromSharePoint("engineering");
+    await fetchCategoriesFromSharePoint();
 
-    await fetchCategoriesFromSharePoint(); // populate cache
-    await deleteDocFromSharePoint("engineering", "setup.mdx"); // should clear cache
-    await fetchCategoriesFromSharePoint(); // should re-fetch
+    await deleteDocFromSharePoint("engineering", "setup.mdx");
 
+    // Doclist cache updated — setup.mdx is gone, other.mdx remains
+    const list = await fetchDocListFromSharePoint("engineering");
+    expect(list).not.toContain("setup.mdx");
+    expect(list).toContain("other.mdx");
+
+    // categories untouched
+    await fetchCategoriesFromSharePoint();
+
+    // Only 2 get calls (the initial warms), no re-fetches
     expect(getMockClient().get).toHaveBeenCalledTimes(2);
   });
 
@@ -279,15 +313,37 @@ describe("moveDocInSharePoint", () => {
     );
   });
 
-  it("clears the cache after a successful move", async () => {
-    // Perform the move (beforeEach already primes the item GET mock)
-    await moveDocInSharePoint("engineering", "setup.mdx", "hr-policies", "setup.mdx");
+  it("removes file from source doclist, injects into dest doclist, leaves categories warm", async () => {
+    const client = getMockClient();
 
-    // Cache should now be empty — next categories fetch must hit the network
-    getMockClient().get.mockResolvedValueOnce({ ok: true, text: async () => "[]" });
+    // Take full control so we can order all mocks precisely.
+    client.get.mockReset();
+    client.get
+      .mockResolvedValueOnce({ value: [{ name: "setup.mdx" }, { name: "other.mdx" }] }) // (1) doclist:engineering warm
+      .mockResolvedValueOnce({ value: [{ name: "existing.mdx" }] })                     // (2) doclist:hr-policies warm
+      .mockResolvedValueOnce({ ok: true, text: async () => "[]" })                       // (3) categories warm
+      .mockResolvedValueOnce({ id: "item-abc", parentReference: { driveId: "drive-xyz" } }); // (4) item lookup (move)
+
+    await fetchDocListFromSharePoint("engineering");
+    await fetchDocListFromSharePoint("hr-policies");
     await fetchCategoriesFromSharePoint();
 
-    // get called: 1 for item lookup (move), 1 for categories re-fetch = 2 total
-    expect(getMockClient().get).toHaveBeenCalledTimes(2);
+    await moveDocInSharePoint("engineering", "setup.mdx", "hr-policies", "setup.mdx"); // call 4
+
+    // Source doclist: setup.mdx removed, other.mdx still present
+    const srcList = await fetchDocListFromSharePoint("engineering");
+    expect(srcList).not.toContain("setup.mdx");
+    expect(srcList).toContain("other.mdx");
+
+    // Dest doclist: setup.mdx injected alongside the pre-existing file
+    const dstList = await fetchDocListFromSharePoint("hr-policies");
+    expect(dstList).toContain("setup.mdx");
+    expect(dstList).toContain("existing.mdx");
+
+    // Categories untouched — no re-fetch
+    await fetchCategoriesFromSharePoint();
+
+    // get: 3 (warms) + 1 (item lookup) = 4 — no additional re-fetches
+    expect(client.get).toHaveBeenCalledTimes(4);
   });
 });
