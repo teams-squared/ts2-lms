@@ -11,7 +11,7 @@ export default function LoginPage() {
   const isProduction = process.env.NODE_ENV === "production";
 
   return (
-    <div className="min-h-[calc(100vh-8rem)] flex items-center justify-center bg-brand-gradient px-4 py-12">
+    <div className="min-h-screen flex items-center justify-center bg-brand-gradient px-4 py-12">
       <div className="w-full max-w-sm">
         {/* Card */}
         <div className="bg-white dark:bg-[#1c1c24] rounded-2xl shadow-elevated border border-gray-100 dark:border-[#2e2e3a] overflow-hidden">
