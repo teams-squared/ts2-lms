@@ -82,8 +82,9 @@ export default function AppSidebar() {
     setCollapsed(!collapsed);
   }
 
-  // Hide sidebar on auth pages
+  // Hide sidebar on auth pages and the public landing page
   if (pathname === "/login") return null;
+  if (pathname === "/" && status !== "authenticated") return null;
 
   // Don't render width-dependent UI until mounted (avoid hydration flash)
   const w = mounted ? (collapsed ? 60 : 220) : 220;

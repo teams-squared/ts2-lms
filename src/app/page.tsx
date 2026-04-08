@@ -7,7 +7,7 @@ import {
 } from "@/lib/docs";
 import SearchBar from "@/components/search/SearchBar";
 import CategoryCard from "@/components/docs/CategoryCard";
-import { BookOpenIcon, SearchIcon, LockIcon } from "@/components/icons";
+import Logo from "@/components/Logo";
 import type { Role } from "@/lib/types";
 
 export default async function HomePage() {
@@ -31,6 +31,45 @@ export default async function HomePage() {
       )
     : [];
 
+  // Logged-out landing page — full-height centered screen
+  if (!session) {
+    return (
+      <div className="min-h-screen flex flex-col items-center justify-center px-4 bg-[#f5f5f8] dark:bg-[#0f0f14]">
+        <div className="w-full max-w-sm text-center space-y-6">
+          {/* Logo */}
+          <div className="flex justify-center mb-2">
+            <Logo size={48} showText={false} />
+          </div>
+
+          {/* Heading */}
+          <div className="space-y-2">
+            <h1 className="text-3xl font-bold text-gray-900 dark:text-gray-100 tracking-tight">
+              Teams Squared{" "}
+              <span className="text-brand-600 dark:text-brand-400">Docs</span>
+            </h1>
+            <p className="text-sm text-gray-500 dark:text-gray-400">
+              Sign in with your Teams Squared account to access company documentation.
+            </p>
+          </div>
+
+          {/* CTA */}
+          <Link
+            href="/login"
+            className="inline-flex items-center justify-center w-full px-6 py-3 rounded-xl bg-brand-600 text-white font-semibold hover:bg-brand-700 active:bg-brand-800 transition-colors shadow-lg shadow-brand-600/25 text-sm"
+          >
+            Sign in
+          </Link>
+        </div>
+
+        {/* Footer */}
+        <p className="absolute bottom-6 text-xs text-gray-400 dark:text-gray-600">
+          © {new Date().getFullYear()} Teams Squared
+        </p>
+      </div>
+    );
+  }
+
+  // Logged-in home page
   return (
     <div>
       {/* Hero */}
@@ -43,22 +82,12 @@ export default async function HomePage() {
           <p className="text-base text-gray-500 dark:text-gray-400 mb-8 max-w-2xl mx-auto leading-relaxed">
             Your central hub for company guides, processes, and resources.
           </p>
-
-          {session ? (
-            <SearchBar className="max-w-xl mx-auto" />
-          ) : (
-            <Link
-              href="/login"
-              className="inline-flex items-center px-6 py-3 rounded-xl bg-brand-600 text-white font-semibold hover:bg-brand-700 transition-colors shadow-lg shadow-brand-600/30 text-sm"
-            >
-              Sign In to Access Docs
-            </Link>
-          )}
+          <SearchBar className="max-w-xl mx-auto" />
         </div>
       </section>
 
       {/* Categories grid */}
-      {session && categoryDocs.length > 0 && (
+      {categoryDocs.length > 0 && (
         <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10">
           <h2 className="text-base font-semibold text-gray-900 dark:text-gray-100 mb-5">
             Browse by Category
@@ -71,39 +100,6 @@ export default async function HomePage() {
                 docCount={docs.length}
                 docTitles={docs.map((d) => d.title)}
               />
-            ))}
-          </div>
-        </section>
-      )}
-
-      {/* Not signed in — feature highlights */}
-      {!session && (
-        <section className="max-w-3xl mx-auto px-4 py-14">
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-6">
-            {[
-              {
-                icon: BookOpenIcon,
-                title: "Organized Docs",
-                desc: "Find what you need quickly with categorized documentation",
-              },
-              {
-                icon: SearchIcon,
-                title: "Fast Search",
-                desc: "Search across all documents instantly with fuzzy matching",
-              },
-              {
-                icon: LockIcon,
-                title: "Role-Based Access",
-                desc: "Secure access control ensures the right people see the right docs",
-              },
-            ].map(({ icon: Icon, title, desc }) => (
-              <div key={title} className="p-5 text-center rounded-xl border border-gray-100 dark:border-[#26262e] bg-white dark:bg-[#1c1c24] shadow-card">
-                <div className="w-10 h-10 rounded-xl bg-brand-50 dark:bg-[#1a0d2e] flex items-center justify-center mx-auto mb-3">
-                  <Icon className="w-5 h-5 text-brand-500 dark:text-brand-400" />
-                </div>
-                <h3 className="font-semibold text-gray-900 dark:text-gray-100 text-sm mb-1">{title}</h3>
-                <p className="text-xs text-gray-500 dark:text-gray-500 leading-relaxed">{desc}</p>
-              </div>
             ))}
           </div>
         </section>
