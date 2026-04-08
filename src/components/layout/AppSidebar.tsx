@@ -3,14 +3,13 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useSession, signOut } from "next-auth/react";
-import { useRef, useState, useEffect } from "react";
+import { useState, useEffect } from "react";
 import Logo from "@/components/Logo";
 import { UserAvatar } from "@/components/ui";
 import { ThemeToggle } from "@/components/theme/ThemeToggle";
 import {
   BookOpenIcon,
   ShieldIcon,
-  ChevronRightIcon,
   HomeIcon,
   SignOutIcon,
   HamburgerIcon,
@@ -18,22 +17,19 @@ import {
 } from "@/components/icons";
 import { posthog } from "@/lib/posthog-client";
 import { isNavActive } from "@/lib/navigation";
-import { useLocalStorage } from "@/hooks/useLocalStorage";
 
-const STORAGE_KEY = "sidebar-collapsed";
+// ─── Nav link ─────────────────────────────────────────────────────────────────
 
 function NavLink({
   href,
   icon: Icon,
   label,
-  showLabel = true,
   onNavigate,
   pathname,
 }: {
   href: string;
   icon: React.FC<{ className?: string }>;
   label: string;
-  showLabel?: boolean;
   onNavigate?: () => void;
   pathname: string;
 }) {
@@ -41,34 +37,70 @@ function NavLink({
   return (
     <Link
       href={href}
-      title={!showLabel ? label : undefined}
       onClick={onNavigate}
-      className={`flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium transition-colors focus:outline-none focus:ring-2 focus:ring-brand-400 ${
+      className={[
+        "flex items-center gap-3 rounded-lg text-sm font-medium transition-colors duration-150 focus:outline-none focus:ring-2 focus:ring-brand-400",
         active
-          ? "border-l-[3px] border-brand-500 bg-brand-50 text-brand-700 pl-[9px] pr-3 rounded-r-lg dark:bg-brand-950/60 dark:text-brand-300 dark:border-brand-400"
-          : "border-l-[3px] border-transparent text-gray-600 hover:bg-black/5 hover:text-gray-900 px-3 rounded-lg dark:text-gray-400 dark:hover:bg-white/8 dark:hover:text-gray-200"
-      }`}
+          ? "border-l-[3px] border-brand-500 dark:border-brand-400 bg-brand-50 dark:bg-brand-950/60 text-brand-700 dark:text-brand-300 pl-[9px] pr-3 py-2.5"
+          : "border-l-[3px] border-transparent text-gray-600 dark:text-gray-400 hover:bg-black/[0.05] dark:hover:bg-white/[0.06] hover:text-gray-900 dark:hover:text-gray-200 px-3 py-2.5",
+      ].join(" ")}
     >
       <Icon className="w-4 h-4 flex-shrink-0" />
-      {showLabel && <span>{label}</span>}
+      {label}
     </Link>
   );
 }
 
+// ─── Shared nav items (used in both desktop + mobile) ─────────────────────────
+
+function NavItems({
+  status,
+  role,
+  pathname,
+  onNavigate,
+}: {
+  status: string;
+  role?: string;
+  pathname: string;
+  onNavigate?: () => void;
+}) {
+  return (
+    <>
+      <NavLink href="/" icon={HomeIcon} label="Home" pathname={pathname} onNavigate={onNavigate} />
+      {status === "authenticated" && (
+        <NavLink
+          href="/docs"
+          icon={BookOpenIcon}
+          label="Documentation"
+          pathname={pathname}
+          onNavigate={onNavigate}
+        />
+      )}
+      {status === "authenticated" && role === "admin" && (
+        <NavLink
+          href="/admin"
+          icon={ShieldIcon}
+          label="Admin"
+          pathname={pathname}
+          onNavigate={onNavigate}
+        />
+      )}
+    </>
+  );
+}
+
+// ─── Root component ───────────────────────────────────────────────────────────
+
 export default function AppSidebar() {
   const { data: session, status } = useSession();
   const pathname = usePathname();
-  const [collapsed, setCollapsed] = useLocalStorage(STORAGE_KEY, false);
-  const [mounted, setMounted] = useState(false);
   const [drawerOpen, setDrawerOpen] = useState(false);
-  const drawerRef = useRef<HTMLElement>(null);
 
+  // Close drawer on route change or Escape key
   useEffect(() => {
-    // eslint-disable-next-line react-hooks/set-state-in-effect
-    setMounted(true);
-  }, []);
+    setDrawerOpen(false);
+  }, [pathname]);
 
-  // Close drawer on Escape key
   useEffect(() => {
     if (!drawerOpen) return;
     function handleKey(e: KeyboardEvent) {
@@ -78,21 +110,15 @@ export default function AppSidebar() {
     return () => document.removeEventListener("keydown", handleKey);
   }, [drawerOpen]);
 
-  function toggle() {
-    setCollapsed(!collapsed);
-  }
-
-  // Hide sidebar on auth pages and the public landing page
   if (pathname === "/login") return null;
   if (pathname === "/" && status !== "authenticated") return null;
 
-  // Don't render width-dependent UI until mounted (avoid hydration flash)
-  const w = mounted ? (collapsed ? 60 : 220) : 220;
+  const userRole = session?.user?.role as string | undefined;
 
   return (
     <>
-      {/* ── Mobile header ──────────────────────────────────────────────────── */}
-      <header className="md:hidden fixed top-0 left-0 right-0 z-40 flex items-center justify-between h-14 px-4 bg-[#f0eeff] dark:bg-[#17141f] border-b border-brand-100/80 dark:border-[#2c2838]">
+      {/* ── Mobile top bar ─────────────────────────────────────────────────── */}
+      <header className="md:hidden fixed top-0 inset-x-0 z-40 flex items-center justify-between h-14 px-4 bg-[#f0eeff] dark:bg-[#17141f] border-b border-brand-100/80 dark:border-[#2c2838]">
         <Link href="/">
           <Logo size={28} showText />
         </Link>
@@ -111,73 +137,51 @@ export default function AppSidebar() {
       {/* ── Mobile drawer ──────────────────────────────────────────────────── */}
       {drawerOpen && (
         <div className="md:hidden fixed inset-0 z-50 flex">
-          {/* Backdrop */}
           <div
             className="absolute inset-0 bg-black/50"
             onClick={() => setDrawerOpen(false)}
             aria-hidden="true"
           />
-          {/* Drawer panel */}
           <nav
-            ref={drawerRef}
             aria-label="Mobile navigation"
-            className="relative w-64 flex flex-col h-full bg-[#f0eeff] dark:bg-[#17141f] border-r border-brand-100/80 dark:border-[#2c2838] shadow-xl"
+            className="relative flex flex-col w-64 h-full bg-[#f0eeff] dark:bg-[#17141f] border-r border-brand-100/80 dark:border-[#2c2838] shadow-xl"
           >
-            {/* Header row */}
-            <div className="flex items-center justify-between px-3 h-14 border-b border-brand-100/60 dark:border-[#2c2838] flex-shrink-0">
+            {/* Header */}
+            <div className="flex items-center justify-between px-4 h-14 border-b border-brand-100/60 dark:border-[#2c2838] flex-shrink-0">
               <Link href="/" onClick={() => setDrawerOpen(false)}>
                 <Logo size={28} showText />
               </Link>
               <button
                 aria-label="Close navigation menu"
                 onClick={() => setDrawerOpen(false)}
-                className="p-1 rounded-md text-gray-400 hover:text-gray-600 hover:bg-black/5 dark:text-gray-500 dark:hover:text-gray-300 dark:hover:bg-white/10 transition-colors"
+                className="p-1.5 rounded-md text-gray-400 hover:text-gray-600 hover:bg-black/5 dark:text-gray-500 dark:hover:text-gray-300 dark:hover:bg-white/10 transition-colors"
               >
                 <CloseIcon className="w-4 h-4" />
               </button>
             </div>
 
-            {/* Nav links */}
-            <div className="flex-1 px-2 py-3 space-y-0.5 overflow-y-auto">
-              <NavLink
-                href="/"
-                icon={HomeIcon}
-                label="Home"
-                onNavigate={() => setDrawerOpen(false)}
+            {/* Nav */}
+            <div className="flex-1 px-3 py-4 space-y-0.5 overflow-y-auto">
+              <NavItems
+                status={status}
+                role={userRole}
                 pathname={pathname}
+                onNavigate={() => setDrawerOpen(false)}
               />
-              {status === "authenticated" && (
-                <NavLink
-                  href="/docs"
-                  icon={BookOpenIcon}
-                  label="Documentation"
-                  onNavigate={() => setDrawerOpen(false)}
-                  pathname={pathname}
-                />
-              )}
-              {status === "authenticated" && session?.user?.role === "admin" && (
-                <NavLink
-                  href="/admin"
-                  icon={ShieldIcon}
-                  label="Admin"
-                  onNavigate={() => setDrawerOpen(false)}
-                  pathname={pathname}
-                />
-              )}
             </div>
 
-            {/* User section */}
-            {status === "authenticated" && (
-              <div className="px-2 py-3 border-t border-brand-100/60 dark:border-[#2c2838] flex-shrink-0 space-y-1">
-                <div className="flex items-center gap-2 px-3 py-1.5">
-                  <UserAvatar name={session.user?.name} email={session.user?.email} />
+            {/* User */}
+            {status === "authenticated" && session?.user && (
+              <div className="px-3 pb-4 pt-3 border-t border-brand-100/60 dark:border-[#2c2838] flex-shrink-0 space-y-1">
+                <div className="flex items-center gap-2.5 px-3 py-2.5 rounded-xl bg-white/60 dark:bg-white/[0.04]">
+                  <UserAvatar name={session.user.name} email={session.user.email} />
                   <div className="min-w-0">
-                    <p className="text-xs font-medium text-gray-700 dark:text-gray-300 truncate">
-                      {session.user?.name || session.user?.email}
+                    <p className="text-xs font-semibold text-gray-800 dark:text-gray-200 truncate leading-tight">
+                      {session.user.name || session.user.email}
                     </p>
-                    <span className="inline-flex items-center gap-1 text-xs text-brand-700 dark:text-brand-400">
+                    <span className="inline-flex items-center gap-1 text-[10px] font-medium text-brand-600 dark:text-brand-400 mt-0.5">
                       <span className="w-1.5 h-1.5 rounded-full bg-brand-400 flex-shrink-0" />
-                      {session.user?.role}
+                      {session.user.role}
                     </span>
                   </div>
                 </div>
@@ -187,157 +191,74 @@ export default function AppSidebar() {
                     posthog.reset();
                     signOut({ callbackUrl: "/" });
                   }}
-                  className="flex items-center gap-3 w-full px-3 py-2 rounded-lg text-sm text-gray-500 hover:text-gray-700 hover:bg-black/5 dark:text-gray-400 dark:hover:text-gray-200 dark:hover:bg-white/10 transition-colors"
+                  className="flex items-center gap-3 w-full px-3 py-2 rounded-lg text-sm text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200 hover:bg-black/5 dark:hover:bg-white/10 transition-colors"
                 >
                   <SignOutIcon className="w-4 h-4 flex-shrink-0" />
-                  Sign Out
+                  Sign out
                 </button>
               </div>
             )}
-
-            {/* Copyright */}
-            <div className="px-3 py-2 border-t border-brand-100/60 dark:border-[#2c2838] flex-shrink-0">
-              <p className="text-[10px] text-gray-400 dark:text-gray-600">
-                &copy; {new Date().getFullYear()} Teams Squared
-              </p>
-            </div>
           </nav>
         </div>
       )}
 
       {/* ── Desktop sidebar ────────────────────────────────────────────────── */}
-      <aside
-        className="hidden md:flex flex-col flex-shrink-0 h-screen sticky top-0 bg-[#f0eeff] dark:bg-[#17141f] border-r border-brand-100/80 dark:border-[#2c2838] transition-[width] duration-200 ease-in-out overflow-hidden"
-        style={{ width: `${w}px` }}
-      >
+      <aside className="hidden md:flex flex-col flex-shrink-0 w-[220px] h-screen sticky top-0 bg-[#f0eeff] dark:bg-[#17141f] border-r border-brand-100/80 dark:border-[#2c2838]">
+
         {/* Logo row */}
-        <div className="flex items-center justify-between px-3 h-14 border-b border-brand-100/60 dark:border-[#2c2838] flex-shrink-0">
-          <Link href="/" className="flex items-center overflow-hidden min-w-0">
-            {mounted && collapsed ? (
-              <Logo size={28} showText={false} />
-            ) : (
-              <Logo size={28} showText />
-            )}
+        <div className="flex items-center justify-between px-4 h-14 border-b border-brand-100/60 dark:border-[#2c2838] flex-shrink-0">
+          <Link href="/" className="flex items-center min-w-0">
+            <Logo size={28} showText />
           </Link>
-          <div className="flex items-center gap-0.5 flex-shrink-0">
-            {/* Theme toggle — hide label in collapsed state */}
-            {(!mounted || !collapsed) && <ThemeToggle />}
-            <button
-              onClick={toggle}
-              title={collapsed ? "Expand sidebar" : "Collapse sidebar"}
-              aria-expanded={!collapsed}
-              aria-label={collapsed ? "Expand sidebar" : "Collapse sidebar"}
-              className="flex-shrink-0 p-1 rounded-md text-gray-400 hover:text-gray-600 hover:bg-black/5 dark:text-gray-500 dark:hover:text-gray-300 dark:hover:bg-white/10 focus:outline-none focus:ring-2 focus:ring-brand-400 transition-colors"
-            >
-              <ChevronRightIcon
-                className="w-4 h-4 transition-transform duration-200"
-                style={{ transform: collapsed ? "rotate(0deg)" : "rotate(180deg)" }}
-              />
-            </button>
-          </div>
+          <ThemeToggle />
         </div>
 
-        {/* Nav links */}
-        <nav className="flex-1 px-2 py-3 space-y-0.5 overflow-hidden">
-          <NavLink
-            href="/"
-            icon={HomeIcon}
-            label="Home"
-            showLabel={!collapsed || !mounted}
-            pathname={pathname}
-          />
-          {status === "authenticated" && (
-            <NavLink
-              href="/docs"
-              icon={BookOpenIcon}
-              label="Documentation"
-              showLabel={!collapsed || !mounted}
-              pathname={pathname}
-            />
-          )}
-          {status === "authenticated" && session?.user?.role === "admin" && (
-            <NavLink
-              href="/admin"
-              icon={ShieldIcon}
-              label="Admin"
-              showLabel={!collapsed || !mounted}
-              pathname={pathname}
-            />
-          )}
+        {/* Navigation */}
+        <nav className="px-3 pt-5 pb-2 space-y-0.5" aria-label="Main navigation">
+          <p className="px-3 mb-2 text-[10px] font-semibold tracking-widest uppercase text-gray-400 dark:text-gray-600 select-none">
+            Menu
+          </p>
+          <NavItems status={status} role={userRole} pathname={pathname} />
         </nav>
 
+        {/* Spacer */}
+        <div className="flex-1" />
+
         {/* User section */}
-        {status === "authenticated" && (
-          <div className="px-2 py-3 border-t border-brand-100/60 dark:border-[#2c2838] flex-shrink-0 space-y-1">
-            <div
-              className="flex items-center gap-2 px-3 py-1.5 overflow-hidden"
-              title={collapsed ? (session.user?.name || session.user?.email || "") : undefined}
-            >
-              <UserAvatar name={session.user?.name} email={session.user?.email} />
-              <div
-                className="transition-[opacity,width] duration-150 overflow-hidden whitespace-nowrap min-w-0"
-                style={
-                  mounted
-                    ? collapsed
-                      ? { opacity: 0, width: 0 }
-                      : { opacity: 1, width: "auto" }
-                    : { opacity: 1, width: "auto" }
-                }
-              >
-                <p className="text-xs font-medium text-gray-700 dark:text-gray-300 truncate">
-                  {session.user?.name || session.user?.email}
+        {status === "authenticated" && session?.user && (
+          <div className="px-3 pb-4 pt-3 border-t border-brand-100/60 dark:border-[#2c2838] flex-shrink-0 space-y-1">
+            {/* User card */}
+            <div className="flex items-center gap-2.5 px-3 py-2.5 rounded-xl bg-white/60 dark:bg-white/[0.04]">
+              <UserAvatar name={session.user.name} email={session.user.email} />
+              <div className="min-w-0 flex-1">
+                <p className="text-xs font-semibold text-gray-800 dark:text-gray-200 truncate leading-tight">
+                  {session.user.name || session.user.email}
                 </p>
-                <span className="inline-flex items-center gap-1 text-xs text-brand-700 dark:text-brand-400">
+                <span className="inline-flex items-center gap-1 text-[10px] font-medium text-brand-600 dark:text-brand-400 mt-0.5">
                   <span className="w-1.5 h-1.5 rounded-full bg-brand-400 flex-shrink-0" />
-                  {session.user?.role}
+                  {session.user.role}
                 </span>
               </div>
             </div>
+
+            {/* Sign out */}
             <button
               onClick={() => {
                 posthog.capture("user_logged_out");
                 posthog.reset();
                 signOut({ callbackUrl: "/" });
               }}
-              title={collapsed ? "Sign Out" : undefined}
-              className="flex items-center gap-3 w-full px-3 py-2 rounded-lg text-sm text-gray-500 hover:text-gray-700 hover:bg-black/5 dark:text-gray-400 dark:hover:text-gray-200 dark:hover:bg-white/10 transition-colors"
+              className="flex items-center gap-3 w-full px-3 py-2 rounded-lg text-sm text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200 hover:bg-black/5 dark:hover:bg-white/10 transition-colors"
             >
               <SignOutIcon className="w-4 h-4 flex-shrink-0" />
-              <span
-                className="transition-[opacity,width] duration-150 overflow-hidden whitespace-nowrap"
-                style={
-                  mounted
-                    ? collapsed
-                      ? { opacity: 0, width: 0 }
-                      : { opacity: 1, width: "auto" }
-                    : { opacity: 1, width: "auto" }
-                }
-              >
-                Sign Out
-              </span>
+              Sign out
             </button>
           </div>
         )}
 
-        {/* Collapsed state: show ThemeToggle at bottom */}
-        {mounted && collapsed && (
-          <div className="px-2 pb-3 flex justify-center flex-shrink-0">
-            <ThemeToggle />
-          </div>
-        )}
-
         {/* Copyright */}
-        <div
-          className="px-3 py-2 border-t border-brand-100/60 dark:border-[#2c2838] flex-shrink-0 overflow-hidden"
-          style={
-            mounted
-              ? collapsed
-                ? { opacity: 0, height: 0, padding: 0 }
-                : { opacity: 1 }
-              : { opacity: 1 }
-          }
-        >
-          <p className="text-[10px] text-gray-400 dark:text-gray-600 whitespace-nowrap">
+        <div className="px-4 py-3 border-t border-brand-100/60 dark:border-[#2c2838] flex-shrink-0">
+          <p className="text-[10px] text-gray-400 dark:text-gray-600">
             &copy; {new Date().getFullYear()} Teams Squared
           </p>
         </div>
