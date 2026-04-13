@@ -9,17 +9,11 @@ const securityHeaders = [
     key: "Content-Security-Policy",
     value: [
       "default-src 'self'",
-      // Next.js inline scripts and RSC payloads require unsafe-inline/unsafe-eval in dev;
-      // in production Turbopack inlines a nonce — keeping unsafe-inline for now is the
-      // pragmatic choice until nonce-based CSP is wired through the app.
-      "script-src 'self' 'unsafe-inline' 'unsafe-eval' https://us-assets.i.posthog.com",
+      "script-src 'self' 'unsafe-inline' 'unsafe-eval'",
       "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com",
       "font-src 'self' https://fonts.gstatic.com",
       "img-src 'self' data: blob:",
-      // us.i.posthog.com = event ingestion; us.posthog.com = feature flags & decide endpoint
-      "connect-src 'self' https://us.i.posthog.com https://us-assets.i.posthog.com https://us.posthog.com",
-      // Allow PostHog dashboard embeds
-      "frame-src 'self' https://us.posthog.com https://eu.posthog.com",
+      "connect-src 'self'",
     ].join("; "),
   },
 ];

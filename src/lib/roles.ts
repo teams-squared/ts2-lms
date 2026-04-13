@@ -1,3 +1,5 @@
+import { prisma } from "./prisma";
+import { prismaRoleToApp } from "./types";
 import type { Role } from "./types";
 
 const ROLE_LEVEL: Record<Role, number> = {
@@ -11,10 +13,9 @@ export function hasAccess(userRole: Role, requiredRole: Role): boolean {
 }
 
 export async function getUserRole(email: string): Promise<Role> {
-  // Dynamic import to avoid pulling fs/path into Edge Runtime
-  const { getRoleConfig } = await import("./role-store");
-  const config = await getRoleConfig();
-  if (config.admins.includes(email)) return "admin";
-  if (config.managers.includes(email)) return "manager";
-  return config.defaultRole as Role;
+  const user = await prisma.user.findUnique({
+    where: { email },
+    select: { role: true },
+  });
+  return user ? prismaRoleToApp(user.role) : "employee";
 }

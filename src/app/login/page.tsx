@@ -13,9 +13,7 @@ export default function LoginPage() {
   return (
     <div className="min-h-screen flex items-center justify-center bg-brand-gradient px-4 py-12">
       <div className="w-full max-w-sm">
-        {/* Card */}
         <div className="bg-white dark:bg-[#1c1c24] rounded-2xl shadow-elevated border border-gray-100 dark:border-[#2e2e3a] overflow-hidden">
-          {/* Top accent */}
           <div className="h-1 w-full bg-gradient-to-r from-brand-500 via-brand-400 to-brand-600" />
 
           <div className="p-7">
@@ -25,11 +23,11 @@ export default function LoginPage() {
                 Welcome back
               </h1>
               <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
-                Sign in to access documentation
+                Sign in to access your learning platform
               </p>
             </div>
 
-            <Suspense fallback={<div className="text-center text-sm text-gray-400 py-4">Loading…</div>}>
+            <Suspense fallback={<div className="text-center text-sm text-gray-400 py-4">Loading...</div>}>
               <LoginForm hasMicrosoftProvider={hasMicrosoftProvider} isProduction={isProduction} />
             </Suspense>
 

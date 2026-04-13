@@ -3,7 +3,6 @@
 import { signIn } from "next-auth/react";
 import { useState } from "react";
 import { useSearchParams } from "next/navigation";
-import { posthog } from "@/lib/posthog-client";
 
 export default function LoginForm({
   hasMicrosoftProvider,
@@ -17,7 +16,7 @@ export default function LoginForm({
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
   const searchParams = useSearchParams();
-  const callbackUrl = searchParams.get("callbackUrl") || "/docs";
+  const callbackUrl = searchParams.get("callbackUrl") || "/";
 
   const handleCredentialLogin = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -35,7 +34,6 @@ export default function LoginForm({
       setError("Invalid email or password");
       setLoading(false);
     } else if (result?.url) {
-      posthog.capture("user_logged_in", { method: "credentials" });
       window.location.href = result.url;
     }
   };
@@ -123,7 +121,7 @@ export default function LoginForm({
             disabled={loading}
             className="w-full px-4 py-2.5 rounded-xl bg-gray-900 dark:bg-gray-100 text-white dark:text-gray-900 text-sm font-semibold hover:bg-gray-800 dark:hover:bg-white disabled:opacity-50 disabled:cursor-not-allowed transition-colors shadow-sm"
           >
-            {loading ? "Signing in…" : "Sign In"}
+            {loading ? "Signing in..." : "Sign In"}
           </button>
         </form>
       )}

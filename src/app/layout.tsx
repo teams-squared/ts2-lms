@@ -1,10 +1,8 @@
 import type { Metadata } from "next";
 import { Inter } from "next/font/google";
 import Providers from "@/components/auth/Providers";
-import AppSidebar from "@/components/layout/AppSidebar";
-import NavigationProgress from "@/components/layout/NavigationProgress";
+import NavBar from "@/components/layout/NavBar";
 import "./globals.css";
-import "highlight.js/styles/github.css";
 
 const inter = Inter({
   subsets: ["latin"],
@@ -12,8 +10,8 @@ const inter = Inter({
 });
 
 export const metadata: Metadata = {
-  title: "Teams Squared Docs",
-  description: "Internal documentation portal for Teams Squared",
+  title: "Teams Squared LMS",
+  description: "Learning Management System for Teams Squared",
 };
 
 export default function RootLayout({
@@ -23,13 +21,10 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en" className={`${inter.variable} h-full antialiased`} suppressHydrationWarning>
-      <body className="min-h-full flex flex-row bg-[#f5f5f8] dark:bg-[#0f0f14]">
+      <body className="min-h-full flex flex-col bg-[#f5f5f8] dark:bg-[#0f0f14]">
         <Providers>
-          <AppSidebar />
-          <div className="flex-1 flex flex-col min-w-0 h-screen overflow-y-auto pt-14 md:pt-0">
-            <NavigationProgress />
-            <main className="flex-1">{children}</main>
-          </div>
+          <NavBar />
+          <main className="flex-1">{children}</main>
         </Providers>
       </body>
     </html>

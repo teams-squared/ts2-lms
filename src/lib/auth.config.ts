@@ -13,11 +13,6 @@ declare module "next-auth" {
       email?: string | null;
       image?: string | null;
       role: Role;
-      /**
-       * Keys of docs unlocked this session, stored as "category/slug".
-       * Lives inside the auth JWT so it is automatically cleared on sign-out.
-       */
-      unlockedDocs?: string[];
     };
   }
 }
@@ -25,8 +20,6 @@ declare module "next-auth" {
 declare module "next-auth" {
   interface JWT {
     role?: Role;
-    /** See Session.user.unlockedDocs */
-    unlockedDocs?: string[];
   }
 }
 
@@ -46,9 +39,6 @@ if (
   );
 }
 
-// Edge-safe config: no Node.js-only imports (fs, path, bcryptjs, etc.)
-// Credentials provider is added in auth.ts (Node.js context) where bcrypt is available.
-// The session callback maps JWT token fields to session — safe for Edge.
 export const authConfig: NextAuthConfig = {
   providers,
   session: { strategy: "jwt" },
@@ -56,8 +46,6 @@ export const authConfig: NextAuthConfig = {
     async session({ session, token }) {
       if (session.user) {
         session.user.role = (token.role as Role) || "employee";
-        session.user.unlockedDocs =
-          (token.unlockedDocs as string[] | undefined) ?? [];
       }
       return session;
     },

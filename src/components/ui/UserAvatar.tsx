@@ -1,33 +1,22 @@
 "use client";
 
-import { useState } from "react";
-
 interface Props {
   name?: string | null;
-  email?: string | null;
-  size?: "sm" | "md";
+  size?: "sm" | "md" | "lg";
   className?: string;
 }
 
-export function UserAvatar({ name, email, size = "sm", className = "" }: Props) {
-  const [imgFailed, setImgFailed] = useState(false);
-  const initial = (name || email || "?")[0].toUpperCase();
-  const dim = size === "sm" ? "w-6 h-6 text-xs" : "w-8 h-8 text-sm";
-
-  if (email && !imgFailed) {
-    return (
-      <img
-        src={`/api/user/avatar?email=${encodeURIComponent(email)}`}
-        alt={name ?? email}
-        onError={() => setImgFailed(true)}
-        className={`${dim} rounded-full object-cover flex-shrink-0 ${className}`}
-      />
-    );
-  }
+export function UserAvatar({ name, size = "sm", className = "" }: Props) {
+  const initial = (name || "?")[0].toUpperCase();
+  const dim = {
+    sm: "w-7 h-7 text-xs",
+    md: "w-9 h-9 text-sm",
+    lg: "w-14 h-14 text-xl",
+  }[size];
 
   return (
     <div
-      className={`${dim} rounded-full bg-brand-200 flex items-center justify-center flex-shrink-0 font-semibold text-brand-800 ${className}`}
+      className={`${dim} rounded-full bg-brand-200 dark:bg-brand-900 flex items-center justify-center flex-shrink-0 font-semibold text-brand-800 dark:text-brand-200 ${className}`}
     >
       {initial}
     </div>
