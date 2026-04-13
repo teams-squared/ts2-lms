@@ -1,5 +1,18 @@
 import "@testing-library/jest-dom";
 
+// happy-dom tries to fetch <iframe src="..."> and aborts mid-request during
+// environment teardown, producing DOMException noise. Stub the src setter so
+// iframes never trigger network activity in the test environment.
+Object.defineProperty(HTMLIFrameElement.prototype, "src", {
+  configurable: true,
+  set(_url: string) {
+    /* no-op: prevent happy-dom from loading iframe content in tests */
+  },
+  get() {
+    return "";
+  },
+});
+
 // Stub window.matchMedia — required by next-themes / dark mode components
 Object.defineProperty(window, "matchMedia", {
   writable: true,

@@ -64,6 +64,9 @@ export default function NavBar() {
             <div className="relative">
               <button
                 onClick={() => setUserMenuOpen(!userMenuOpen)}
+                aria-label="Open user menu"
+                aria-expanded={userMenuOpen}
+                aria-haspopup="true"
                 className="flex items-center gap-2 p-1 rounded-lg hover:bg-gray-50 dark:hover:bg-[#1e1e28] transition-colors"
               >
                 <UserAvatar name={session.user?.name} size="sm" />
@@ -106,6 +109,8 @@ export default function NavBar() {
             <button
               className="sm:hidden p-1.5 rounded-lg hover:bg-gray-50 dark:hover:bg-[#1e1e28]"
               onClick={() => setMobileOpen(!mobileOpen)}
+              aria-label={mobileOpen ? "Close navigation menu" : "Open navigation menu"}
+              aria-expanded={mobileOpen}
             >
               {mobileOpen ? <CloseIcon className="w-5 h-5" /> : <HamburgerIcon className="w-5 h-5" />}
             </button>

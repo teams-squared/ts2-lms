@@ -140,7 +140,7 @@ export function UsersIcon(props: IconProps) {
   );
 }
 
-function BarChartIcon(props: IconProps) {
+export function BarChartIcon(props: IconProps) {
   return (
     <Icon {...props}>
       <line x1="12" y1="20" x2="12" y2="10" />

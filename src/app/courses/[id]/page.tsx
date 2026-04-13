@@ -1,3 +1,4 @@
+import Image from "next/image";
 import { auth } from "@/lib/auth";
 import { redirect, notFound } from "next/navigation";
 import { prisma } from "@/lib/prisma";
@@ -52,11 +53,14 @@ export default async function CourseDetailPage({
       {/* Header */}
       <div className="mb-8">
         {course.thumbnail && (
-          <div className="aspect-video rounded-xl overflow-hidden mb-6 bg-gray-100 dark:bg-[#18181f]">
-            <img
+          <div className="relative aspect-video rounded-xl overflow-hidden mb-6 bg-gray-100 dark:bg-[#18181f]">
+            <Image
               src={course.thumbnail}
               alt={course.title}
-              className="w-full h-full object-cover"
+              fill
+              sizes="(max-width: 768px) 100vw, 768px"
+              className="object-cover"
+              unoptimized
             />
           </div>
         )}

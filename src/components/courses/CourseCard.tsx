@@ -1,3 +1,4 @@
+import Image from "next/image";
 import Link from "next/link";
 import { CourseStatusBadge } from "./CourseStatusBadge";
 import type { CourseStatus } from "@/lib/types";
@@ -25,16 +26,19 @@ export function CourseCard({
       className="group block rounded-xl border border-gray-200/80 dark:border-[#2e2e3a] bg-white dark:bg-[#1c1c24] shadow-card hover:shadow-elevated transition-shadow overflow-hidden"
     >
       {/* Thumbnail */}
-      <div className="aspect-video bg-gray-100 dark:bg-[#18181f] flex items-center justify-center overflow-hidden">
+      <div className="relative aspect-video bg-gray-100 dark:bg-[#18181f] overflow-hidden">
         {thumbnail ? (
-          <img
+          <Image
             src={thumbnail}
             alt={title}
-            className="w-full h-full object-cover"
+            fill
+            sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
+            className="object-cover"
+            unoptimized
           />
         ) : (
-          <div className="text-3xl text-gray-300 dark:text-gray-600">
-            {title[0]?.toUpperCase() || "?"}
+          <div className="absolute inset-0 flex items-center justify-center text-3xl text-gray-300 dark:text-gray-600">
+            {title[0]?.toUpperCase() ?? "?"}
           </div>
         )}
       </div>

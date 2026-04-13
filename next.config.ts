@@ -12,7 +12,10 @@ const securityHeaders = [
       "script-src 'self' 'unsafe-inline' 'unsafe-eval'",
       "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com",
       "font-src 'self' https://fonts.gstatic.com",
-      "img-src 'self' data: blob:",
+      // Allow external HTTPS images (user-provided thumbnails)
+      "img-src 'self' data: blob: https:",
+      // Allow YouTube and Vimeo video embeds
+      "frame-src https://www.youtube.com https://www.youtube-nocookie.com https://player.vimeo.com",
       "connect-src 'self'",
     ].join("; "),
   },
@@ -26,6 +29,10 @@ const nextConfig: NextConfig = {
         headers: securityHeaders,
       },
     ];
+  },
+  images: {
+    // Thumbnails are user-provided external URLs — allow any HTTPS host
+    remotePatterns: [{ protocol: "https", hostname: "**" }],
   },
 };
 

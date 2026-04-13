@@ -47,8 +47,9 @@ export function CourseForm({
     setLoading(true);
     try {
       await onSubmit({ title, description, thumbnail, status });
-    } catch {
-      setError("Something went wrong");
+    } catch (err: unknown) {
+      setError(err instanceof Error ? err.message : "Something went wrong");
+    } finally {
       setLoading(false);
     }
   };

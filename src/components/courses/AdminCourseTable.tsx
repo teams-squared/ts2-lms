@@ -15,21 +15,41 @@ interface Course {
   createdAt: string;
 }
 
+async function apiFetch<T>(
+  url: string,
+  options?: RequestInit
+): Promise<T> {
+  const res = await fetch(url, options);
+  if (!res.ok) {
+    const body = await res.json().catch(() => ({}));
+    throw new Error(
+      (body as { error?: string }).error ?? `Request failed (${res.status})`
+    );
+  }
+  return res.json() as Promise<T>;
+}
+
 export default function AdminCourseTable() {
   const [courses, setCourses] = useState<Course[]>([]);
   const [loading, setLoading] = useState(true);
+  const [fetchError, setFetchError] = useState<string | null>(null);
   const [showForm, setShowForm] = useState(false);
   const [editingCourse, setEditingCourse] = useState<Course | null>(null);
   const [updatingStatus, setUpdatingStatus] = useState<string | null>(null);
+  const [statusError, setStatusError] = useState<string | null>(null);
 
   useEffect(() => {
-    fetch("/api/admin/courses")
-      .then((res) => res.json())
+    apiFetch<Course[]>("/api/admin/courses")
       .then((data) => {
         setCourses(data);
         setLoading(false);
       })
-      .catch(() => setLoading(false));
+      .catch((err: unknown) => {
+        setFetchError(
+          err instanceof Error ? err.message : "Failed to load courses"
+        );
+        setLoading(false);
+      });
   }, []);
 
   const handleCreate = async (data: {
@@ -38,12 +58,11 @@ export default function AdminCourseTable() {
     thumbnail: string;
     status: CourseStatus;
   }) => {
-    const res = await fetch("/api/courses", {
+    const course = await apiFetch<Course>("/api/courses", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(data),
     });
-    const course = await res.json();
     setCourses((prev) => [course, ...prev]);
     setShowForm(false);
   };
@@ -55,15 +74,12 @@ export default function AdminCourseTable() {
     status: CourseStatus;
   }) => {
     if (!editingCourse) return;
-    const res = await fetch(`/api/courses/${editingCourse.id}`, {
+    const updated = await apiFetch<Course>(`/api/courses/${editingCourse.id}`, {
       method: "PATCH",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(data),
     });
-    const updated = await res.json();
-    setCourses((prev) =>
-      prev.map((c) => (c.id === updated.id ? updated : c))
-    );
+    setCourses((prev) => prev.map((c) => (c.id === updated.id ? updated : c)));
     setEditingCourse(null);
   };
 
@@ -72,26 +88,37 @@ export default function AdminCourseTable() {
     newStatus: CourseStatus
   ) => {
     setUpdatingStatus(courseId);
+    setStatusError(null);
     try {
-      const res = await fetch(`/api/courses/${courseId}`, {
+      const updated = await apiFetch<Course>(`/api/courses/${courseId}`, {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ status: newStatus }),
       });
-      const updated = await res.json();
       setCourses((prev) =>
         prev.map((c) => (c.id === updated.id ? updated : c))
       );
-    } catch {
-      // silent
+    } catch (err: unknown) {
+      setStatusError(
+        err instanceof Error ? err.message : "Failed to update status"
+      );
+    } finally {
+      setUpdatingStatus(null);
     }
-    setUpdatingStatus(null);
   };
 
   if (loading) {
     return (
       <div className="text-sm text-gray-500 dark:text-gray-400 py-8 text-center">
-        Loading courses...
+        Loading courses…
+      </div>
+    );
+  }
+
+  if (fetchError) {
+    return (
+      <div className="text-sm text-red-600 dark:text-red-400 py-8 text-center">
+        {fetchError}
       </div>
     );
   }
@@ -125,6 +152,11 @@ export default function AdminCourseTable() {
 
   return (
     <div>
+      {statusError && (
+        <div className="mb-3 px-4 py-2.5 rounded-xl bg-red-50 dark:bg-red-950/30 border border-red-100 dark:border-red-900/50 text-red-600 dark:text-red-400 text-sm">
+          {statusError}
+        </div>
+      )}
       <div className="flex items-center justify-between mb-4">
         <span className="text-sm text-gray-500 dark:text-gray-400">
           {courses.length} course{courses.length !== 1 ? "s" : ""}
@@ -176,12 +208,10 @@ export default function AdminCourseTable() {
                   <select
                     value={course.status}
                     onChange={(e) =>
-                      handleStatusChange(
-                        course.id,
-                        e.target.value as CourseStatus
-                      )
+                      handleStatusChange(course.id, e.target.value as CourseStatus)
                     }
                     disabled={updatingStatus === course.id}
+                    aria-label={`Status for ${course.title}`}
                     className="px-2 py-1 rounded-lg border border-gray-200 dark:border-[#3a3a48] bg-white dark:bg-[#1e1e28] text-sm text-gray-700 dark:text-gray-300 focus:outline-none focus:ring-2 focus:ring-brand-500 disabled:opacity-50 cursor-pointer"
                   >
                     <option value="draft">Draft</option>
