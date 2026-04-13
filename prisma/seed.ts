@@ -131,7 +131,7 @@ async function main() {
           {
             title: "Threat Landscape Overview",
             type: LessonType.VIDEO,
-            content: "https://www.youtube.com/embed/dQw4w9WgXcQ",
+            content: "https://www.youtube.com/embed/inWWhr5tnEA",
           },
           {
             title: "Security Fundamentals Quiz",
@@ -171,7 +171,7 @@ async function main() {
           {
             title: "Cloud Providers Comparison",
             type: LessonType.VIDEO,
-            content: "https://www.youtube.com/embed/dQw4w9WgXcQ",
+            content: "https://www.youtube.com/embed/M988_fsOSWo",
           },
         ],
       },
@@ -211,7 +211,7 @@ async function main() {
           {
             title: "Building Trust in Teams",
             type: LessonType.VIDEO,
-            content: "https://www.youtube.com/embed/dQw4w9WgXcQ",
+            content: "https://www.youtube.com/embed/AL9DKAdqQBk",
           },
         ],
       },
