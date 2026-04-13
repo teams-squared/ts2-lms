@@ -2,6 +2,8 @@ import { prisma } from "@/lib/prisma";
 import { UsersIcon } from "@/components/icons";
 import UserTable from "@/components/admin/UserTable";
 
+export const dynamic = "force-dynamic";
+
 export default async function AdminPage() {
   const [totalUsers, adminCount, managerCount, employeeCount] =
     await Promise.all([

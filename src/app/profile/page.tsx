@@ -1,5 +1,7 @@
 import { auth } from "@/lib/auth";
 import { redirect } from "next/navigation";
+
+export const dynamic = "force-dynamic";
 import { prisma } from "@/lib/prisma";
 import { UserAvatar } from "@/components/ui/UserAvatar";
 import { RoleBadge } from "@/components/ui/Badge";
