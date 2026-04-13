@@ -135,12 +135,20 @@ export default async function ManagerPage() {
                       {course.enrollments.length}
                     </td>
                     <td className="px-5 py-3 text-right">
-                      <Link
-                        href={`/courses/${course.id}`}
-                        className="text-xs text-indigo-600 dark:text-indigo-400 hover:underline font-medium"
-                      >
-                        View
-                      </Link>
+                      <div className="flex items-center justify-end gap-3">
+                        <Link
+                          href={`/manager/courses/${course.id}/edit`}
+                          className="text-xs text-indigo-600 dark:text-indigo-400 hover:underline font-medium"
+                        >
+                          Edit
+                        </Link>
+                        <Link
+                          href={`/courses/${course.id}`}
+                          className="text-xs text-gray-500 dark:text-gray-400 hover:underline font-medium"
+                        >
+                          View
+                        </Link>
+                      </div>
                     </td>
                   </tr>
                 );

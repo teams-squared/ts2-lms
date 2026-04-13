@@ -7,7 +7,7 @@ import { CourseEditor } from "@/components/courses/CourseEditor";
 
 export const dynamic = "force-dynamic";
 
-export default async function CourseEditPage({
+export default async function ManagerCourseEditPage({
   params,
 }: {
   params: Promise<{ id: string }>;
@@ -54,7 +54,6 @@ export default async function CourseEditPage({
         })
       : [];
 
-  // Build quizDataByLessonId map
   const quizDataByLessonId: Record<
     string,
     {
@@ -107,16 +106,14 @@ export default async function CourseEditPage({
     })),
   }));
 
-  const backHref = session.user?.role === "manager" ? "/manager" : "/admin/courses";
-
   return (
     <div>
       <div className="flex items-center gap-3 mb-6">
         <Link
-          href={backHref}
+          href="/manager"
           className="text-sm text-indigo-600 dark:text-indigo-400 hover:underline"
         >
-          ← Back
+          ← Back to dashboard
         </Link>
       </div>
       <h1 className="text-xl font-bold text-gray-900 dark:text-gray-100 mb-6">
