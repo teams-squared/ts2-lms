@@ -8,7 +8,7 @@ vi.mock("@/lib/auth", () => ({ auth: mockAuth }));
 const { POST } = await import(
   "@/app/api/courses/[id]/modules/[moduleId]/lessons/[lessonId]/quiz/questions/route"
 );
-const { DELETE } = await import(
+const { DELETE, PATCH } = await import(
   "@/app/api/courses/[id]/modules/[moduleId]/lessons/[lessonId]/quiz/questions/[questionId]/route"
 );
 
@@ -270,5 +270,124 @@ describe("DELETE .../quiz/questions/[questionId]", () => {
     expect(mockPrisma.quizQuestion.delete).toHaveBeenCalledWith({
       where: { id: "q1" },
     });
+  });
+});
+
+describe("PATCH .../quiz/questions/[questionId]", () => {
+  beforeEach(() => vi.clearAllMocks());
+
+  const makePatchRequest = (body: unknown) =>
+    new Request(
+      "http://localhost/api/courses/c1/modules/m1/lessons/l1/quiz/questions/q1",
+      {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(body),
+      },
+    );
+
+  const mockQuestionWithOptions = {
+    id: "q1",
+    lessonId: "l1",
+    text: "What is 2+2?",
+    order: 1,
+    options: [
+      { id: "o1", text: "3", isCorrect: false, order: 1 },
+      { id: "o2", text: "4", isCorrect: true, order: 2 },
+    ],
+  };
+
+  it("returns 401 when unauthenticated", async () => {
+    mockAuth.mockResolvedValue(null);
+    const res = await PATCH(makePatchRequest({ text: "Updated?" }), makeDeleteParams("c1", "m1", "l1", "q1"));
+    expect(res.status).toBe(401);
+  });
+
+  it("returns 403 for employees", async () => {
+    mockAuth.mockResolvedValue(mockSession({ role: "employee" }));
+    mockPrisma.lesson.findUnique.mockResolvedValue(mockLesson);
+    const res = await PATCH(makePatchRequest({ text: "Updated?" }), makeDeleteParams("c1", "m1", "l1", "q1"));
+    expect(res.status).toBe(403);
+  });
+
+  it("returns 404 when lesson not found", async () => {
+    mockAuth.mockResolvedValue(mockSession({ role: "admin" }));
+    mockPrisma.lesson.findUnique.mockResolvedValue(null);
+    const res = await PATCH(makePatchRequest({ text: "Updated?" }), makeDeleteParams("c1", "m1", "l1", "q1"));
+    expect(res.status).toBe(404);
+  });
+
+  it("returns 404 when question not found", async () => {
+    mockAuth.mockResolvedValue(mockSession({ role: "admin" }));
+    mockPrisma.lesson.findUnique.mockResolvedValue(mockLesson);
+    mockPrisma.quizQuestion.findUnique.mockResolvedValue(null);
+    const res = await PATCH(makePatchRequest({ text: "Updated?" }), makeDeleteParams("c1", "m1", "l1", "q1"));
+    expect(res.status).toBe(404);
+  });
+
+  it("returns 400 when options array has fewer than 2 items", async () => {
+    mockAuth.mockResolvedValue(mockSession({ role: "admin" }));
+    mockPrisma.lesson.findUnique.mockResolvedValue(mockLesson);
+    mockPrisma.quizQuestion.findUnique.mockResolvedValue(mockQuestionWithOptions);
+    const res = await PATCH(
+      makePatchRequest({ options: [{ id: "o1", text: "Only one", isCorrect: true }] }),
+      makeDeleteParams("c1", "m1", "l1", "q1"),
+    );
+    expect(res.status).toBe(400);
+  });
+
+  it("returns 400 when options has no correct answer", async () => {
+    mockAuth.mockResolvedValue(mockSession({ role: "admin" }));
+    mockPrisma.lesson.findUnique.mockResolvedValue(mockLesson);
+    mockPrisma.quizQuestion.findUnique.mockResolvedValue(mockQuestionWithOptions);
+    const res = await PATCH(
+      makePatchRequest({
+        options: [
+          { id: "o1", text: "A", isCorrect: false },
+          { id: "o2", text: "B", isCorrect: false },
+        ],
+      }),
+      makeDeleteParams("c1", "m1", "l1", "q1"),
+    );
+    expect(res.status).toBe(400);
+  });
+
+  it("updates question text only", async () => {
+    mockAuth.mockResolvedValue(mockSession({ role: "admin" }));
+    mockPrisma.lesson.findUnique.mockResolvedValue(mockLesson);
+    mockPrisma.quizQuestion.findUnique
+      .mockResolvedValueOnce(mockQuestionWithOptions)
+      .mockResolvedValueOnce({ ...mockQuestionWithOptions, text: "What is 3+3?" });
+    mockPrisma.quizQuestion.update.mockResolvedValue({});
+
+    const res = await PATCH(
+      makePatchRequest({ text: "What is 3+3?" }),
+      makeDeleteParams("c1", "m1", "l1", "q1"),
+    );
+    expect(res.status).toBe(200);
+    expect(mockPrisma.quizQuestion.update).toHaveBeenCalledWith(
+      expect.objectContaining({ data: { text: "What is 3+3?" } }),
+    );
+  });
+
+  it("updates options when provided", async () => {
+    mockAuth.mockResolvedValue(mockSession({ role: "admin" }));
+    mockPrisma.lesson.findUnique.mockResolvedValue(mockLesson);
+    mockPrisma.quizQuestion.findUnique
+      .mockResolvedValueOnce(mockQuestionWithOptions)
+      .mockResolvedValueOnce(mockQuestionWithOptions);
+    mockPrisma.quizOption.update.mockResolvedValue({});
+
+    const res = await PATCH(
+      makePatchRequest({
+        options: [
+          { id: "o1", text: "Updated A", isCorrect: true },
+          { id: "o2", text: "Updated B", isCorrect: false },
+        ],
+      }),
+      makeDeleteParams("c1", "m1", "l1", "q1"),
+    );
+    expect(res.status).toBe(200);
+    expect(mockPrisma.quizOption.update).toHaveBeenCalledTimes(2);
   });
 });

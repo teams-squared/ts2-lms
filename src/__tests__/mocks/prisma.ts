@@ -81,6 +81,7 @@ export const mockPrisma = {
     create: vi.fn(),
     createMany: vi.fn(),
   },
+  $transaction: vi.fn((ops: unknown[]) => Promise.all(ops)),
   assignment: {
     findUnique: vi.fn(),
     findMany: vi.fn(),
