@@ -176,6 +176,82 @@ async function main() {
       ON "LessonProgress"("userId", "lessonId");
   `);
 
+  // Create QuizQuestion table (idempotent)
+  await client.query(`
+    CREATE TABLE IF NOT EXISTS "QuizQuestion" (
+      "id"        TEXT         NOT NULL,
+      "lessonId"  TEXT         NOT NULL,
+      "text"      TEXT         NOT NULL,
+      "order"     INTEGER      NOT NULL,
+      "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+      "updatedAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+      CONSTRAINT "QuizQuestion_pkey" PRIMARY KEY ("id"),
+      CONSTRAINT "QuizQuestion_lessonId_fkey"
+        FOREIGN KEY ("lessonId") REFERENCES "Lesson"("id") ON DELETE CASCADE ON UPDATE CASCADE
+    );
+  `);
+
+  await client.query(`
+    CREATE UNIQUE INDEX IF NOT EXISTS "QuizQuestion_lessonId_order_key"
+      ON "QuizQuestion"("lessonId", "order");
+  `);
+
+  // Create QuizOption table (idempotent)
+  await client.query(`
+    CREATE TABLE IF NOT EXISTS "QuizOption" (
+      "id"         TEXT         NOT NULL,
+      "questionId" TEXT         NOT NULL,
+      "text"       TEXT         NOT NULL,
+      "isCorrect"  BOOLEAN      NOT NULL DEFAULT false,
+      "order"      INTEGER      NOT NULL,
+      "createdAt"  TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+      "updatedAt"  TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+      CONSTRAINT "QuizOption_pkey" PRIMARY KEY ("id"),
+      CONSTRAINT "QuizOption_questionId_fkey"
+        FOREIGN KEY ("questionId") REFERENCES "QuizQuestion"("id") ON DELETE CASCADE ON UPDATE CASCADE
+    );
+  `);
+
+  await client.query(`
+    CREATE UNIQUE INDEX IF NOT EXISTS "QuizOption_questionId_order_key"
+      ON "QuizOption"("questionId", "order");
+  `);
+
+  // Create QuizAttempt table (idempotent)
+  await client.query(`
+    CREATE TABLE IF NOT EXISTS "QuizAttempt" (
+      "id"             TEXT         NOT NULL,
+      "userId"         TEXT         NOT NULL,
+      "lessonId"       TEXT         NOT NULL,
+      "score"          INTEGER      NOT NULL,
+      "totalQuestions" INTEGER      NOT NULL,
+      "passed"         BOOLEAN      NOT NULL,
+      "createdAt"      TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+      CONSTRAINT "QuizAttempt_pkey" PRIMARY KEY ("id"),
+      CONSTRAINT "QuizAttempt_userId_fkey"
+        FOREIGN KEY ("userId") REFERENCES "User"("id") ON DELETE CASCADE ON UPDATE CASCADE,
+      CONSTRAINT "QuizAttempt_lessonId_fkey"
+        FOREIGN KEY ("lessonId") REFERENCES "Lesson"("id") ON DELETE CASCADE ON UPDATE CASCADE
+    );
+  `);
+
+  // Create QuizAnswer table (idempotent)
+  await client.query(`
+    CREATE TABLE IF NOT EXISTS "QuizAnswer" (
+      "id"               TEXT NOT NULL,
+      "attemptId"        TEXT NOT NULL,
+      "questionId"       TEXT NOT NULL,
+      "selectedOptionId" TEXT NOT NULL,
+      CONSTRAINT "QuizAnswer_pkey" PRIMARY KEY ("id"),
+      CONSTRAINT "QuizAnswer_attemptId_fkey"
+        FOREIGN KEY ("attemptId") REFERENCES "QuizAttempt"("id") ON DELETE CASCADE ON UPDATE CASCADE,
+      CONSTRAINT "QuizAnswer_questionId_fkey"
+        FOREIGN KEY ("questionId") REFERENCES "QuizQuestion"("id") ON DELETE CASCADE ON UPDATE CASCADE,
+      CONSTRAINT "QuizAnswer_selectedOptionId_fkey"
+        FOREIGN KEY ("selectedOptionId") REFERENCES "QuizOption"("id") ON DELETE CASCADE ON UPDATE CASCADE
+    );
+  `);
+
   console.log("Migration complete");
   await client.end();
 }

@@ -3,6 +3,8 @@ import { redirect, notFound } from "next/navigation";
 import { prisma } from "@/lib/prisma";
 import { prismaLessonTypeToApp } from "@/lib/types";
 import { LessonViewer } from "@/components/courses/LessonViewer";
+import { QuizViewer } from "@/components/courses/QuizViewer";
+import { QuizBuilder } from "@/components/courses/QuizBuilder";
 import { CourseSidebar } from "@/components/courses/CourseSidebar";
 import { LessonCompleteButton } from "@/components/courses/LessonCompleteButton";
 import { CheckCircleIcon } from "@/components/icons";
@@ -97,6 +99,70 @@ export default async function LessonPage({
     })),
   }));
 
+  const lessonType = prismaLessonTypeToApp(lesson.type);
+  const isQuiz = lessonType === "quiz";
+  const isPrivileged =
+    session.user?.role === "admin" || session.user?.role === "manager";
+
+  // Fetch quiz data for quiz-type lessons
+  let quizQuestions: {
+    id: string;
+    text: string;
+    order: number;
+    options: { id: string; text: string; isCorrect: boolean; order: number }[];
+  }[] = [];
+  let quizPassingScore = 70;
+  let quizBestAttempt: {
+    id: string;
+    score: number;
+    totalQuestions: number;
+    passed: boolean;
+    createdAt: string;
+  } | null = null;
+
+  if (isQuiz) {
+    if (lesson.content) {
+      try {
+        const parsed = JSON.parse(lesson.content) as { passingScore?: number };
+        if (typeof parsed.passingScore === "number") {
+          quizPassingScore = parsed.passingScore;
+        }
+      } catch {
+        // use default
+      }
+    }
+
+    quizQuestions = await prisma.quizQuestion.findMany({
+      where: { lessonId },
+      include: { options: { orderBy: { order: "asc" } } },
+      orderBy: { order: "asc" },
+    });
+
+    const attempts = await prisma.quizAttempt.findMany({
+      where: { userId, lessonId },
+      orderBy: { createdAt: "desc" },
+    });
+
+    if (attempts.length > 0) {
+      const best = attempts.reduce((b, a) => (a.score > b.score ? a : b), attempts[0]);
+      quizBestAttempt = {
+        id: best.id,
+        score: best.score,
+        totalQuestions: best.totalQuestions,
+        passed: best.passed,
+        createdAt: best.createdAt.toISOString(),
+      };
+    }
+
+    // For employees: omit isCorrect
+    if (!isPrivileged) {
+      quizQuestions = quizQuestions.map((q) => ({
+        ...q,
+        options: q.options.map((o) => ({ ...o, isCorrect: false })),
+      }));
+    }
+  }
+
   return (
     <div className="flex h-[calc(100vh-4rem)] overflow-hidden">
       <CourseSidebar
@@ -125,21 +191,48 @@ export default async function LessonPage({
             </div>
           )}
 
-          <LessonViewer
-            title={lesson.title}
-            type={prismaLessonTypeToApp(lesson.type)}
-            content={lesson.content}
-          />
+          {isQuiz ? (
+            <>
+              <h1 className="text-2xl font-bold text-gray-900 dark:text-gray-100 mb-6">
+                {lesson.title}
+              </h1>
+              <QuizViewer
+                questions={quizQuestions}
+                passingScore={quizPassingScore}
+                initialBestAttempt={quizBestAttempt}
+                courseId={courseId}
+                moduleId={lesson.moduleId}
+                lessonId={lessonId}
+              />
+              {isPrivileged && (
+                <QuizBuilder
+                  initialQuestions={quizQuestions}
+                  passingScore={quizPassingScore}
+                  courseId={courseId}
+                  moduleId={lesson.moduleId}
+                  lessonId={lessonId}
+                />
+              )}
+            </>
+          ) : (
+            <>
+              <LessonViewer
+                title={lesson.title}
+                type={lessonType}
+                content={lesson.content}
+              />
 
-          {/* Mark complete button */}
-          <div className="mt-8 pt-6 border-t border-gray-100 dark:border-[#2e2e3a]">
-            <LessonCompleteButton
-              courseId={courseId}
-              moduleId={lesson.moduleId}
-              lessonId={lessonId}
-              initialCompleted={isCurrentLessonCompleted}
-            />
-          </div>
+              {/* Mark complete button */}
+              <div className="mt-8 pt-6 border-t border-gray-100 dark:border-[#2e2e3a]">
+                <LessonCompleteButton
+                  courseId={courseId}
+                  moduleId={lesson.moduleId}
+                  lessonId={lessonId}
+                  initialCompleted={isCurrentLessonCompleted}
+                />
+              </div>
+            </>
+          )}
         </div>
       </main>
     </div>

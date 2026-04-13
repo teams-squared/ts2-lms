@@ -24,6 +24,7 @@ model User {
   createdCourses Course[]         @relation("CreatedCourses")
   enrollments    Enrollment[]
   lessonProgress LessonProgress[]
+  quizAttempts   QuizAttempt[]
 }
 
 enum CourseStatus {
@@ -67,16 +68,18 @@ model Module {
 }
 
 model Lesson {
-  id        String           @id @default(cuid())
-  title     String
-  type      LessonType       @default(TEXT)
-  content   String?
-  order     Int
-  moduleId  String
-  module    Module           @relation(fields: [moduleId], references: [id], onDelete: Cascade)
-  progress  LessonProgress[]
-  createdAt DateTime         @default(now())
-  updatedAt DateTime         @updatedAt
+  id            String           @id @default(cuid())
+  title         String
+  type          LessonType       @default(TEXT)
+  content       String?
+  order         Int
+  moduleId      String
+  module        Module           @relation(fields: [moduleId], references: [id], onDelete: Cascade)
+  progress      LessonProgress[]
+  quizQuestions QuizQuestion[]
+  quizAttempts  QuizAttempt[]
+  createdAt     DateTime         @default(now())
+  updatedAt     DateTime         @updatedAt
 
   @@unique([moduleId, order])
 }
@@ -114,4 +117,57 @@ model SharePointCache {
   expiresAt DateTime
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
+}
+
+model QuizQuestion {
+  id        String       @id @default(cuid())
+  lessonId  String
+  text      String
+  order     Int
+  lesson    Lesson       @relation(fields: [lessonId], references: [id], onDelete: Cascade)
+  options   QuizOption[]
+  answers   QuizAnswer[]
+  createdAt DateTime     @default(now())
+  updatedAt DateTime     @updatedAt
+
+  @@unique([lessonId, order])
+}
+
+model QuizOption {
+  id         String       @id @default(cuid())
+  questionId String
+  text       String
+  isCorrect  Boolean      @default(false)
+  order      Int
+  question   QuizQuestion @relation(fields: [questionId], references: [id], onDelete: Cascade)
+  answers    QuizAnswer[]
+  createdAt  DateTime     @default(now())
+  updatedAt  DateTime     @updatedAt
+
+  @@unique([questionId, order])
+}
+
+model QuizAttempt {
+  id             String       @id @default(cuid())
+  userId         String
+  lessonId       String
+  score          Int
+  totalQuestions Int
+  passed         Boolean
+  createdAt      DateTime     @default(now())
+
+  user    User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+  lesson  Lesson       @relation(fields: [lessonId], references: [id], onDelete: Cascade)
+  answers QuizAnswer[]
+}
+
+model QuizAnswer {
+  id               String       @id @default(cuid())
+  attemptId        String
+  questionId       String
+  selectedOptionId String
+
+  attempt        QuizAttempt  @relation(fields: [attemptId], references: [id], onDelete: Cascade)
+  question       QuizQuestion @relation(fields: [questionId], references: [id], onDelete: Cascade)
+  selectedOption QuizOption   @relation(fields: [selectedOptionId], references: [id], onDelete: Cascade)
 }
