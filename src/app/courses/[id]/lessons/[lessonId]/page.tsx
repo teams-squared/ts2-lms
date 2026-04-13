@@ -204,6 +204,14 @@ export default async function LessonPage({
                 moduleId={lesson.moduleId}
                 lessonId={lessonId}
               />
+              {isCurrentLessonCompleted && (
+                <div className="mt-6 flex items-center gap-3 rounded-xl border border-emerald-200 dark:border-emerald-800/40 bg-emerald-50 dark:bg-emerald-900/20 px-5 py-4">
+                  <CheckCircleIcon className="w-5 h-5 text-emerald-600 dark:text-emerald-400 flex-shrink-0" />
+                  <p className="text-sm font-semibold text-emerald-800 dark:text-emerald-200">
+                    Lesson complete — you passed this quiz.
+                  </p>
+                </div>
+              )}
               {isPrivileged && (
                 <QuizBuilder
                   initialQuestions={quizQuestions}

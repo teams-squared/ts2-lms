@@ -237,7 +237,7 @@ describe("QuizViewer", () => {
     expect(screen.getByText("Submit Quiz")).toBeInTheDocument();
   });
 
-  it("shows passed state immediately when initialBestAttempt.passed is true", () => {
+  it("always starts in idle state even when initialBestAttempt.passed is true (no blank screen)", () => {
     render(
       <QuizViewer
         {...defaultProps}
@@ -250,11 +250,40 @@ describe("QuizViewer", () => {
         }}
       />,
     );
-    // When passed is true, start in submitted state showing score
-    // Actually our component starts in idle state for simplicity; let's just verify the best attempt shows
-    // (the component shows "Retake Quiz" when there IS an attempt but starts idle)
-    // For a passed attempt, it immediately enters submitted view
-    // Let's verify the component renders in submitted-ish state
-    expect(screen.queryByText("Try Again")).not.toBeInTheDocument();
+    // Must NOT return null — idle state renders quiz info and a button
+    expect(screen.getByText("Retake Quiz")).toBeInTheDocument();
+    expect(screen.getByText(/2 questions/i)).toBeInTheDocument();
+  });
+
+  it("shows passed badge in idle state when initialBestAttempt.passed is true", () => {
+    render(
+      <QuizViewer
+        {...defaultProps}
+        initialBestAttempt={{
+          id: "att1",
+          score: 2,
+          totalQuestions: 2,
+          passed: true,
+          createdAt: new Date().toISOString(),
+        }}
+      />,
+    );
+    expect(screen.getByText(/you passed this quiz/i)).toBeInTheDocument();
+  });
+
+  it("does not show passed badge when best attempt failed", () => {
+    render(
+      <QuizViewer
+        {...defaultProps}
+        initialBestAttempt={{
+          id: "att1",
+          score: 1,
+          totalQuestions: 2,
+          passed: false,
+          createdAt: new Date().toISOString(),
+        }}
+      />,
+    );
+    expect(screen.queryByText(/you passed this quiz/i)).not.toBeInTheDocument();
   });
 });
