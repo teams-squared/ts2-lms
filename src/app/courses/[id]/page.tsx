@@ -1,9 +1,10 @@
 import { auth } from "@/lib/auth";
 import { redirect, notFound } from "next/navigation";
 import { prisma } from "@/lib/prisma";
-import { prismaStatusToApp } from "@/lib/types";
+import { prismaStatusToApp, prismaLessonTypeToApp } from "@/lib/types";
 import { CourseStatusBadge } from "@/components/courses/CourseStatusBadge";
 import { UserAvatar } from "@/components/ui/UserAvatar";
+import { ModuleList } from "@/components/courses/ModuleList";
 
 export const dynamic = "force-dynamic";
 
@@ -19,7 +20,18 @@ export default async function CourseDetailPage({
 
   const course = await prisma.course.findUnique({
     where: { id },
-    include: { createdBy: { select: { name: true, email: true } } },
+    include: {
+      createdBy: { select: { name: true, email: true } },
+      modules: {
+        orderBy: { order: "asc" },
+        include: {
+          lessons: {
+            orderBy: { order: "asc" },
+            select: { id: true, title: true, type: true, order: true },
+          },
+        },
+      },
+    },
   });
 
   if (!course) notFound();
@@ -81,14 +93,30 @@ export default async function CourseDetailPage({
         </div>
       </div>
 
-      {/* Modules placeholder */}
-      <div className="rounded-xl border border-gray-200/80 dark:border-[#2e2e3a] bg-white dark:bg-[#1c1c24] shadow-card p-6">
-        <h2 className="text-sm font-semibold text-gray-900 dark:text-gray-100 mb-2">
-          Course Content
-        </h2>
-        <p className="text-xs text-gray-500 dark:text-gray-400">
-          Modules and lessons coming soon.
-        </p>
+      {/* Modules & Lessons */}
+      <div className="rounded-xl border border-gray-200/80 dark:border-[#2e2e3a] bg-white dark:bg-[#1c1c24] shadow-card overflow-hidden">
+        <div className="px-4 py-3 border-b border-gray-100 dark:border-[#26262e]">
+          <h2 className="text-sm font-semibold text-gray-900 dark:text-gray-100">
+            Course Content
+          </h2>
+          <p className="text-xs text-gray-400 mt-0.5">
+            {course.modules.length} module{course.modules.length !== 1 ? "s" : ""} &middot;{" "}
+            {course.modules.reduce((sum, m) => sum + m.lessons.length, 0)} lesson
+            {course.modules.reduce((sum, m) => sum + m.lessons.length, 0) !== 1 ? "s" : ""}
+          </p>
+        </div>
+        <ModuleList
+          courseId={id}
+          modules={course.modules.map((m) => ({
+            id: m.id,
+            title: m.title,
+            order: m.order,
+            lessons: m.lessons.map((l) => ({
+              ...l,
+              type: prismaLessonTypeToApp(l.type),
+            })),
+          }))}
+        />
       </div>
     </div>
   );

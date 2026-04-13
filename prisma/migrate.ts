@@ -65,6 +65,53 @@ async function main() {
     );
   `);
 
+  // Create LessonType enum (idempotent)
+  await client.query(`
+    DO $$ BEGIN
+      CREATE TYPE "LessonType" AS ENUM ('TEXT', 'VIDEO', 'QUIZ');
+    EXCEPTION
+      WHEN duplicate_object THEN NULL;
+    END $$;
+  `);
+
+  // Create Module table (idempotent)
+  await client.query(`
+    CREATE TABLE IF NOT EXISTS "Module" (
+      "id"        TEXT         NOT NULL,
+      "title"     TEXT         NOT NULL,
+      "order"     INTEGER      NOT NULL,
+      "courseId"   TEXT         NOT NULL,
+      "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+      "updatedAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+      CONSTRAINT "Module_pkey" PRIMARY KEY ("id"),
+      CONSTRAINT "Module_courseId_fkey" FOREIGN KEY ("courseId") REFERENCES "Course"("id") ON DELETE CASCADE ON UPDATE CASCADE
+    );
+  `);
+
+  await client.query(`
+    CREATE UNIQUE INDEX IF NOT EXISTS "Module_courseId_order_key" ON "Module"("courseId", "order");
+  `);
+
+  // Create Lesson table (idempotent)
+  await client.query(`
+    CREATE TABLE IF NOT EXISTS "Lesson" (
+      "id"        TEXT          NOT NULL,
+      "title"     TEXT          NOT NULL,
+      "type"      "LessonType"  NOT NULL DEFAULT 'TEXT',
+      "content"   TEXT,
+      "order"     INTEGER       NOT NULL,
+      "moduleId"  TEXT          NOT NULL,
+      "createdAt" TIMESTAMP(3)  NOT NULL DEFAULT CURRENT_TIMESTAMP,
+      "updatedAt" TIMESTAMP(3)  NOT NULL DEFAULT CURRENT_TIMESTAMP,
+      CONSTRAINT "Lesson_pkey" PRIMARY KEY ("id"),
+      CONSTRAINT "Lesson_moduleId_fkey" FOREIGN KEY ("moduleId") REFERENCES "Module"("id") ON DELETE CASCADE ON UPDATE CASCADE
+    );
+  `);
+
+  await client.query(`
+    CREATE UNIQUE INDEX IF NOT EXISTS "Lesson_moduleId_order_key" ON "Lesson"("moduleId", "order");
+  `);
+
   console.log("Migration complete");
   await client.end();
 }

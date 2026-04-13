@@ -1,4 +1,4 @@
-import { Role as PrismaRole, CourseStatus as PrismaCourseStatus } from "@prisma/client";
+import { Role as PrismaRole, CourseStatus as PrismaCourseStatus, LessonType as PrismaLessonType } from "@prisma/client";
 
 export type Role = "admin" | "manager" | "employee";
 export type CourseStatus = "draft" | "published" | "archived";
@@ -43,4 +43,28 @@ export function prismaStatusToApp(status: PrismaCourseStatus): CourseStatus {
 
 export function appStatusToPrisma(status: CourseStatus): PrismaCourseStatus {
   return APP_STATUS_MAP[status];
+}
+
+// ─── LessonType mapping ────────────────────────────────────────────────────
+
+export type LessonType = "text" | "video" | "quiz";
+
+const PRISMA_LESSON_TYPE_MAP: Record<PrismaLessonType, LessonType> = {
+  TEXT: "text",
+  VIDEO: "video",
+  QUIZ: "quiz",
+};
+
+const APP_LESSON_TYPE_MAP: Record<LessonType, PrismaLessonType> = {
+  text: "TEXT",
+  video: "VIDEO",
+  quiz: "QUIZ",
+};
+
+export function prismaLessonTypeToApp(type: PrismaLessonType): LessonType {
+  return PRISMA_LESSON_TYPE_MAP[type];
+}
+
+export function appLessonTypeToPrisma(type: LessonType): PrismaLessonType {
+  return APP_LESSON_TYPE_MAP[type];
 }

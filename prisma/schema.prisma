@@ -38,6 +38,40 @@ model Course {
   status      CourseStatus @default(DRAFT)
   createdById String
   createdBy   User         @relation("CreatedCourses", fields: [createdById], references: [id])
+  modules     Module[]
   createdAt   DateTime     @default(now())
   updatedAt   DateTime     @updatedAt
+}
+
+enum LessonType {
+  TEXT
+  VIDEO
+  QUIZ
+}
+
+model Module {
+  id        String   @id @default(cuid())
+  title     String
+  order     Int
+  courseId   String
+  course    Course   @relation(fields: [courseId], references: [id], onDelete: Cascade)
+  lessons   Lesson[]
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([courseId, order])
+}
+
+model Lesson {
+  id        String     @id @default(cuid())
+  title     String
+  type      LessonType @default(TEXT)
+  content   String?
+  order     Int
+  moduleId  String
+  module    Module     @relation(fields: [moduleId], references: [id], onDelete: Cascade)
+  createdAt DateTime   @default(now())
+  updatedAt DateTime   @updatedAt
+
+  @@unique([moduleId, order])
 }

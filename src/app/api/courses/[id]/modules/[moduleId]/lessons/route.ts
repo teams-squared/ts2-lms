@@ -1,0 +1,61 @@
+import { NextResponse } from "next/server";
+import { auth } from "@/lib/auth";
+import { prisma } from "@/lib/prisma";
+import { appLessonTypeToPrisma, prismaLessonTypeToApp } from "@/lib/types";
+import type { LessonType } from "@/lib/types";
+
+type Params = { params: Promise<{ id: string; moduleId: string }> };
+
+/** POST /api/courses/[id]/modules/[moduleId]/lessons — create a lesson. */
+export async function POST(request: Request, { params }: Params) {
+  const session = await auth();
+  if (!session?.user?.id) {
+    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  }
+
+  const { id: courseId, moduleId } = await params;
+  const course = await prisma.course.findUnique({ where: { id: courseId } });
+  if (!course) {
+    return NextResponse.json({ error: "Course not found" }, { status: 404 });
+  }
+  if (session.user.role !== "admin" && course.createdById !== session.user.id) {
+    return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+  }
+
+  const mod = await prisma.module.findUnique({ where: { id: moduleId } });
+  if (!mod || mod.courseId !== courseId) {
+    return NextResponse.json({ error: "Module not found" }, { status: 404 });
+  }
+
+  const body = await request.json();
+  const title = (body.title as string)?.trim();
+  if (!title) {
+    return NextResponse.json({ error: "Title is required" }, { status: 400 });
+  }
+
+  const type: LessonType = body.type || "text";
+  if (!["text", "video", "quiz"].includes(type)) {
+    return NextResponse.json({ error: "Invalid lesson type" }, { status: 400 });
+  }
+
+  const maxOrder = await prisma.lesson.findFirst({
+    where: { moduleId },
+    orderBy: { order: "desc" },
+    select: { order: true },
+  });
+
+  const lesson = await prisma.lesson.create({
+    data: {
+      title,
+      type: appLessonTypeToPrisma(type),
+      content: body.content?.trim() || null,
+      order: (maxOrder?.order ?? 0) + 1,
+      moduleId,
+    },
+  });
+
+  return NextResponse.json(
+    { ...lesson, type: prismaLessonTypeToApp(lesson.type) },
+    { status: 201 }
+  );
+}
