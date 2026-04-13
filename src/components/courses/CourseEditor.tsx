@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { SharePointFilePicker } from "./SharePointFilePicker";
+import { QuizBuilder } from "./QuizBuilder";
 import type { CourseStatus, LessonType } from "@/lib/types";
 import type { SharePointDocumentRef } from "@/lib/sharepoint/types";
 
@@ -21,12 +22,32 @@ interface Module {
   lessons: Lesson[];
 }
 
+interface QuizOption {
+  id: string;
+  text: string;
+  isCorrect: boolean;
+  order: number;
+}
+
+interface QuizQuestion {
+  id: string;
+  text: string;
+  order: number;
+  options: QuizOption[];
+}
+
+interface QuizLessonData {
+  questions: QuizQuestion[];
+  passingScore: number;
+}
+
 interface CourseEditorProps {
   courseId: string;
   initialTitle: string;
   initialDescription: string | null;
   initialStatus: CourseStatus;
   initialModules: Module[];
+  quizDataByLessonId?: Record<string, QuizLessonData>;
 }
 
 async function apiFetch<T>(url: string, options?: RequestInit): Promise<T> {
@@ -46,6 +67,7 @@ export function CourseEditor({
   initialDescription,
   initialStatus,
   initialModules,
+  quizDataByLessonId = {},
 }: CourseEditorProps) {
   const router = useRouter();
 
@@ -86,6 +108,18 @@ export function CourseEditor({
   // Delete state
   const [deletingModuleId, setDeletingModuleId] = useState<string | null>(null);
   const [deletingLessonId, setDeletingLessonId] = useState<string | null>(null);
+
+  // Inline quiz builder state
+  const [expandedQuizLessons, setExpandedQuizLessons] = useState<Set<string>>(new Set());
+
+  const toggleQuizBuilder = (lessonId: string) => {
+    setExpandedQuizLessons((prev) => {
+      const next = new Set(prev);
+      if (next.has(lessonId)) next.delete(lessonId);
+      else next.add(lessonId);
+      return next;
+    });
+  };
 
   // ─── Course save ───────────────────────────────────────────────────────────
 
@@ -384,41 +418,57 @@ export function CourseEditor({
               {expandedModules.has(module.id) && (
                 <div className="border-t border-gray-100 dark:border-[#2a2a38] px-4 py-3 space-y-2">
                   {module.lessons.map((lesson) => (
-                    <div
-                      key={lesson.id}
-                      className="flex items-center gap-2 rounded-lg px-3 py-2 bg-gray-50 dark:bg-[#18181f]"
-                    >
-                      <span className="text-xs text-gray-400 capitalize w-16 shrink-0">
-                        {lesson.type}
-                      </span>
-                      <p className="text-sm text-gray-800 dark:text-gray-200 flex-1 truncate">
-                        {lesson.title}
-                      </p>
-                      {lesson.type === "quiz" ? (
-                        <a
-                          href={`/courses/${courseId}/lessons/${lesson.id}`}
-                          className="text-xs text-indigo-600 dark:text-indigo-400 hover:underline"
-                          target="_blank"
-                          rel="noopener noreferrer"
-                        >
-                          Quiz builder ↗
-                        </a>
-                      ) : (
+                    <div key={lesson.id}>
+                      <div className="flex items-center gap-2 rounded-lg px-3 py-2 bg-gray-50 dark:bg-[#18181f]">
+                        <span className="text-xs text-gray-400 capitalize w-16 shrink-0">
+                          {lesson.type}
+                        </span>
+                        <p className="text-sm text-gray-800 dark:text-gray-200 flex-1 truncate">
+                          {lesson.title}
+                        </p>
+                        {lesson.type === "quiz" ? (
+                          <button
+                            onClick={() => toggleQuizBuilder(lesson.id)}
+                            className="text-xs text-indigo-600 dark:text-indigo-400 hover:underline"
+                            data-testid={`toggle-quiz-builder-${lesson.id}`}
+                          >
+                            {expandedQuizLessons.has(lesson.id) ? "Quiz Builder ▲" : "Quiz Builder ▼"}
+                          </button>
+                        ) : (
+                          <button
+                            onClick={() => startEditLesson(lesson)}
+                            className="text-xs text-indigo-600 dark:text-indigo-400 hover:underline"
+                          >
+                            Edit
+                          </button>
+                        )}
                         <button
-                          onClick={() => startEditLesson(lesson)}
-                          className="text-xs text-indigo-600 dark:text-indigo-400 hover:underline"
+                          onClick={() => void handleDeleteLesson(module.id, lesson.id)}
+                          disabled={deletingLessonId === lesson.id}
+                          className="text-xs text-red-500 hover:text-red-700 disabled:opacity-50"
+                          aria-label={`Delete lesson ${lesson.title}`}
                         >
-                          Edit
+                          Delete
                         </button>
-                      )}
-                      <button
-                        onClick={() => void handleDeleteLesson(module.id, lesson.id)}
-                        disabled={deletingLessonId === lesson.id}
-                        className="text-xs text-red-500 hover:text-red-700 disabled:opacity-50"
-                        aria-label={`Delete lesson ${lesson.title}`}
-                      >
-                        Delete
-                      </button>
+                      </div>
+                      {lesson.type === "quiz" && expandedQuizLessons.has(lesson.id) && (() => {
+                        const qData = quizDataByLessonId[lesson.id];
+                        if (!qData) return null;
+                        return (
+                          <div
+                            className="mt-1 mb-1 rounded-xl border border-indigo-200 dark:border-indigo-800/40 bg-indigo-50/30 dark:bg-indigo-900/10 px-4 pb-4"
+                            data-testid={`quiz-builder-panel-${lesson.id}`}
+                          >
+                            <QuizBuilder
+                              initialQuestions={qData.questions}
+                              passingScore={qData.passingScore}
+                              courseId={courseId}
+                              moduleId={module.id}
+                              lessonId={lesson.id}
+                            />
+                          </div>
+                        );
+                      })()}
                     </div>
                   ))}
 
