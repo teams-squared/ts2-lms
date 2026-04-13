@@ -85,6 +85,7 @@ describe("PATCH /api/courses/[id]", () => {
     mockPrisma.course.findUnique.mockResolvedValue({
       id: "c1",
       createdById: "other-user",
+      status: "DRAFT",
     });
     mockPrisma.course.update.mockResolvedValue({
       id: "c1",
@@ -96,6 +97,8 @@ describe("PATCH /api/courses/[id]", () => {
       createdAt: new Date(),
       updatedAt: new Date(),
     });
+    // Notification side-effect: no enrollments, so no notifications created
+    mockPrisma.enrollment.findMany.mockResolvedValue([]);
     const req = new Request("http://localhost/api/courses/c1", {
       method: "PATCH",
       headers: { "Content-Type": "application/json" },

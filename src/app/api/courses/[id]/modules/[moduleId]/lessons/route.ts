@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { appLessonTypeToPrisma, prismaLessonTypeToApp } from "@/lib/types";
+import { createNotificationsForCourse } from "@/lib/notifications";
 import type { LessonType } from "@/lib/types";
 
 type Params = { params: Promise<{ id: string; moduleId: string }> };
@@ -64,6 +65,15 @@ export async function POST(request: Request, { params }: Params) {
       moduleId,
     },
   });
+
+  // Notify enrolled users when a lesson is added to an already-published course
+  if (course.status === "PUBLISHED") {
+    await createNotificationsForCourse(
+      courseId,
+      "new_lesson",
+      `A new lesson "${title}" has been added to "${course.title}".`
+    );
+  }
 
   return NextResponse.json(
     { ...lesson, type: prismaLessonTypeToApp(lesson.type) },

@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { prismaStatusToApp, appStatusToPrisma } from "@/lib/types";
+import { createNotificationsForCourse } from "@/lib/notifications";
 import type { CourseStatus } from "@/lib/types";
 
 type Params = { params: Promise<{ id: string }> };
@@ -91,6 +92,15 @@ export async function PATCH(request: Request, { params }: Params) {
     data,
     include: { createdBy: { select: { name: true, email: true } } },
   });
+
+  // Notify enrolled users when a course transitions to published
+  if (data.status === "PUBLISHED" && course.status !== "PUBLISHED") {
+    await createNotificationsForCourse(
+      id,
+      "course_published",
+      `"${updated.title}" is now published and available.`
+    );
+  }
 
   return NextResponse.json({
     id: updated.id,
