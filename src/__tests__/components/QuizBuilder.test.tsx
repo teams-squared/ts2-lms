@@ -19,6 +19,15 @@ const mockQuestions = [
       { id: "o2", text: "4", isCorrect: true, order: 2 },
     ],
   },
+  {
+    id: "q2",
+    text: "What is 3+3?",
+    order: 2,
+    options: [
+      { id: "o3", text: "5", isCorrect: false, order: 1 },
+      { id: "o4", text: "6", isCorrect: true, order: 2 },
+    ],
+  },
 ];
 
 const defaultProps = {
@@ -42,8 +51,9 @@ describe("QuizBuilder", () => {
     expect(screen.getByText("4")).toBeInTheDocument();
   });
 
-  it("shows passing score", () => {
+  it("shows passing score as clickable button", () => {
     render(<QuizBuilder {...defaultProps} />);
+    expect(screen.getByRole("button", { name: /edit passing score/i })).toBeInTheDocument();
     expect(screen.getByText(/passing score: 70%/i)).toBeInTheDocument();
   });
 
@@ -52,10 +62,12 @@ describe("QuizBuilder", () => {
     expect(screen.getByText("Add question")).toBeInTheDocument();
   });
 
-  it("shows delete button for each question", () => {
+  it("shows delete and edit buttons for each question", () => {
     render(<QuizBuilder {...defaultProps} />);
     const deleteButtons = screen.getAllByRole("button", { name: /delete question/i });
-    expect(deleteButtons).toHaveLength(1);
+    expect(deleteButtons).toHaveLength(2);
+    const editButtons = screen.getAllByRole("button", { name: /edit question/i });
+    expect(editButtons).toHaveLength(2);
   });
 
   it("shows empty state when no questions", () => {
@@ -159,6 +171,141 @@ describe("QuizBuilder", () => {
     await waitFor(() => {
       expect(screen.queryByText(/What is 2\+2\?/)).not.toBeInTheDocument();
     });
+  });
+
+  // ── Passing score editing ────────────────────────────────────────────────
+
+  it("shows passing score input when edit button is clicked", () => {
+    render(<QuizBuilder {...defaultProps} />);
+    fireEvent.click(screen.getByRole("button", { name: /edit passing score/i }));
+    expect(screen.getByRole("spinbutton", { name: /passing score/i })).toBeInTheDocument();
+  });
+
+  it("calls fetch PATCH lesson on passing score save", async () => {
+    const mockFetch = vi.fn().mockResolvedValue({ ok: true, json: async () => ({}) });
+    vi.stubGlobal("fetch", mockFetch);
+
+    render(<QuizBuilder {...defaultProps} />);
+    fireEvent.click(screen.getByRole("button", { name: /edit passing score/i }));
+    const input = screen.getByRole("spinbutton", { name: /passing score/i });
+    fireEvent.change(input, { target: { value: "80" } });
+    fireEvent.click(screen.getByRole("button", { name: /^save$/i }));
+
+    await waitFor(() => {
+      expect(mockFetch).toHaveBeenCalledWith(
+        "/api/courses/c1/modules/m1/lessons/l1",
+        expect.objectContaining({ method: "PATCH" }),
+      );
+    });
+  });
+
+  it("cancels passing score edit without saving", () => {
+    render(<QuizBuilder {...defaultProps} />);
+    fireEvent.click(screen.getByRole("button", { name: /edit passing score/i }));
+    expect(screen.getByRole("spinbutton", { name: /passing score/i })).toBeInTheDocument();
+    fireEvent.click(screen.getByRole("button", { name: /^cancel$/i }));
+    expect(screen.queryByRole("spinbutton", { name: /passing score/i })).not.toBeInTheDocument();
+    expect(screen.getByText(/passing score: 70%/i)).toBeInTheDocument();
+  });
+
+  // ── Inline question editing ──────────────────────────────────────────────
+
+  it("shows edit form when Edit button is clicked", () => {
+    render(<QuizBuilder {...defaultProps} />);
+    fireEvent.click(screen.getByRole("button", { name: /edit question 1/i }));
+    expect(screen.getByRole("textbox", { name: /edit question text/i })).toBeInTheDocument();
+  });
+
+  it("pre-fills edit form with existing question text and options", () => {
+    render(<QuizBuilder {...defaultProps} />);
+    fireEvent.click(screen.getByRole("button", { name: /edit question 1/i }));
+    const input = screen.getByRole("textbox", { name: /edit question text/i });
+    expect((input as HTMLInputElement).value).toBe("What is 2+2?");
+  });
+
+  it("calls fetch PATCH question on save", async () => {
+    const mockFetch = vi.fn().mockResolvedValue({
+      ok: true,
+      json: async () => ({
+        id: "q1",
+        text: "What is 2+2? (updated)",
+        order: 1,
+        options: [
+          { id: "o1", text: "3", isCorrect: false, order: 1 },
+          { id: "o2", text: "4", isCorrect: true, order: 2 },
+        ],
+      }),
+    });
+    vi.stubGlobal("fetch", mockFetch);
+
+    render(<QuizBuilder {...defaultProps} />);
+    fireEvent.click(screen.getByRole("button", { name: /edit question 1/i }));
+
+    const input = screen.getByRole("textbox", { name: /edit question text/i });
+    fireEvent.change(input, { target: { value: "What is 2+2? (updated)" } });
+    fireEvent.click(screen.getByRole("button", { name: /^save$/i }));
+
+    await waitFor(() => {
+      expect(mockFetch).toHaveBeenCalledWith(
+        "/api/courses/c1/modules/m1/lessons/l1/quiz/questions/q1",
+        expect.objectContaining({ method: "PATCH" }),
+      );
+    });
+  });
+
+  it("cancels inline edit without saving", () => {
+    render(<QuizBuilder {...defaultProps} />);
+    fireEvent.click(screen.getByRole("button", { name: /edit question 1/i }));
+    expect(screen.getByRole("textbox", { name: /edit question text/i })).toBeInTheDocument();
+    fireEvent.click(screen.getByRole("button", { name: /^cancel$/i }));
+    expect(screen.queryByRole("textbox", { name: /edit question text/i })).not.toBeInTheDocument();
+  });
+
+  // ── Reordering ───────────────────────────────────────────────────────────
+
+  it("shows up/down buttons for each question", () => {
+    render(<QuizBuilder {...defaultProps} />);
+    const upButtons = screen.getAllByRole("button", { name: /move question.*up/i });
+    const downButtons = screen.getAllByRole("button", { name: /move question.*down/i });
+    expect(upButtons).toHaveLength(2);
+    expect(downButtons).toHaveLength(2);
+  });
+
+  it("disables up button for first question", () => {
+    render(<QuizBuilder {...defaultProps} />);
+    const upBtn = screen.getByRole("button", { name: /move question 1 up/i });
+    expect(upBtn).toBeDisabled();
+  });
+
+  it("disables down button for last question", () => {
+    render(<QuizBuilder {...defaultProps} />);
+    const downBtn = screen.getByRole("button", { name: /move question 2 down/i });
+    expect(downBtn).toBeDisabled();
+  });
+
+  it("calls reorder endpoint when up button clicked", async () => {
+    const mockFetch = vi.fn().mockResolvedValue({
+      ok: true,
+      json: async () => [
+        { id: "q2", text: "What is 3+3?", order: 1, options: [] },
+        { id: "q1", text: "What is 2+2?", order: 2, options: [] },
+      ],
+    });
+    vi.stubGlobal("fetch", mockFetch);
+
+    render(<QuizBuilder {...defaultProps} />);
+    const upBtn = screen.getByRole("button", { name: /move question 2 up/i });
+    fireEvent.click(upBtn);
+
+    await waitFor(() => {
+      expect(mockFetch).toHaveBeenCalledWith(
+        "/api/courses/c1/modules/m1/lessons/l1/quiz/questions/reorder",
+        expect.objectContaining({ method: "POST" }),
+      );
+    });
+    // Verify orderedIds has q2 first
+    const callBody = JSON.parse(mockFetch.mock.calls[0][1].body as string) as { orderedIds: string[] };
+    expect(callBody.orderedIds).toEqual(["q2", "q1"]);
   });
 
   it("shows error when submitting form with empty question text", async () => {
