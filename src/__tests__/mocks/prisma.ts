@@ -91,6 +91,7 @@ export const mockPrisma = {
   notification: {
     findMany: vi.fn(),
     create: vi.fn(),
+    createMany: vi.fn(),
     update: vi.fn(),
     updateMany: vi.fn(),
     count: vi.fn(),
