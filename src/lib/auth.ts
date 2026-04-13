@@ -4,7 +4,6 @@ import bcrypt from "bcryptjs";
 import { authConfig } from "./auth.config";
 import { prisma } from "./prisma";
 import { prismaRoleToApp } from "./types";
-import type { Role } from "./types";
 
 if (!process.env.AUTH_SECRET) {
   if (process.env.NODE_ENV === "production") {
@@ -42,28 +41,27 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
     ...authConfig.callbacks,
     async jwt({ token, user }) {
       if (user?.email) {
-        const dbUser = await prisma.user.findUnique({
-          where: { email: user.email },
-          select: { role: true },
-        });
-        token.role = dbUser ? prismaRoleToApp(dbUser.role) : "employee";
+        try {
+          // Upsert SSO users on first login, then read their role.
+          // Must happen here (not in events.signIn) so the role is available
+          // before the token is signed.
+          const dbUser = await prisma.user.upsert({
+            where: { email: user.email },
+            update: { name: user.name ?? undefined },
+            create: {
+              email: user.email,
+              name: user.name ?? null,
+              role: "EMPLOYEE",
+            },
+            select: { role: true },
+          });
+          token.role = prismaRoleToApp(dbUser.role);
+        } catch (err) {
+          console.error("[auth] jwt callback DB error:", err);
+          token.role = "employee";
+        }
       }
       return token;
-    },
-  },
-  events: {
-    async signIn({ user }) {
-      if (!user?.email) return;
-      // Upsert SSO users into DB on first login
-      await prisma.user.upsert({
-        where: { email: user.email },
-        update: { name: user.name ?? undefined },
-        create: {
-          email: user.email,
-          name: user.name ?? null,
-          role: "EMPLOYEE",
-        },
-      });
     },
   },
 });
