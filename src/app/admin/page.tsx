@@ -1,16 +1,18 @@
+import Link from "next/link";
 import { prisma } from "@/lib/prisma";
-import { UsersIcon } from "@/components/icons";
+import { UsersIcon, GraduationCapIcon } from "@/components/icons";
 import UserTable from "@/components/admin/UserTable";
 
 export const dynamic = "force-dynamic";
 
 export default async function AdminPage() {
-  const [totalUsers, adminCount, managerCount, employeeCount] =
+  const [totalUsers, adminCount, managerCount, employeeCount, totalCourses] =
     await Promise.all([
       prisma.user.count(),
       prisma.user.count({ where: { role: "ADMIN" } }),
       prisma.user.count({ where: { role: "MANAGER" } }),
       prisma.user.count({ where: { role: "EMPLOYEE" } }),
+      prisma.course.count(),
     ]);
 
   const stats = [
@@ -18,6 +20,7 @@ export default async function AdminPage() {
     { value: adminCount, label: "Admins" },
     { value: managerCount, label: "Managers" },
     { value: employeeCount, label: "Employees" },
+    { value: totalCourses, label: "Courses" },
   ];
 
   return (
@@ -37,6 +40,34 @@ export default async function AdminPage() {
             </div>
           </div>
         ))}
+      </div>
+
+      {/* Admin sections */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-8">
+        <Link
+          href="/admin"
+          className="p-5 rounded-xl border border-brand-200 dark:border-brand-900/50 bg-brand-50/50 dark:bg-brand-950/20 shadow-card hover:shadow-elevated transition-shadow"
+        >
+          <UsersIcon className="w-5 h-5 text-brand-600 dark:text-brand-400 mb-2" />
+          <h2 className="text-sm font-semibold text-gray-900 dark:text-gray-100">
+            User Management
+          </h2>
+          <p className="text-xs text-gray-500 dark:text-gray-400">
+            Manage users and roles
+          </p>
+        </Link>
+        <Link
+          href="/admin/courses"
+          className="p-5 rounded-xl border border-brand-200 dark:border-brand-900/50 bg-brand-50/50 dark:bg-brand-950/20 shadow-card hover:shadow-elevated transition-shadow"
+        >
+          <GraduationCapIcon className="w-5 h-5 text-brand-600 dark:text-brand-400 mb-2" />
+          <h2 className="text-sm font-semibold text-gray-900 dark:text-gray-100">
+            Course Management
+          </h2>
+          <p className="text-xs text-gray-500 dark:text-gray-400">
+            Create and manage courses
+          </p>
+        </Link>
       </div>
 
       {/* User table */}

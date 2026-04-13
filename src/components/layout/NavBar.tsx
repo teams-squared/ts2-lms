@@ -7,7 +7,7 @@ import { useState } from "react";
 import Logo from "@/components/Logo";
 import { ThemeToggle } from "@/components/theme/ThemeToggle";
 import { UserAvatar } from "@/components/ui/UserAvatar";
-import { HomeIcon, ShieldIcon, HamburgerIcon, CloseIcon, SignOutIcon } from "@/components/icons";
+import { HomeIcon, GraduationCapIcon, ShieldIcon, HamburgerIcon, CloseIcon, SignOutIcon } from "@/components/icons";
 
 export default function NavBar() {
   const pathname = usePathname();
@@ -22,6 +22,7 @@ export default function NavBar() {
 
   const navLinks = [
     { href: "/", label: "Home", icon: HomeIcon },
+    { href: "/courses", label: "Courses", icon: GraduationCapIcon },
     ...(isAdmin ? [{ href: "/admin", label: "Admin", icon: ShieldIcon }] : []),
   ];
 

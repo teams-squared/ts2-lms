@@ -59,6 +59,18 @@ export default async function HomePage() {
       {/* Quick links */}
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
         <Link
+          href="/courses"
+          className="p-5 rounded-xl border border-gray-200/80 dark:border-[#2e2e3a] bg-white dark:bg-[#1c1c24] shadow-card hover:shadow-elevated transition-shadow"
+        >
+          <h2 className="text-sm font-semibold text-gray-900 dark:text-gray-100 mb-1">
+            Course Catalog
+          </h2>
+          <p className="text-xs text-gray-500 dark:text-gray-400">
+            Browse available courses
+          </p>
+        </Link>
+
+        <Link
           href="/profile"
           className="p-5 rounded-xl border border-gray-200/80 dark:border-[#2e2e3a] bg-white dark:bg-[#1c1c24] shadow-card hover:shadow-elevated transition-shadow"
         >

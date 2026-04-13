@@ -24,6 +24,7 @@ vi.mock("@/components/theme/ThemeToggle", () => ({
 }));
 vi.mock("@/components/icons", () => ({
   HomeIcon: (props: Record<string, unknown>) => <svg data-testid="home-icon" {...props} />,
+  GraduationCapIcon: (props: Record<string, unknown>) => <svg data-testid="graduation-icon" {...props} />,
   ShieldIcon: (props: Record<string, unknown>) => <svg data-testid="shield-icon" {...props} />,
   HamburgerIcon: (props: Record<string, unknown>) => <svg data-testid="hamburger-icon" {...props} />,
   CloseIcon: (props: Record<string, unknown>) => <svg data-testid="close-icon" {...props} />,
@@ -51,7 +52,7 @@ describe("NavBar", () => {
     expect(container.firstChild).toBeNull();
   });
 
-  it("shows Home link for authenticated user", () => {
+  it("shows Home and Courses links for authenticated user", () => {
     mockUseSession.mockReturnValue({
       data: {
         user: { name: "Test", email: "test@test.com", role: "employee" },
@@ -60,6 +61,7 @@ describe("NavBar", () => {
     });
     render(<NavBar />);
     expect(screen.getByText("Home")).toBeInTheDocument();
+    expect(screen.getByText("Courses")).toBeInTheDocument();
   });
 
   it("shows Admin link only for admin role", () => {

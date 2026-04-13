@@ -53,8 +53,9 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
               name: user.name ?? null,
               role: "EMPLOYEE",
             },
-            select: { role: true },
+            select: { id: true, role: true },
           });
+          token.id = dbUser.id;
           token.role = prismaRoleToApp(dbUser.role);
         } catch (err) {
           console.error("[auth] jwt callback DB error:", err);

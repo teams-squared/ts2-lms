@@ -34,6 +34,31 @@ async function main() {
     CREATE UNIQUE INDEX IF NOT EXISTS "User_email_key" ON "User"("email");
   `);
 
+  // Create CourseStatus enum (idempotent)
+  await client.query(`
+    DO $$ BEGIN
+      CREATE TYPE "CourseStatus" AS ENUM ('DRAFT', 'PUBLISHED', 'ARCHIVED');
+    EXCEPTION
+      WHEN duplicate_object THEN NULL;
+    END $$;
+  `);
+
+  // Create Course table (idempotent)
+  await client.query(`
+    CREATE TABLE IF NOT EXISTS "Course" (
+      "id"          TEXT           NOT NULL,
+      "title"       TEXT           NOT NULL,
+      "description" TEXT,
+      "thumbnail"   TEXT,
+      "status"      "CourseStatus" NOT NULL DEFAULT 'DRAFT',
+      "createdById" TEXT           NOT NULL,
+      "createdAt"   TIMESTAMP(3)  NOT NULL DEFAULT CURRENT_TIMESTAMP,
+      "updatedAt"   TIMESTAMP(3)  NOT NULL DEFAULT CURRENT_TIMESTAMP,
+      CONSTRAINT "Course_pkey" PRIMARY KEY ("id"),
+      CONSTRAINT "Course_createdById_fkey" FOREIGN KEY ("createdById") REFERENCES "User"("id") ON DELETE RESTRICT ON UPDATE CASCADE
+    );
+  `);
+
   console.log("Migration complete");
   await client.end();
 }
