@@ -1,8 +1,14 @@
+import "dotenv/config";
 import { PrismaClient, Role, CourseStatus } from "@prisma/client";
 import { PrismaPg } from "@prisma/adapter-pg";
 import bcrypt from "bcryptjs";
 
-const adapter = new PrismaPg({ connectionString: process.env.DATABASE_URL! });
+const connectionString = process.env.DATABASE_URL!;
+const url = new URL(connectionString);
+if (connectionString.includes("render.com")) {
+  url.searchParams.set("sslmode", "require");
+}
+const adapter = new PrismaPg({ connectionString: url.toString() });
 const prisma = new PrismaClient({ adapter });
 
 const DEMO_USERS = [
