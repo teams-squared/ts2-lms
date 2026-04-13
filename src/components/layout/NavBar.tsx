@@ -7,6 +7,7 @@ import { useState } from "react";
 import Logo from "@/components/Logo";
 import { ThemeToggle } from "@/components/theme/ThemeToggle";
 import { UserAvatar } from "@/components/ui/UserAvatar";
+import { NotificationBell } from "@/components/layout/NotificationBell";
 import { HomeIcon, GraduationCapIcon, ShieldIcon, HamburgerIcon, CloseIcon, SignOutIcon } from "@/components/icons";
 
 export default function NavBar() {
@@ -58,8 +59,9 @@ export default function NavBar() {
             </div>
           </div>
 
-          {/* Right: theme toggle + user menu */}
+          {/* Right: notifications + theme toggle + user menu */}
           <div className="flex items-center gap-2">
+            <NotificationBell />
             <ThemeToggle />
 
             {/* User menu */}

@@ -252,6 +252,45 @@ async function main() {
     );
   `);
 
+  // Create Assignment table (idempotent)
+  await client.query(`
+    CREATE TABLE IF NOT EXISTS "Assignment" (
+      "id"           TEXT         NOT NULL,
+      "courseId"     TEXT         NOT NULL,
+      "userId"       TEXT         NOT NULL,
+      "assignedById" TEXT         NOT NULL,
+      "assignedAt"   TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+      CONSTRAINT "Assignment_pkey" PRIMARY KEY ("id"),
+      CONSTRAINT "Assignment_courseId_fkey"
+        FOREIGN KEY ("courseId") REFERENCES "Course"("id") ON DELETE CASCADE ON UPDATE CASCADE,
+      CONSTRAINT "Assignment_userId_fkey"
+        FOREIGN KEY ("userId") REFERENCES "User"("id") ON DELETE CASCADE ON UPDATE CASCADE,
+      CONSTRAINT "Assignment_assignedById_fkey"
+        FOREIGN KEY ("assignedById") REFERENCES "User"("id") ON DELETE CASCADE ON UPDATE CASCADE
+    );
+  `);
+
+  await client.query(`
+    CREATE UNIQUE INDEX IF NOT EXISTS "Assignment_courseId_userId_key"
+      ON "Assignment"("courseId", "userId");
+  `);
+
+  // Create Notification table (idempotent)
+  await client.query(`
+    CREATE TABLE IF NOT EXISTS "Notification" (
+      "id"        TEXT         NOT NULL,
+      "userId"    TEXT         NOT NULL,
+      "type"      TEXT         NOT NULL,
+      "message"   TEXT         NOT NULL,
+      "read"      BOOLEAN      NOT NULL DEFAULT false,
+      "courseId"  TEXT,
+      "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+      CONSTRAINT "Notification_pkey" PRIMARY KEY ("id"),
+      CONSTRAINT "Notification_userId_fkey"
+        FOREIGN KEY ("userId") REFERENCES "User"("id") ON DELETE CASCADE ON UPDATE CASCADE
+    );
+  `);
+
   console.log("Migration complete");
   await client.end();
 }
