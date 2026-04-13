@@ -6,6 +6,8 @@ import { useState } from "react";
 import type { Category, DocMeta } from "@/lib/types";
 import { CATEGORY_ICONS, CATEGORY_COLORS, FileTextIcon, ChevronRightIcon } from "@/components/icons";
 import RecentlyViewed from "@/components/docs/RecentlyViewed";
+import { useProgress } from "@/components/providers/ProgressProvider";
+import ProgressBar from "@/components/ui/ProgressBar";
 
 interface SidebarProps {
   categories: Category[];
@@ -135,7 +137,12 @@ function NodeItem({ node, currentCategory, depth }: NodeItemProps) {
 
 export default function Sidebar({ categories, currentCategory, docs }: SidebarProps) {
   const pathname = usePathname();
+  const { isDocCompleted } = useProgress();
   const tree = buildTree(categories);
+
+  const completedCount = docs
+    ? docs.filter((d) => isDocCompleted(`${d.category}/${d.slug}`)).length
+    : 0;
 
   return (
     <aside className="w-56 flex-shrink-0 hidden md:block">
@@ -164,7 +171,9 @@ export default function Sidebar({ categories, currentCategory, docs }: SidebarPr
             <ul className="space-y-0.5">
               {docs.map((doc) => {
                 const docPath = `/docs/${doc.category}/${doc.slug}`;
+                const docKey = `${doc.category}/${doc.slug}`;
                 const isActive = pathname === docPath;
+                const completed = isDocCompleted(docKey);
                 return (
                   <li key={doc.slug}>
                     <Link
@@ -176,13 +185,20 @@ export default function Sidebar({ categories, currentCategory, docs }: SidebarPr
                       }`}
                       style={{ paddingLeft: `${12 - (isActive ? 1 : 0)}px`, paddingRight: "12px" }}
                     >
-                      <FileTextIcon className="w-3.5 h-3.5 flex-shrink-0 text-gray-400 dark:text-gray-600" />
+                      {completed ? (
+                        <span className="w-3.5 h-3.5 flex-shrink-0 text-green-500 dark:text-green-400 text-xs leading-none flex items-center justify-center">&#10003;</span>
+                      ) : (
+                        <FileTextIcon className="w-3.5 h-3.5 flex-shrink-0 text-gray-400 dark:text-gray-600" />
+                      )}
                       <span className="truncate">{doc.title}</span>
                     </Link>
                   </li>
                 );
               })}
             </ul>
+            <div className="mt-3 px-3">
+              <ProgressBar completed={completedCount} total={docs.length} />
+            </div>
           </div>
         )}
 

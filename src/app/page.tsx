@@ -8,12 +8,16 @@ import {
 import SearchBar from "@/components/search/SearchBar";
 import CategoryCard from "@/components/docs/CategoryCard";
 import Logo from "@/components/Logo";
+import { getUserProgress } from "@/lib/progress-store";
 import type { Role } from "@/lib/types";
 
 export default async function HomePage() {
   const session = await auth();
   const userRole = (session?.user?.role as Role) || "employee";
   const topLevel = session ? await getTopLevelCategories(userRole) : [];
+
+  const userEmail = session?.user?.email;
+  const userProgress = userEmail ? getUserProgress(userEmail) : null;
 
   const categoryDocs = session
     ? await Promise.all(
@@ -93,14 +97,23 @@ export default async function HomePage() {
             Browse by Category
           </h2>
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-            {categoryDocs.map(({ cat, docs }) => (
-              <CategoryCard
-                key={cat.slug}
-                category={cat}
-                docCount={docs.length}
-                docTitles={docs.map((d) => d.title)}
-              />
-            ))}
+            {categoryDocs.map(({ cat, docs }) => {
+              const completedCount = userProgress
+                ? docs.filter((d) => {
+                    const dp = userProgress.docs[`${d.category}/${d.slug}`];
+                    return dp?.completedAt != null;
+                  }).length
+                : undefined;
+              return (
+                <CategoryCard
+                  key={cat.slug}
+                  category={cat}
+                  docCount={docs.length}
+                  docTitles={docs.map((d) => d.title)}
+                  completedCount={completedCount}
+                />
+              );
+            })}
           </div>
         </section>
       )}

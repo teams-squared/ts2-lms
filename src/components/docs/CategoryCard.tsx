@@ -6,12 +6,14 @@ interface CategoryCardProps {
   category: Category;
   docCount: number;
   docTitles?: string[];
+  completedCount?: number;
 }
 
 export default function CategoryCard({
   category,
   docCount,
   docTitles,
+  completedCount,
 }: CategoryCardProps) {
   const Icon = CATEGORY_ICONS[category.icon] || FileTextIcon;
   const iconBg = CATEGORY_COLORS[category.icon] || "var(--cat-shield)";
@@ -70,6 +72,29 @@ export default function CategoryCard({
                   +{remaining} more
                 </div>
               )}
+            </div>
+          )}
+
+          {completedCount !== undefined && docCount > 0 && (
+            <div className="mt-3 pt-3 border-t border-gray-100 dark:border-[#26262e]">
+              <div className="flex items-center justify-between mb-1">
+                <span className="text-[10px] text-gray-500 dark:text-gray-500">
+                  {completedCount}/{docCount} completed
+                </span>
+                <span className="text-[10px] font-medium text-gray-600 dark:text-gray-400">
+                  {Math.round((completedCount / docCount) * 100)}%
+                </span>
+              </div>
+              <div className="w-full h-1.5 rounded-full bg-gray-100 dark:bg-[#26262e] overflow-hidden">
+                <div
+                  className={`h-1.5 rounded-full transition-all duration-500 ease-out ${
+                    completedCount === docCount
+                      ? "bg-green-500"
+                      : "bg-brand-500"
+                  }`}
+                  style={{ width: `${Math.round((completedCount / docCount) * 100)}%` }}
+                />
+              </div>
             </div>
           )}
         </div>
