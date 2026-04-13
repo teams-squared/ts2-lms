@@ -2,6 +2,7 @@
 
 import ReactMarkdown from "react-markdown";
 import type { LessonType } from "@/lib/types";
+import type { SharePointDocumentRef } from "@/lib/sharepoint/types";
 
 interface LessonViewerProps {
   title: string;
@@ -10,6 +11,61 @@ interface LessonViewerProps {
 }
 
 export function LessonViewer({ title, type, content }: LessonViewerProps) {
+  if (type === "document") {
+    let docRef: SharePointDocumentRef | null = null;
+    if (content) {
+      try {
+        docRef = JSON.parse(content) as SharePointDocumentRef;
+      } catch {
+        docRef = null;
+      }
+    }
+
+    const proxyUrl = docRef
+      ? `/api/sharepoint/files/${docRef.driveId}/${docRef.itemId}`
+      : null;
+    const isPdf = docRef?.mimeType === "application/pdf";
+
+    return (
+      <div>
+        <h1 className="text-2xl font-bold text-gray-900 dark:text-gray-100 mb-6">
+          {title}
+        </h1>
+        {!docRef ? (
+          <p className="text-sm text-gray-500 dark:text-gray-400">
+            No document attached.
+          </p>
+        ) : isPdf ? (
+          <div className="rounded-xl overflow-hidden border border-gray-200 dark:border-[#3a3a48]" style={{ height: "80vh" }}>
+            <iframe
+              src={proxyUrl!}
+              title={docRef.fileName}
+              className="w-full h-full"
+            />
+          </div>
+        ) : (
+          <div className="rounded-xl border border-gray-200 dark:border-[#3a3a48] bg-gray-50 dark:bg-[#18181f] p-6 flex items-center gap-4">
+            <div className="flex-1 min-w-0">
+              <p className="text-sm font-medium text-gray-900 dark:text-gray-100 truncate">
+                {docRef.fileName}
+              </p>
+              <p className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">
+                {docRef.mimeType}
+              </p>
+            </div>
+            <a
+              href={proxyUrl!}
+              download={docRef.fileName}
+              className="shrink-0 rounded-lg bg-indigo-600 hover:bg-indigo-700 text-white text-sm font-medium px-4 py-2 transition-colors"
+            >
+              Download
+            </a>
+          </div>
+        )}
+      </div>
+    );
+  }
+
   if (type === "video") {
     return (
       <div>

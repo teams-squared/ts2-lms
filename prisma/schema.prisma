@@ -47,6 +47,7 @@ enum LessonType {
   TEXT
   VIDEO
   QUIZ
+  DOCUMENT
 }
 
 model Module {
@@ -74,4 +75,14 @@ model Lesson {
   updatedAt DateTime   @updatedAt
 
   @@unique([moduleId, order])
+}
+
+model SharePointCache {
+  id        String   @id @default(cuid())
+  cacheKey  String   @unique
+  data      String
+  etag      String?
+  expiresAt DateTime
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 }

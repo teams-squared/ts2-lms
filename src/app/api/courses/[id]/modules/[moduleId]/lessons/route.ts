@@ -34,8 +34,19 @@ export async function POST(request: Request, { params }: Params) {
   }
 
   const type: LessonType = body.type || "text";
-  if (!["text", "video", "quiz"].includes(type)) {
+  if (!["text", "video", "quiz", "document"].includes(type)) {
     return NextResponse.json({ error: "Invalid lesson type" }, { status: 400 });
+  }
+
+  if (type === "document" && body.content) {
+    try {
+      const ref = JSON.parse(body.content);
+      if (!ref.driveId || !ref.itemId || !ref.fileName || !ref.mimeType) {
+        return NextResponse.json({ error: "Invalid document reference" }, { status: 400 });
+      }
+    } catch {
+      return NextResponse.json({ error: "Invalid document reference JSON" }, { status: 400 });
+    }
   }
 
   const maxOrder = await prisma.lesson.findFirst({

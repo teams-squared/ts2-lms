@@ -112,6 +112,29 @@ async function main() {
     CREATE UNIQUE INDEX IF NOT EXISTS "Lesson_moduleId_order_key" ON "Lesson"("moduleId", "order");
   `);
 
+  // Add DOCUMENT value to LessonType enum (idempotent)
+  await client.query(`
+    ALTER TYPE "LessonType" ADD VALUE IF NOT EXISTS 'DOCUMENT';
+  `);
+
+  // Create SharePointCache table (idempotent)
+  await client.query(`
+    CREATE TABLE IF NOT EXISTS "SharePointCache" (
+      "id"        TEXT         NOT NULL,
+      "cacheKey"  TEXT         NOT NULL,
+      "data"      TEXT         NOT NULL,
+      "etag"      TEXT,
+      "expiresAt" TIMESTAMP(3) NOT NULL,
+      "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+      "updatedAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+      CONSTRAINT "SharePointCache_pkey" PRIMARY KEY ("id")
+    );
+  `);
+
+  await client.query(`
+    CREATE UNIQUE INDEX IF NOT EXISTS "SharePointCache_cacheKey_key" ON "SharePointCache"("cacheKey");
+  `);
+
   console.log("Migration complete");
   await client.end();
 }

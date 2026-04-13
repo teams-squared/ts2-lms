@@ -11,6 +11,9 @@ describe("prismaLessonTypeToApp", () => {
   it("maps QUIZ → quiz", () => {
     expect(prismaLessonTypeToApp("QUIZ")).toBe("quiz");
   });
+  it("maps DOCUMENT → document", () => {
+    expect(prismaLessonTypeToApp("DOCUMENT")).toBe("document");
+  });
 });
 
 describe("appLessonTypeToPrisma", () => {
@@ -23,10 +26,13 @@ describe("appLessonTypeToPrisma", () => {
   it("maps quiz → QUIZ", () => {
     expect(appLessonTypeToPrisma("quiz")).toBe("QUIZ");
   });
+  it("maps document → DOCUMENT", () => {
+    expect(appLessonTypeToPrisma("document")).toBe("DOCUMENT");
+  });
 });
 
 describe("LessonType roundtrip", () => {
-  it.each(["TEXT", "VIDEO", "QUIZ"] as const)(
+  it.each(["TEXT", "VIDEO", "QUIZ", "DOCUMENT"] as const)(
     "appLessonTypeToPrisma(prismaLessonTypeToApp(%s)) === %s",
     (prismaType) => {
       expect(appLessonTypeToPrisma(prismaLessonTypeToApp(prismaType))).toBe(prismaType);

@@ -118,6 +118,45 @@ describe("POST /api/courses/[id]/modules/[moduleId]/lessons", () => {
     const res = await lessonsRoute.POST(req, makeLessonsParams("c1", "m1"));
     expect(res.status).toBe(400);
   });
+
+  it("creates document lesson with valid SharePointDocumentRef", async () => {
+    mockAuth.mockResolvedValue(mockSession({ id: "user-1", role: "admin" }));
+    mockPrisma.course.findUnique.mockResolvedValue({ id: "c1", createdById: "user-1" });
+    mockPrisma.module.findUnique.mockResolvedValue({ id: "m1", courseId: "c1" });
+    mockPrisma.lesson.findFirst.mockResolvedValue(null);
+    mockPrisma.lesson.create.mockResolvedValue({
+      id: "l-doc",
+      title: "Security Policy",
+      type: "DOCUMENT",
+      content: JSON.stringify({ driveId: "d1", itemId: "i1", fileName: "policy.pdf", mimeType: "application/pdf" }),
+      order: 1,
+      moduleId: "m1",
+    });
+    const req = new Request("http://localhost/api/courses/c1/modules/m1/lessons", {
+      method: "POST",
+      body: JSON.stringify({
+        title: "Security Policy",
+        type: "document",
+        content: JSON.stringify({ driveId: "d1", itemId: "i1", fileName: "policy.pdf", mimeType: "application/pdf" }),
+      }),
+    });
+    const res = await lessonsRoute.POST(req, makeLessonsParams("c1", "m1"));
+    expect(res.status).toBe(201);
+    const body = await res.json();
+    expect(body.type).toBe("document");
+  });
+
+  it("returns 400 for document lesson with invalid JSON content", async () => {
+    mockAuth.mockResolvedValue(mockSession({ id: "user-1", role: "admin" }));
+    mockPrisma.course.findUnique.mockResolvedValue({ id: "c1", createdById: "user-1" });
+    mockPrisma.module.findUnique.mockResolvedValue({ id: "m1", courseId: "c1" });
+    const req = new Request("http://localhost/api/courses/c1/modules/m1/lessons", {
+      method: "POST",
+      body: JSON.stringify({ title: "Doc", type: "document", content: "not-valid-json" }),
+    });
+    const res = await lessonsRoute.POST(req, makeLessonsParams("c1", "m1"));
+    expect(res.status).toBe(400);
+  });
 });
 
 describe("PATCH /api/courses/[id]/modules/[moduleId]/lessons/[lessonId]", () => {

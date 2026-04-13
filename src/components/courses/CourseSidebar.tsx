@@ -22,6 +22,7 @@ const LESSON_TYPE_ICON: Record<LessonType, string> = {
   text: "📄",
   video: "🎬",
   quiz: "❓",
+  document: "📎",
 };
 
 export function CourseSidebar({

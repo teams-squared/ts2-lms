@@ -46,4 +46,39 @@ describe("LessonViewer", () => {
       screen.getByText("Quiz functionality coming soon.")
     ).toBeInTheDocument();
   });
+
+  it("renders PDF iframe for document lesson with PDF mimeType", () => {
+    const docRef = JSON.stringify({
+      driveId: "drive-1",
+      itemId: "item-1",
+      fileName: "policy.pdf",
+      mimeType: "application/pdf",
+    });
+    render(<LessonViewer title="Security Policy" type="document" content={docRef} />);
+    expect(screen.getByText("Security Policy")).toBeInTheDocument();
+    const iframe = document.querySelector("iframe");
+    expect(iframe).toBeTruthy();
+    expect(iframe?.getAttribute("src")).toBe("/api/sharepoint/files/drive-1/item-1");
+  });
+
+  it("renders download card for document lesson with non-PDF mimeType", () => {
+    const docRef = JSON.stringify({
+      driveId: "drive-2",
+      itemId: "item-2",
+      fileName: "report.docx",
+      mimeType: "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+    });
+    render(<LessonViewer title="Quarterly Report" type="document" content={docRef} />);
+    expect(screen.getByText("Quarterly Report")).toBeInTheDocument();
+    expect(screen.getByText("report.docx")).toBeInTheDocument();
+    const link = screen.getByRole("link", { name: "Download" });
+    expect(link).toHaveAttribute("href", "/api/sharepoint/files/drive-2/item-2");
+    expect(link).toHaveAttribute("download", "report.docx");
+  });
+
+  it("renders empty state for document lesson with null content", () => {
+    render(<LessonViewer title="Pending Doc" type="document" content={null} />);
+    expect(screen.getByText("Pending Doc")).toBeInTheDocument();
+    expect(screen.getByText("No document attached.")).toBeInTheDocument();
+  });
 });

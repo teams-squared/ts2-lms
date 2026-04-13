@@ -14,9 +14,10 @@ const securityHeaders = [
       "font-src 'self' https://fonts.gstatic.com",
       // Allow external HTTPS images (user-provided thumbnails)
       "img-src 'self' data: blob: https:",
-      // Allow YouTube and Vimeo video embeds
-      "frame-src https://www.youtube.com https://www.youtube-nocookie.com https://player.vimeo.com",
-      "connect-src 'self'",
+      // Allow YouTube/Vimeo video embeds and self-origin for SharePoint PDF proxy
+      "frame-src 'self' https://www.youtube.com https://www.youtube-nocookie.com https://player.vimeo.com",
+      // Allow self + MS Graph/login for future client-side calls
+      "connect-src 'self' https://graph.microsoft.com https://login.microsoftonline.com",
     ].join("; "),
   },
 ];
