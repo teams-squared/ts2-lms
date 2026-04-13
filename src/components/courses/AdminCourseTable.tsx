@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import Link from "next/link";
 import { CourseForm } from "./CourseForm";
 import { PlusIcon } from "@/components/icons";
 import type { CourseStatus } from "@/lib/types";
@@ -223,12 +224,20 @@ export default function AdminCourseTable() {
                   {course.createdBy.name || course.createdBy.email}
                 </td>
                 <td className="px-5 py-3 text-right">
-                  <button
-                    onClick={() => setEditingCourse(course)}
-                    className="text-xs text-brand-600 dark:text-brand-400 hover:underline font-medium"
-                  >
-                    Edit
-                  </button>
+                  <div className="flex items-center justify-end gap-3">
+                    <Link
+                      href={`/admin/courses/${course.id}/edit`}
+                      className="text-xs text-brand-600 dark:text-brand-400 hover:underline font-medium"
+                    >
+                      Full Editor
+                    </Link>
+                    <button
+                      onClick={() => setEditingCourse(course)}
+                      className="text-xs text-brand-600 dark:text-brand-400 hover:underline font-medium"
+                    >
+                      Quick Edit
+                    </button>
+                  </div>
                 </td>
               </tr>
             ))}
