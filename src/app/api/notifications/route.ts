@@ -3,7 +3,7 @@ import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 
 /** GET /api/notifications — get current user's notifications */
-export async function GET(_request: Request) {
+export async function GET() {
   const session = await auth();
   if (!session?.user?.id) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
@@ -23,7 +23,7 @@ export async function GET(_request: Request) {
 }
 
 /** PATCH /api/notifications — mark all as read */
-export async function PATCH(_request: Request) {
+export async function PATCH() {
   const session = await auth();
   if (!session?.user?.id) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
