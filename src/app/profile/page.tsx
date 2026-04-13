@@ -7,6 +7,7 @@ import { UserAvatar } from "@/components/ui/UserAvatar";
 import { RoleBadge } from "@/components/ui/Badge";
 import { prismaRoleToApp } from "@/lib/types";
 import { EditNameForm } from "@/components/profile/EditNameForm";
+import { ChangePasswordForm } from "@/components/profile/ChangePasswordForm";
 
 export default async function ProfilePage() {
   const session = await auth();
@@ -78,6 +79,7 @@ export default async function ProfilePage() {
               <RoleBadge role={role} />
             </div>
             <EditNameForm currentName={user.name} />
+            <ChangePasswordForm isSsoOnly={!user.passwordHash} />
           </div>
         </div>
 

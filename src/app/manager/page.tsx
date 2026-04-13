@@ -59,13 +59,19 @@ export default async function ManagerPage() {
         ))}
       </div>
 
-      {/* Quick action */}
-      <div className="mb-6">
+      {/* Quick actions */}
+      <div className="mb-6 flex flex-wrap gap-3">
         <Link
           href="/admin/courses"
           className="inline-flex items-center gap-2 rounded-lg bg-indigo-600 hover:bg-indigo-700 text-white text-sm font-medium px-4 py-2.5 transition-colors"
         >
           + Create new course
+        </Link>
+        <Link
+          href="/manager/assignments"
+          className="inline-flex items-center gap-2 rounded-lg border border-gray-300 dark:border-[#3a3a48] bg-white dark:bg-[#1c1c24] text-gray-700 dark:text-gray-300 text-sm font-medium px-4 py-2.5 transition-colors hover:bg-gray-50 dark:hover:bg-[#1e1e28]"
+        >
+          Manage assignments
         </Link>
       </div>
 
