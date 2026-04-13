@@ -50,6 +50,7 @@ const PROTECTED_DOC = {
   },
   content: "# Secret",
   passwordHash: "$2b$10$somehash",
+  quiz: null,
 };
 
 const UNPROTECTED_DOC = {

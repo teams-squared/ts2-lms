@@ -1,5 +1,5 @@
 import matter from "gray-matter";
-import type { Category, DocMeta, Role } from "./types";
+import type { Category, DocMeta, QuizDefinition, Role } from "./types";
 import { hasAccess } from "./roles";
 import {
   fetchCategoriesFromSharePoint,
@@ -23,6 +23,7 @@ function buildDocMeta(
     tags: (data.tags as string[]) || [],
     order: (data.order as number) || 0,
     passwordProtected: !!(data.password as string),
+    hasQuiz: !!(data.quiz as QuizDefinition),
   };
 }
 
@@ -63,7 +64,7 @@ export async function getDocsByCategory(
 export async function getDocContent(
   category: string,
   slug: string
-): Promise<{ meta: DocMeta; content: string; passwordHash?: string } | null> {
+): Promise<{ meta: DocMeta; content: string; passwordHash?: string; quiz: QuizDefinition | null } | null> {
   const files = await fetchDocListFromSharePoint(category);
   const fileName = `${slug}.mdx`;
   if (!files.includes(fileName)) return null;
@@ -75,6 +76,7 @@ export async function getDocContent(
     meta: buildDocMeta(data, slug, category),
     content,
     passwordHash: data.password as string | undefined,
+    quiz: (data.quiz as QuizDefinition) || null,
   };
 }
 

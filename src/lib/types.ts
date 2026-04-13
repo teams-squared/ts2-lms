@@ -17,6 +17,7 @@ export interface DocMeta {
   tags?: string[];
   order?: number;
   passwordProtected?: boolean;
+  hasQuiz?: boolean;
 }
 
 export interface Category {
@@ -27,4 +28,47 @@ export interface Category {
   minRole: Role;
   parentCategory?: string;
   order?: number;
+}
+
+// ── LMS / Quiz types ────────────────────────────────────────────────
+
+export interface QuizQuestion {
+  id: string;
+  question: string;
+  options: string[];
+  correctIndex: number;
+  explanation?: string;
+}
+
+export interface QuizDefinition {
+  passingScore: number;
+  questions: QuizQuestion[];
+}
+
+export interface DocProgress {
+  completedAt: string | null;
+  quizScore: number | null;
+  quizPassedAt: string | null;
+  quizAttempts: number;
+}
+
+export interface Badge {
+  id: string;
+  name: string;
+  description: string;
+  icon: string;
+  earnedAt: string;
+}
+
+export interface StreakInfo {
+  currentStreak: number;
+  longestStreak: number;
+  lastActivityDate: string;
+}
+
+export interface UserProgress {
+  docs: Record<string, DocProgress>;
+  badges: Badge[];
+  streak: StreakInfo;
+  lastSyncedAt: string;
 }
