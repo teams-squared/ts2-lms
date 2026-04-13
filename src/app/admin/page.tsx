@@ -43,7 +43,7 @@ export default async function AdminPage() {
       </div>
 
       {/* Admin sections */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-8">
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-8">
         <Link
           href="/admin"
           className="p-5 rounded-xl border border-brand-200 dark:border-brand-900/50 bg-brand-50/50 dark:bg-brand-950/20 shadow-card hover:shadow-elevated transition-shadow"
@@ -66,6 +66,18 @@ export default async function AdminPage() {
           </h2>
           <p className="text-xs text-gray-500 dark:text-gray-400">
             Create and manage courses
+          </p>
+        </Link>
+        <Link
+          href="/admin/assignments"
+          className="p-5 rounded-xl border border-brand-200 dark:border-brand-900/50 bg-brand-50/50 dark:bg-brand-950/20 shadow-card hover:shadow-elevated transition-shadow"
+        >
+          <GraduationCapIcon className="w-5 h-5 text-brand-600 dark:text-brand-400 mb-2" />
+          <h2 className="text-sm font-semibold text-gray-900 dark:text-gray-100">
+            Assignments
+          </h2>
+          <p className="text-xs text-gray-500 dark:text-gray-400">
+            Assign courses to users
           </p>
         </Link>
       </div>

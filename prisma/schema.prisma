@@ -21,10 +21,13 @@ model User {
   avatar         String?
   createdAt      DateTime         @default(now())
   updatedAt      DateTime         @updatedAt
-  createdCourses Course[]         @relation("CreatedCourses")
-  enrollments    Enrollment[]
-  lessonProgress LessonProgress[]
-  quizAttempts   QuizAttempt[]
+  createdCourses      Course[]         @relation("CreatedCourses")
+  enrollments         Enrollment[]
+  lessonProgress      LessonProgress[]
+  quizAttempts        QuizAttempt[]
+  assignmentsReceived Assignment[]     @relation("AssignedTo")
+  assignmentsMade     Assignment[]     @relation("AssignedBy")
+  notifications       Notification[]
 }
 
 enum CourseStatus {
@@ -43,6 +46,7 @@ model Course {
   createdBy   User         @relation("CreatedCourses", fields: [createdById], references: [id])
   modules     Module[]
   enrollments Enrollment[]
+  assignments Assignment[]
   createdAt   DateTime     @default(now())
   updatedAt   DateTime     @updatedAt
 }
@@ -170,4 +174,30 @@ model QuizAnswer {
   attempt        QuizAttempt  @relation(fields: [attemptId], references: [id], onDelete: Cascade)
   question       QuizQuestion @relation(fields: [questionId], references: [id], onDelete: Cascade)
   selectedOption QuizOption   @relation(fields: [selectedOptionId], references: [id], onDelete: Cascade)
+}
+
+model Assignment {
+  id           String   @id @default(cuid())
+  courseId     String
+  userId       String
+  assignedById String
+  assignedAt   DateTime @default(now())
+
+  course      Course @relation(fields: [courseId], references: [id], onDelete: Cascade)
+  user        User   @relation("AssignedTo", fields: [userId], references: [id], onDelete: Cascade)
+  assignedBy  User   @relation("AssignedBy", fields: [assignedById], references: [id], onDelete: Cascade)
+
+  @@unique([courseId, userId])
+}
+
+model Notification {
+  id        String    @id @default(cuid())
+  userId    String
+  type      String
+  message   String
+  read      Boolean   @default(false)
+  courseId  String?
+  createdAt DateTime  @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
 }

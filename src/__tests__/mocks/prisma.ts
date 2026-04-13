@@ -81,4 +81,18 @@ export const mockPrisma = {
     create: vi.fn(),
     createMany: vi.fn(),
   },
+  assignment: {
+    findUnique: vi.fn(),
+    findMany: vi.fn(),
+    create: vi.fn(),
+    delete: vi.fn(),
+    count: vi.fn(),
+  },
+  notification: {
+    findMany: vi.fn(),
+    create: vi.fn(),
+    update: vi.fn(),
+    updateMany: vi.fn(),
+    count: vi.fn(),
+  },
 };
