@@ -7,7 +7,7 @@ function createPrismaClient() {
   let connectionString = process.env.DATABASE_URL!;
   if (connectionString?.includes("render.com") && !connectionString.includes("sslmode")) {
     const sep = connectionString.includes("?") ? "&" : "?";
-    connectionString = `${connectionString}${sep}sslmode=require`;
+    connectionString = `${connectionString}${sep}sslmode=verify-full`;
   }
   const adapter = new PrismaPg({ connectionString });
   return new PrismaClient({ adapter });
