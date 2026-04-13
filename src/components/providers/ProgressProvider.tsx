@@ -9,7 +9,8 @@ import {
 } from "react";
 import { useSession } from "next-auth/react";
 import { getStorageItem, setStorageItem } from "@/lib/storage";
-import type { UserProgress, DocProgress } from "@/lib/types";
+import Toast from "@/components/ui/Toast";
+import type { UserProgress, DocProgress, Badge } from "@/lib/types";
 
 const STORAGE_KEY = "ts2-lms-progress";
 
@@ -50,6 +51,7 @@ export default function ProgressProvider({
   const [progress, setProgress] = useState<UserProgress>(() =>
     getStorageItem<UserProgress>(STORAGE_KEY, emptyProgress)
   );
+  const [toastQueue, setToastQueue] = useState<Badge[]>([]);
 
   useEffect(() => {
     if (status !== "authenticated") return;
@@ -90,6 +92,9 @@ export default function ProgressProvider({
           setProgress(data.progress);
           setStorageItem(STORAGE_KEY, data.progress);
         }
+        if (data.newBadges && data.newBadges.length > 0) {
+          setToastQueue((prev) => [...prev, ...data.newBadges]);
+        }
       } catch {
         // silent fail — progress will sync on next load
       }
@@ -102,6 +107,13 @@ export default function ProgressProvider({
       value={{ progress, isDocCompleted, getDocProgress, updateProgress }}
     >
       {children}
+      {toastQueue.length > 0 && (
+        <Toast
+          message={`Badge earned: ${toastQueue[0].name}!`}
+          icon={toastQueue[0].icon}
+          onClose={() => setToastQueue((prev) => prev.slice(1))}
+        />
+      )}
     </ProgressContext.Provider>
   );
 }

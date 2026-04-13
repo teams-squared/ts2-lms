@@ -11,6 +11,7 @@ import CategoryCard from "@/components/docs/CategoryCard";
 import Logo from "@/components/Logo";
 import ProgressRing from "@/components/dashboard/ProgressRing";
 import ContinueLearningCard from "@/components/dashboard/ContinueLearningCard";
+import BadgeShowcase from "@/components/dashboard/BadgeShowcase";
 import { getUserProgress } from "@/lib/progress-store";
 import type { DocMeta, Role } from "@/lib/types";
 
@@ -141,6 +142,9 @@ export default async function HomePage() {
             <ContinueLearningCard doc={nextDoc} category={nextDocCategory} />
           </section>
         )}
+
+        {/* Badges */}
+        <BadgeShowcase />
 
         {/* Learning Paths */}
         {categoryDocs.length > 0 && (

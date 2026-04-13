@@ -3,8 +3,11 @@ import { auth } from "@/lib/auth";
 import {
   getUserProgress,
   updateDocProgress,
+  saveUserProgress,
 } from "@/lib/progress-store";
-import type { DocProgress } from "@/lib/types";
+import { evaluateBadges } from "@/lib/badges";
+import { getAllDocs, getCategories } from "@/lib/docs";
+import type { DocProgress, Role } from "@/lib/types";
 
 export async function GET() {
   const session = await auth();
@@ -39,7 +42,24 @@ export async function POST(request: Request) {
 
   try {
     const progress = updateDocProgress(session.user.email, docKey, update);
-    return NextResponse.json({ progress });
+
+    // Evaluate badges
+    const userRole = (session.user?.role as Role) || "employee";
+    const [allDocs, categories] = await Promise.all([
+      getAllDocs(userRole),
+      getCategories(),
+    ]);
+    const { allBadges, newBadges } = evaluateBadges(
+      progress,
+      allDocs,
+      categories
+    );
+    if (newBadges.length > 0) {
+      progress.badges = allBadges;
+      saveUserProgress(session.user.email, progress);
+    }
+
+    return NextResponse.json({ progress, newBadges });
   } catch (err) {
     console.error("[progress] updateDocProgress failed:", err);
     return NextResponse.json(
