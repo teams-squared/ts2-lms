@@ -50,7 +50,11 @@ jobs:
       - name: Type-check
         run: npx tsc --noEmit
 
-      # ── 7. Build ───────────────────────────────────────────────────────────
+      # ── 7. Test ──────────────────────────────────────────────────────────
+      - name: Unit & Integration Tests
+        run: npm run test
+
+      # ── 8. Build ───────────────────────────────────────────────────────────
       - name: Build
         run: npm run build
         env:
