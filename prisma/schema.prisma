@@ -13,15 +13,17 @@ enum Role {
 }
 
 model User {
-  id             String   @id @default(cuid())
-  email          String   @unique
+  id             String           @id @default(cuid())
+  email          String           @unique
   name           String?
   passwordHash   String?
-  role           Role     @default(EMPLOYEE)
+  role           Role             @default(EMPLOYEE)
   avatar         String?
-  createdAt      DateTime @default(now())
-  updatedAt      DateTime @updatedAt
-  createdCourses Course[] @relation("CreatedCourses")
+  createdAt      DateTime         @default(now())
+  updatedAt      DateTime         @updatedAt
+  createdCourses Course[]         @relation("CreatedCourses")
+  enrollments    Enrollment[]
+  lessonProgress LessonProgress[]
 }
 
 enum CourseStatus {
@@ -39,6 +41,7 @@ model Course {
   createdById String
   createdBy   User         @relation("CreatedCourses", fields: [createdById], references: [id])
   modules     Module[]
+  enrollments Enrollment[]
   createdAt   DateTime     @default(now())
   updatedAt   DateTime     @updatedAt
 }
@@ -64,17 +67,43 @@ model Module {
 }
 
 model Lesson {
-  id        String     @id @default(cuid())
+  id        String           @id @default(cuid())
   title     String
-  type      LessonType @default(TEXT)
+  type      LessonType       @default(TEXT)
   content   String?
   order     Int
   moduleId  String
-  module    Module     @relation(fields: [moduleId], references: [id], onDelete: Cascade)
-  createdAt DateTime   @default(now())
-  updatedAt DateTime   @updatedAt
+  module    Module           @relation(fields: [moduleId], references: [id], onDelete: Cascade)
+  progress  LessonProgress[]
+  createdAt DateTime         @default(now())
+  updatedAt DateTime         @updatedAt
 
   @@unique([moduleId, order])
+}
+
+model Enrollment {
+  id         String   @id @default(cuid())
+  userId     String
+  courseId   String
+  enrolledAt DateTime @default(now())
+
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+  course Course @relation(fields: [courseId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, courseId])
+}
+
+model LessonProgress {
+  id          String    @id @default(cuid())
+  userId      String
+  lessonId    String
+  startedAt   DateTime?
+  completedAt DateTime?
+
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+  lesson Lesson @relation(fields: [lessonId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, lessonId])
 }
 
 model SharePointCache {

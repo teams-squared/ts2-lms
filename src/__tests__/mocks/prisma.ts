@@ -43,4 +43,17 @@ export const mockPrisma = {
     delete: vi.fn(),
     deleteMany: vi.fn(),
   },
+  enrollment: {
+    findUnique: vi.fn(),
+    findMany: vi.fn(),
+    create: vi.fn(),
+    upsert: vi.fn(),
+    delete: vi.fn(),
+  },
+  lessonProgress: {
+    findUnique: vi.fn(),
+    findMany: vi.fn(),
+    upsert: vi.fn(),
+    delete: vi.fn(),
+  },
 };

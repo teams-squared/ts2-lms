@@ -269,6 +269,15 @@ export function PlusIcon(props: IconProps) {
   );
 }
 
+export function CheckCircleIcon(props: IconProps) {
+  return (
+    <Icon {...props}>
+      <circle cx="12" cy="12" r="10" />
+      <polyline points="9 12 11 14 15 10" />
+    </Icon>
+  );
+}
+
 // ─── Form icons (used by PasswordInput show/hide toggle) ─────────────────────
 
 export function EyeIcon(props: IconProps) {

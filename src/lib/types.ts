@@ -70,3 +70,18 @@ export function prismaLessonTypeToApp(type: PrismaLessonType): LessonType {
 export function appLessonTypeToPrisma(type: LessonType): PrismaLessonType {
   return APP_LESSON_TYPE_MAP[type];
 }
+
+// ─── Progress types ────────────────────────────────────────────────────────
+
+export interface CourseProgress {
+  enrolled: boolean;
+  enrolledAt: string | null;
+  totalLessons: number;
+  completedLessons: number;
+  percentComplete: number;
+  lessons: {
+    lessonId: string;
+    completed: boolean;
+    completedAt: string | null;
+  }[];
+}

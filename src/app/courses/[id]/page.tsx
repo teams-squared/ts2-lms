@@ -18,6 +18,7 @@ export default async function CourseDetailPage({
   if (!session) redirect("/login");
 
   const { id } = await params;
+  const userId = session.user!.id!;
 
   const course = await prisma.course.findUnique({
     where: { id },
@@ -44,6 +45,25 @@ export default async function CourseDetailPage({
     course.createdById !== session.user?.id
   ) {
     notFound();
+  }
+
+  // Fetch enrollment + progress
+  const enrollment = await prisma.enrollment.findUnique({
+    where: { userId_courseId: { userId, courseId: id } },
+  });
+
+  const allLessonIds = course.modules.flatMap((m) => m.lessons.map((l) => l.id));
+  const totalLessons = allLessonIds.length;
+
+  let completedLessons = 0;
+  let percentComplete = 0;
+
+  if (enrollment && totalLessons > 0) {
+    const progressRecords = await prisma.lessonProgress.findMany({
+      where: { userId, lessonId: { in: allLessonIds }, completedAt: { not: null } },
+    });
+    completedLessons = progressRecords.length;
+    percentComplete = Math.round((completedLessons / totalLessons) * 1000) / 10;
   }
 
   const status = prismaStatusToApp(course.status);
@@ -79,6 +99,26 @@ export default async function CourseDetailPage({
           </p>
         )}
 
+        {/* Progress bar (shown when enrolled and course has lessons) */}
+        {enrollment && totalLessons > 0 && (
+          <div className="rounded-xl border border-gray-200/80 dark:border-[#2e2e3a] bg-white dark:bg-[#1c1c24] shadow-card px-4 py-3 mb-4">
+            <div className="flex justify-between text-xs text-gray-500 dark:text-gray-400 mb-1.5">
+              <span>
+                {completedLessons} of {totalLessons} lesson{totalLessons !== 1 ? "s" : ""} complete
+              </span>
+              <span className="font-medium text-gray-700 dark:text-gray-300">
+                {percentComplete}%
+              </span>
+            </div>
+            <div className="h-2 bg-gray-100 dark:bg-[#2e2e3a] rounded-full overflow-hidden">
+              <div
+                className="h-full bg-indigo-500 rounded-full transition-all duration-300"
+                style={{ width: `${percentComplete}%` }}
+              />
+            </div>
+          </div>
+        )}
+
         {/* Author */}
         <div className="flex items-center gap-3 pt-4 border-t border-gray-100 dark:border-[#2e2e3a]">
           <UserAvatar name={course.createdBy.name} size="sm" />
@@ -105,8 +145,8 @@ export default async function CourseDetailPage({
           </h2>
           <p className="text-xs text-gray-400 mt-0.5">
             {course.modules.length} module{course.modules.length !== 1 ? "s" : ""} &middot;{" "}
-            {course.modules.reduce((sum, m) => sum + m.lessons.length, 0)} lesson
-            {course.modules.reduce((sum, m) => sum + m.lessons.length, 0) !== 1 ? "s" : ""}
+            {totalLessons} lesson
+            {totalLessons !== 1 ? "s" : ""}
           </p>
         </div>
         <ModuleList

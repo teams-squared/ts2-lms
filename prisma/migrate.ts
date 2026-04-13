@@ -135,6 +135,47 @@ async function main() {
     CREATE UNIQUE INDEX IF NOT EXISTS "SharePointCache_cacheKey_key" ON "SharePointCache"("cacheKey");
   `);
 
+  // Create Enrollment table (idempotent)
+  await client.query(`
+    CREATE TABLE IF NOT EXISTS "Enrollment" (
+      "id"         TEXT         NOT NULL,
+      "userId"     TEXT         NOT NULL,
+      "courseId"   TEXT         NOT NULL,
+      "enrolledAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+      CONSTRAINT "Enrollment_pkey" PRIMARY KEY ("id"),
+      CONSTRAINT "Enrollment_userId_fkey"
+        FOREIGN KEY ("userId") REFERENCES "User"("id") ON DELETE CASCADE ON UPDATE CASCADE,
+      CONSTRAINT "Enrollment_courseId_fkey"
+        FOREIGN KEY ("courseId") REFERENCES "Course"("id") ON DELETE CASCADE ON UPDATE CASCADE
+    );
+  `);
+
+  await client.query(`
+    CREATE UNIQUE INDEX IF NOT EXISTS "Enrollment_userId_courseId_key"
+      ON "Enrollment"("userId", "courseId");
+  `);
+
+  // Create LessonProgress table (idempotent)
+  await client.query(`
+    CREATE TABLE IF NOT EXISTS "LessonProgress" (
+      "id"          TEXT         NOT NULL,
+      "userId"      TEXT         NOT NULL,
+      "lessonId"    TEXT         NOT NULL,
+      "startedAt"   TIMESTAMP(3),
+      "completedAt" TIMESTAMP(3),
+      CONSTRAINT "LessonProgress_pkey" PRIMARY KEY ("id"),
+      CONSTRAINT "LessonProgress_userId_fkey"
+        FOREIGN KEY ("userId") REFERENCES "User"("id") ON DELETE CASCADE ON UPDATE CASCADE,
+      CONSTRAINT "LessonProgress_lessonId_fkey"
+        FOREIGN KEY ("lessonId") REFERENCES "Lesson"("id") ON DELETE CASCADE ON UPDATE CASCADE
+    );
+  `);
+
+  await client.query(`
+    CREATE UNIQUE INDEX IF NOT EXISTS "LessonProgress_userId_lessonId_key"
+      ON "LessonProgress"("userId", "lessonId");
+  `);
+
   console.log("Migration complete");
   await client.end();
 }

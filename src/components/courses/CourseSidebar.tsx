@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { ChevronLeftIcon } from "@/components/icons";
+import { ChevronLeftIcon, CheckCircleIcon } from "@/components/icons";
 import type { LessonType } from "@/lib/types";
 
 interface Lesson {
@@ -30,12 +30,18 @@ export function CourseSidebar({
   courseId,
   currentLessonId,
   courseTitle,
+  completedLessonIds = new Set(),
+  percentComplete = 0,
 }: {
   modules: Module[];
   courseId: string;
   currentLessonId: string;
   courseTitle: string;
+  completedLessonIds?: Set<string>;
+  percentComplete?: number;
 }) {
+  const totalLessons = modules.reduce((sum, m) => sum + m.lessons.length, 0);
+
   return (
     <aside className="w-72 flex-shrink-0 border-r border-gray-200/80 dark:border-[#2e2e3a] bg-white dark:bg-[#1c1c24] overflow-y-auto">
       {/* Back to course */}
@@ -52,6 +58,26 @@ export function CourseSidebar({
         </h2>
       </div>
 
+      {/* Progress bar */}
+      {totalLessons > 0 && (
+        <div
+          className="px-4 py-2.5 border-b border-gray-100 dark:border-[#26262e]"
+          data-testid="progress-bar-container"
+        >
+          <div className="flex justify-between text-xs text-gray-500 dark:text-gray-400 mb-1.5">
+            <span>Progress</span>
+            <span data-testid="progress-percent">{percentComplete}%</span>
+          </div>
+          <div className="h-1.5 bg-gray-100 dark:bg-[#2e2e3a] rounded-full overflow-hidden">
+            <div
+              className="h-full bg-indigo-500 rounded-full transition-all duration-300"
+              style={{ width: `${percentComplete}%` }}
+              data-testid="progress-bar"
+            />
+          </div>
+        </div>
+      )}
+
       {/* Module/Lesson navigation */}
       <nav className="py-2">
         {modules.map((mod) => (
@@ -64,6 +90,7 @@ export function CourseSidebar({
             <div className="space-y-0.5">
               {mod.lessons.map((lesson) => {
                 const isActive = lesson.id === currentLessonId;
+                const isDone = completedLessonIds.has(lesson.id);
                 return (
                   <Link
                     key={lesson.id}
@@ -77,7 +104,14 @@ export function CourseSidebar({
                     <span className="text-xs flex-shrink-0">
                       {LESSON_TYPE_ICON[lesson.type]}
                     </span>
-                    <span className="line-clamp-1">{lesson.title}</span>
+                    <span className="line-clamp-1 flex-1">{lesson.title}</span>
+                    {isDone && (
+                      <CheckCircleIcon
+                        className="w-3.5 h-3.5 flex-shrink-0 text-emerald-500"
+                        aria-label="Completed"
+                        data-testid={`completed-icon-${lesson.id}`}
+                      />
+                    )}
                   </Link>
                 );
               })}
