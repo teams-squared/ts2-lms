@@ -6,6 +6,29 @@ order: 1
 updatedAt: "2026-03-10"
 author: Platform Team
 tags: [api, rest, standards, engineering]
+quiz:
+  passingScore: 0.75
+  questions:
+    - id: api-q1
+      question: "What HTTP status code should be returned for a successful resource creation?"
+      options: ["200 OK", "201 Created", "204 No Content", "202 Accepted"]
+      correctIndex: 1
+      explanation: "201 Created is the correct status for successful resource creation."
+    - id: api-q2
+      question: "Which URL pattern is correct for our API standards?"
+      options: ["api.teamssquared.com/resource/v1", "api.teamssquared.com/v1/resource", "teamssquared.com/api/resource", "api/v1-resource"]
+      correctIndex: 1
+      explanation: "The version comes before the resource in our URL structure."
+    - id: api-q3
+      question: "What format should error responses use?"
+      options: ["Plain text", "HTML", "Structured JSON with error code and message", "XML"]
+      correctIndex: 2
+      explanation: "All error responses must use a structured JSON format with code and message fields."
+    - id: api-q4
+      question: "How should API endpoints handle authentication?"
+      options: ["API keys in URL", "Bearer tokens in Authorization header", "Cookies only", "Basic auth"]
+      correctIndex: 1
+      explanation: "Bearer tokens in the Authorization header is our standard authentication method."
 ---
 
 # API Design Standards

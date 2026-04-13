@@ -20,6 +20,9 @@ import DocPasswordGate from "@/components/docs/DocPasswordGate";
 import DocProtectionPanel from "@/components/docs/DocProtectionPanel";
 import { ChevronRightIcon, LockIcon } from "@/components/icons";
 import DocViewTracker from "@/components/telemetry/DocViewTracker";
+import Quiz from "@/components/docs/Quiz";
+import MarkCompleteButton from "@/components/docs/MarkCompleteButton";
+import { getUserProgress } from "@/lib/progress-store";
 import type { Role } from "@/lib/types";
 
 function extractHeadings(mdx: string): TocHeading[] {
@@ -62,6 +65,10 @@ export default async function DocPage({
   const docKey = `${categorySlug}/${slug}`;
   const unlockedDocs = session?.user?.unlockedDocs ?? [];
   const isUnlocked = !doc.meta.passwordProtected || unlockedDocs.includes(docKey);
+
+  const userEmail = session?.user?.email;
+  const userProgress = userEmail ? getUserProgress(userEmail) : null;
+  const docProgress = userProgress?.docs[docKey] ?? null;
 
   const headings = extractHeadings(doc.content);
   const tocHeadings = headings.length >= 3 ? headings : [];
@@ -173,6 +180,21 @@ export default async function DocPage({
               >
                 <DocRenderer source={doc.content} />
               </div>
+
+              {session && (
+                doc.quiz ? (
+                  <Quiz
+                    quiz={doc.quiz}
+                    docKey={docKey}
+                    existingProgress={docProgress}
+                  />
+                ) : (
+                  <MarkCompleteButton
+                    docKey={docKey}
+                    existingProgress={docProgress}
+                  />
+                )
+              )}
 
               {hasAccess(userRole, "manager") && (
                 <DocProtectionPanel
