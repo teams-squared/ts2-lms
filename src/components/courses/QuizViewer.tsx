@@ -60,9 +60,7 @@ export function QuizViewer({
   lessonId,
 }: QuizViewerProps) {
   const router = useRouter();
-  const [state, setState] = useState<State>(
-    initialBestAttempt?.passed ? "submitted" : "idle",
-  );
+  const [state, setState] = useState<State>("idle");
   const [selectedAnswers, setSelectedAnswers] = useState<Record<string, string>>({});
   const [result, setResult] = useState<QuizResult | null>(null);
   const [submitting, setSubmitting] = useState(false);
@@ -150,6 +148,14 @@ export function QuizViewer({
   if (state === "idle") {
     return (
       <div className="space-y-6">
+        {bestAttempt?.passed && (
+          <div className="flex items-center gap-2 rounded-xl border border-emerald-200 dark:border-emerald-800/40 bg-emerald-50 dark:bg-emerald-900/20 px-5 py-3">
+            <span className="text-emerald-600 dark:text-emerald-400 text-base">✓</span>
+            <p className="text-sm font-semibold text-emerald-800 dark:text-emerald-200">
+              You passed this quiz.
+            </p>
+          </div>
+        )}
         <div className="rounded-xl border border-gray-200 dark:border-[#3a3a48] bg-gray-50 dark:bg-[#18181f] p-6">
           <div className="flex items-center justify-between mb-4">
             <div>

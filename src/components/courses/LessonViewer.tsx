@@ -1,5 +1,6 @@
 "use client";
 
+import { useState } from "react";
 import ReactMarkdown from "react-markdown";
 import type { LessonType } from "@/lib/types";
 import type { SharePointDocumentRef } from "@/lib/sharepoint/types";
@@ -8,6 +9,56 @@ interface LessonViewerProps {
   title: string;
   type: LessonType;
   content: string | null;
+}
+
+function PdfViewer({ proxyUrl, fileName }: { proxyUrl: string; fileName: string }) {
+  const [loaded, setLoaded] = useState(false);
+  const [error, setError] = useState(false);
+
+  return (
+    <div
+      className="rounded-xl overflow-hidden border border-gray-200 dark:border-[#3a3a48]"
+      style={{ height: "80vh" }}
+    >
+      {!loaded && !error && (
+        <div className="w-full h-full flex items-center justify-center bg-gray-50 dark:bg-[#18181f]">
+          <div className="flex flex-col items-center gap-3">
+            <div className="w-8 h-8 border-2 border-indigo-600 border-t-transparent rounded-full animate-spin" />
+            <p className="text-sm text-gray-500 dark:text-gray-400">Loading document…</p>
+          </div>
+        </div>
+      )}
+      {error ? (
+        <div className="w-full h-full flex items-center justify-center bg-gray-50 dark:bg-[#18181f] p-8">
+          <div className="text-center max-w-sm">
+            <p className="text-sm font-medium text-gray-900 dark:text-gray-100 mb-1">
+              Unable to display document
+            </p>
+            <p className="text-xs text-gray-500 dark:text-gray-400 mb-4">
+              The document could not be loaded. You can download it directly instead.
+            </p>
+            <a
+              href={proxyUrl}
+              download={fileName}
+              className="inline-block rounded-lg bg-indigo-600 hover:bg-indigo-700 text-white text-sm font-medium px-4 py-2 transition-colors"
+            >
+              Download {fileName}
+            </a>
+          </div>
+        </div>
+      ) : (
+        <iframe
+          src={proxyUrl}
+          title={fileName}
+          className="w-full h-full"
+          style={{ display: loaded ? "block" : "none" }}
+          sandbox="allow-scripts allow-same-origin allow-forms allow-popups"
+          onLoad={() => setLoaded(true)}
+          onError={() => setError(true)}
+        />
+      )}
+    </div>
+  );
 }
 
 export function LessonViewer({ title, type, content }: LessonViewerProps) {
@@ -36,13 +87,7 @@ export function LessonViewer({ title, type, content }: LessonViewerProps) {
             No document attached.
           </p>
         ) : isPdf ? (
-          <div className="rounded-xl overflow-hidden border border-gray-200 dark:border-[#3a3a48]" style={{ height: "80vh" }}>
-            <iframe
-              src={proxyUrl!}
-              title={docRef.fileName}
-              className="w-full h-full"
-            />
-          </div>
+          <PdfViewer proxyUrl={proxyUrl!} fileName={docRef.fileName} />
         ) : (
           <div className="rounded-xl border border-gray-200 dark:border-[#3a3a48] bg-gray-50 dark:bg-[#18181f] p-6 flex items-center gap-4">
             <div className="flex-1 min-w-0">
@@ -93,22 +138,7 @@ export function LessonViewer({ title, type, content }: LessonViewerProps) {
     );
   }
 
-  if (type === "quiz") {
-    return (
-      <div>
-        <h1 className="text-2xl font-bold text-gray-900 dark:text-gray-100 mb-6">
-          {title}
-        </h1>
-        <div className="rounded-xl border border-amber-200 dark:border-amber-800/40 bg-amber-50 dark:bg-amber-900/20 p-8 text-center">
-          <p className="text-sm text-amber-800 dark:text-amber-200">
-            Quiz functionality coming soon.
-          </p>
-        </div>
-      </div>
-    );
-  }
-
-  // Default: text (markdown)
+  // Default: text (markdown) — also handles any other types gracefully
   return (
     <div>
       <h1 className="text-2xl font-bold text-gray-900 dark:text-gray-100 mb-6">

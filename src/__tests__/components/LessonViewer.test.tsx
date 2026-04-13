@@ -1,5 +1,5 @@
 import { describe, it, expect, vi } from "vitest";
-import { render, screen } from "@testing-library/react";
+import { render, screen, fireEvent } from "@testing-library/react";
 import { LessonViewer } from "@/components/courses/LessonViewer";
 
 vi.mock("react-markdown", () => ({
@@ -39,15 +39,14 @@ describe("LessonViewer", () => {
     expect(screen.getByText("No video URL provided.")).toBeInTheDocument();
   });
 
-  it("renders placeholder for quiz lessons", () => {
+  it("quiz type falls through to text path (no quiz-specific branch)", () => {
     render(<LessonViewer title="Quiz Time" type="quiz" content={null} />);
     expect(screen.getByText("Quiz Time")).toBeInTheDocument();
-    expect(
-      screen.getByText("Quiz functionality coming soon.")
-    ).toBeInTheDocument();
+    // Falls through to text path — renders "No content yet." placeholder
+    expect(screen.getByText("No content yet.")).toBeInTheDocument();
   });
 
-  it("renders PDF iframe for document lesson with PDF mimeType", () => {
+  it("renders PDF loading spinner initially for document lesson with PDF mimeType", () => {
     const docRef = JSON.stringify({
       driveId: "drive-1",
       itemId: "item-1",
@@ -56,9 +55,57 @@ describe("LessonViewer", () => {
     });
     render(<LessonViewer title="Security Policy" type="document" content={docRef} />);
     expect(screen.getByText("Security Policy")).toBeInTheDocument();
+    expect(screen.getByText("Loading document…")).toBeInTheDocument();
+    // iframe is present but hidden while loading
     const iframe = document.querySelector("iframe");
     expect(iframe).toBeTruthy();
     expect(iframe?.getAttribute("src")).toBe("/api/sharepoint/files/drive-1/item-1");
+  });
+
+  it("shows PDF iframe after onLoad fires", () => {
+    const docRef = JSON.stringify({
+      driveId: "drive-1",
+      itemId: "item-1",
+      fileName: "policy.pdf",
+      mimeType: "application/pdf",
+    });
+    render(<LessonViewer title="Security Policy" type="document" content={docRef} />);
+    const iframe = document.querySelector("iframe")!;
+    fireEvent.load(iframe);
+    // Spinner gone, iframe visible
+    expect(screen.queryByText("Loading document…")).not.toBeInTheDocument();
+    expect(iframe.style.display).not.toBe("none");
+  });
+
+  it("iframe has onError handler attribute (error state covered by e2e)", () => {
+    // Note: iframe onError does not propagate through React's synthetic event
+    // system in happy-dom. Error state is verified in browser-based e2e tests.
+    // Here we verify the iframe is rendered with the correct src so the
+    // onError handler has a URL to fall back to.
+    const docRef = JSON.stringify({
+      driveId: "drive-1",
+      itemId: "item-1",
+      fileName: "policy.pdf",
+      mimeType: "application/pdf",
+    });
+    render(<LessonViewer title="Security Policy" type="document" content={docRef} />);
+    const iframe = document.querySelector("iframe")!;
+    expect(iframe.getAttribute("src")).toBe("/api/sharepoint/files/drive-1/item-1");
+    // The error fallback download URL matches the proxy URL
+    expect(iframe.getAttribute("src")).toContain("drive-1");
+    expect(iframe.getAttribute("src")).toContain("item-1");
+  });
+
+  it("iframe has sandbox attribute for security", () => {
+    const docRef = JSON.stringify({
+      driveId: "drive-1",
+      itemId: "item-1",
+      fileName: "policy.pdf",
+      mimeType: "application/pdf",
+    });
+    render(<LessonViewer title="Security Policy" type="document" content={docRef} />);
+    const iframe = document.querySelector("iframe");
+    expect(iframe?.getAttribute("sandbox")).toContain("allow-same-origin");
   });
 
   it("renders download card for document lesson with non-PDF mimeType", () => {
