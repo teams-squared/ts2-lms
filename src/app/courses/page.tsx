@@ -167,16 +167,19 @@ export default async function CourseCatalogPage({
   }
 
   return (
-    <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-      <div className="mb-6">
-        <h1 className="text-2xl font-bold text-gray-900 dark:text-gray-100 tracking-tight mb-1 flex items-center gap-2">
-          <GraduationCapIcon className="w-6 h-6" />
-          Courses
-        </h1>
-        <p className="text-sm text-gray-500 dark:text-gray-400">
-          Browse and track your learning
-        </p>
+    <div>
+      <div className="bg-page-header-gradient">
+        <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 pt-10 pb-6">
+          <h1 className="text-2xl font-bold text-gray-900 dark:text-gray-100 tracking-tight mb-1 flex items-center gap-2">
+            <GraduationCapIcon className="w-6 h-6" />
+            Courses
+          </h1>
+          <p className="text-sm text-gray-500 dark:text-gray-400">
+            Browse and track your learning
+          </p>
+        </div>
       </div>
+      <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 pb-10">
 
       {/* Tabs */}
       <div className="flex items-center gap-1 mb-6 border-b border-gray-200 dark:border-[#2e2e3a]">
@@ -277,7 +280,7 @@ export default async function CourseCatalogPage({
                 : "No courses available yet."}
             </div>
           ) : (
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
               {allCourses.map((course) => {
                 const elig = eligibilityMap.get(course.id);
                 return (
@@ -315,7 +318,7 @@ export default async function CourseCatalogPage({
               </Link>
             </div>
           ) : (
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
               {myCourses.map((course) => (
                 <div key={course.id} className="relative">
                   {course.source === "assigned" && (
@@ -339,6 +342,7 @@ export default async function CourseCatalogPage({
           )}
         </>
       )}
+      </div>
     </div>
   );
 }

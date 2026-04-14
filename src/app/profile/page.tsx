@@ -163,7 +163,7 @@ export default async function ProfilePage() {
                 View all
               </Link>
             </div>
-            <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
+            <div className="grid grid-cols-2 sm:grid-cols-3 gap-4">
               {recentAchievements.map((a) => (
                 <AchievementCard
                   key={a.id}
