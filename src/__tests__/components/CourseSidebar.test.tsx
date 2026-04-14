@@ -21,6 +21,12 @@ vi.mock("@/components/icons", () => ({
   CheckCircleIcon: (props: Record<string, unknown>) => (
     <svg data-testid="check-circle" {...props} />
   ),
+  HamburgerIcon: (props: Record<string, unknown>) => (
+    <svg data-testid="hamburger" {...props} />
+  ),
+  CloseIcon: (props: Record<string, unknown>) => (
+    <svg data-testid="close" {...props} />
+  ),
 }));
 
 const sampleModules = [
