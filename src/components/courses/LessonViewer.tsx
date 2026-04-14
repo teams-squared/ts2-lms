@@ -13,18 +13,22 @@ interface LessonViewerProps {
 }
 
 function PdfViewer({ proxyUrl, fileName }: { proxyUrl: string; fileName: string }) {
-  const [blobUrl, setBlobUrl] = useState<string | null>(null);
+  // Pre-flight: fetch the file to verify it's accessible and populate the
+  // browser cache (Cache-Control: private, max-age=900). The iframe then loads
+  // the same URL from cache — no blob: URL needed, avoiding Chrome's
+  // "Not allowed to load local resource: blob:" restriction.
+  const [ready, setReady] = useState(false);
   const [error, setError] = useState(false);
 
   useEffect(() => {
     const controller = new AbortController();
 
     fetch(proxyUrl, { signal: controller.signal })
-      .then((res) => {
+      .then(async (res) => {
         if (!res.ok) throw new Error(`HTTP ${res.status}`);
-        return res.blob();
+        await res.blob(); // consume body so browser caches it for the iframe
+        setReady(true);
       })
-      .then((blob) => setBlobUrl(URL.createObjectURL(blob)))
       .catch((err) => {
         if ((err as Error).name !== "AbortError") setError(true);
       });
@@ -32,18 +36,12 @@ function PdfViewer({ proxyUrl, fileName }: { proxyUrl: string; fileName: string 
     return () => controller.abort();
   }, [proxyUrl]);
 
-  useEffect(() => {
-    return () => {
-      if (blobUrl) URL.revokeObjectURL(blobUrl);
-    };
-  }, [blobUrl]);
-
   return (
     <div
       className="rounded-xl overflow-hidden border border-gray-200 dark:border-[#3a3a48]"
       style={{ height: "min(80vh, calc(100vh - 8rem))" }}
     >
-      {!blobUrl && !error && (
+      {!ready && !error && (
         <div className="w-full h-full flex items-center justify-center bg-gray-50 dark:bg-[#18181f]">
           <div className="flex flex-col items-center gap-3">
             <Spinner size="lg" />
@@ -69,9 +67,9 @@ function PdfViewer({ proxyUrl, fileName }: { proxyUrl: string; fileName: string 
             </a>
           </div>
         </div>
-      ) : blobUrl ? (
+      ) : ready ? (
         <iframe
-          src={blobUrl}
+          src={proxyUrl}
           title={fileName}
           className="w-full h-full"
           sandbox="allow-scripts allow-same-origin allow-forms allow-popups"

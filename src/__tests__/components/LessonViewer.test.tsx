@@ -46,7 +46,7 @@ describe("LessonViewer", () => {
     expect(screen.getByText("No content yet.")).toBeInTheDocument();
   });
 
-  describe("PDF document viewer (fetch + blob URL)", () => {
+  describe("PDF document viewer (pre-flight fetch + cached proxy URL)", () => {
     const docRef = JSON.stringify({
       driveId: "drive-1",
       itemId: "item-1",
@@ -54,11 +54,6 @@ describe("LessonViewer", () => {
       mimeType: "application/pdf",
     });
     const proxyUrl = "/api/sharepoint/files/drive-1/item-1";
-
-    beforeEach(() => {
-      vi.spyOn(URL, "createObjectURL").mockReturnValue("blob:fake-pdf-url");
-      vi.spyOn(URL, "revokeObjectURL").mockImplementation(() => {});
-    });
 
     afterEach(() => {
       vi.restoreAllMocks();
@@ -75,7 +70,7 @@ describe("LessonViewer", () => {
       expect(document.querySelector("iframe")).toBeNull();
     });
 
-    it("shows PDF iframe after fetch resolves", async () => {
+    it("shows PDF iframe with proxy URL after pre-flight fetch succeeds", async () => {
       const blob = new Blob(["%PDF-1.4"], { type: "application/pdf" });
       vi.stubGlobal("fetch", vi.fn(() =>
         Promise.resolve({ ok: true, blob: () => Promise.resolve(blob) })
@@ -86,7 +81,8 @@ describe("LessonViewer", () => {
 
       await waitFor(() => expect(document.querySelector("iframe")).toBeTruthy());
       expect(screen.queryByText("Loading document…")).not.toBeInTheDocument();
-      expect(document.querySelector("iframe")?.getAttribute("src")).toBe("blob:fake-pdf-url");
+      // iframe loads from browser cache via the original proxy URL (no blob: URL)
+      expect(document.querySelector("iframe")?.getAttribute("src")).toBe(proxyUrl);
     });
 
     it("shows error fallback when fetch returns an HTTP error", async () => {
@@ -98,7 +94,6 @@ describe("LessonViewer", () => {
       await waitFor(() =>
         expect(screen.getByText("Unable to display document")).toBeInTheDocument()
       );
-      // Download link points to the original proxy URL (not a blob URL)
       const link = screen.getByRole("link", { name: /download policy\.pdf/i });
       expect(link).toHaveAttribute("href", proxyUrl);
     });
