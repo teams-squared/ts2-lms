@@ -2,6 +2,7 @@ import Link from "next/link";
 import { auth } from "@/lib/auth";
 import Logo from "@/components/Logo";
 import { RoleBadge } from "@/components/ui/Badge";
+import { GraduationCapIcon, UsersIcon, ShieldIcon } from "@/components/icons";
 import type { Role } from "@/lib/types";
 
 export default async function HomePage() {
@@ -42,59 +43,66 @@ export default async function HomePage() {
   const firstName = session.user?.name?.split(" ")[0] || "there";
 
   return (
-    <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-10">
-      {/* Welcome */}
-      <div className="mb-8">
-        <h1 className="text-2xl sm:text-3xl font-bold text-gray-900 dark:text-gray-100 tracking-tight mb-2">
-          Welcome back, {firstName}
-        </h1>
-        <div className="flex items-center gap-3">
-          <p className="text-sm text-gray-500 dark:text-gray-400">
-            {session.user?.email}
-          </p>
-          <RoleBadge role={userRole} />
+    <div>
+      {/* Welcome hero */}
+      <div className="bg-brand-gradient-subtle">
+        <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 pt-12 pb-10">
+          <h1 className="text-2xl sm:text-3xl font-bold text-gray-900 dark:text-gray-100 tracking-tight mb-2">
+            Welcome back, {firstName}
+          </h1>
+          <div className="flex items-center gap-3">
+            <p className="text-sm text-gray-500 dark:text-gray-400">
+              {session.user?.email}
+            </p>
+            <RoleBadge role={userRole} />
+          </div>
         </div>
       </div>
 
       {/* Quick links */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-        <Link
-          href="/courses"
-          className="p-5 rounded-xl border border-gray-200/80 dark:border-[#2e2e3a] bg-white dark:bg-[#1c1c24] shadow-card hover:shadow-elevated transition-shadow"
-        >
-          <h2 className="text-base font-semibold text-gray-900 dark:text-gray-100 mb-1">
-            Course Catalog
-          </h2>
-          <p className="text-sm text-gray-500 dark:text-gray-400">
-            Browse available courses
-          </p>
-        </Link>
-
-        <Link
-          href="/profile"
-          className="p-5 rounded-xl border border-gray-200/80 dark:border-[#2e2e3a] bg-white dark:bg-[#1c1c24] shadow-card hover:shadow-elevated transition-shadow"
-        >
-          <h2 className="text-base font-semibold text-gray-900 dark:text-gray-100 mb-1">
-            My Profile
-          </h2>
-          <p className="text-sm text-gray-500 dark:text-gray-400">
-            View your account details and role
-          </p>
-        </Link>
-
-        {userRole === "admin" && (
+      <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
           <Link
-            href="/admin"
-            className="p-5 rounded-xl border border-gray-200/80 dark:border-[#2e2e3a] bg-white dark:bg-[#1c1c24] shadow-card hover:shadow-elevated transition-shadow"
+            href="/courses"
+            className="p-6 rounded-xl border border-gray-200/80 dark:border-[#2e2e3a] bg-white dark:bg-[#1c1c24] shadow-card hover:shadow-elevated hover-lift"
           >
+            <GraduationCapIcon className="w-6 h-6 text-brand-600 dark:text-brand-400 mb-3" />
             <h2 className="text-base font-semibold text-gray-900 dark:text-gray-100 mb-1">
-              Admin Dashboard
+              Course Catalog
             </h2>
             <p className="text-sm text-gray-500 dark:text-gray-400">
-              Manage users and roles
+              Browse available courses
             </p>
           </Link>
-        )}
+
+          <Link
+            href="/profile"
+            className="p-6 rounded-xl border border-gray-200/80 dark:border-[#2e2e3a] bg-white dark:bg-[#1c1c24] shadow-card hover:shadow-elevated hover-lift"
+          >
+            <UsersIcon className="w-6 h-6 text-brand-600 dark:text-brand-400 mb-3" />
+            <h2 className="text-base font-semibold text-gray-900 dark:text-gray-100 mb-1">
+              My Profile
+            </h2>
+            <p className="text-sm text-gray-500 dark:text-gray-400">
+              View your account details and role
+            </p>
+          </Link>
+
+          {userRole === "admin" && (
+            <Link
+              href="/admin"
+              className="p-6 rounded-xl border border-gray-200/80 dark:border-[#2e2e3a] bg-white dark:bg-[#1c1c24] shadow-card hover:shadow-elevated hover-lift"
+            >
+              <ShieldIcon className="w-6 h-6 text-brand-600 dark:text-brand-400 mb-3" />
+              <h2 className="text-base font-semibold text-gray-900 dark:text-gray-100 mb-1">
+                Admin Dashboard
+              </h2>
+              <p className="text-sm text-gray-500 dark:text-gray-400">
+                Manage users and roles
+              </p>
+            </Link>
+          )}
+        </div>
       </div>
     </div>
   );
