@@ -68,16 +68,22 @@ body {
 
 /* ── Background gradients ──────────────────────────────────────────────────── */
 .bg-brand-gradient {
-  background: radial-gradient(ellipse at 50% -20%, #ddd6fe 0%, #ede9fe 35%, #f3f0ff 65%, #f5f5f8 100%);
+  background: linear-gradient(90deg, #e9d5ff 0%, #ffffff 50%, #d4b3ff 100%);
 }
 .bg-brand-gradient-subtle {
-  background: radial-gradient(ellipse at center, #ffffff 60%, #f0e6ff 100%);
+  background: linear-gradient(90deg, #f5eeff 0%, #ffffff 50%, #f0e6ff 100%);
 }
 .dark .bg-brand-gradient {
-  background: radial-gradient(ellipse at 50% -20%, #1c1030 0%, #17112b 35%, #130f22 65%, #0f0f14 100%);
+  background: linear-gradient(90deg, #1e103a 0%, #18161e 50%, #1a1040 100%);
 }
 .dark .bg-brand-gradient-subtle {
-  background: radial-gradient(ellipse at center, #18161e 60%, #1a1028 100%);
+  background: linear-gradient(90deg, #14101e 0%, #18161e 50%, #160e28 100%);
+}
+.bg-page-header-gradient {
+  background: linear-gradient(180deg, #f0e6ff 0%, #f5f5f8 100%);
+}
+.dark .bg-page-header-gradient {
+  background: linear-gradient(180deg, #1a1028 0%, #0f0f14 100%);
 }
 
 /* ── Shadows ───────────────────────────────────────────────────────────────── */
@@ -98,6 +104,14 @@ body {
 }
 .dark .shadow-elevated {
   box-shadow: 0 8px 32px rgba(0,0,0,.50), 0 2px 8px rgba(0,0,0,.35);
+}
+
+/* ── Card hover-lift ──────────────────────────────────────────────────────── */
+.hover-lift {
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+.hover-lift:hover {
+  transform: translateY(-2px);
 }
 
 /* ── Search highlights ─────────────────────────────────────────────────────── */
