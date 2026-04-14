@@ -123,4 +123,15 @@ export const mockPrisma = {
     upsert: vi.fn().mockResolvedValue({ xp: 0, streak: 1, lastActivityDate: new Date() }),
     update: vi.fn(),
   },
+  userClearance: {
+    findUnique: vi.fn(),
+    findMany: vi.fn().mockResolvedValue([]),
+    create: vi.fn(),
+    delete: vi.fn(),
+  },
+  coursePrerequisite: {
+    findMany: vi.fn().mockResolvedValue([]),
+    create: vi.fn(),
+    delete: vi.fn(),
+  },
 };

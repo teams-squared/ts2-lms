@@ -32,6 +32,7 @@ model User {
   notifications       Notification[]
   achievements        UserAchievement[]
   stats               UserStats?
+  clearances          UserClearance[]
 }
 
 enum CourseStatus {
@@ -41,19 +42,23 @@ enum CourseStatus {
 }
 
 model Course {
-  id          String       @id @default(cuid())
-  title       String
-  description String?
-  thumbnail   String?
-  status      CourseStatus @default(DRAFT)
-  createdById String
-  createdBy   User         @relation("CreatedCourses", fields: [createdById], references: [id])
-  modules     Module[]
-  enrollments Enrollment[]
-  assignments Assignment[]
-  instructors CourseInstructor[]
-  createdAt   DateTime     @default(now())
-  updatedAt   DateTime     @updatedAt
+  id                String       @id @default(cuid())
+  title             String
+  description       String?
+  thumbnail         String?
+  status            CourseStatus @default(DRAFT)
+  category          String?
+  requiredClearance String?
+  createdById       String
+  createdBy         User         @relation("CreatedCourses", fields: [createdById], references: [id])
+  modules           Module[]
+  enrollments       Enrollment[]
+  assignments       Assignment[]
+  instructors       CourseInstructor[]
+  prerequisites     CoursePrerequisite[] @relation("CoursePrereqs")
+  prerequisiteOf    CoursePrerequisite[] @relation("PrereqOf")
+  createdAt         DateTime     @default(now())
+  updatedAt         DateTime     @updatedAt
 }
 
 enum LessonType {
@@ -252,4 +257,25 @@ model CourseInstructor {
   user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@id([courseId, userId])
+}
+
+model UserClearance {
+  id        String   @id @default(cuid())
+  userId    String
+  clearance String
+  grantedAt DateTime @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, clearance])
+}
+
+model CoursePrerequisite {
+  courseId        String
+  prerequisiteId  String
+
+  course       Course @relation("CoursePrereqs", fields: [courseId], references: [id], onDelete: Cascade)
+  prerequisite Course @relation("PrereqOf", fields: [prerequisiteId], references: [id], onDelete: Cascade)
+
+  @@id([courseId, prerequisiteId])
 }
