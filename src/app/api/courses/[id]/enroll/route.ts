@@ -1,6 +1,8 @@
 import { NextResponse } from "next/server";
 import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
+import { awardXp } from "@/lib/xp";
+import { trackEvent } from "@/lib/posthog-server";
 
 type Params = { params: Promise<{ id: string }> };
 
@@ -33,8 +35,18 @@ export async function POST(_request: Request, { params }: Params) {
     update: {},
   });
 
+  // Award XP and track event
+  const { newAchievements } = await awardXp(session.user.id, 5);
+  trackEvent(session.user.id, "course_enrolled", { courseId });
+
   return NextResponse.json({
     enrolled: true,
     enrolledAt: enrollment.enrolledAt,
+    xpAwarded: 5,
+    newAchievements: newAchievements.map((a) => ({
+      key: a.key,
+      title: a.title,
+      icon: a.icon,
+    })),
   });
 }

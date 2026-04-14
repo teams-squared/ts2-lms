@@ -1,6 +1,8 @@
 import { NextResponse } from "next/server";
 import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
+import { awardXp } from "@/lib/xp";
+import { trackEvent } from "@/lib/posthog-server";
 
 type Params = { params: Promise<{ id: string; moduleId: string; lessonId: string }> };
 
@@ -165,6 +167,28 @@ export async function POST(request: Request, { params }: Params) {
     });
   }
 
+  // Award XP and track event
+  let xpAwarded = 0;
+  let newAchievements: { key: string; title: string; icon: string }[] = [];
+  if (passed) {
+    const isPerfect = correctCount === totalQuestions;
+    xpAwarded = isPerfect ? 50 : 25;
+    const result = await awardXp(userId, xpAwarded);
+    newAchievements = result.newAchievements.map((a) => ({
+      key: a.key,
+      title: a.title,
+      icon: a.icon,
+    }));
+  }
+  trackEvent(userId, "quiz_completed", {
+    courseId,
+    lessonId,
+    score: correctCount,
+    totalQuestions,
+    percentage,
+    passed,
+  });
+
   return NextResponse.json({
     score: correctCount,
     totalQuestions,
@@ -172,5 +196,7 @@ export async function POST(request: Request, { params }: Params) {
     passed,
     passingScore,
     answers: answerResults,
+    xpAwarded,
+    newAchievements,
   });
 }
