@@ -71,7 +71,7 @@ export default function NavBar() {
                 aria-label="Open user menu"
                 aria-expanded={userMenuOpen}
                 aria-haspopup="true"
-                className="flex items-center gap-2 p-1 rounded-lg hover:bg-gray-50 dark:hover:bg-[#1e1e28] transition-colors"
+                className="flex items-center gap-2 p-2 rounded-lg hover:bg-gray-50 dark:hover:bg-[#1e1e28] transition-colors"
               >
                 <UserAvatar name={session.user?.name} size="sm" />
                 <span className="hidden sm:block text-sm font-medium text-gray-700 dark:text-gray-300 max-w-[120px] truncate">
@@ -111,7 +111,7 @@ export default function NavBar() {
 
             {/* Mobile hamburger */}
             <button
-              className="sm:hidden p-1.5 rounded-lg hover:bg-gray-50 dark:hover:bg-[#1e1e28]"
+              className="sm:hidden p-2.5 rounded-lg hover:bg-gray-50 dark:hover:bg-[#1e1e28]"
               onClick={() => setMobileOpen(!mobileOpen)}
               aria-label={mobileOpen ? "Close navigation menu" : "Open navigation menu"}
               aria-expanded={mobileOpen}

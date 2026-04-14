@@ -19,7 +19,7 @@ export function ThemeToggle({ className = "" }: ThemeToggleProps) {
 
   // Render a stable placeholder to avoid layout shift before mount
   if (!mounted) {
-    return <div className="w-7 h-7 flex-shrink-0" aria-hidden />;
+    return <div className="w-9 h-9 flex-shrink-0" aria-hidden />;
   }
 
   const isDark = resolvedTheme === "dark";
@@ -29,7 +29,7 @@ export function ThemeToggle({ className = "" }: ThemeToggleProps) {
       onClick={() => setTheme(isDark ? "light" : "dark")}
       title={isDark ? "Switch to light mode" : "Switch to dark mode"}
       aria-label={isDark ? "Switch to light mode" : "Switch to dark mode"}
-      className={`flex-shrink-0 p-1.5 rounded-md text-gray-400 hover:text-gray-600 hover:bg-black/5 dark:text-gray-500 dark:hover:text-gray-300 dark:hover:bg-white/10 transition-colors focus:outline-none focus:ring-2 focus:ring-brand-400 ${className}`}
+      className={`flex-shrink-0 p-2.5 rounded-lg text-gray-400 hover:text-gray-600 hover:bg-black/5 dark:text-gray-500 dark:hover:text-gray-300 dark:hover:bg-white/10 transition-colors focus:outline-none focus:ring-2 focus:ring-brand-400 ${className}`}
     >
       {isDark
         ? <SunIcon className="w-4 h-4" />

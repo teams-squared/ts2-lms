@@ -59,7 +59,7 @@ export function NotificationBell() {
       <button
         onClick={() => void handleOpen()}
         aria-label={`Notifications${unreadCount > 0 ? ` (${unreadCount} unread)` : ""}`}
-        className="relative p-1.5 rounded-lg hover:bg-gray-50 dark:hover:bg-[#1e1e28] transition-colors"
+        className="relative p-2.5 rounded-lg hover:bg-gray-50 dark:hover:bg-[#1e1e28] transition-colors"
       >
         <svg
           className="w-5 h-5 text-gray-500 dark:text-gray-400"
