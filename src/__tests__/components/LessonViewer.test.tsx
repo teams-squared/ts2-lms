@@ -98,7 +98,7 @@ describe("LessonViewer", () => {
       expect(link).toHaveAttribute("href", proxyUrl);
     });
 
-    it("iframe has sandbox attribute for security", async () => {
+    it("iframe renders with the proxy URL (no sandbox — Chrome PDF viewer requires it)", async () => {
       const blob = new Blob(["%PDF-1.4"], { type: "application/pdf" });
       vi.stubGlobal("fetch", vi.fn(() =>
         Promise.resolve({ ok: true, blob: () => Promise.resolve(blob) })
@@ -106,7 +106,8 @@ describe("LessonViewer", () => {
 
       render(<LessonViewer title="Security Policy" type="document" content={docRef} />);
       await waitFor(() => expect(document.querySelector("iframe")).toBeTruthy());
-      expect(document.querySelector("iframe")?.getAttribute("sandbox")).toContain("allow-same-origin");
+      // No sandbox — Chrome's built-in PDF viewer fails inside sandboxed iframes
+      expect(document.querySelector("iframe")?.getAttribute("sandbox")).toBeNull();
     });
   });
 

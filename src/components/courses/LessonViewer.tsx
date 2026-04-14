@@ -72,7 +72,6 @@ function PdfViewer({ proxyUrl, fileName }: { proxyUrl: string; fileName: string 
           src={proxyUrl}
           title={fileName}
           className="w-full h-full"
-          sandbox="allow-scripts allow-same-origin allow-forms allow-popups"
         />
       ) : null}
     </div>
