@@ -42,7 +42,7 @@ export async function GET(request: Request) {
   });
 
   // Batch-check eligibility for the current user
-  const userId = session.user.id;
+  const userId = session.user.id ?? "";
   const role = session.user.role as Role;
   const eligibilityResults = await Promise.all(
     courses.map((c) => checkCourseEligibility(userId, role, c.id)),

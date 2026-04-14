@@ -2,6 +2,7 @@ import "dotenv/config";
 import { PrismaClient, Role, CourseStatus, LessonType } from "@prisma/client";
 import { PrismaPg } from "@prisma/adapter-pg";
 import bcrypt from "bcryptjs";
+import { seedCoursePackages } from "./seed-courses";
 
 const connectionString = process.env.DATABASE_URL!;
 const url = new URL(connectionString);
@@ -256,6 +257,12 @@ async function main() {
       },
     ],
   };
+
+  // Seed course packages (4 structured packages with prerequisites and clearances)
+  if (adminUser) {
+    console.log("\n=== Seeding Course Packages ===");
+    await seedCoursePackages(prisma, adminUser.id);
+  }
 
   // Seed achievements
   for (const achievement of ACHIEVEMENTS) {

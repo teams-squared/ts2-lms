@@ -56,7 +56,7 @@ export async function checkCourseEligibility(
 
   // Check prerequisite completion
   const missingPrerequisites: { id: string; title: string }[] = [];
-  for (const { prerequisite } of course.prerequisites) {
+  for (const { prerequisite } of course.prerequisites ?? []) {
     const completed = await isCourseCompleted(userId, prerequisite.id);
     if (!completed) {
       missingPrerequisites.push({
