@@ -8,7 +8,7 @@ export default async function ManagerLayout({
 }) {
   const session = await auth();
   const role = session?.user?.role;
-  if (!session || (role !== "admin" && role !== "manager")) {
+  if (!session || (role !== "admin" && role !== "manager" && role !== "instructor")) {
     redirect("/");
   }
 

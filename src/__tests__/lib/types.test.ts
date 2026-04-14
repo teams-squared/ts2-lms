@@ -13,6 +13,10 @@ describe("prismaRoleToApp", () => {
   it("maps EMPLOYEE → employee", () => {
     expect(prismaRoleToApp("EMPLOYEE")).toBe("employee");
   });
+
+  it("maps INSTRUCTOR → instructor", () => {
+    expect(prismaRoleToApp("INSTRUCTOR")).toBe("instructor");
+  });
 });
 
 describe("appRoleToPrisma", () => {
@@ -27,10 +31,14 @@ describe("appRoleToPrisma", () => {
   it("maps employee → EMPLOYEE", () => {
     expect(appRoleToPrisma("employee")).toBe("EMPLOYEE");
   });
+
+  it("maps instructor → INSTRUCTOR", () => {
+    expect(appRoleToPrisma("instructor")).toBe("INSTRUCTOR");
+  });
 });
 
 describe("roundtrip conversion", () => {
-  it.each(["ADMIN", "MANAGER", "EMPLOYEE"] as const)(
+  it.each(["ADMIN", "MANAGER", "INSTRUCTOR", "EMPLOYEE"] as const)(
     "appRoleToPrisma(prismaRoleToApp(%s)) === %s",
     (prismaRole) => {
       expect(appRoleToPrisma(prismaRoleToApp(prismaRole))).toBe(prismaRole);

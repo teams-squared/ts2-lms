@@ -15,6 +15,11 @@ export const ROLE_STYLES: Record<Role, { badge: string; dot: string; avatar: str
     dot: "bg-blue-500",
     avatar: "bg-blue-200 text-blue-800",
   },
+  instructor: {
+    badge: "bg-purple-100 text-purple-700",
+    dot: "bg-purple-500",
+    avatar: "bg-purple-200 text-purple-800",
+  },
   employee: {
     badge: "bg-gray-100 text-gray-600",
     dot: "bg-gray-400",

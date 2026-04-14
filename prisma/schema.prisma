@@ -9,6 +9,7 @@ datasource db {
 enum Role {
   ADMIN
   MANAGER
+  INSTRUCTOR
   EMPLOYEE
 }
 
@@ -22,6 +23,7 @@ model User {
   createdAt      DateTime         @default(now())
   updatedAt      DateTime         @updatedAt
   createdCourses      Course[]         @relation("CreatedCourses")
+  instructedCourses   CourseInstructor[]
   enrollments         Enrollment[]
   lessonProgress      LessonProgress[]
   quizAttempts        QuizAttempt[]
@@ -47,6 +49,7 @@ model Course {
   modules     Module[]
   enrollments Enrollment[]
   assignments Assignment[]
+  instructors CourseInstructor[]
   createdAt   DateTime     @default(now())
   updatedAt   DateTime     @updatedAt
 }
@@ -200,4 +203,15 @@ model Notification {
   createdAt DateTime  @default(now())
 
   user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model CourseInstructor {
+  courseId   String
+  userId     String
+  assignedAt DateTime @default(now())
+
+  course Course @relation(fields: [courseId], references: [id], onDelete: Cascade)
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@id([courseId, userId])
 }

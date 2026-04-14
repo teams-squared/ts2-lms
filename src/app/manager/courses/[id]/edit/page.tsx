@@ -13,7 +13,8 @@ export default async function ManagerCourseEditPage({
   params: Promise<{ id: string }>;
 }) {
   const session = await auth();
-  if (!session || (session.user?.role !== "admin" && session.user?.role !== "manager")) {
+  const role = session?.user?.role;
+  if (!session || (role !== "admin" && role !== "manager" && role !== "instructor")) {
     redirect("/");
   }
 
@@ -35,9 +36,15 @@ export default async function ManagerCourseEditPage({
 
   if (!course) notFound();
 
-  // Managers may only edit courses they created
-  if (session.user?.role === "manager" && course.createdById !== session.user.id) {
+  // Managers may only edit courses they created; instructors only their assigned courses
+  if (role === "manager" && course.createdById !== session.user?.id) {
     redirect("/manager");
+  }
+  if (role === "instructor") {
+    const assignment = await prisma.courseInstructor.findUnique({
+      where: { courseId_userId: { courseId, userId: session.user!.id! } },
+    });
+    if (!assignment) redirect("/manager");
   }
 
   // Gather all quiz lesson IDs so we can fetch their questions in one query

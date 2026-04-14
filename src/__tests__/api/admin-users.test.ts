@@ -92,6 +92,26 @@ describe("PATCH /api/admin/users", () => {
     expect(res.status).toBe(400);
   });
 
+  it("accepts instructor as a valid role", async () => {
+    mockAuth.mockResolvedValue(mockSession({ role: "admin" }));
+    mockPrisma.user.update.mockResolvedValue({
+      id: "1",
+      email: "user@test.com",
+      name: "User",
+      role: "INSTRUCTOR",
+      createdAt: new Date("2024-01-01"),
+    });
+    const req = new Request("http://localhost/api/admin/users", {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ userId: "1", role: "instructor" }),
+    });
+    const res = await PATCH(req);
+    expect(res.status).toBe(200);
+    const body = await res.json();
+    expect(body.role).toBe("instructor");
+  });
+
   it("returns 200 with updated user", async () => {
     mockAuth.mockResolvedValue(mockSession({ role: "admin" }));
     mockPrisma.user.update.mockResolvedValue({
