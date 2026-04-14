@@ -18,7 +18,7 @@ function PdfViewer({ proxyUrl, fileName }: { proxyUrl: string; fileName: string 
   return (
     <div
       className="rounded-xl overflow-hidden border border-gray-200 dark:border-[#3a3a48]"
-      style={{ height: "80vh" }}
+      style={{ height: "min(80vh, calc(100vh - 8rem))" }}
     >
       {!loaded && !error && (
         <div className="w-full h-full flex items-center justify-center bg-gray-50 dark:bg-[#18181f]">

@@ -88,8 +88,8 @@ export default function UserTable() {
           {updateError}
         </div>
       )}
-      <div className="rounded-xl border border-gray-200/80 dark:border-[#2e2e3a] bg-white dark:bg-[#1c1c24] shadow-card overflow-hidden">
-        <table className="w-full text-sm">
+      <div className="rounded-xl border border-gray-200/80 dark:border-[#2e2e3a] bg-white dark:bg-[#1c1c24] shadow-card overflow-x-auto">
+        <table className="w-full text-sm min-w-[600px]">
           <thead>
             <tr className="bg-gray-50 dark:bg-[#18181f] text-left">
               <th className="px-5 py-3 font-medium text-gray-500 dark:text-gray-400">
