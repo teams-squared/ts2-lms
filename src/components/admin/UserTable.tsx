@@ -133,7 +133,7 @@ export default function UserTable() {
                     }
                     disabled={updating === user.id}
                     aria-label={`Role for ${user.name || user.email}`}
-                    className="px-2 py-1 rounded-lg border border-gray-200 dark:border-[#3a3a48] bg-white dark:bg-[#1e1e28] text-sm text-gray-700 dark:text-gray-300 focus:outline-none focus:ring-2 focus:ring-brand-500 disabled:opacity-50 cursor-pointer"
+                    className="px-3 py-2 rounded-lg border border-gray-200 dark:border-[#3a3a48] bg-white dark:bg-[#1e1e28] text-base sm:text-sm text-gray-700 dark:text-gray-300 focus:outline-none focus:ring-2 focus:ring-brand-500 disabled:opacity-50 cursor-pointer"
                   >
                     <option value="admin">Admin</option>
                     <option value="manager">Manager</option>

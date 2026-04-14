@@ -45,7 +45,7 @@ export function SearchBar({ initialQuery = "" }: SearchBarProps) {
         }}
         placeholder="Search courses…"
         aria-label="Search courses"
-        className="w-full sm:w-72 rounded-lg border border-gray-200 dark:border-[#3a3a48] bg-white dark:bg-[#1e1e28] text-sm text-gray-900 dark:text-gray-100 placeholder-gray-400 px-3.5 py-2 pl-9 focus:outline-none focus:ring-2 focus:ring-brand-500 transition-all"
+        className="w-full sm:w-72 rounded-lg border border-gray-200 dark:border-[#3a3a48] bg-white dark:bg-[#1e1e28] text-base sm:text-sm text-gray-900 dark:text-gray-100 placeholder-gray-400 px-3.5 py-2.5 pl-9 focus:outline-none focus:ring-2 focus:ring-brand-500 transition-all"
       />
       <svg
         className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400"
