@@ -17,7 +17,7 @@ describe("SearchBar", () => {
       back: vi.fn(),
       forward: vi.fn(),
       prefetch: vi.fn(),
-    } as any);
+    } as ReturnType<typeof useRouter>);
   });
 
   it("renders input with placeholder 'Search courses…'", () => {

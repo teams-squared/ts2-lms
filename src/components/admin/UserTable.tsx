@@ -4,7 +4,7 @@ import { useEffect, useState } from "react";
 import Link from "next/link";
 import { UserAvatar } from "@/components/ui/UserAvatar";
 import { Spinner } from "@/components/ui/Spinner";
-import { Skeleton, SkeletonTableRow } from "@/components/ui/Skeleton";
+import { SkeletonTableRow } from "@/components/ui/Skeleton";
 import type { Role } from "@/lib/types";
 
 interface User {

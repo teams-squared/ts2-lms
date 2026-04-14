@@ -5,7 +5,7 @@ import Link from "next/link";
 import { CourseForm } from "./CourseForm";
 import { PlusIcon } from "@/components/icons";
 import { Spinner } from "@/components/ui/Spinner";
-import { Skeleton, SkeletonTableRow } from "@/components/ui/Skeleton";
+import { SkeletonTableRow } from "@/components/ui/Skeleton";
 import type { CourseStatus } from "@/lib/types";
 
 interface Course {

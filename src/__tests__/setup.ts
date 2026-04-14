@@ -5,7 +5,7 @@ import "@testing-library/jest-dom";
 // iframes never trigger network activity in the test environment.
 Object.defineProperty(HTMLIFrameElement.prototype, "src", {
   configurable: true,
-  set(_url: string) {
+  set(_url) {
     /* no-op: prevent happy-dom from loading iframe content in tests */
   },
   get() {
