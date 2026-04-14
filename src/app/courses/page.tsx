@@ -7,7 +7,7 @@ import { prismaStatusToApp } from "@/lib/types";
 import { checkCourseEligibility } from "@/lib/course-eligibility";
 import { CourseCard } from "@/components/courses/CourseCard";
 import { SearchBar } from "@/components/courses/SearchBar";
-import { GraduationCapIcon } from "@/components/icons";
+import { GraduationCapIcon, BookOpenIcon, ChevronRightIcon } from "@/components/icons";
 import type { Prisma } from "@prisma/client";
 import type { Role } from "@/lib/types";
 
@@ -274,10 +274,16 @@ export default async function CourseCatalogPage({
           )}
 
           {allCourses.length === 0 ? (
-            <div className="text-center py-16 text-sm text-gray-500 dark:text-gray-400">
-              {searchQuery
-                ? `No courses found for "${searchQuery}".`
-                : "No courses available yet."}
+            <div className="text-center py-20">
+              <GraduationCapIcon className="w-12 h-12 text-gray-300 dark:text-gray-600 mx-auto mb-4" />
+              <p className="text-base font-medium text-gray-700 dark:text-gray-300 mb-2">
+                {searchQuery ? "No courses found" : "No courses available yet"}
+              </p>
+              <p className="text-sm text-gray-500 dark:text-gray-400 max-w-sm mx-auto">
+                {searchQuery
+                  ? `We couldn\u2019t find any courses matching \u201c${searchQuery}\u201d. Try a different search term.`
+                  : "New courses are being added regularly. Check back soon!"}
+              </p>
             </div>
           ) : (
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
@@ -306,15 +312,20 @@ export default async function CourseCatalogPage({
       {activeTab === "my" && (
         <>
           {myCourses.length === 0 ? (
-            <div className="text-center py-16">
-              <p className="text-sm text-gray-500 dark:text-gray-400 mb-4">
-                You are not enrolled in or assigned to any courses yet.
+            <div className="text-center py-20">
+              <BookOpenIcon className="w-12 h-12 text-gray-300 dark:text-gray-600 mx-auto mb-4" />
+              <p className="text-base font-medium text-gray-700 dark:text-gray-300 mb-2">
+                No courses yet
+              </p>
+              <p className="text-sm text-gray-500 dark:text-gray-400 mb-6">
+                You haven&apos;t enrolled in or been assigned any courses yet.
               </p>
               <Link
                 href="/courses"
-                className="text-sm text-brand-600 dark:text-brand-400 hover:underline"
+                className="inline-flex items-center gap-1 text-sm font-medium text-brand-600 dark:text-brand-400 hover:underline"
               >
-                Browse all courses →
+                Browse all courses
+                <ChevronRightIcon className="w-4 h-4" />
               </Link>
             </div>
           ) : (
