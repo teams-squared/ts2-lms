@@ -60,6 +60,12 @@ body {
 }
 .animate-fade-in { animation: fadeInUp .2s ease-out forwards; }
 
+@keyframes slideUp {
+  from { opacity: 0; transform: translateY(16px); }
+  to   { opacity: 1; transform: translateY(0);    }
+}
+.animate-slide-up { animation: slideUp .3s ease-out forwards; }
+
 /* ── Background gradients ──────────────────────────────────────────────────── */
 .bg-brand-gradient {
   background: radial-gradient(ellipse at 50% -20%, #ddd6fe 0%, #ede9fe 35%, #f3f0ff 65%, #f5f5f8 100%);

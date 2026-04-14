@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { prisma } from "@/lib/prisma";
-import { UsersIcon, GraduationCapIcon } from "@/components/icons";
+import { UsersIcon, GraduationCapIcon, BarChartIcon } from "@/components/icons";
 import UserTable from "@/components/admin/UserTable";
 
 export const dynamic = "force-dynamic";
@@ -45,7 +45,7 @@ export default async function AdminPage() {
       </div>
 
       {/* Admin sections */}
-      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-8">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
         <Link
           href="/admin/users"
           className="p-5 rounded-xl border border-brand-200 dark:border-brand-900/50 bg-brand-50/50 dark:bg-brand-950/20 shadow-card hover:shadow-elevated transition-shadow"
@@ -80,6 +80,18 @@ export default async function AdminPage() {
           </h2>
           <p className="text-xs text-gray-500 dark:text-gray-400">
             Assign courses to users
+          </p>
+        </Link>
+        <Link
+          href="/admin/analytics"
+          className="p-5 rounded-xl border border-brand-200 dark:border-brand-900/50 bg-brand-50/50 dark:bg-brand-950/20 shadow-card hover:shadow-elevated transition-shadow"
+        >
+          <BarChartIcon className="w-5 h-5 text-brand-600 dark:text-brand-400 mb-2" />
+          <h2 className="text-sm font-semibold text-gray-900 dark:text-gray-100">
+            Analytics
+          </h2>
+          <p className="text-xs text-gray-500 dark:text-gray-400">
+            Course activity and user progress
           </p>
         </Link>
       </div>

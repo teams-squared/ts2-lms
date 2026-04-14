@@ -30,6 +30,8 @@ model User {
   assignmentsReceived Assignment[]     @relation("AssignedTo")
   assignmentsMade     Assignment[]     @relation("AssignedBy")
   notifications       Notification[]
+  achievements        UserAchievement[]
+  stats               UserStats?
 }
 
 enum CourseStatus {
@@ -201,6 +203,42 @@ model Notification {
   read      Boolean   @default(false)
   courseId  String?
   createdAt DateTime  @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model Achievement {
+  id          String            @id @default(cuid())
+  key         String            @unique
+  title       String
+  description String
+  icon        String            @default("🏆")
+  xpReward    Int               @default(0)
+  category    String            @default("general")
+  threshold   Int               @default(1)
+  createdAt   DateTime          @default(now())
+  users       UserAchievement[]
+}
+
+model UserAchievement {
+  id            String      @id @default(cuid())
+  userId        String
+  achievementId String
+  unlockedAt    DateTime    @default(now())
+
+  user        User        @relation(fields: [userId], references: [id], onDelete: Cascade)
+  achievement Achievement @relation(fields: [achievementId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, achievementId])
+}
+
+model UserStats {
+  id               String   @id @default(cuid())
+  userId           String   @unique
+  xp               Int      @default(0)
+  streak           Int      @default(0)
+  lastActivityDate DateTime?
+  updatedAt        DateTime @updatedAt
 
   user User @relation(fields: [userId], references: [id], onDelete: Cascade)
 }

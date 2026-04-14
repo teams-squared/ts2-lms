@@ -9,15 +9,15 @@ const securityHeaders = [
     key: "Content-Security-Policy",
     value: [
       "default-src 'self'",
-      "script-src 'self' 'unsafe-inline' 'unsafe-eval'",
+      "script-src 'self' 'unsafe-inline' 'unsafe-eval' https://us-assets.i.posthog.com",
       "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com",
       "font-src 'self' https://fonts.gstatic.com",
       // Allow external HTTPS images (user-provided thumbnails)
       "img-src 'self' data: blob: https:",
-      // Allow YouTube/Vimeo video embeds and self-origin for SharePoint PDF proxy
-      "frame-src 'self' https://www.youtube.com https://www.youtube-nocookie.com https://player.vimeo.com",
-      // Allow self + MS Graph/login for future client-side calls
-      "connect-src 'self' https://graph.microsoft.com https://login.microsoftonline.com",
+      // Allow YouTube/Vimeo video embeds, SharePoint PDF proxy, and PostHog dashboard embeds
+      "frame-src 'self' https://www.youtube.com https://www.youtube-nocookie.com https://player.vimeo.com https://us.posthog.com https://eu.posthog.com",
+      // Allow self + MS Graph/login + PostHog ingestion
+      "connect-src 'self' https://graph.microsoft.com https://login.microsoftonline.com https://us.i.posthog.com https://us-assets.i.posthog.com https://us.posthog.com",
     ].join("; "),
   },
 ];
