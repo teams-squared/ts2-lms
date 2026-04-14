@@ -80,8 +80,8 @@ export default function NavBar() {
               </button>
               {userMenuOpen && (
                 <>
-                  <div className="fixed inset-0 z-40" onClick={() => setUserMenuOpen(false)} />
-                  <div className="absolute right-0 mt-1 z-50 w-56 rounded-xl border border-gray-200 dark:border-[#2e2e3a] bg-white dark:bg-[#1c1c24] shadow-elevated py-1">
+                  <div className="fixed inset-0 z-40" onClick={() => setUserMenuOpen(false)} aria-hidden="true" />
+                  <div role="menu" aria-label="User menu" className="absolute right-0 mt-1 z-50 w-56 rounded-xl border border-gray-200 dark:border-[#2e2e3a] bg-white dark:bg-[#1c1c24] shadow-elevated py-1">
                     <div className="px-4 py-2.5 border-b border-gray-100 dark:border-[#2e2e3a]">
                       <p className="text-sm font-medium text-gray-900 dark:text-gray-100 truncate">
                         {session.user?.name}
@@ -124,19 +124,19 @@ export default function NavBar() {
 
       {/* Mobile menu */}
       {mobileOpen && (
-        <div className="sm:hidden border-t border-gray-100 dark:border-[#2e2e3a] bg-white dark:bg-[#141418] px-4 py-3 space-y-1">
+        <nav className="sm:hidden border-t border-gray-100 dark:border-[#2e2e3a] bg-white dark:bg-[#141418] px-4 py-3 space-y-1" aria-label="Mobile navigation">
           {navLinks.map(({ href, label, icon: Icon }) => (
             <Link
               key={href}
               href={href}
               onClick={() => setMobileOpen(false)}
-              className="flex items-center gap-2 px-3 py-2 rounded-lg text-sm font-medium text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-[#1e1e28]"
+              className="flex items-center gap-2 px-3 py-3 rounded-lg text-sm font-medium text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-[#1e1e28]"
             >
               <Icon className="w-4 h-4" />
               {label}
             </Link>
           ))}
-        </div>
+        </nav>
       )}
     </nav>
   );

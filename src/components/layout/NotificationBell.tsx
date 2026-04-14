@@ -84,7 +84,7 @@ export function NotificationBell() {
 
       {open && (
         <>
-          <div className="fixed inset-0 z-40" onClick={() => setOpen(false)} />
+          <div className="fixed inset-0 z-40" onClick={() => setOpen(false)} aria-hidden="true" />
           <div className="absolute right-0 mt-1 z-50 w-80 rounded-xl border border-gray-200 dark:border-[#2e2e3a] bg-white dark:bg-[#1c1c24] shadow-elevated">
             <div className="px-4 py-3 border-b border-gray-100 dark:border-[#2e2e3a] flex items-center justify-between">
               <p className="text-sm font-semibold text-gray-900 dark:text-gray-100">
