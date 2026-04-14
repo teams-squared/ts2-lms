@@ -2,7 +2,8 @@ import { NextResponse } from "next/server";
 import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { prismaLessonTypeToApp, appLessonTypeToPrisma } from "@/lib/types";
-import type { LessonType } from "@/lib/types";
+import { canManageCourse } from "@/lib/courseAccess";
+import type { LessonType, Role } from "@/lib/types";
 
 type Params = {
   params: Promise<{ id: string; moduleId: string; lessonId: string }>;
@@ -48,7 +49,7 @@ export async function PATCH(request: Request, { params }: Params) {
   if (!course) {
     return NextResponse.json({ error: "Course not found" }, { status: 404 });
   }
-  if (session.user.role !== "admin" && course.createdById !== session.user.id) {
+  if (!(await canManageCourse(session.user.id, session.user.role as Role, courseId))) {
     return NextResponse.json({ error: "Forbidden" }, { status: 403 });
   }
 
@@ -109,7 +110,7 @@ export async function DELETE(_request: Request, { params }: Params) {
   if (!course) {
     return NextResponse.json({ error: "Course not found" }, { status: 404 });
   }
-  if (session.user.role !== "admin" && course.createdById !== session.user.id) {
+  if (!(await canManageCourse(session.user.id, session.user.role as Role, courseId))) {
     return NextResponse.json({ error: "Forbidden" }, { status: 403 });
   }
 

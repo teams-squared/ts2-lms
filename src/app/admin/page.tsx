@@ -6,11 +6,12 @@ import UserTable from "@/components/admin/UserTable";
 export const dynamic = "force-dynamic";
 
 export default async function AdminPage() {
-  const [totalUsers, adminCount, managerCount, employeeCount, totalCourses] =
+  const [totalUsers, adminCount, managerCount, instructorCount, employeeCount, totalCourses] =
     await Promise.all([
       prisma.user.count(),
       prisma.user.count({ where: { role: "ADMIN" } }),
       prisma.user.count({ where: { role: "MANAGER" } }),
+      prisma.user.count({ where: { role: "INSTRUCTOR" } }),
       prisma.user.count({ where: { role: "EMPLOYEE" } }),
       prisma.course.count(),
     ]);
@@ -19,6 +20,7 @@ export default async function AdminPage() {
     { value: totalUsers, label: "Total Users" },
     { value: adminCount, label: "Admins" },
     { value: managerCount, label: "Managers" },
+    { value: instructorCount, label: "Instructors" },
     { value: employeeCount, label: "Employees" },
     { value: totalCourses, label: "Courses" },
   ];
@@ -26,7 +28,7 @@ export default async function AdminPage() {
   return (
     <div>
       {/* Stats cards */}
-      <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 mb-8">
+      <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-4 mb-8">
         {stats.map(({ value, label }) => (
           <div
             key={label}
@@ -45,7 +47,7 @@ export default async function AdminPage() {
       {/* Admin sections */}
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-8">
         <Link
-          href="/admin"
+          href="/admin/users"
           className="p-5 rounded-xl border border-brand-200 dark:border-brand-900/50 bg-brand-50/50 dark:bg-brand-950/20 shadow-card hover:shadow-elevated transition-shadow"
         >
           <UsersIcon className="w-5 h-5 text-brand-600 dark:text-brand-400 mb-2" />
@@ -53,7 +55,7 @@ export default async function AdminPage() {
             User Management
           </h2>
           <p className="text-xs text-gray-500 dark:text-gray-400">
-            Manage users and roles
+            Manage users, roles and instructor assignments
           </p>
         </Link>
         <Link

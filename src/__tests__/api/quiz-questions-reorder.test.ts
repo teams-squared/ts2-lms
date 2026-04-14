@@ -114,6 +114,7 @@ describe("POST .../quiz/questions/reorder", () => {
 
   it("reorders successfully for manager", async () => {
     mockAuth.mockResolvedValue(mockSession({ role: "manager" }));
+    mockPrisma.course.findUnique.mockResolvedValue({ createdById: "test-user-id" });
     mockPrisma.lesson.findUnique.mockResolvedValue(mockLesson);
     mockPrisma.quizQuestion.findMany
       .mockResolvedValueOnce([{ id: "q1" }, { id: "q2" }])

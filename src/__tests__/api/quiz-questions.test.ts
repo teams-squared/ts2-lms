@@ -170,6 +170,7 @@ describe("POST .../quiz/questions", () => {
 
   it("creates question successfully for manager", async () => {
     mockAuth.mockResolvedValue(mockSession({ role: "manager" }));
+    mockPrisma.course.findUnique.mockResolvedValue({ createdById: "test-user-id" });
     mockPrisma.lesson.findUnique.mockResolvedValue(mockLesson);
     mockPrisma.quizQuestion.count.mockResolvedValue(2);
     mockPrisma.quizQuestion.create.mockResolvedValue({

@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import Link from "next/link";
 import { UserAvatar } from "@/components/ui/UserAvatar";
 import type { Role } from "@/lib/types";
 
@@ -97,8 +98,11 @@ export default function UserTable() {
               <th className="px-5 py-3 font-medium text-gray-500 dark:text-gray-400">
                 Role
               </th>
-              <th className="px-5 py-3 font-medium text-gray-500 dark:text-gray-400 text-right">
+              <th className="px-5 py-3 font-medium text-gray-500 dark:text-gray-400">
                 Joined
+              </th>
+              <th className="px-5 py-3 font-medium text-gray-500 dark:text-gray-400 text-right">
+                Actions
               </th>
             </tr>
           </thead>
@@ -133,11 +137,20 @@ export default function UserTable() {
                   >
                     <option value="admin">Admin</option>
                     <option value="manager">Manager</option>
+                    <option value="instructor">Instructor</option>
                     <option value="employee">Employee</option>
                   </select>
                 </td>
-                <td className="px-5 py-3 text-right text-xs text-gray-500 dark:text-gray-500">
+                <td className="px-5 py-3 text-xs text-gray-500 dark:text-gray-500">
                   {new Date(user.createdAt).toLocaleDateString()}
+                </td>
+                <td className="px-5 py-3 text-right">
+                  <Link
+                    href={`/admin/users/${user.id}`}
+                    className="text-xs text-indigo-600 dark:text-indigo-400 hover:underline"
+                  >
+                    Manage →
+                  </Link>
                 </td>
               </tr>
             ))}

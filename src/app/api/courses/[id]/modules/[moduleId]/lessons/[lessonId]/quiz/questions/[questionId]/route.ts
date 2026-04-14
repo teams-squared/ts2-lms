@@ -1,6 +1,8 @@
 import { NextResponse } from "next/server";
 import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
+import { canManageCourse } from "@/lib/courseAccess";
+import type { Role } from "@/lib/types";
 
 type Params = {
   params: Promise<{ id: string; moduleId: string; lessonId: string; questionId: string }>;
@@ -13,12 +15,11 @@ export async function PATCH(request: Request, { params }: Params) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
-  const isPrivileged = session.user.role === "admin" || session.user.role === "manager";
-  if (!isPrivileged) {
+  const { id: courseId, moduleId, lessonId, questionId } = await params;
+
+  if (!(await canManageCourse(session.user.id, session.user.role as Role, courseId))) {
     return NextResponse.json({ error: "Forbidden" }, { status: 403 });
   }
-
-  const { id: courseId, moduleId, lessonId, questionId } = await params;
 
   const lesson = await prisma.lesson.findUnique({
     where: { id: lessonId },
@@ -93,19 +94,18 @@ export async function PATCH(request: Request, { params }: Params) {
   return NextResponse.json(updated);
 }
 
-/** DELETE .../quiz/questions/[questionId] — remove a question (admin/manager only) */
+/** DELETE .../quiz/questions/[questionId] — remove a question (admin/manager/instructor only) */
 export async function DELETE(_request: Request, { params }: Params) {
   const session = await auth();
   if (!session?.user?.id) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
-  const isPrivileged = session.user.role === "admin" || session.user.role === "manager";
-  if (!isPrivileged) {
+  const { id: courseId, moduleId, lessonId, questionId } = await params;
+
+  if (!(await canManageCourse(session.user.id, session.user.role as Role, courseId))) {
     return NextResponse.json({ error: "Forbidden" }, { status: 403 });
   }
-
-  const { id: courseId, moduleId, lessonId, questionId } = await params;
 
   const lesson = await prisma.lesson.findUnique({
     where: { id: lessonId },

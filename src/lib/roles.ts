@@ -4,8 +4,9 @@ import type { Role } from "./types";
 
 const ROLE_LEVEL: Record<Role, number> = {
   employee: 1,
-  manager: 2,
-  admin: 3,
+  instructor: 2,
+  manager: 3,
+  admin: 4,
 };
 
 export function hasAccess(userRole: Role, requiredRole: Role): boolean {

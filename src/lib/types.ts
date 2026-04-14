@@ -1,17 +1,19 @@
 import { Role as PrismaRole, CourseStatus as PrismaCourseStatus, LessonType as PrismaLessonType } from "@prisma/client";
 
-export type Role = "admin" | "manager" | "employee";
+export type Role = "admin" | "manager" | "instructor" | "employee";
 export type CourseStatus = "draft" | "published" | "archived";
 
 const PRISMA_ROLE_MAP: Record<PrismaRole, Role> = {
   ADMIN: "admin",
   MANAGER: "manager",
+  INSTRUCTOR: "instructor",
   EMPLOYEE: "employee",
 };
 
 const APP_ROLE_MAP: Record<Role, PrismaRole> = {
   admin: "ADMIN",
   manager: "MANAGER",
+  instructor: "INSTRUCTOR",
   employee: "EMPLOYEE",
 };
 

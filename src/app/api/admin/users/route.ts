@@ -34,7 +34,7 @@ export async function PATCH(request: Request) {
     role: Role;
   };
 
-  if (!userId || !["admin", "manager", "employee"].includes(role)) {
+  if (!userId || !["admin", "manager", "instructor", "employee"].includes(role)) {
     return NextResponse.json({ error: "Invalid input" }, { status: 400 });
   }
 

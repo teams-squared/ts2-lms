@@ -2,6 +2,8 @@ import { NextResponse } from "next/server";
 import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { prismaLessonTypeToApp } from "@/lib/types";
+import { canManageCourse } from "@/lib/courseAccess";
+import type { Role } from "@/lib/types";
 
 type Params = { params: Promise<{ id: string }> };
 
@@ -56,10 +58,8 @@ export async function POST(request: Request, { params }: Params) {
     return NextResponse.json({ error: "Course not found" }, { status: 404 });
   }
 
-  if (
-    session.user.role !== "admin" &&
-    course.createdById !== session.user.id
-  ) {
+  const allowed = await canManageCourse(session.user.id, session.user.role as Role, courseId);
+  if (!allowed) {
     return NextResponse.json({ error: "Forbidden" }, { status: 403 });
   }
 
