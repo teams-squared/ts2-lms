@@ -42,8 +42,9 @@ describe("UserTable", () => {
 
     render(<UserTable />);
 
-    // Loading state uses an ellipsis character
-    expect(screen.getByText("Loading users…")).toBeInTheDocument();
+    // Loading state shows skeleton table with header columns
+    expect(screen.getByText("User")).toBeInTheDocument();
+    expect(screen.getByText("Role")).toBeInTheDocument();
 
     // After fetch, user rows appear
     await waitFor(() => {

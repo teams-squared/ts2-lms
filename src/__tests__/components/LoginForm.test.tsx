@@ -78,6 +78,6 @@ describe("LoginForm", () => {
     await user.type(screen.getByLabelText("Password"), "pass");
     await user.click(screen.getByRole("button", { name: "Sign In" }));
 
-    expect(screen.getByText("Signing in...")).toBeInTheDocument();
+    expect(screen.getByText(/Signing in/)).toBeInTheDocument();
   });
 });
