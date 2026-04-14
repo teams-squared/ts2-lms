@@ -187,7 +187,7 @@ export default async function LessonPage({
       />
 
       <main className="flex-1 overflow-y-auto">
-        <div className="max-w-3xl mx-auto px-6 py-8">
+        <div className="max-w-3xl mx-auto px-4 sm:px-6 py-8">
           {/* Course complete banner */}
           {isCourseComplete && (
             <div className="mb-6 flex items-center gap-3 rounded-xl border border-emerald-200 dark:border-emerald-800/40 bg-emerald-50 dark:bg-emerald-900/20 px-5 py-4">
