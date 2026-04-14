@@ -122,7 +122,7 @@ export function AssignmentManager({
             <select
               value={selectedCourse}
               onChange={(e) => setSelectedCourse(e.target.value)}
-              className="rounded-lg border border-gray-300 dark:border-[#3a3a48] bg-white dark:bg-[#18181f] text-sm text-gray-700 dark:text-gray-300 px-3 py-2 focus:outline-none focus:ring-2 focus:ring-indigo-500"
+              className="rounded-lg border border-gray-300 dark:border-[#3a3a48] bg-white dark:bg-[#18181f] text-sm text-gray-700 dark:text-gray-300 px-3 py-2 focus:outline-none focus:ring-2 focus:ring-brand-500"
               aria-label="Select course to assign"
             >
               <option value="">Select course…</option>
@@ -140,7 +140,7 @@ export function AssignmentManager({
             <select
               value={selectedUser}
               onChange={(e) => setSelectedUser(e.target.value)}
-              className="rounded-lg border border-gray-300 dark:border-[#3a3a48] bg-white dark:bg-[#18181f] text-sm text-gray-700 dark:text-gray-300 px-3 py-2 focus:outline-none focus:ring-2 focus:ring-indigo-500"
+              className="rounded-lg border border-gray-300 dark:border-[#3a3a48] bg-white dark:bg-[#18181f] text-sm text-gray-700 dark:text-gray-300 px-3 py-2 focus:outline-none focus:ring-2 focus:ring-brand-500"
               aria-label="Select user to assign"
             >
               <option value="">Select user…</option>
@@ -154,7 +154,7 @@ export function AssignmentManager({
           <button
             onClick={() => void handleAssign()}
             disabled={submitting}
-            className="rounded-lg bg-indigo-600 hover:bg-indigo-700 disabled:opacity-50 text-white text-sm font-medium px-4 py-2 transition-colors"
+            className="rounded-lg bg-brand-600 hover:bg-brand-700 disabled:opacity-50 text-white text-sm font-medium px-4 py-2 transition-colors"
           >
             {submitting ? "Assigning…" : "Assign"}
           </button>

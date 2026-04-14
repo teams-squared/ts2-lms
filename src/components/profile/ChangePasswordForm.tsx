@@ -71,7 +71,7 @@ export function ChangePasswordForm({ isSsoOnly }: ChangePasswordFormProps) {
       <div className="flex items-center gap-3 mt-1">
         <button
           onClick={() => setOpen(true)}
-          className="text-xs text-indigo-600 dark:text-indigo-400 hover:underline"
+          className="text-xs text-brand-600 dark:text-brand-400 hover:underline"
           data-testid="change-password-trigger"
         >
           Change password
@@ -101,7 +101,7 @@ export function ChangePasswordForm({ isSsoOnly }: ChangePasswordFormProps) {
           onChange={(e) => setCurrentPassword(e.target.value)}
           required
           autoComplete="current-password"
-          className="w-full rounded-lg border border-gray-300 dark:border-[#3a3a48] bg-white dark:bg-[#1e1e28] text-sm text-gray-900 dark:text-gray-100 px-3 py-1.5 focus:outline-none focus:ring-2 focus:ring-indigo-500"
+          className="w-full rounded-lg border border-gray-300 dark:border-[#3a3a48] bg-white dark:bg-[#1e1e28] text-sm text-gray-900 dark:text-gray-100 px-3 py-1.5 focus:outline-none focus:ring-2 focus:ring-brand-500"
           data-testid="current-password-input"
         />
       </div>
@@ -116,7 +116,7 @@ export function ChangePasswordForm({ isSsoOnly }: ChangePasswordFormProps) {
           required
           minLength={8}
           autoComplete="new-password"
-          className="w-full rounded-lg border border-gray-300 dark:border-[#3a3a48] bg-white dark:bg-[#1e1e28] text-sm text-gray-900 dark:text-gray-100 px-3 py-1.5 focus:outline-none focus:ring-2 focus:ring-indigo-500"
+          className="w-full rounded-lg border border-gray-300 dark:border-[#3a3a48] bg-white dark:bg-[#1e1e28] text-sm text-gray-900 dark:text-gray-100 px-3 py-1.5 focus:outline-none focus:ring-2 focus:ring-brand-500"
           data-testid="new-password-input"
         />
       </div>
@@ -130,7 +130,7 @@ export function ChangePasswordForm({ isSsoOnly }: ChangePasswordFormProps) {
           onChange={(e) => setConfirmPassword(e.target.value)}
           required
           autoComplete="new-password"
-          className="w-full rounded-lg border border-gray-300 dark:border-[#3a3a48] bg-white dark:bg-[#1e1e28] text-sm text-gray-900 dark:text-gray-100 px-3 py-1.5 focus:outline-none focus:ring-2 focus:ring-indigo-500"
+          className="w-full rounded-lg border border-gray-300 dark:border-[#3a3a48] bg-white dark:bg-[#1e1e28] text-sm text-gray-900 dark:text-gray-100 px-3 py-1.5 focus:outline-none focus:ring-2 focus:ring-brand-500"
           data-testid="confirm-password-input"
         />
       </div>
@@ -143,7 +143,7 @@ export function ChangePasswordForm({ isSsoOnly }: ChangePasswordFormProps) {
         <button
           type="submit"
           disabled={saving}
-          className="rounded-lg bg-indigo-600 hover:bg-indigo-700 disabled:opacity-50 text-white text-xs font-medium px-3 py-1.5"
+          className="rounded-lg bg-brand-600 hover:bg-brand-700 disabled:opacity-50 text-white text-xs font-medium px-3 py-1.5"
           data-testid="save-password-button"
         >
           {saving ? "Saving…" : "Save password"}

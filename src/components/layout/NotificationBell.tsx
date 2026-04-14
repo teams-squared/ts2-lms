@@ -106,7 +106,7 @@ export function NotificationBell() {
                       key={n.id}
                       className={`px-4 py-3 text-sm ${
                         !n.read
-                          ? "bg-indigo-50 dark:bg-indigo-900/10"
+                          ? "bg-brand-50 dark:bg-brand-950/10"
                           : ""
                       }`}
                     >
@@ -116,7 +116,7 @@ export function NotificationBell() {
                       {n.courseId && (
                         <a
                           href={`/courses/${n.courseId}`}
-                          className="text-xs text-indigo-600 dark:text-indigo-400 hover:underline mt-0.5 block"
+                          className="text-xs text-brand-600 dark:text-brand-400 hover:underline mt-0.5 block"
                           onClick={() => setOpen(false)}
                         >
                           View course →

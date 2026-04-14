@@ -114,7 +114,7 @@ export default async function CourseEditPage({
       <div className="flex items-center gap-3 mb-6">
         <Link
           href={backHref}
-          className="text-sm text-indigo-600 dark:text-indigo-400 hover:underline"
+          className="text-sm text-brand-600 dark:text-brand-400 hover:underline"
         >
           ← Back
         </Link>

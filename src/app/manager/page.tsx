@@ -58,7 +58,7 @@ export default async function ManagerPage() {
             key={label}
             className="p-5 rounded-xl border border-gray-200/80 dark:border-[#2e2e3a] bg-white dark:bg-[#1c1c24] shadow-sm"
           >
-            <div className="text-2xl font-bold text-indigo-600 dark:text-indigo-400 tabular-nums mb-1">
+            <div className="text-2xl font-bold text-brand-600 dark:text-brand-400 tabular-nums mb-1">
               {value}
             </div>
             <div className="text-xs text-gray-500 dark:text-gray-400 font-medium">
@@ -74,7 +74,7 @@ export default async function ManagerPage() {
           <>
             <Link
               href="/admin/courses"
-              className="inline-flex items-center gap-2 rounded-lg bg-indigo-600 hover:bg-indigo-700 text-white text-sm font-medium px-4 py-2.5 transition-colors"
+              className="inline-flex items-center gap-2 rounded-lg bg-brand-600 hover:bg-brand-700 text-white text-sm font-medium px-4 py-2.5 transition-colors"
             >
               + Create new course
             </Link>
@@ -153,7 +153,7 @@ export default async function ManagerPage() {
                       <div className="flex items-center justify-end gap-3">
                         <Link
                           href={`/manager/courses/${course.id}/edit`}
-                          className="text-xs text-indigo-600 dark:text-indigo-400 hover:underline font-medium"
+                          className="text-xs text-brand-600 dark:text-brand-400 hover:underline font-medium"
                         >
                           Edit
                         </Link>

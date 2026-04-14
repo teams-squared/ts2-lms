@@ -287,13 +287,13 @@ export function QuizBuilder({
                 value={passingScoreDraft}
                 onChange={(e) => setPassingScoreDraft(Number(e.target.value))}
                 aria-label="Passing score"
-                className="w-16 rounded border border-gray-300 dark:border-[#3a3a48] bg-white dark:bg-[#18181f] text-sm text-gray-900 dark:text-gray-100 px-2 py-0.5 focus:outline-none focus:ring-1 focus:ring-indigo-500"
+                className="w-16 rounded border border-gray-300 dark:border-[#3a3a48] bg-white dark:bg-[#18181f] text-sm text-gray-900 dark:text-gray-100 px-2 py-0.5 focus:outline-none focus:ring-1 focus:ring-brand-500"
               />
               <span className="text-xs text-gray-500">%</span>
               <button
                 onClick={handleSavePassingScore}
                 disabled={savingPassingScore}
-                className="text-xs text-indigo-600 dark:text-indigo-400 hover:underline disabled:opacity-50"
+                className="text-xs text-brand-600 dark:text-brand-400 hover:underline disabled:opacity-50"
               >
                 {savingPassingScore ? "Saving…" : "Save"}
               </button>
@@ -314,7 +314,7 @@ export function QuizBuilder({
                 setEditingPassingScore(true);
               }}
               aria-label="Edit passing score"
-              className="text-xs text-gray-500 dark:text-gray-400 mt-0.5 hover:text-indigo-600 dark:hover:text-indigo-400 transition-colors"
+              className="text-xs text-gray-500 dark:text-gray-400 mt-0.5 hover:text-brand-600 dark:hover:text-brand-400 transition-colors"
             >
               Passing score: {currentPassingScore}% ✎
             </button>
@@ -323,7 +323,7 @@ export function QuizBuilder({
         {!showForm && (
           <button
             onClick={() => setShowForm(true)}
-            className="rounded-lg bg-indigo-600 hover:bg-indigo-700 text-white text-sm font-medium px-3 py-1.5 transition-colors"
+            className="rounded-lg bg-brand-600 hover:bg-brand-700 text-white text-sm font-medium px-3 py-1.5 transition-colors"
           >
             Add question
           </button>
@@ -351,7 +351,7 @@ export function QuizBuilder({
                   value={editQuestionText}
                   onChange={(e) => setEditQuestionText(e.target.value)}
                   aria-label="Edit question text"
-                  className="w-full rounded-lg border border-gray-300 dark:border-[#3a3a48] bg-white dark:bg-[#18181f] text-sm text-gray-900 dark:text-gray-100 px-3 py-2 focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                  className="w-full rounded-lg border border-gray-300 dark:border-[#3a3a48] bg-white dark:bg-[#18181f] text-sm text-gray-900 dark:text-gray-100 px-3 py-2 focus:outline-none focus:ring-2 focus:ring-brand-500"
                 />
                 <div className="space-y-2">
                   {editOptions.map((opt, oidx) => (
@@ -362,14 +362,14 @@ export function QuizBuilder({
                         checked={opt.isCorrect}
                         onChange={() => handleEditCorrect(oidx)}
                         title={`Mark option ${oidx + 1} as correct`}
-                        className="text-indigo-600 focus:ring-indigo-500 shrink-0"
+                        className="text-brand-600 focus:ring-brand-500 shrink-0"
                       />
                       <input
                         type="text"
                         value={opt.text}
                         onChange={(e) => handleEditOptionText(oidx, e.target.value)}
                         aria-label={`Option ${oidx + 1} text`}
-                        className="flex-1 rounded-lg border border-gray-300 dark:border-[#3a3a48] bg-white dark:bg-[#18181f] text-sm text-gray-900 dark:text-gray-100 px-3 py-1.5 focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                        className="flex-1 rounded-lg border border-gray-300 dark:border-[#3a3a48] bg-white dark:bg-[#18181f] text-sm text-gray-900 dark:text-gray-100 px-3 py-1.5 focus:outline-none focus:ring-2 focus:ring-brand-500"
                       />
                     </div>
                   ))}
@@ -381,7 +381,7 @@ export function QuizBuilder({
                   <button
                     onClick={() => handleSaveEdit(question.id)}
                     disabled={savingEditId === question.id}
-                    className="rounded-lg bg-indigo-600 hover:bg-indigo-700 disabled:opacity-50 text-white text-xs font-medium px-3 py-1.5 transition-colors"
+                    className="rounded-lg bg-brand-600 hover:bg-brand-700 disabled:opacity-50 text-white text-xs font-medium px-3 py-1.5 transition-colors"
                   >
                     {savingEditId === question.id ? "Saving…" : "Save"}
                   </button>
@@ -421,7 +421,7 @@ export function QuizBuilder({
                     <button
                       onClick={() => startEdit(question)}
                       aria-label={`Edit question ${idx + 1}`}
-                      className="text-xs text-indigo-600 dark:text-indigo-400 hover:underline px-1 transition-colors"
+                      className="text-xs text-brand-600 dark:text-brand-400 hover:underline px-1 transition-colors"
                     >
                       Edit
                     </button>
@@ -462,7 +462,7 @@ export function QuizBuilder({
       {showForm && (
         <form
           onSubmit={handleSubmit}
-          className="rounded-xl border border-indigo-200 dark:border-indigo-800/40 bg-indigo-50/30 dark:bg-indigo-900/10 p-5 space-y-4"
+          className="rounded-xl border border-brand-200 dark:border-brand-800/40 bg-brand-50/30 dark:bg-brand-950/10 p-5 space-y-4"
         >
           <div>
             <label className="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">
@@ -473,7 +473,7 @@ export function QuizBuilder({
               value={questionText}
               onChange={(e) => setQuestionText(e.target.value)}
               placeholder="Enter your question…"
-              className="w-full rounded-lg border border-gray-300 dark:border-[#3a3a48] bg-white dark:bg-[#18181f] text-sm text-gray-900 dark:text-gray-100 px-3 py-2 focus:outline-none focus:ring-2 focus:ring-indigo-500"
+              className="w-full rounded-lg border border-gray-300 dark:border-[#3a3a48] bg-white dark:bg-[#18181f] text-sm text-gray-900 dark:text-gray-100 px-3 py-2 focus:outline-none focus:ring-2 focus:ring-brand-500"
             />
           </div>
 
@@ -490,14 +490,14 @@ export function QuizBuilder({
                     checked={opt.isCorrect}
                     onChange={() => handleCorrectChange(idx)}
                     title={`Mark option ${idx + 1} as correct`}
-                    className="text-indigo-600 focus:ring-indigo-500 shrink-0"
+                    className="text-brand-600 focus:ring-brand-500 shrink-0"
                   />
                   <input
                     type="text"
                     value={opt.text}
                     onChange={(e) => handleOptionText(idx, e.target.value)}
                     placeholder={`Option ${idx + 1}`}
-                    className="flex-1 rounded-lg border border-gray-300 dark:border-[#3a3a48] bg-white dark:bg-[#18181f] text-sm text-gray-900 dark:text-gray-100 px-3 py-1.5 focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                    className="flex-1 rounded-lg border border-gray-300 dark:border-[#3a3a48] bg-white dark:bg-[#18181f] text-sm text-gray-900 dark:text-gray-100 px-3 py-1.5 focus:outline-none focus:ring-2 focus:ring-brand-500"
                   />
                   {options.length > 2 && (
                     <button
@@ -516,7 +516,7 @@ export function QuizBuilder({
               <button
                 type="button"
                 onClick={handleAddOption}
-                className="mt-2 text-xs text-indigo-600 dark:text-indigo-400 hover:underline"
+                className="mt-2 text-xs text-brand-600 dark:text-brand-400 hover:underline"
               >
                 + Add option
               </button>
@@ -531,7 +531,7 @@ export function QuizBuilder({
             <button
               type="submit"
               disabled={submitting}
-              className="rounded-lg bg-indigo-600 hover:bg-indigo-700 disabled:opacity-50 text-white text-sm font-medium px-4 py-2 transition-colors"
+              className="rounded-lg bg-brand-600 hover:bg-brand-700 disabled:opacity-50 text-white text-sm font-medium px-4 py-2 transition-colors"
             >
               {submitting ? "Adding…" : "Add question"}
             </button>

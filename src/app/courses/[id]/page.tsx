@@ -130,7 +130,7 @@ export default async function CourseDetailPage({
                         <li key={prereq.id}>
                           <Link
                             href={`/courses/${prereq.id}`}
-                            className="text-xs text-indigo-600 dark:text-indigo-400 hover:underline"
+                            className="text-xs text-brand-600 dark:text-brand-400 hover:underline"
                           >
                             {prereq.title}
                           </Link>
@@ -162,7 +162,7 @@ export default async function CourseDetailPage({
             </div>
             <div className="h-2 bg-gray-100 dark:bg-[#2e2e3a] rounded-full overflow-hidden">
               <div
-                className="h-full bg-indigo-500 rounded-full transition-all duration-300"
+                className="h-full bg-brand-500 rounded-full transition-all duration-300"
                 style={{ width: `${percentComplete}%` }}
               />
             </div>

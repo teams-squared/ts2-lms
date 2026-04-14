@@ -118,7 +118,7 @@ export default async function ManagerCourseEditPage({
       <div className="flex items-center gap-3 mb-6">
         <Link
           href="/manager"
-          className="text-sm text-indigo-600 dark:text-indigo-400 hover:underline"
+          className="text-sm text-brand-600 dark:text-brand-400 hover:underline"
         >
           ← Back to dashboard
         </Link>

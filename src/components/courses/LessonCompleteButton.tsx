@@ -60,7 +60,7 @@ export function LessonCompleteButton({
       <button
         onClick={handleMarkComplete}
         disabled={isLoading}
-        className="inline-flex items-center gap-2 rounded-lg bg-indigo-600 hover:bg-indigo-700 disabled:opacity-50 disabled:cursor-not-allowed text-white text-sm font-medium px-4 py-2 transition-colors"
+        className="inline-flex items-center gap-2 rounded-lg bg-brand-600 hover:bg-brand-700 disabled:opacity-50 disabled:cursor-not-allowed text-white text-sm font-medium px-4 py-2 transition-colors"
         data-testid="mark-complete-button"
       >
         {isLoading ? "Saving…" : "Mark complete"}

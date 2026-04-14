@@ -147,7 +147,7 @@ export default function UserTable() {
                 <td className="px-5 py-3 text-right">
                   <Link
                     href={`/admin/users/${user.id}`}
-                    className="text-xs text-indigo-600 dark:text-indigo-400 hover:underline"
+                    className="text-xs text-brand-600 dark:text-brand-400 hover:underline"
                   >
                     Manage →
                   </Link>

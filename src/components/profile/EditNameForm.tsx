@@ -46,7 +46,7 @@ export function EditNameForm({ currentName }: EditNameFormProps) {
     return (
       <button
         onClick={() => setEditing(true)}
-        className="text-xs text-indigo-600 dark:text-indigo-400 hover:underline"
+        className="text-xs text-brand-600 dark:text-brand-400 hover:underline"
       >
         Edit name
       </button>
@@ -60,12 +60,12 @@ export function EditNameForm({ currentName }: EditNameFormProps) {
         value={name}
         onChange={(e) => setName(e.target.value)}
         placeholder="Your name"
-        className="rounded-lg border border-gray-300 dark:border-[#3a3a48] bg-white dark:bg-[#1e1e28] text-sm text-gray-900 dark:text-gray-100 px-3 py-1.5 focus:outline-none focus:ring-2 focus:ring-indigo-500"
+        className="rounded-lg border border-gray-300 dark:border-[#3a3a48] bg-white dark:bg-[#1e1e28] text-sm text-gray-900 dark:text-gray-100 px-3 py-1.5 focus:outline-none focus:ring-2 focus:ring-brand-500"
       />
       <button
         type="submit"
         disabled={saving}
-        className="rounded-lg bg-indigo-600 hover:bg-indigo-700 disabled:opacity-50 text-white text-xs font-medium px-3 py-1.5"
+        className="rounded-lg bg-brand-600 hover:bg-brand-700 disabled:opacity-50 text-white text-xs font-medium px-3 py-1.5"
       >
         {saving ? "Saving…" : "Save"}
       </button>

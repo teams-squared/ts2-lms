@@ -204,7 +204,7 @@ export function UserDetailManager({
               setRoleSuccess(false);
             }}
             aria-label="User role"
-            className="px-3 py-2 rounded-lg border border-gray-200 dark:border-[#3a3a48] bg-white dark:bg-[#1e1e28] text-sm text-gray-700 dark:text-gray-300 focus:outline-none focus:ring-2 focus:ring-indigo-500"
+            className="px-3 py-2 rounded-lg border border-gray-200 dark:border-[#3a3a48] bg-white dark:bg-[#1e1e28] text-sm text-gray-700 dark:text-gray-300 focus:outline-none focus:ring-2 focus:ring-brand-500"
           >
             {(["admin", "manager", "instructor", "employee"] as Role[]).map((r) => (
               <option key={r} value={r}>{ROLE_LABELS[r]}</option>
@@ -213,7 +213,7 @@ export function UserDetailManager({
           <button
             onClick={handleSaveRole}
             disabled={savingRole || role === initialRole}
-            className="rounded-lg bg-indigo-600 hover:bg-indigo-700 disabled:opacity-50 text-white text-sm font-medium px-4 py-2 transition-colors"
+            className="rounded-lg bg-brand-600 hover:bg-brand-700 disabled:opacity-50 text-white text-sm font-medium px-4 py-2 transition-colors"
           >
             {savingRole ? "Saving…" : "Save role"}
           </button>
@@ -244,7 +244,7 @@ export function UserDetailManager({
               value={selectedCourseId}
               onChange={(e) => setSelectedCourseId(e.target.value)}
               aria-label="Select course to assign"
-              className="flex-1 px-3 py-2 rounded-lg border border-gray-200 dark:border-[#3a3a48] bg-white dark:bg-[#1e1e28] text-sm text-gray-700 dark:text-gray-300 focus:outline-none focus:ring-2 focus:ring-indigo-500"
+              className="flex-1 px-3 py-2 rounded-lg border border-gray-200 dark:border-[#3a3a48] bg-white dark:bg-[#1e1e28] text-sm text-gray-700 dark:text-gray-300 focus:outline-none focus:ring-2 focus:ring-brand-500"
             >
               <option value="">Select a course…</option>
               {availableCourses.map((c) => (
@@ -257,7 +257,7 @@ export function UserDetailManager({
               onClick={handleAssignCourse}
               disabled={!selectedCourseId || assigning}
               aria-label="Assign course"
-              className="rounded-lg bg-indigo-600 hover:bg-indigo-700 disabled:opacity-50 text-white text-sm font-medium px-4 py-2 transition-colors"
+              className="rounded-lg bg-brand-600 hover:bg-brand-700 disabled:opacity-50 text-white text-sm font-medium px-4 py-2 transition-colors"
             >
               {assigning ? "Assigning…" : "Assign"}
             </button>
@@ -311,7 +311,7 @@ export function UserDetailManager({
             value={selectedClearance}
             onChange={(e) => setSelectedClearance(e.target.value)}
             aria-label="Select clearance to grant"
-            className="flex-1 px-3 py-2 rounded-lg border border-gray-200 dark:border-[#3a3a48] bg-white dark:bg-[#1e1e28] text-sm text-gray-700 dark:text-gray-300 focus:outline-none focus:ring-2 focus:ring-indigo-500"
+            className="flex-1 px-3 py-2 rounded-lg border border-gray-200 dark:border-[#3a3a48] bg-white dark:bg-[#1e1e28] text-sm text-gray-700 dark:text-gray-300 focus:outline-none focus:ring-2 focus:ring-brand-500"
           >
             <option value="">Select a clearance…</option>
             {availClearances.map((c) => (
@@ -324,7 +324,7 @@ export function UserDetailManager({
             onClick={handleGrantClearance}
             disabled={!selectedClearance || grantingClearance}
             aria-label="Grant clearance"
-            className="rounded-lg bg-indigo-600 hover:bg-indigo-700 disabled:opacity-50 text-white text-sm font-medium px-4 py-2 transition-colors"
+            className="rounded-lg bg-brand-600 hover:bg-brand-700 disabled:opacity-50 text-white text-sm font-medium px-4 py-2 transition-colors"
           >
             {grantingClearance ? "Granting…" : "Grant"}
           </button>
@@ -343,14 +343,14 @@ export function UserDetailManager({
             {clearances.map((clearance) => (
               <span
                 key={clearance}
-                className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-medium bg-indigo-50 dark:bg-indigo-900/20 text-indigo-700 dark:text-indigo-300 border border-indigo-200 dark:border-indigo-800/40"
+                className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-medium bg-brand-50 dark:bg-brand-950/20 text-brand-700 dark:text-brand-300 border border-brand-200 dark:border-brand-800/40"
               >
                 {clearance}
                 <button
                   onClick={() => handleRevokeClearance(clearance)}
                   disabled={revokingClearance === clearance}
                   aria-label={`Revoke ${clearance} clearance`}
-                  className="ml-0.5 text-indigo-400 hover:text-red-500 disabled:opacity-50 transition-colors"
+                  className="ml-0.5 text-brand-400 hover:text-red-500 disabled:opacity-50 transition-colors"
                 >
                   {revokingClearance === clearance ? "…" : "×"}
                 </button>

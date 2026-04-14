@@ -184,7 +184,7 @@ export default async function CourseCatalogPage({
           href="/courses?tab=my"
           className={`px-4 py-2 text-sm font-medium border-b-2 transition-colors ${
             activeTab === "my"
-              ? "border-indigo-600 text-indigo-600 dark:text-indigo-400 dark:border-indigo-400"
+              ? "border-brand-600 text-brand-600 dark:text-brand-400 dark:border-brand-400"
               : "border-transparent text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200"
           }`}
         >
@@ -194,7 +194,7 @@ export default async function CourseCatalogPage({
           href="/courses"
           className={`px-4 py-2 text-sm font-medium border-b-2 transition-colors ${
             activeTab === "all"
-              ? "border-indigo-600 text-indigo-600 dark:text-indigo-400 dark:border-indigo-400"
+              ? "border-brand-600 text-brand-600 dark:text-brand-400 dark:border-brand-400"
               : "border-transparent text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200"
           }`}
         >
@@ -222,8 +222,8 @@ export default async function CourseCatalogPage({
                   href={href}
                   className={`text-xs px-2.5 py-1 rounded-full border transition-colors capitalize ${
                     isActive
-                      ? "border-indigo-500 bg-indigo-50 dark:bg-indigo-900/20 text-indigo-700 dark:text-indigo-300"
-                      : "border-gray-200 dark:border-[#3a3a48] text-gray-500 dark:text-gray-400 hover:border-indigo-400"
+                      ? "border-brand-500 bg-brand-50 dark:bg-brand-950/20 text-brand-700 dark:text-brand-300"
+                      : "border-gray-200 dark:border-[#3a3a48] text-gray-500 dark:text-gray-400 hover:border-brand-400"
                   }`}
                 >
                   {cat}
@@ -252,8 +252,8 @@ export default async function CourseCatalogPage({
                       href={href}
                       className={`text-xs px-2.5 py-1 rounded-full border transition-colors capitalize ${
                         isActive
-                          ? "border-indigo-500 bg-indigo-50 dark:bg-indigo-900/20 text-indigo-700 dark:text-indigo-300"
-                          : "border-gray-200 dark:border-[#3a3a48] text-gray-500 dark:text-gray-400 hover:border-indigo-400"
+                          ? "border-brand-500 bg-brand-50 dark:bg-brand-950/20 text-brand-700 dark:text-brand-300"
+                          : "border-gray-200 dark:border-[#3a3a48] text-gray-500 dark:text-gray-400 hover:border-brand-400"
                       }`}
                     >
                       {s}
@@ -309,7 +309,7 @@ export default async function CourseCatalogPage({
               </p>
               <Link
                 href="/courses"
-                className="text-sm text-indigo-600 dark:text-indigo-400 hover:underline"
+                className="text-sm text-brand-600 dark:text-brand-400 hover:underline"
               >
                 Browse all courses →
               </Link>

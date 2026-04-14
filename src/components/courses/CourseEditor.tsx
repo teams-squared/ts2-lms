@@ -320,7 +320,7 @@ export function CourseEditor({
               type="text"
               value={title}
               onChange={(e) => setTitle(e.target.value)}
-              className="w-full rounded-lg border border-gray-300 dark:border-[#3a3a48] bg-white dark:bg-[#18181f] text-sm text-gray-900 dark:text-gray-100 px-3 py-2 focus:outline-none focus:ring-2 focus:ring-indigo-500"
+              className="w-full rounded-lg border border-gray-300 dark:border-[#3a3a48] bg-white dark:bg-[#18181f] text-sm text-gray-900 dark:text-gray-100 px-3 py-2 focus:outline-none focus:ring-2 focus:ring-brand-500"
             />
           </div>
           <div>
@@ -331,7 +331,7 @@ export function CourseEditor({
               value={description}
               onChange={(e) => setDescription(e.target.value)}
               rows={3}
-              className="w-full rounded-lg border border-gray-300 dark:border-[#3a3a48] bg-white dark:bg-[#18181f] text-sm text-gray-900 dark:text-gray-100 px-3 py-2 focus:outline-none focus:ring-2 focus:ring-indigo-500 resize-none"
+              className="w-full rounded-lg border border-gray-300 dark:border-[#3a3a48] bg-white dark:bg-[#18181f] text-sm text-gray-900 dark:text-gray-100 px-3 py-2 focus:outline-none focus:ring-2 focus:ring-brand-500 resize-none"
             />
           </div>
           <div>
@@ -341,7 +341,7 @@ export function CourseEditor({
             <select
               value={status}
               onChange={(e) => setStatus(e.target.value as CourseStatus)}
-              className="rounded-lg border border-gray-300 dark:border-[#3a3a48] bg-white dark:bg-[#18181f] text-sm text-gray-700 dark:text-gray-300 px-3 py-2 focus:outline-none focus:ring-2 focus:ring-indigo-500"
+              className="rounded-lg border border-gray-300 dark:border-[#3a3a48] bg-white dark:bg-[#18181f] text-sm text-gray-700 dark:text-gray-300 px-3 py-2 focus:outline-none focus:ring-2 focus:ring-brand-500"
             >
               <option value="draft">Draft</option>
               <option value="published">Published</option>
@@ -354,7 +354,7 @@ export function CourseEditor({
           <button
             onClick={handleSaveCourse}
             disabled={courseSaving}
-            className="rounded-lg bg-indigo-600 hover:bg-indigo-700 disabled:opacity-50 text-white text-sm font-medium px-4 py-2 transition-colors"
+            className="rounded-lg bg-brand-600 hover:bg-brand-700 disabled:opacity-50 text-white text-sm font-medium px-4 py-2 transition-colors"
           >
             {courseSaving ? "Saving…" : "Save course"}
           </button>
@@ -369,7 +369,7 @@ export function CourseEditor({
           </h2>
           <button
             onClick={() => setShowAddModule(true)}
-            className="text-xs text-indigo-600 dark:text-indigo-400 hover:underline font-medium"
+            className="text-xs text-brand-600 dark:text-brand-400 hover:underline font-medium"
           >
             + Add module
           </button>
@@ -429,7 +429,7 @@ export function CourseEditor({
                         {lesson.type === "quiz" ? (
                           <button
                             onClick={() => toggleQuizBuilder(lesson.id)}
-                            className="text-xs text-indigo-600 dark:text-indigo-400 hover:underline"
+                            className="text-xs text-brand-600 dark:text-brand-400 hover:underline"
                             data-testid={`toggle-quiz-builder-${lesson.id}`}
                           >
                             {expandedQuizLessons.has(lesson.id) ? "Quiz Builder ▲" : "Quiz Builder ▼"}
@@ -437,7 +437,7 @@ export function CourseEditor({
                         ) : (
                           <button
                             onClick={() => startEditLesson(lesson)}
-                            className="text-xs text-indigo-600 dark:text-indigo-400 hover:underline"
+                            className="text-xs text-brand-600 dark:text-brand-400 hover:underline"
                           >
                             Edit
                           </button>
@@ -456,7 +456,7 @@ export function CourseEditor({
                         if (!qData) return null;
                         return (
                           <div
-                            className="mt-1 mb-1 rounded-xl border border-indigo-200 dark:border-indigo-800/40 bg-indigo-50/30 dark:bg-indigo-900/10 px-4 pb-4"
+                            className="mt-1 mb-1 rounded-xl border border-brand-200 dark:border-brand-800/40 bg-brand-50/30 dark:bg-brand-950/10 px-4 pb-4"
                             data-testid={`quiz-builder-panel-${lesson.id}`}
                           >
                             <QuizBuilder
@@ -480,12 +480,12 @@ export function CourseEditor({
                         value={newLessonTitle}
                         onChange={(e) => setNewLessonTitle(e.target.value)}
                         placeholder="Lesson title"
-                        className="flex-1 rounded-lg border border-gray-300 dark:border-[#3a3a48] bg-white dark:bg-[#1e1e28] text-sm px-2 py-1.5 focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                        className="flex-1 rounded-lg border border-gray-300 dark:border-[#3a3a48] bg-white dark:bg-[#1e1e28] text-sm px-2 py-1.5 focus:outline-none focus:ring-2 focus:ring-brand-500"
                       />
                       <select
                         value={newLessonType}
                         onChange={(e) => setNewLessonType(e.target.value as LessonType)}
-                        className="rounded-lg border border-gray-300 dark:border-[#3a3a48] bg-white dark:bg-[#1e1e28] text-sm px-2 py-1.5 focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                        className="rounded-lg border border-gray-300 dark:border-[#3a3a48] bg-white dark:bg-[#1e1e28] text-sm px-2 py-1.5 focus:outline-none focus:ring-2 focus:ring-brand-500"
                         aria-label="Lesson type"
                       >
                         <option value="text">Text</option>
@@ -496,7 +496,7 @@ export function CourseEditor({
                       <button
                         onClick={() => void handleAddLesson(module.id)}
                         disabled={addingLesson}
-                        className="rounded-lg bg-indigo-600 text-white text-xs px-3 py-1.5 disabled:opacity-50"
+                        className="rounded-lg bg-brand-600 text-white text-xs px-3 py-1.5 disabled:opacity-50"
                       >
                         Add
                       </button>
@@ -514,7 +514,7 @@ export function CourseEditor({
                         setNewLessonTitle("");
                         setNewLessonType("text");
                       }}
-                      className="text-xs text-indigo-600 dark:text-indigo-400 hover:underline mt-1"
+                      className="text-xs text-brand-600 dark:text-brand-400 hover:underline mt-1"
                     >
                       + Add lesson
                     </button>
@@ -533,12 +533,12 @@ export function CourseEditor({
               value={newModuleTitle}
               onChange={(e) => setNewModuleTitle(e.target.value)}
               placeholder="Module title"
-              className="flex-1 rounded-lg border border-gray-300 dark:border-[#3a3a48] bg-white dark:bg-[#1c1c24] text-sm px-3 py-2 focus:outline-none focus:ring-2 focus:ring-indigo-500"
+              className="flex-1 rounded-lg border border-gray-300 dark:border-[#3a3a48] bg-white dark:bg-[#1c1c24] text-sm px-3 py-2 focus:outline-none focus:ring-2 focus:ring-brand-500"
             />
             <button
               onClick={() => void handleAddModule()}
               disabled={addingModule}
-              className="rounded-lg bg-indigo-600 text-white text-sm px-4 py-2 disabled:opacity-50"
+              className="rounded-lg bg-brand-600 text-white text-sm px-4 py-2 disabled:opacity-50"
             >
               {addingModule ? "Adding…" : "Add"}
             </button>
@@ -568,7 +568,7 @@ export function CourseEditor({
                   type="text"
                   value={editTitle}
                   onChange={(e) => setEditTitle(e.target.value)}
-                  className="w-full rounded-lg border border-gray-300 dark:border-[#3a3a48] bg-white dark:bg-[#1e1e28] text-sm px-3 py-2 focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                  className="w-full rounded-lg border border-gray-300 dark:border-[#3a3a48] bg-white dark:bg-[#1e1e28] text-sm px-3 py-2 focus:outline-none focus:ring-2 focus:ring-brand-500"
                 />
               </div>
               <div>
@@ -581,7 +581,7 @@ export function CourseEditor({
                     setEditType(e.target.value as LessonType);
                     setEditContent("");
                   }}
-                  className="rounded-lg border border-gray-300 dark:border-[#3a3a48] bg-white dark:bg-[#1e1e28] text-sm px-3 py-2 focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                  className="rounded-lg border border-gray-300 dark:border-[#3a3a48] bg-white dark:bg-[#1e1e28] text-sm px-3 py-2 focus:outline-none focus:ring-2 focus:ring-brand-500"
                   aria-label="Edit lesson type"
                 >
                   <option value="text">Text</option>
@@ -613,7 +613,7 @@ export function CourseEditor({
                           setPickerTarget("edit");
                           setPickerOpen(true);
                         }}
-                        className="text-xs text-indigo-600 dark:text-indigo-400 hover:underline"
+                        className="text-xs text-brand-600 dark:text-brand-400 hover:underline"
                       >
                         Change
                       </button>
@@ -625,7 +625,7 @@ export function CourseEditor({
                         setPickerTarget("edit");
                         setPickerOpen(true);
                       }}
-                      className="rounded-lg border border-dashed border-gray-300 dark:border-[#3a3a48] px-4 py-3 text-sm text-indigo-600 dark:text-indigo-400 w-full text-center hover:bg-indigo-50 dark:hover:bg-indigo-900/20 transition-colors"
+                      className="rounded-lg border border-dashed border-gray-300 dark:border-[#3a3a48] px-4 py-3 text-sm text-brand-600 dark:text-brand-400 w-full text-center hover:bg-brand-50 dark:hover:bg-brand-950/20 transition-colors"
                     >
                       Browse SharePoint…
                     </button>
@@ -640,7 +640,7 @@ export function CourseEditor({
                     value={editContent}
                     onChange={(e) => setEditContent(e.target.value)}
                     rows={editType === "text" ? 6 : 2}
-                    className="w-full rounded-lg border border-gray-300 dark:border-[#3a3a48] bg-white dark:bg-[#1e1e28] text-sm px-3 py-2 focus:outline-none focus:ring-2 focus:ring-indigo-500 resize-none"
+                    className="w-full rounded-lg border border-gray-300 dark:border-[#3a3a48] bg-white dark:bg-[#1e1e28] text-sm px-3 py-2 focus:outline-none focus:ring-2 focus:ring-brand-500 resize-none"
                     placeholder={editType === "video" ? "https://www.youtube.com/embed/..." : "Markdown content…"}
                   />
                 </div>
@@ -654,7 +654,7 @@ export function CourseEditor({
                 <button
                   onClick={() => void handleSaveLesson()}
                   disabled={editSaving}
-                  className="rounded-lg bg-indigo-600 hover:bg-indigo-700 disabled:opacity-50 text-white text-sm font-medium px-4 py-2"
+                  className="rounded-lg bg-brand-600 hover:bg-brand-700 disabled:opacity-50 text-white text-sm font-medium px-4 py-2"
                 >
                   {editSaving ? "Saving…" : "Save"}
                 </button>

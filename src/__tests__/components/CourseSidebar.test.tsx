@@ -153,7 +153,7 @@ describe("CourseSidebar", () => {
       />,
     );
     const activeLink = screen.getByText("Lesson B").closest("a");
-    expect(activeLink?.className).toMatch(/indigo/);
+    expect(activeLink?.className).toMatch(/brand/);
   });
 
   it("defaults percentComplete to 0 and completedLessonIds to empty set when not provided", () => {

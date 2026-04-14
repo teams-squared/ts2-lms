@@ -109,7 +109,7 @@ export function SharePointFilePicker({ isOpen, onClose, onSelect }: SharePointFi
         <div className="flex items-center gap-1 px-6 py-2 text-sm text-gray-500 dark:text-gray-400 border-b border-gray-100 dark:border-[#2a2a38]">
           <button
             onClick={() => handleBreadcrumbClick(null)}
-            className="hover:text-indigo-600 dark:hover:text-indigo-400 transition-colors"
+            className="hover:text-brand-600 dark:hover:text-brand-400 transition-colors"
           >
             Root
           </button>
@@ -118,7 +118,7 @@ export function SharePointFilePicker({ isOpen, onClose, onSelect }: SharePointFi
               <span>/</span>
               <button
                 onClick={() => handleBreadcrumbClick(crumb.id)}
-                className="hover:text-indigo-600 dark:hover:text-indigo-400 transition-colors"
+                className="hover:text-brand-600 dark:hover:text-brand-400 transition-colors"
               >
                 {crumb.name}
               </button>
@@ -169,7 +169,7 @@ export function SharePointFilePicker({ isOpen, onClose, onSelect }: SharePointFi
                   ) : (
                     <button
                       onClick={() => handleFileClick(item)}
-                      className="w-full flex items-center gap-3 py-3 text-left hover:bg-indigo-50 dark:hover:bg-indigo-900/20 rounded-lg px-2 transition-colors"
+                      className="w-full flex items-center gap-3 py-3 text-left hover:bg-brand-50 dark:hover:bg-brand-950/20 rounded-lg px-2 transition-colors"
                     >
                       <span className="text-xl">{fileIcon(item.mimeType)}</span>
                       <div className="flex-1 min-w-0">

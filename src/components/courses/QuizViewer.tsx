@@ -184,7 +184,7 @@ export function QuizViewer({
           </div>
           <button
             onClick={handleStart}
-            className="w-full rounded-lg bg-indigo-600 hover:bg-indigo-700 text-white text-sm font-medium px-4 py-2.5 transition-colors"
+            className="w-full rounded-lg bg-brand-600 hover:bg-brand-700 text-white text-sm font-medium px-4 py-2.5 transition-colors"
           >
             {bestAttempt ? "Retake Quiz" : "Start Quiz"}
           </button>
@@ -220,7 +220,7 @@ export function QuizViewer({
                   key={option.id}
                   className={`flex items-center gap-3 rounded-lg border px-4 py-3 cursor-pointer transition-colors ${
                     selectedAnswers[question.id] === option.id
-                      ? "border-indigo-500 bg-indigo-50 dark:bg-indigo-900/20"
+                      ? "border-brand-500 bg-brand-50 dark:bg-brand-950/20"
                       : "border-gray-200 dark:border-[#3a3a48] hover:bg-gray-50 dark:hover:bg-[#1e1e28]"
                   }`}
                 >
@@ -230,7 +230,7 @@ export function QuizViewer({
                     value={option.id}
                     checked={selectedAnswers[question.id] === option.id}
                     onChange={() => handleSelect(question.id, option.id)}
-                    className="text-indigo-600 focus:ring-indigo-500"
+                    className="text-brand-600 focus:ring-brand-500"
                   />
                   <span className="text-sm text-gray-800 dark:text-gray-200">
                     {option.text}
@@ -248,7 +248,7 @@ export function QuizViewer({
         <button
           onClick={handleSubmit}
           disabled={!allAnswered || submitting}
-          className="w-full rounded-lg bg-indigo-600 hover:bg-indigo-700 disabled:opacity-50 disabled:cursor-not-allowed text-white text-sm font-medium px-4 py-2.5 transition-colors"
+          className="w-full rounded-lg bg-brand-600 hover:bg-brand-700 disabled:opacity-50 disabled:cursor-not-allowed text-white text-sm font-medium px-4 py-2.5 transition-colors"
         >
           {submitting ? "Submitting…" : "Submit Quiz"}
         </button>
@@ -358,7 +358,7 @@ export function QuizViewer({
       {!currentResult.passed && (
         <button
           onClick={handleRetry}
-          className="w-full rounded-lg bg-indigo-600 hover:bg-indigo-700 text-white text-sm font-medium px-4 py-2.5 transition-colors"
+          className="w-full rounded-lg bg-brand-600 hover:bg-brand-700 text-white text-sm font-medium px-4 py-2.5 transition-colors"
         >
           Try Again
         </button>
