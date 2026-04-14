@@ -49,6 +49,7 @@ export const mockPrisma = {
     create: vi.fn(),
     upsert: vi.fn(),
     delete: vi.fn(),
+    count: vi.fn().mockResolvedValue(0),
   },
   lessonProgress: {
     findUnique: vi.fn(),
