@@ -15,10 +15,10 @@ export function AchievementCard({ icon, title, description, unlockedAt }: Achiev
       className={`relative p-4 rounded-xl border transition-shadow ${
         isLocked
           ? "border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800/50 opacity-50"
-          : "border-brand-200 dark:border-brand-800/40 bg-white dark:bg-[#1c1c24] shadow-card hover:shadow-elevated"
+          : "border-brand-200 dark:border-brand-800/40 bg-white dark:bg-[#1c1c24] shadow-card hover:shadow-elevated hover-lift"
       }`}
     >
-      <div className="text-2xl mb-2" role="img" aria-label={title}>
+      <div className="text-3xl mb-2" role="img" aria-label={title}>
         {icon}
       </div>
       <h3 className="text-base font-semibold text-gray-900 dark:text-gray-100 mb-0.5">

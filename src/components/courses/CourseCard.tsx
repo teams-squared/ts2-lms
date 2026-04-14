@@ -28,7 +28,7 @@ export function CourseCard({
   return (
     <Link
       href={`/courses/${id}`}
-      className={`group block rounded-xl border bg-white dark:bg-[#1c1c24] shadow-card hover:shadow-elevated transition-shadow overflow-hidden ${
+      className={`group block rounded-xl border bg-white dark:bg-[#1c1c24] shadow-card hover:shadow-elevated hover-lift overflow-hidden ${
         locked
           ? "border-gray-300/60 dark:border-[#3a3a48] opacity-75"
           : "border-gray-200/80 dark:border-[#2e2e3a]"
@@ -58,7 +58,7 @@ export function CourseCard({
       </div>
 
       {/* Content */}
-      <div className="p-4">
+      <div className="p-5">
         <div className="flex items-center gap-2 mb-2">
           <CourseStatusBadge status={status} />
           {locked && (

@@ -68,9 +68,9 @@ export function CourseSidebar({
             <span>Progress</span>
             <span data-testid="progress-percent">{percentComplete}%</span>
           </div>
-          <div className="h-1.5 bg-gray-100 dark:bg-[#2e2e3a] rounded-full overflow-hidden">
+          <div className="h-2 bg-gray-100 dark:bg-[#2e2e3a] rounded-full overflow-hidden">
             <div
-              className="h-full bg-brand-500 rounded-full transition-all duration-300"
+              className="h-full bg-gradient-to-r from-brand-500 to-brand-400 rounded-full transition-all duration-300"
               style={{ width: `${percentComplete}%` }}
               data-testid="progress-bar"
             />

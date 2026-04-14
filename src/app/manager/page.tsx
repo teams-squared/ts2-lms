@@ -56,13 +56,16 @@ export default async function ManagerPage() {
         {stats.map(({ label, value }) => (
           <div
             key={label}
-            className="p-5 rounded-xl border border-gray-200/80 dark:border-[#2e2e3a] bg-white dark:bg-[#1c1c24] shadow-sm"
+            className="rounded-xl border border-gray-200/80 dark:border-[#2e2e3a] bg-white dark:bg-[#1c1c24] shadow-sm hover-lift overflow-hidden"
           >
-            <div className="text-2xl font-bold text-brand-600 dark:text-brand-400 tabular-nums mb-1">
-              {value}
-            </div>
-            <div className="text-xs text-gray-500 dark:text-gray-400 font-medium">
-              {label}
+            <div className="h-1 bg-gradient-to-r from-brand-500 to-brand-400" />
+            <div className="p-5">
+              <div className="text-2xl font-bold text-brand-600 dark:text-brand-400 tabular-nums mb-1">
+                {value}
+              </div>
+              <div className="text-sm text-gray-500 dark:text-gray-400 font-medium">
+                {label}
+              </div>
             </div>
           </div>
         ))}

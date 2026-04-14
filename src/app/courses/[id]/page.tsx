@@ -160,9 +160,9 @@ export default async function CourseDetailPage({
                 {percentComplete}%
               </span>
             </div>
-            <div className="h-2 bg-gray-100 dark:bg-[#2e2e3a] rounded-full overflow-hidden">
+            <div className="h-3 bg-gray-100 dark:bg-[#2e2e3a] rounded-full overflow-hidden">
               <div
-                className="h-full bg-brand-500 rounded-full transition-all duration-300"
+                className="h-full bg-gradient-to-r from-brand-500 to-brand-400 rounded-full shadow-sm shadow-brand-400/30 transition-all duration-300"
                 style={{ width: `${percentComplete}%` }}
               />
             </div>

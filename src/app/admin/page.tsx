@@ -32,13 +32,16 @@ export default async function AdminPage() {
         {stats.map(({ value, label }) => (
           <div
             key={label}
-            className="p-5 rounded-xl border border-gray-200/80 dark:border-[#2e2e3a] bg-white dark:bg-[#1c1c24] shadow-card"
+            className="rounded-xl border border-gray-200/80 dark:border-[#2e2e3a] bg-white dark:bg-[#1c1c24] shadow-card hover-lift overflow-hidden"
           >
-            <div className="text-2xl font-bold text-brand-600 dark:text-brand-400 tabular-nums mb-1">
-              {value}
-            </div>
-            <div className="text-sm text-gray-500 dark:text-gray-500 font-medium">
-              {label}
+            <div className="h-1 bg-gradient-to-r from-brand-500 to-brand-400" />
+            <div className="p-5">
+              <div className="text-2xl font-bold text-brand-600 dark:text-brand-400 tabular-nums mb-1">
+                {value}
+              </div>
+              <div className="text-sm text-gray-500 dark:text-gray-500 font-medium">
+                {label}
+              </div>
             </div>
           </div>
         ))}
@@ -48,7 +51,7 @@ export default async function AdminPage() {
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
         <Link
           href="/admin/users"
-          className="p-5 rounded-xl border border-brand-200 dark:border-brand-900/50 bg-brand-50/50 dark:bg-brand-950/20 shadow-card hover:shadow-elevated transition-shadow"
+          className="p-5 rounded-xl border border-brand-200 dark:border-brand-900/50 bg-brand-50/50 dark:bg-brand-950/20 shadow-card hover:shadow-elevated hover-lift"
         >
           <UsersIcon className="w-5 h-5 text-brand-600 dark:text-brand-400 mb-2" />
           <h2 className="text-base font-semibold text-gray-900 dark:text-gray-100">
@@ -60,7 +63,7 @@ export default async function AdminPage() {
         </Link>
         <Link
           href="/admin/courses"
-          className="p-5 rounded-xl border border-brand-200 dark:border-brand-900/50 bg-brand-50/50 dark:bg-brand-950/20 shadow-card hover:shadow-elevated transition-shadow"
+          className="p-5 rounded-xl border border-brand-200 dark:border-brand-900/50 bg-brand-50/50 dark:bg-brand-950/20 shadow-card hover:shadow-elevated hover-lift"
         >
           <GraduationCapIcon className="w-5 h-5 text-brand-600 dark:text-brand-400 mb-2" />
           <h2 className="text-base font-semibold text-gray-900 dark:text-gray-100">
@@ -72,7 +75,7 @@ export default async function AdminPage() {
         </Link>
         <Link
           href="/admin/assignments"
-          className="p-5 rounded-xl border border-brand-200 dark:border-brand-900/50 bg-brand-50/50 dark:bg-brand-950/20 shadow-card hover:shadow-elevated transition-shadow"
+          className="p-5 rounded-xl border border-brand-200 dark:border-brand-900/50 bg-brand-50/50 dark:bg-brand-950/20 shadow-card hover:shadow-elevated hover-lift"
         >
           <GraduationCapIcon className="w-5 h-5 text-brand-600 dark:text-brand-400 mb-2" />
           <h2 className="text-base font-semibold text-gray-900 dark:text-gray-100">
@@ -84,7 +87,7 @@ export default async function AdminPage() {
         </Link>
         <Link
           href="/admin/analytics"
-          className="p-5 rounded-xl border border-brand-200 dark:border-brand-900/50 bg-brand-50/50 dark:bg-brand-950/20 shadow-card hover:shadow-elevated transition-shadow"
+          className="p-5 rounded-xl border border-brand-200 dark:border-brand-900/50 bg-brand-50/50 dark:bg-brand-950/20 shadow-card hover:shadow-elevated hover-lift"
         >
           <BarChartIcon className="w-5 h-5 text-brand-600 dark:text-brand-400 mb-2" />
           <h2 className="text-base font-semibold text-gray-900 dark:text-gray-100">
