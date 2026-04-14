@@ -1,5 +1,6 @@
 import { auth } from "@/lib/auth";
 import { redirect } from "next/navigation";
+import { AdminTabs } from "@/components/admin/AdminTabs";
 
 export default async function AdminLayout({
   children,
@@ -18,9 +19,10 @@ export default async function AdminLayout({
           Admin Dashboard
         </h1>
         <p className="text-sm text-gray-500 dark:text-gray-400">
-          Manage users and roles
+          Manage users, courses, and analytics
         </p>
       </div>
+      <AdminTabs />
       {children}
     </div>
   );
