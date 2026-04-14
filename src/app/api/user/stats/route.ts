@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
-import { calculateLevel } from "@/lib/xp";
+import { calculateLevel } from "@/lib/levels";
 
 /** GET /api/user/stats — returns the current user's XP, streak, and level info. */
 export async function GET() {
