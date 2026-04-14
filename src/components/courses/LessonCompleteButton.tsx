@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { CheckCircleIcon } from "@/components/icons";
+import { Spinner } from "@/components/ui/Spinner";
 
 interface LessonCompleteButtonProps {
   courseId: string;
@@ -63,7 +64,7 @@ export function LessonCompleteButton({
         className="inline-flex items-center gap-2 rounded-lg bg-brand-600 hover:bg-brand-700 disabled:opacity-50 disabled:cursor-not-allowed text-white text-sm font-medium px-4 py-2 transition-colors"
         data-testid="mark-complete-button"
       >
-        {isLoading ? "Saving…" : "Mark complete"}
+        {isLoading ? <><Spinner size="sm" className="border-white border-t-transparent" /> Saving…</> : "Mark complete"}
       </button>
       {error && (
         <p className="text-xs text-red-600 dark:text-red-400" data-testid="complete-error">

@@ -4,6 +4,8 @@ import { useEffect, useState } from "react";
 import Link from "next/link";
 import { CourseForm } from "./CourseForm";
 import { PlusIcon } from "@/components/icons";
+import { Spinner } from "@/components/ui/Spinner";
+import { Skeleton, SkeletonTableRow } from "@/components/ui/Skeleton";
 import type { CourseStatus } from "@/lib/types";
 
 interface Course {
@@ -110,8 +112,21 @@ export default function AdminCourseTable() {
 
   if (loading) {
     return (
-      <div className="text-sm text-gray-500 dark:text-gray-400 py-8 text-center">
-        Loading courses…
+      <div className="rounded-xl border border-gray-200/80 dark:border-[#2e2e3a] bg-white dark:bg-[#1c1c24] shadow-card overflow-hidden">
+        <table className="w-full text-sm">
+          <thead>
+            <tr className="bg-gray-50 dark:bg-[#18181f] text-left">
+              {["Course", "Status", "Created By", "Created", "Actions"].map((h) => (
+                <th key={h} className="px-5 py-3 font-medium text-gray-500 dark:text-gray-400">{h}</th>
+              ))}
+            </tr>
+          </thead>
+          <tbody className="divide-y divide-gray-100 dark:divide-[#26262e]">
+            {Array.from({ length: 4 }).map((_, i) => (
+              <SkeletonTableRow key={i} cols={5} />
+            ))}
+          </tbody>
+        </table>
       </div>
     );
   }
@@ -206,19 +221,22 @@ export default function AdminCourseTable() {
                   )}
                 </td>
                 <td className="px-5 py-3">
-                  <select
-                    value={course.status}
-                    onChange={(e) =>
-                      handleStatusChange(course.id, e.target.value as CourseStatus)
-                    }
-                    disabled={updatingStatus === course.id}
-                    aria-label={`Status for ${course.title}`}
-                    className="px-2 py-1 rounded-lg border border-gray-200 dark:border-[#3a3a48] bg-white dark:bg-[#1e1e28] text-sm text-gray-700 dark:text-gray-300 focus:outline-none focus:ring-2 focus:ring-brand-500 disabled:opacity-50 cursor-pointer"
-                  >
-                    <option value="draft">Draft</option>
-                    <option value="published">Published</option>
-                    <option value="archived">Archived</option>
-                  </select>
+                  <div className="flex items-center gap-2">
+                    <select
+                      value={course.status}
+                      onChange={(e) =>
+                        handleStatusChange(course.id, e.target.value as CourseStatus)
+                      }
+                      disabled={updatingStatus === course.id}
+                      aria-label={`Status for ${course.title}`}
+                      className="px-2 py-1 rounded-lg border border-gray-200 dark:border-[#3a3a48] bg-white dark:bg-[#1e1e28] text-sm text-gray-700 dark:text-gray-300 focus:outline-none focus:ring-2 focus:ring-brand-500 disabled:opacity-50 cursor-pointer"
+                    >
+                      <option value="draft">Draft</option>
+                      <option value="published">Published</option>
+                      <option value="archived">Archived</option>
+                    </select>
+                    {updatingStatus === course.id && <Spinner size="sm" />}
+                  </div>
                 </td>
                 <td className="px-5 py-3 text-xs text-gray-500 dark:text-gray-400">
                   {course.createdBy.name || course.createdBy.email}

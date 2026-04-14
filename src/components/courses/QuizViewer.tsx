@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
+import { Spinner } from "@/components/ui/Spinner";
 
 interface QuizOption {
   id: string;
@@ -250,7 +251,7 @@ export function QuizViewer({
           disabled={!allAnswered || submitting}
           className="w-full rounded-lg bg-brand-600 hover:bg-brand-700 disabled:opacity-50 disabled:cursor-not-allowed text-white text-sm font-medium px-4 py-2.5 transition-colors"
         >
-          {submitting ? "Submitting…" : "Submit Quiz"}
+          {submitting ? <span className="inline-flex items-center gap-2"><Spinner size="sm" className="border-white border-t-transparent" /> Submitting…</span> : "Submit Quiz"}
         </button>
       </div>
     );

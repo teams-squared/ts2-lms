@@ -3,6 +3,8 @@
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import { UserAvatar } from "@/components/ui/UserAvatar";
+import { Spinner } from "@/components/ui/Spinner";
+import { Skeleton, SkeletonTableRow } from "@/components/ui/Skeleton";
 import type { Role } from "@/lib/types";
 
 interface User {
@@ -67,8 +69,21 @@ export default function UserTable() {
 
   if (loading) {
     return (
-      <div className="text-sm text-gray-500 dark:text-gray-400 py-8 text-center">
-        Loading users…
+      <div className="rounded-xl border border-gray-200/80 dark:border-[#2e2e3a] bg-white dark:bg-[#1c1c24] shadow-card overflow-hidden">
+        <table className="w-full text-sm min-w-[600px]">
+          <thead>
+            <tr className="bg-gray-50 dark:bg-[#18181f] text-left">
+              {["User", "Role", "Joined", "Actions"].map((h) => (
+                <th key={h} className="px-5 py-3 font-medium text-gray-500 dark:text-gray-400">{h}</th>
+              ))}
+            </tr>
+          </thead>
+          <tbody className="divide-y divide-gray-100 dark:divide-[#26262e]">
+            {Array.from({ length: 5 }).map((_, i) => (
+              <SkeletonTableRow key={i} cols={4} />
+            ))}
+          </tbody>
+        </table>
       </div>
     );
   }
@@ -126,20 +141,23 @@ export default function UserTable() {
                   </div>
                 </td>
                 <td className="px-5 py-3">
-                  <select
-                    value={user.role}
-                    onChange={(e) =>
-                      handleRoleChange(user.id, e.target.value as Role)
-                    }
-                    disabled={updating === user.id}
-                    aria-label={`Role for ${user.name || user.email}`}
-                    className="px-3 py-2 rounded-lg border border-gray-200 dark:border-[#3a3a48] bg-white dark:bg-[#1e1e28] text-base sm:text-sm text-gray-700 dark:text-gray-300 focus:outline-none focus:ring-2 focus:ring-brand-500 disabled:opacity-50 cursor-pointer"
-                  >
-                    <option value="admin">Admin</option>
-                    <option value="manager">Manager</option>
-                    <option value="instructor">Instructor</option>
-                    <option value="employee">Employee</option>
-                  </select>
+                  <div className="flex items-center gap-2">
+                    <select
+                      value={user.role}
+                      onChange={(e) =>
+                        handleRoleChange(user.id, e.target.value as Role)
+                      }
+                      disabled={updating === user.id}
+                      aria-label={`Role for ${user.name || user.email}`}
+                      className="px-3 py-2 rounded-lg border border-gray-200 dark:border-[#3a3a48] bg-white dark:bg-[#1e1e28] text-base sm:text-sm text-gray-700 dark:text-gray-300 focus:outline-none focus:ring-2 focus:ring-brand-500 disabled:opacity-50 cursor-pointer"
+                    >
+                      <option value="admin">Admin</option>
+                      <option value="manager">Manager</option>
+                      <option value="instructor">Instructor</option>
+                      <option value="employee">Employee</option>
+                    </select>
+                    {updating === user.id && <Spinner size="sm" />}
+                  </div>
                 </td>
                 <td className="px-5 py-3 text-xs text-gray-500 dark:text-gray-500">
                   {new Date(user.createdAt).toLocaleDateString()}

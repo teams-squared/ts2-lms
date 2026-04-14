@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import { Spinner } from "@/components/ui/Spinner";
 
 interface Notification {
   id: string;
@@ -90,9 +91,7 @@ export function NotificationBell() {
               <p className="text-sm font-semibold text-gray-900 dark:text-gray-100">
                 Notifications
               </p>
-              {loading && (
-                <span className="text-xs text-gray-400">Marking read…</span>
-              )}
+              {loading && <Spinner size="sm" />}
             </div>
             <div className="max-h-72 overflow-y-auto">
               {notifications.length === 0 ? (

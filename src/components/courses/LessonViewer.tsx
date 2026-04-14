@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import ReactMarkdown from "react-markdown";
+import { Spinner } from "@/components/ui/Spinner";
 import type { LessonType } from "@/lib/types";
 import type { SharePointDocumentRef } from "@/lib/sharepoint/types";
 
@@ -23,7 +24,7 @@ function PdfViewer({ proxyUrl, fileName }: { proxyUrl: string; fileName: string 
       {!loaded && !error && (
         <div className="w-full h-full flex items-center justify-center bg-gray-50 dark:bg-[#18181f]">
           <div className="flex flex-col items-center gap-3">
-            <div className="w-8 h-8 border-2 border-brand-600 border-t-transparent rounded-full animate-spin" />
+            <Spinner size="lg" />
             <p className="text-sm text-gray-500 dark:text-gray-400">Loading document…</p>
           </div>
         </div>

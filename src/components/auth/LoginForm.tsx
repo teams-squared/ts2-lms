@@ -3,6 +3,7 @@
 import { signIn } from "next-auth/react";
 import { useState } from "react";
 import { useSearchParams } from "next/navigation";
+import { Spinner } from "@/components/ui/Spinner";
 
 export default function LoginForm({
   hasMicrosoftProvider,
@@ -121,7 +122,7 @@ export default function LoginForm({
             disabled={loading}
             className="w-full px-4 py-2.5 rounded-xl bg-gray-900 dark:bg-gray-100 text-white dark:text-gray-900 text-sm font-semibold hover:bg-gray-800 dark:hover:bg-white disabled:opacity-50 disabled:cursor-not-allowed transition-colors shadow-sm"
           >
-            {loading ? "Signing in..." : "Sign In"}
+            {loading ? <span className="inline-flex items-center gap-2"><Spinner size="sm" className="border-white border-t-transparent" /> Signing in…</span> : "Sign In"}
           </button>
         </form>
       )}
