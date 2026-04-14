@@ -2,7 +2,8 @@ import { NextResponse } from "next/server";
 import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { prismaStatusToApp, appStatusToPrisma } from "@/lib/types";
-import type { CourseStatus } from "@/lib/types";
+import { checkCourseEligibility } from "@/lib/course-eligibility";
+import type { CourseStatus, Role } from "@/lib/types";
 
 /** GET /api/courses — course catalog.
  *  Employees see only PUBLISHED courses.
@@ -40,17 +41,45 @@ export async function GET(request: Request) {
     orderBy: { createdAt: "desc" },
   });
 
+  // Batch-check eligibility for the current user
+  const userId = session.user.id;
+  const role = session.user.role as Role;
+  const eligibilityResults = await Promise.all(
+    courses.map((c) => checkCourseEligibility(userId, role, c.id)),
+  );
+
   return NextResponse.json(
-    courses.map((c) => ({
-      id: c.id,
-      title: c.title,
-      description: c.description,
-      thumbnail: c.thumbnail,
-      status: prismaStatusToApp(c.status),
-      createdBy: c.createdBy,
-      createdAt: c.createdAt,
-      updatedAt: c.updatedAt,
-    }))
+    courses.map((c, i) => {
+      const elig = eligibilityResults[i];
+      let lockReason: string | undefined;
+      if (!elig.eligible) {
+        const parts: string[] = [];
+        if (elig.missingPrerequisites.length > 0) {
+          parts.push(
+            `Complete prerequisites: ${elig.missingPrerequisites.map((p) => p.title).join(", ")}`,
+          );
+        }
+        if (elig.missingClearance) {
+          parts.push(
+            `Requires ${elig.missingClearance} clearance`,
+          );
+        }
+        lockReason = parts.join(". ");
+      }
+      return {
+        id: c.id,
+        title: c.title,
+        description: c.description,
+        thumbnail: c.thumbnail,
+        status: prismaStatusToApp(c.status),
+        category: c.category,
+        locked: !elig.eligible,
+        lockReason,
+        createdBy: c.createdBy,
+        createdAt: c.createdAt,
+        updatedAt: c.updatedAt,
+      };
+    }),
   );
 }
 

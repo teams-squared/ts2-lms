@@ -3,6 +3,8 @@ import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { awardXp } from "@/lib/xp";
 import { trackEvent } from "@/lib/posthog-server";
+import { checkCourseEligibility } from "@/lib/course-eligibility";
+import type { Role } from "@/lib/types";
 
 type Params = { params: Promise<{ id: string }> };
 
@@ -27,6 +29,23 @@ export async function POST(_request: Request, { params }: Params) {
     course.createdById !== session.user.id
   ) {
     return NextResponse.json({ error: "Course not found" }, { status: 404 });
+  }
+
+  // Check prerequisite and clearance eligibility
+  const eligibility = await checkCourseEligibility(
+    session.user.id,
+    session.user.role as Role,
+    courseId,
+  );
+  if (!eligibility.eligible) {
+    return NextResponse.json(
+      {
+        error: "You do not meet the requirements for this course",
+        missingPrerequisites: eligibility.missingPrerequisites,
+        missingClearance: eligibility.missingClearance,
+      },
+      { status: 403 },
+    );
   }
 
   const enrollment = await prisma.enrollment.upsert({
