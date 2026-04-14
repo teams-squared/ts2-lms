@@ -1,6 +1,6 @@
 "use client";
 
-import { calculateLevel } from "@/lib/xp";
+import { calculateLevel } from "@/lib/levels";
 
 interface XpProgressBarProps {
   xp: number;
