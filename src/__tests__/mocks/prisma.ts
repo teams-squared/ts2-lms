@@ -29,7 +29,7 @@ export const mockPrisma = {
   lesson: {
     findUnique: vi.fn(),
     findFirst: vi.fn(),
-    findMany: vi.fn(),
+    findMany: vi.fn().mockResolvedValue([]),
     create: vi.fn(),
     update: vi.fn(),
     delete: vi.fn(),
@@ -55,6 +55,7 @@ export const mockPrisma = {
     findMany: vi.fn(),
     upsert: vi.fn(),
     delete: vi.fn(),
+    count: vi.fn().mockResolvedValue(0),
   },
   quizQuestion: {
     findUnique: vi.fn(),
@@ -122,5 +123,16 @@ export const mockPrisma = {
     findUnique: vi.fn().mockResolvedValue(null),
     upsert: vi.fn().mockResolvedValue({ xp: 0, streak: 1, lastActivityDate: new Date() }),
     update: vi.fn(),
+  },
+  userClearance: {
+    findUnique: vi.fn().mockResolvedValue(null),
+    findMany: vi.fn().mockResolvedValue([]),
+    create: vi.fn(),
+    delete: vi.fn(),
+  },
+  coursePrerequisite: {
+    findMany: vi.fn().mockResolvedValue([]),
+    create: vi.fn(),
+    delete: vi.fn(),
   },
 };

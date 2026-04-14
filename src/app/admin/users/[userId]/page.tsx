@@ -33,12 +33,26 @@ export default async function AdminUserDetailPage({
 
   if (!user) notFound();
 
-  const allCourses = await prisma.course.findMany({
-    select: { id: true, title: true, status: true },
-    orderBy: { title: "asc" },
-  });
+  const [allCourses, userClearances, distinctClearances] = await Promise.all([
+    prisma.course.findMany({
+      select: { id: true, title: true, status: true },
+      orderBy: { title: "asc" },
+    }),
+    prisma.userClearance.findMany({
+      where: { userId },
+      orderBy: { grantedAt: "asc" },
+    }),
+    prisma.course.findMany({
+      where: { requiredClearance: { not: null } },
+      select: { requiredClearance: true },
+      distinct: ["requiredClearance"],
+    }),
+  ]);
 
   const assignedCourseIds = new Set(user.instructedCourses.map((ic) => ic.course.id));
+  const availableClearances = distinctClearances
+    .map((c) => c.requiredClearance!)
+    .filter((cl) => !userClearances.some((uc) => uc.clearance === cl));
 
   return (
     <div>
@@ -70,6 +84,8 @@ export default async function AdminUserDetailPage({
             title: c.title,
             status: c.status.toLowerCase() as "draft" | "published" | "archived",
           }))}
+        initialClearances={userClearances.map((uc) => uc.clearance)}
+        availableClearances={availableClearances}
       />
     </div>
   );

@@ -4,22 +4,24 @@ import { Suspense } from "react";
 import Link from "next/link";
 import { prisma } from "@/lib/prisma";
 import { prismaStatusToApp } from "@/lib/types";
+import { checkCourseEligibility } from "@/lib/course-eligibility";
 import { CourseCard } from "@/components/courses/CourseCard";
 import { SearchBar } from "@/components/courses/SearchBar";
 import { GraduationCapIcon } from "@/components/icons";
 import type { Prisma } from "@prisma/client";
+import type { Role } from "@/lib/types";
 
 export const dynamic = "force-dynamic";
 
 export default async function CourseCatalogPage({
   searchParams,
 }: {
-  searchParams: Promise<{ q?: string; status?: string; tab?: string }>;
+  searchParams: Promise<{ q?: string; status?: string; tab?: string; category?: string }>;
 }) {
   const session = await auth();
   if (!session) redirect("/login");
 
-  const { q: searchQuery, status: statusFilter, tab } = await searchParams;
+  const { q: searchQuery, status: statusFilter, tab, category: categoryFilter } = await searchParams;
   const activeTab = tab === "my" ? "my" : "all";
   const isPrivileged =
     session.user?.role === "admin" || session.user?.role === "manager";
@@ -120,10 +122,17 @@ export default async function CourseCatalogPage({
     };
   }
 
+  let categoryWhere: Prisma.CourseWhereInput = {};
+  if (categoryFilter && categoryFilter !== "all") {
+    categoryWhere = { category: categoryFilter };
+  }
+
+  const filters: Prisma.CourseWhereInput[] = [visibilityFilter];
+  if (searchQuery?.trim()) filters.push(searchFilter);
+  if (categoryFilter && categoryFilter !== "all") filters.push(categoryWhere);
+
   const where: Prisma.CourseWhereInput =
-    searchQuery?.trim()
-      ? { AND: [visibilityFilter, searchFilter] }
-      : visibilityFilter;
+    filters.length > 1 ? { AND: filters } : filters[0];
 
   const allCourses =
     activeTab === "all"
@@ -133,6 +142,29 @@ export default async function CourseCatalogPage({
           orderBy: { createdAt: "desc" },
         })
       : [];
+
+  // Check eligibility for each course
+  const eligibilityMap = new Map<string, { locked: boolean; lockReason?: string }>();
+  if (activeTab === "all" && userId) {
+    const results = await Promise.all(
+      allCourses.map((c) => checkCourseEligibility(userId, (session.user?.role ?? "employee") as Role, c.id)),
+    );
+    allCourses.forEach((c, i) => {
+      const elig = results[i];
+      if (!elig.eligible) {
+        const parts: string[] = [];
+        if (elig.missingPrerequisites.length > 0) {
+          parts.push(`Complete: ${elig.missingPrerequisites.map((p) => p.title).join(", ")}`);
+        }
+        if (elig.missingClearance) {
+          parts.push(`Requires ${elig.missingClearance} clearance`);
+        }
+        eligibilityMap.set(c.id, { locked: true, lockReason: parts.join(". ") });
+      } else {
+        eligibilityMap.set(c.id, { locked: false });
+      }
+    });
+  }
 
   return (
     <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
@@ -173,6 +205,33 @@ export default async function CourseCatalogPage({
       {/* All Courses tab content */}
       {activeTab === "all" && (
         <>
+          {/* Category filter */}
+          <div className="flex items-center gap-2 mb-4">
+            <span className="text-xs text-gray-500 dark:text-gray-400">Category:</span>
+            {["all", "onboarding", "cybersecurity", "hr"].map((cat) => {
+              const isActive = cat === "all" ? !categoryFilter || categoryFilter === "all" : categoryFilter === cat;
+              const base = "/courses";
+              const qp = new URLSearchParams();
+              if (searchQuery) qp.set("q", searchQuery);
+              if (statusFilter) qp.set("status", statusFilter);
+              if (cat !== "all") qp.set("category", cat);
+              const href = qp.toString() ? `${base}?${qp.toString()}` : base;
+              return (
+                <a
+                  key={cat}
+                  href={href}
+                  className={`text-xs px-2.5 py-1 rounded-full border transition-colors capitalize ${
+                    isActive
+                      ? "border-indigo-500 bg-indigo-50 dark:bg-indigo-900/20 text-indigo-700 dark:text-indigo-300"
+                      : "border-gray-200 dark:border-[#3a3a48] text-gray-500 dark:text-gray-400 hover:border-indigo-400"
+                  }`}
+                >
+                  {cat}
+                </a>
+              );
+            })}
+          </div>
+
           <div className="flex flex-wrap items-center gap-3 mb-6">
             <Suspense fallback={null}>
               <SearchBar initialQuery={searchQuery ?? ""} />
@@ -219,17 +278,22 @@ export default async function CourseCatalogPage({
             </div>
           ) : (
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-              {allCourses.map((course) => (
-                <CourseCard
-                  key={course.id}
-                  id={course.id}
-                  title={course.title}
-                  description={course.description}
-                  status={prismaStatusToApp(course.status)}
-                  thumbnail={course.thumbnail}
-                  createdBy={course.createdBy}
-                />
-              ))}
+              {allCourses.map((course) => {
+                const elig = eligibilityMap.get(course.id);
+                return (
+                  <CourseCard
+                    key={course.id}
+                    id={course.id}
+                    title={course.title}
+                    description={course.description}
+                    status={prismaStatusToApp(course.status)}
+                    thumbnail={course.thumbnail}
+                    createdBy={course.createdBy}
+                    locked={elig?.locked}
+                    lockReason={elig?.lockReason}
+                  />
+                );
+              })}
             </div>
           )}
         </>
