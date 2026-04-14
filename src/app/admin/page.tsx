@@ -37,7 +37,7 @@ export default async function AdminPage() {
             <div className="text-2xl font-bold text-brand-600 dark:text-brand-400 tabular-nums mb-1">
               {value}
             </div>
-            <div className="text-xs text-gray-500 dark:text-gray-500 font-medium">
+            <div className="text-sm text-gray-500 dark:text-gray-500 font-medium">
               {label}
             </div>
           </div>
@@ -51,10 +51,10 @@ export default async function AdminPage() {
           className="p-5 rounded-xl border border-brand-200 dark:border-brand-900/50 bg-brand-50/50 dark:bg-brand-950/20 shadow-card hover:shadow-elevated transition-shadow"
         >
           <UsersIcon className="w-5 h-5 text-brand-600 dark:text-brand-400 mb-2" />
-          <h2 className="text-sm font-semibold text-gray-900 dark:text-gray-100">
+          <h2 className="text-base font-semibold text-gray-900 dark:text-gray-100">
             User Management
           </h2>
-          <p className="text-xs text-gray-500 dark:text-gray-400">
+          <p className="text-sm text-gray-500 dark:text-gray-400">
             Manage users, roles and instructor assignments
           </p>
         </Link>
@@ -63,10 +63,10 @@ export default async function AdminPage() {
           className="p-5 rounded-xl border border-brand-200 dark:border-brand-900/50 bg-brand-50/50 dark:bg-brand-950/20 shadow-card hover:shadow-elevated transition-shadow"
         >
           <GraduationCapIcon className="w-5 h-5 text-brand-600 dark:text-brand-400 mb-2" />
-          <h2 className="text-sm font-semibold text-gray-900 dark:text-gray-100">
+          <h2 className="text-base font-semibold text-gray-900 dark:text-gray-100">
             Course Management
           </h2>
-          <p className="text-xs text-gray-500 dark:text-gray-400">
+          <p className="text-sm text-gray-500 dark:text-gray-400">
             Create and manage courses
           </p>
         </Link>
@@ -75,10 +75,10 @@ export default async function AdminPage() {
           className="p-5 rounded-xl border border-brand-200 dark:border-brand-900/50 bg-brand-50/50 dark:bg-brand-950/20 shadow-card hover:shadow-elevated transition-shadow"
         >
           <GraduationCapIcon className="w-5 h-5 text-brand-600 dark:text-brand-400 mb-2" />
-          <h2 className="text-sm font-semibold text-gray-900 dark:text-gray-100">
+          <h2 className="text-base font-semibold text-gray-900 dark:text-gray-100">
             Assignments
           </h2>
-          <p className="text-xs text-gray-500 dark:text-gray-400">
+          <p className="text-sm text-gray-500 dark:text-gray-400">
             Assign courses to users
           </p>
         </Link>
@@ -87,10 +87,10 @@ export default async function AdminPage() {
           className="p-5 rounded-xl border border-brand-200 dark:border-brand-900/50 bg-brand-50/50 dark:bg-brand-950/20 shadow-card hover:shadow-elevated transition-shadow"
         >
           <BarChartIcon className="w-5 h-5 text-brand-600 dark:text-brand-400 mb-2" />
-          <h2 className="text-sm font-semibold text-gray-900 dark:text-gray-100">
+          <h2 className="text-base font-semibold text-gray-900 dark:text-gray-100">
             Analytics
           </h2>
-          <p className="text-xs text-gray-500 dark:text-gray-400">
+          <p className="text-sm text-gray-500 dark:text-gray-400">
             Course activity and user progress
           </p>
         </Link>
@@ -98,7 +98,7 @@ export default async function AdminPage() {
 
       {/* User table */}
       <div>
-        <h2 className="text-sm font-semibold text-gray-900 dark:text-gray-100 mb-3 flex items-center gap-2">
+        <h2 className="text-base font-semibold text-gray-900 dark:text-gray-100 mb-3 flex items-center gap-2">
           <UsersIcon className="w-4 h-4" />
           All Users
         </h2>

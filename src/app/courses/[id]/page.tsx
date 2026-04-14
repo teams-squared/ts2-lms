@@ -106,7 +106,7 @@ export default async function CourseDetailPage({
         </h1>
 
         {course.description && (
-          <p className="text-sm text-gray-600 dark:text-gray-400 leading-relaxed mb-4">
+          <p className="text-base text-gray-600 dark:text-gray-400 leading-relaxed mb-4">
             {course.description}
           </p>
         )}
@@ -152,7 +152,7 @@ export default async function CourseDetailPage({
         {/* Progress bar (shown when enrolled and course has lessons) */}
         {enrollment && totalLessons > 0 && (
           <div className="rounded-xl border border-gray-200/80 dark:border-[#2e2e3a] bg-white dark:bg-[#1c1c24] shadow-card px-4 py-3 mb-4">
-            <div className="flex justify-between text-xs text-gray-500 dark:text-gray-400 mb-1.5">
+            <div className="flex justify-between text-sm text-gray-500 dark:text-gray-400 mb-1.5">
               <span>
                 {completedLessons} of {totalLessons} lesson{totalLessons !== 1 ? "s" : ""} complete
               </span>
@@ -190,7 +190,7 @@ export default async function CourseDetailPage({
       {/* Modules & Lessons */}
       <div className="rounded-xl border border-gray-200/80 dark:border-[#2e2e3a] bg-white dark:bg-[#1c1c24] shadow-card overflow-hidden">
         <div className="px-4 py-3 border-b border-gray-100 dark:border-[#26262e]">
-          <h2 className="text-sm font-semibold text-gray-900 dark:text-gray-100">
+          <h2 className="text-base font-semibold text-gray-900 dark:text-gray-100">
             Course Content
           </h2>
           <p className="text-xs text-gray-400 mt-0.5">

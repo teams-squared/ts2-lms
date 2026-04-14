@@ -20,7 +20,7 @@ export default async function HomePage() {
               Teams Squared{" "}
               <span className="text-brand-600 dark:text-brand-400">LMS</span>
             </h1>
-            <p className="text-sm text-gray-500 dark:text-gray-400">
+            <p className="text-base text-gray-500 dark:text-gray-400">
               Sign in to access your learning platform.
             </p>
           </div>
@@ -62,10 +62,10 @@ export default async function HomePage() {
           href="/courses"
           className="p-5 rounded-xl border border-gray-200/80 dark:border-[#2e2e3a] bg-white dark:bg-[#1c1c24] shadow-card hover:shadow-elevated transition-shadow"
         >
-          <h2 className="text-sm font-semibold text-gray-900 dark:text-gray-100 mb-1">
+          <h2 className="text-base font-semibold text-gray-900 dark:text-gray-100 mb-1">
             Course Catalog
           </h2>
-          <p className="text-xs text-gray-500 dark:text-gray-400">
+          <p className="text-sm text-gray-500 dark:text-gray-400">
             Browse available courses
           </p>
         </Link>
@@ -74,10 +74,10 @@ export default async function HomePage() {
           href="/profile"
           className="p-5 rounded-xl border border-gray-200/80 dark:border-[#2e2e3a] bg-white dark:bg-[#1c1c24] shadow-card hover:shadow-elevated transition-shadow"
         >
-          <h2 className="text-sm font-semibold text-gray-900 dark:text-gray-100 mb-1">
+          <h2 className="text-base font-semibold text-gray-900 dark:text-gray-100 mb-1">
             My Profile
           </h2>
-          <p className="text-xs text-gray-500 dark:text-gray-400">
+          <p className="text-sm text-gray-500 dark:text-gray-400">
             View your account details and role
           </p>
         </Link>
@@ -87,10 +87,10 @@ export default async function HomePage() {
             href="/admin"
             className="p-5 rounded-xl border border-gray-200/80 dark:border-[#2e2e3a] bg-white dark:bg-[#1c1c24] shadow-card hover:shadow-elevated transition-shadow"
           >
-            <h2 className="text-sm font-semibold text-gray-900 dark:text-gray-100 mb-1">
+            <h2 className="text-base font-semibold text-gray-900 dark:text-gray-100 mb-1">
               Admin Dashboard
             </h2>
-            <p className="text-xs text-gray-500 dark:text-gray-400">
+            <p className="text-sm text-gray-500 dark:text-gray-400">
               Manage users and roles
             </p>
           </Link>

@@ -26,7 +26,7 @@ export function XpProgressBar({ xp }: XpProgressBarProps) {
           style={{ width: `${progressPercent}%` }}
         />
       </div>
-      <p className="text-[10px] text-gray-400 dark:text-gray-500 tabular-nums">
+      <p className="text-xs text-gray-400 dark:text-gray-500 tabular-nums">
         {xp.toLocaleString()} XP total
       </p>
     </div>
