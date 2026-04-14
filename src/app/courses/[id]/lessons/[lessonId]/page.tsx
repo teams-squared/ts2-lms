@@ -2,6 +2,8 @@ import { auth } from "@/lib/auth";
 import { redirect, notFound } from "next/navigation";
 import { prisma } from "@/lib/prisma";
 import { prismaLessonTypeToApp } from "@/lib/types";
+import { checkCourseEligibility } from "@/lib/course-eligibility";
+import type { Role } from "@/lib/types";
 import { LessonViewer } from "@/components/courses/LessonViewer";
 import { QuizViewer } from "@/components/courses/QuizViewer";
 import { QuizBuilder } from "@/components/courses/QuizBuilder";
@@ -47,6 +49,16 @@ export default async function LessonPage({
     course.createdById !== session.user?.id
   ) {
     notFound();
+  }
+
+  // Check eligibility — redirect to course page if locked
+  const eligibility = await checkCourseEligibility(
+    userId,
+    (session.user?.role ?? "employee") as Role,
+    courseId,
+  );
+  if (!eligibility.eligible) {
+    redirect(`/courses/${courseId}`);
   }
 
   // Auto-enroll the user (idempotent) so progress tracking is available immediately
