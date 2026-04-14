@@ -24,7 +24,9 @@ export async function checkAndAwardAchievements(userId: string): Promise<Awarded
     prisma.userStats.findUnique({ where: { userId } }),
   ]);
 
-  const earnedIds = new Set(userAchievements.map((ua) => ua.achievementId));
+  if (!allAchievements || allAchievements.length === 0) return [];
+
+  const earnedIds = new Set((userAchievements ?? []).map((ua) => ua.achievementId));
   const unearnedAchievements = allAchievements.filter((a) => !earnedIds.has(a.id));
 
   if (unearnedAchievements.length === 0) return [];

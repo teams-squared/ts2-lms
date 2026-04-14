@@ -9,7 +9,6 @@ import { RoleBadge } from "@/components/ui/Badge";
 import { prismaRoleToApp } from "@/lib/types";
 import { EditNameForm } from "@/components/profile/EditNameForm";
 import { ChangePasswordForm } from "@/components/profile/ChangePasswordForm";
-import { calculateLevel } from "@/lib/xp";
 import { XpProgressBar } from "@/components/gamification/XpProgressBar";
 import { StreakBadge } from "@/components/gamification/StreakBadge";
 import { AchievementCard } from "@/components/gamification/AchievementCard";

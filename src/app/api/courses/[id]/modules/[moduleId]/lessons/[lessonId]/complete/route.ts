@@ -49,18 +49,23 @@ export async function POST(_request: Request, { params }: Params) {
   trackEvent(userId, "lesson_completed", { courseId, moduleId, lessonId });
 
   // Check if entire course is now complete
-  const allModules = await prisma.module.findMany({
-    where: { courseId },
-    include: { lessons: { select: { id: true } } },
-  });
-  const allLessonIds = allModules.flatMap((m) => m.lessons.map((l) => l.id));
-  const completedCount = await prisma.lessonProgress.count({
-    where: { userId, lessonId: { in: allLessonIds }, completedAt: { not: null } },
-  });
-
-  if (allLessonIds.length > 0 && completedCount >= allLessonIds.length) {
-    await awardXp(userId, 100);
-    trackEvent(userId, "course_completed", { courseId });
+  try {
+    const allModules = await prisma.module.findMany({
+      where: { courseId },
+      include: { lessons: { select: { id: true } } },
+    });
+    const allLessonIds = (allModules ?? []).flatMap((m) => m.lessons.map((l) => l.id));
+    if (allLessonIds.length > 0) {
+      const completedCount = await prisma.lessonProgress.count({
+        where: { userId, lessonId: { in: allLessonIds }, completedAt: { not: null } },
+      });
+      if (completedCount >= allLessonIds.length) {
+        await awardXp(userId, 100);
+        trackEvent(userId, "course_completed", { courseId });
+      }
+    }
+  } catch {
+    // Course completion check is non-critical; don't fail the request
   }
 
   return NextResponse.json({
