@@ -26,7 +26,7 @@ export function AchievementCard({ icon, title, description, unlockedAt }: Achiev
       </h3>
       <p className="text-xs text-gray-500 dark:text-gray-400">{description}</p>
       {unlockedAt && (
-        <p className="text-[10px] text-gray-400 dark:text-gray-500 mt-2">
+        <p className="text-xs text-gray-400 dark:text-gray-500 mt-2">
           Unlocked {new Date(unlockedAt).toLocaleDateString()}
         </p>
       )}

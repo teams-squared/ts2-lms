@@ -334,7 +334,7 @@ export default async function CourseCatalogPage({
                 <div key={course.id} className="relative">
                   {course.source === "assigned" && (
                     <div className="absolute top-2 right-2 z-10">
-                      <span className="text-[10px] font-semibold px-2 py-0.5 rounded-full bg-amber-100 dark:bg-amber-900/30 text-amber-700 dark:text-amber-300 border border-amber-200 dark:border-amber-700/50">
+                      <span className="text-xs font-semibold px-2 py-0.5 rounded-full bg-amber-100 dark:bg-amber-900/30 text-amber-700 dark:text-amber-300 border border-amber-200 dark:border-amber-700/50">
                         Assigned
                       </span>
                     </div>

@@ -62,7 +62,7 @@ export function CourseCard({
         <div className="flex items-center gap-2 mb-2">
           <CourseStatusBadge status={status} />
           {locked && (
-            <span className="text-[10px] font-semibold px-2 py-0.5 rounded-full bg-gray-100 dark:bg-gray-800 text-gray-500 dark:text-gray-400 border border-gray-200 dark:border-gray-700">
+            <span className="text-xs font-semibold px-2 py-0.5 rounded-full bg-gray-100 dark:bg-gray-800 text-gray-500 dark:text-gray-400 border border-gray-200 dark:border-gray-700">
               Locked
             </span>
           )}
@@ -76,7 +76,7 @@ export function CourseCard({
           </p>
         )}
         {locked && lockReason && (
-          <p className="text-[10px] text-amber-600 dark:text-amber-400 mb-1 line-clamp-2">
+          <p className="text-xs text-amber-600 dark:text-amber-400 mb-1 line-clamp-2">
             {lockReason}
           </p>
         )}
