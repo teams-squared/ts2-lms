@@ -119,6 +119,15 @@ export default async function LessonPage({
   const isPrivileged =
     session.user?.role === "admin" || session.user?.role === "manager";
 
+  // Compute next lesson URL for quiz "Continue" CTA and lesson navigation
+  const allLessonsFlat = sidebarModules.flatMap((m) => m.lessons);
+  const currentLessonIdx = allLessonsFlat.findIndex((l) => l.id === lessonId);
+  const nextLesson =
+    currentLessonIdx >= 0 && currentLessonIdx < allLessonsFlat.length - 1
+      ? allLessonsFlat[currentLessonIdx + 1]
+      : null;
+  const nextLessonUrl = nextLesson ? `/courses/${courseId}/lessons/${nextLesson.id}` : null;
+
   // Fetch quiz data for quiz-type lessons
   let quizQuestions: {
     id: string;
@@ -227,6 +236,7 @@ export default async function LessonPage({
                 courseId={courseId}
                 moduleId={lesson.moduleId}
                 lessonId={lessonId}
+                nextLessonUrl={nextLessonUrl}
               />
               {isCurrentLessonCompleted && (
                 <div className="mt-6 flex items-center gap-3 rounded-xl border border-emerald-200 dark:border-emerald-800/40 bg-emerald-50 dark:bg-emerald-900/20 px-5 py-4">

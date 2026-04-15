@@ -2,7 +2,9 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
+import Link from "next/link";
 import { Spinner } from "@/components/ui/Spinner";
+import { ChevronRightIcon } from "@/components/icons";
 
 interface QuizOption {
   id: string;
@@ -48,6 +50,8 @@ interface QuizViewerProps {
   courseId: string;
   moduleId: string;
   lessonId: string;
+  /** URL of the next lesson — shows a "Continue" CTA after passing. */
+  nextLessonUrl?: string | null;
 }
 
 type State = "idle" | "taking" | "submitted";
@@ -59,6 +63,7 @@ export function QuizViewer({
   courseId,
   moduleId,
   lessonId,
+  nextLessonUrl,
 }: QuizViewerProps) {
   const router = useRouter();
   const [state, setState] = useState<State>("idle");
@@ -150,11 +155,22 @@ export function QuizViewer({
     return (
       <div className="space-y-6">
         {bestAttempt?.passed && (
-          <div className="flex items-center gap-2 rounded-xl border border-emerald-200 dark:border-emerald-800/40 bg-emerald-50 dark:bg-emerald-900/20 px-5 py-3">
-            <span className="text-emerald-600 dark:text-emerald-400 text-base">✓</span>
-            <p className="text-sm font-semibold text-emerald-800 dark:text-emerald-200">
-              You passed this quiz.
-            </p>
+          <div className="flex items-center justify-between gap-3 rounded-xl border border-emerald-200 dark:border-emerald-800/40 bg-emerald-50 dark:bg-emerald-900/20 px-5 py-3">
+            <div className="flex items-center gap-2">
+              <span className="text-emerald-600 dark:text-emerald-400 text-base">✓</span>
+              <p className="text-sm font-semibold text-emerald-800 dark:text-emerald-200">
+                You passed this quiz.
+              </p>
+            </div>
+            {nextLessonUrl && (
+              <Link
+                href={nextLessonUrl}
+                className="shrink-0 inline-flex items-center gap-1.5 text-xs font-semibold text-brand-600 dark:text-brand-400 hover:underline"
+              >
+                Next lesson
+                <ChevronRightIcon className="w-3.5 h-3.5" />
+              </Link>
+            )}
           </div>
         )}
         <div className="rounded-xl border border-gray-200 dark:border-[#3a3a48] bg-gray-50 dark:bg-[#18181f] p-6">
@@ -293,6 +309,15 @@ export function QuizViewer({
         <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
           Passing score: {currentResult.passingScore}%
         </p>
+        {currentResult.passed && nextLessonUrl && (
+          <Link
+            href={nextLessonUrl}
+            className="mt-4 inline-flex items-center gap-2 rounded-lg bg-brand-600 hover:bg-brand-700 text-white text-sm font-semibold px-5 py-2.5 transition-colors"
+          >
+            Continue to Next Lesson
+            <ChevronRightIcon className="w-4 h-4" />
+          </Link>
+        )}
       </div>
 
       {/* Answer review */}

@@ -10,6 +10,7 @@ import { UserAvatar } from "@/components/ui/UserAvatar";
 import { ModuleList } from "@/components/courses/ModuleList";
 import { LockIcon, GraduationCapIcon } from "@/components/icons";
 import { Breadcrumbs } from "@/components/ui/Breadcrumbs";
+import { EnrollButton } from "@/components/courses/EnrollButton";
 import type { Role } from "@/lib/types";
 
 export const dynamic = "force-dynamic";
@@ -65,11 +66,13 @@ export default async function CourseDetailPage({
     where: { userId_courseId: { userId, courseId: id } },
   });
 
-  const allLessonIds = course.modules.flatMap((m) => m.lessons.map((l) => l.id));
+  const allLessonsFlat = course.modules.flatMap((m) => m.lessons);
+  const allLessonIds = allLessonsFlat.map((l) => l.id);
   const totalLessons = allLessonIds.length;
 
   let completedLessons = 0;
   let percentComplete = 0;
+  let completedLessonIdSet = new Set<string>();
 
   if (enrollment && totalLessons > 0) {
     const progressRecords = await prisma.lessonProgress.findMany({
@@ -77,7 +80,18 @@ export default async function CourseDetailPage({
     });
     completedLessons = progressRecords.length;
     percentComplete = Math.round((completedLessons / totalLessons) * 1000) / 10;
+    completedLessonIdSet = new Set(progressRecords.map((p) => p.lessonId));
   }
+
+  // Compute lesson navigation URLs for the CTA
+  const firstLessonId = allLessonsFlat[0]?.id ?? null;
+  const firstLessonUrl = firstLessonId ? `/courses/${id}/lessons/${firstLessonId}` : null;
+  const firstIncompleteLessonId =
+    allLessonsFlat.find((l) => !completedLessonIdSet.has(l.id))?.id ?? null;
+  const continueUrl = firstIncompleteLessonId
+    ? `/courses/${id}/lessons/${firstIncompleteLessonId}`
+    : firstLessonUrl;
+  const isCourseComplete = totalLessons > 0 && completedLessons === totalLessons;
 
   const status = prismaStatusToApp(course.status);
 
@@ -126,6 +140,16 @@ export default async function CourseDetailPage({
             {course.description}
           </p>
         )}
+
+        {/* Primary CTA — enroll or continue */}
+        <EnrollButton
+          courseId={id}
+          isLocked={isLocked}
+          enrolled={!!enrollment}
+          isComplete={isCourseComplete}
+          firstLessonUrl={firstLessonUrl}
+          continueUrl={continueUrl}
+        />
 
         {/* Lock banner */}
         {isLocked && (
@@ -176,12 +200,24 @@ export default async function CourseDetailPage({
                 {percentComplete}%
               </span>
             </div>
-            <div className="h-3 bg-gray-100 dark:bg-[#2e2e3a] rounded-full overflow-hidden">
+            <div className="h-3 bg-gray-100 dark:bg-[#2e2e3a] rounded-full overflow-hidden mb-3">
               <div
                 className="h-full bg-gradient-to-r from-brand-500 to-brand-400 rounded-full shadow-sm shadow-brand-400/30 transition-all duration-300"
                 style={{ width: `${percentComplete}%` }}
               />
             </div>
+            {isCourseComplete ? (
+              <p className="text-xs text-emerald-600 dark:text-emerald-400 font-medium">
+                ✓ Course complete
+              </p>
+            ) : continueUrl ? (
+              <Link
+                href={continueUrl}
+                className="text-xs font-medium text-brand-600 dark:text-brand-400 hover:underline"
+              >
+                Continue where you left off →
+              </Link>
+            ) : null}
           </div>
         )}
 
