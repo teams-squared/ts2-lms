@@ -11,7 +11,7 @@ export function RoleBadge({ role, className = "" }: RoleBadgeProps) {
     <span
       className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium ${ROLE_STYLES[role].badge} ${className}`}
     >
-      {role}
+      {role.charAt(0).toUpperCase() + role.slice(1)}
     </span>
   );
 }

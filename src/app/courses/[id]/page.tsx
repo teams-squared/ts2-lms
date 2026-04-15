@@ -8,7 +8,7 @@ import { checkCourseEligibility } from "@/lib/course-eligibility";
 import { CourseStatusBadge } from "@/components/courses/CourseStatusBadge";
 import { UserAvatar } from "@/components/ui/UserAvatar";
 import { ModuleList } from "@/components/courses/ModuleList";
-import { LockIcon } from "@/components/icons";
+import { LockIcon, GraduationCapIcon } from "@/components/icons";
 import type { Role } from "@/lib/types";
 
 export const dynamic = "force-dynamic";
@@ -84,8 +84,8 @@ export default async function CourseDetailPage({
     <div className="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8 py-10">
       {/* Header */}
       <div className="mb-8">
-        {course.thumbnail && (
-          <div className="relative aspect-video rounded-xl overflow-hidden mb-6 bg-gray-100 dark:bg-[#18181f]">
+        <div className="relative aspect-video rounded-xl overflow-hidden mb-6 bg-gray-100 dark:bg-[#18181f]">
+          {course.thumbnail ? (
             <Image
               src={course.thumbnail}
               alt={course.title}
@@ -94,8 +94,15 @@ export default async function CourseDetailPage({
               className="object-cover"
               unoptimized
             />
-          </div>
-        )}
+          ) : (
+            <div className="absolute inset-0 flex flex-col items-center justify-center bg-gradient-to-br from-brand-100 to-brand-200 dark:from-brand-950/40 dark:to-brand-900/30">
+              <GraduationCapIcon className="w-16 h-16 text-brand-400 dark:text-brand-500 mb-3" />
+              <span className="text-sm font-medium text-brand-600 dark:text-brand-400 px-8 text-center max-w-md">
+                {course.title}
+              </span>
+            </div>
+          )}
+        </div>
 
         <div className="flex items-center gap-2 mb-3">
           <CourseStatusBadge status={status} />
@@ -141,7 +148,7 @@ export default async function CourseDetailPage({
                 )}
                 {eligibility.missingClearance && (
                   <p className="text-xs text-amber-700 dark:text-amber-300 mt-2">
-                    Requires <span className="font-medium">{eligibility.missingClearance}</span> clearance — contact your administrator.
+                    Requires <span className="font-medium">{eligibility.missingClearance.toUpperCase()}</span> clearance — contact your administrator.
                   </p>
                 )}
               </div>

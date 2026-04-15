@@ -1,7 +1,7 @@
 import Image from "next/image";
 import Link from "next/link";
 import { CourseStatusBadge } from "./CourseStatusBadge";
-import { LockIcon } from "@/components/icons";
+import { LockIcon, GraduationCapIcon } from "@/components/icons";
 import type { CourseStatus } from "@/lib/types";
 
 interface CourseCardProps {
@@ -46,8 +46,11 @@ export function CourseCard({
             unoptimized
           />
         ) : (
-          <div className="absolute inset-0 flex items-center justify-center text-3xl text-gray-300 dark:text-gray-600">
-            {title[0]?.toUpperCase() ?? "?"}
+          <div className="absolute inset-0 flex flex-col items-center justify-center bg-gradient-to-br from-brand-100 to-brand-200 dark:from-brand-950/40 dark:to-brand-900/30">
+            <GraduationCapIcon className="w-10 h-10 text-brand-400 dark:text-brand-500 mb-1.5" />
+            <span className="text-xs font-medium text-brand-500 dark:text-brand-400 px-3 text-center line-clamp-2 max-w-[80%]">
+              {title}
+            </span>
           </div>
         )}
         {locked && (

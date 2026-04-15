@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import { CloseIcon } from "@/components/icons";
 import { Spinner } from "@/components/ui/Spinner";
 
 interface Notification {
@@ -91,7 +92,16 @@ export function NotificationBell() {
               <p className="text-sm font-semibold text-gray-900 dark:text-gray-100">
                 Notifications
               </p>
-              {loading && <Spinner size="sm" />}
+              <div className="flex items-center gap-2">
+                {loading && <Spinner size="sm" />}
+                <button
+                  onClick={() => setOpen(false)}
+                  className="p-1 rounded-md hover:bg-gray-100 dark:hover:bg-[#2e2e3a] transition-colors"
+                  aria-label="Close notifications"
+                >
+                  <CloseIcon className="w-4 h-4 text-gray-400 dark:text-gray-500" />
+                </button>
+              </div>
             </div>
             <div className="max-h-72 overflow-y-auto">
               {notifications.length === 0 ? (

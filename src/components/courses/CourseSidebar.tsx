@@ -107,7 +107,7 @@ export function CourseSidebar({
                     <span className="text-sm flex-shrink-0" aria-hidden="true">
                       {LESSON_TYPE_ICON[lesson.type]}
                     </span>
-                    <span className="line-clamp-1 flex-1">{lesson.title}</span>
+                    <span className="line-clamp-1 flex-1" title={lesson.title}>{lesson.title}</span>
                     {isDone && (
                       <CheckCircleIcon
                         className="w-4 h-4 flex-shrink-0 text-emerald-500"

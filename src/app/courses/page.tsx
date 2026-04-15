@@ -157,7 +157,7 @@ export default async function CourseCatalogPage({
           parts.push(`Complete: ${elig.missingPrerequisites.map((p) => p.title).join(", ")}`);
         }
         if (elig.missingClearance) {
-          parts.push(`Requires ${elig.missingClearance} clearance`);
+          parts.push(`Requires ${elig.missingClearance.toUpperCase()} clearance`);
         }
         eligibilityMap.set(c.id, { locked: true, lockReason: parts.join(". ") });
       } else {
@@ -212,6 +212,12 @@ export default async function CourseCatalogPage({
           <div className="flex items-center gap-2 mb-4">
             <span className="text-xs text-gray-500 dark:text-gray-400">Category:</span>
             {["all", "onboarding", "cybersecurity", "hr"].map((cat) => {
+              const CATEGORY_LABELS: Record<string, string> = {
+                all: "All",
+                onboarding: "Onboarding",
+                cybersecurity: "Cybersecurity",
+                hr: "HR",
+              };
               const isActive = cat === "all" ? !categoryFilter || categoryFilter === "all" : categoryFilter === cat;
               const base = "/courses";
               const qp = new URLSearchParams();
@@ -223,13 +229,13 @@ export default async function CourseCatalogPage({
                 <a
                   key={cat}
                   href={href}
-                  className={`text-xs px-2.5 py-1 rounded-full border transition-colors capitalize ${
+                  className={`text-xs px-2.5 py-1 rounded-full border transition-colors ${
                     isActive
                       ? "border-brand-500 bg-brand-50 dark:bg-brand-950/20 text-brand-700 dark:text-brand-300"
                       : "border-gray-200 dark:border-[#3a3a48] text-gray-500 dark:text-gray-400 hover:border-brand-400"
                   }`}
                 >
-                  {cat}
+                  {CATEGORY_LABELS[cat] ?? cat}
                 </a>
               );
             })}
