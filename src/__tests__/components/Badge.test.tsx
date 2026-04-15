@@ -9,7 +9,8 @@ describe("RoleBadge", () => {
 
   it.each(roles)("renders '%s' role text", (role) => {
     render(<RoleBadge role={role} />);
-    expect(screen.getByText(role)).toBeInTheDocument();
+    const capitalized = role.charAt(0).toUpperCase() + role.slice(1);
+    expect(screen.getByText(capitalized)).toBeInTheDocument();
   });
 
   it.each(roles)("applies correct ROLE_STYLES classes for '%s'", (role) => {

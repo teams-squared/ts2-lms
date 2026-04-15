@@ -13,8 +13,9 @@ describe("CourseCard", () => {
   };
 
   it("renders title and description", () => {
-    render(<CourseCard {...defaultProps} />);
-    expect(screen.getByText("Test Course")).toBeInTheDocument();
+    render(<CourseCard {...defaultProps} thumbnail={null} />);
+    // Title appears in both the thumbnail fallback and the card heading
+    expect(screen.getAllByText("Test Course").length).toBeGreaterThanOrEqual(1);
     expect(screen.getByText("A test description")).toBeInTheDocument();
   });
 
@@ -35,7 +36,7 @@ describe("CourseCard", () => {
 
   it("renders status badge", () => {
     render(<CourseCard {...defaultProps} />);
-    expect(screen.getByText("published")).toBeInTheDocument();
+    expect(screen.getByText("Published")).toBeInTheDocument();
   });
 
   it("links to course detail page", () => {
@@ -44,8 +45,9 @@ describe("CourseCard", () => {
     expect(link).toHaveAttribute("href", "/courses/c1");
   });
 
-  it("shows initial letter when no thumbnail", () => {
+  it("shows title text in thumbnail area when no thumbnail", () => {
     render(<CourseCard {...defaultProps} thumbnail={null} />);
-    expect(screen.getByText("T")).toBeInTheDocument();
+    // Thumbnail fallback now shows a gradient with the title text instead of a single letter
+    expect(screen.getAllByText("Test Course").length).toBeGreaterThanOrEqual(2);
   });
 });

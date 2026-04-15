@@ -8,7 +8,8 @@ describe("CourseStatusBadge", () => {
 
   it.each(statuses)("renders '%s' status text", (status) => {
     render(<CourseStatusBadge status={status} />);
-    expect(screen.getByText(status)).toBeInTheDocument();
+    const capitalized = status.charAt(0).toUpperCase() + status.slice(1);
+    expect(screen.getByText(capitalized)).toBeInTheDocument();
   });
 
   it("applies yellow classes for draft", () => {
