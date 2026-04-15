@@ -9,6 +9,7 @@ import { CourseStatusBadge } from "@/components/courses/CourseStatusBadge";
 import { UserAvatar } from "@/components/ui/UserAvatar";
 import { ModuleList } from "@/components/courses/ModuleList";
 import { LockIcon, GraduationCapIcon } from "@/components/icons";
+import { Breadcrumbs } from "@/components/ui/Breadcrumbs";
 import type { Role } from "@/lib/types";
 
 export const dynamic = "force-dynamic";
@@ -82,6 +83,14 @@ export default async function CourseDetailPage({
 
   return (
     <div className="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8 py-10">
+      <Breadcrumbs
+        items={[
+          { label: "Home", href: "/" },
+          { label: "Courses", href: "/courses" },
+          { label: course.title },
+        ]}
+      />
+
       {/* Header */}
       <div className="mb-8">
         <div className="relative aspect-video rounded-xl overflow-hidden mb-6 bg-gray-100 dark:bg-[#18181f]">

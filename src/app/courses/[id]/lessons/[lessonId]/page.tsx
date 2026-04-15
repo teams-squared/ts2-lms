@@ -10,6 +10,8 @@ import { QuizBuilder } from "@/components/courses/QuizBuilder";
 import { CourseSidebar } from "@/components/courses/CourseSidebar";
 import { LessonCompleteButton } from "@/components/courses/LessonCompleteButton";
 import { CheckCircleIcon } from "@/components/icons";
+import { Breadcrumbs } from "@/components/ui/Breadcrumbs";
+import { LessonNavigation } from "@/components/courses/LessonNavigation";
 
 export const dynamic = "force-dynamic";
 
@@ -189,6 +191,15 @@ export default async function LessonPage({
 
       <main className="flex-1 overflow-y-auto">
         <div className={`${isDocument ? "max-w-5xl" : "max-w-3xl"} mx-auto px-4 sm:px-6 py-8`}>
+          <Breadcrumbs
+            items={[
+              { label: "Home", href: "/" },
+              { label: "Courses", href: "/courses" },
+              { label: course.title, href: `/courses/${courseId}` },
+              { label: lesson.title },
+            ]}
+          />
+
           {/* Course complete banner */}
           {isCourseComplete && (
             <div className="mb-6 flex items-center gap-3 rounded-xl border border-emerald-200 dark:border-emerald-800/40 bg-emerald-50 dark:bg-emerald-900/20 px-5 py-4">
@@ -234,6 +245,11 @@ export default async function LessonPage({
                   lessonId={lessonId}
                 />
               )}
+              <LessonNavigation
+                courseId={courseId}
+                currentLessonId={lessonId}
+                modules={sidebarModules}
+              />
             </>
           ) : (
             <>
@@ -252,6 +268,11 @@ export default async function LessonPage({
                   initialCompleted={isCurrentLessonCompleted}
                 />
               </div>
+              <LessonNavigation
+                courseId={courseId}
+                currentLessonId={lessonId}
+                modules={sidebarModules}
+              />
             </>
           )}
         </div>

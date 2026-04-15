@@ -8,6 +8,7 @@ import { checkCourseEligibility } from "@/lib/course-eligibility";
 import { CourseCard } from "@/components/courses/CourseCard";
 import { SearchBar } from "@/components/courses/SearchBar";
 import { GraduationCapIcon, BookOpenIcon, ChevronRightIcon } from "@/components/icons";
+import { Breadcrumbs } from "@/components/ui/Breadcrumbs";
 import type { Prisma } from "@prisma/client";
 import type { Role } from "@/lib/types";
 
@@ -170,6 +171,7 @@ export default async function CourseCatalogPage({
     <div>
       <div className="bg-page-header-gradient">
         <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 pt-10 pb-6">
+          <Breadcrumbs items={[{ label: "Home", href: "/" }, { label: "Courses" }]} />
           <h1 className="text-2xl font-bold text-gray-900 dark:text-gray-100 tracking-tight mb-1 flex items-center gap-2">
             <GraduationCapIcon className="w-6 h-6" />
             Courses

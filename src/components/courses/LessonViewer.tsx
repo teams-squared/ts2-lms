@@ -129,6 +129,19 @@ function PdfViewer({ proxyUrl, fileName }: { proxyUrl: string; fileName: string 
   );
 }
 
+/**
+ * Strips the first `# Heading` from markdown if it duplicates the lesson title,
+ * preventing the page <h1> and the markdown heading from stacking identically.
+ */
+function stripLeadingTitle(content: string, title: string): string {
+  const match = content.match(/^#\s+(.+)(\r?\n|$)/);
+  if (!match) return content;
+  if (match[1].trim().toLowerCase() === title.trim().toLowerCase()) {
+    return content.slice(match[0].length);
+  }
+  return content;
+}
+
 export function LessonViewer({ title, type, content }: LessonViewerProps) {
   if (type === "document") {
     let docRef: SharePointDocumentRef | null = null;
@@ -214,7 +227,7 @@ export function LessonViewer({ title, type, content }: LessonViewerProps) {
       </h1>
       {content ? (
         <div className="max-w-none text-sm">
-          <ReactMarkdown components={mdComponents}>{content}</ReactMarkdown>
+          <ReactMarkdown components={mdComponents}>{stripLeadingTitle(content, title)}</ReactMarkdown>
         </div>
       ) : (
         <p className="text-sm text-gray-500 dark:text-gray-400">
