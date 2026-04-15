@@ -2,9 +2,60 @@
 
 import { useState, useEffect } from "react";
 import ReactMarkdown from "react-markdown";
+import type { Components } from "react-markdown";
 import { Spinner } from "@/components/ui/Spinner";
 import type { LessonType } from "@/lib/types";
 import type { SharePointDocumentRef } from "@/lib/sharepoint/types";
+
+/** Explicit Tailwind styling for every markdown element — no typography plugin needed. */
+const mdComponents: Components = {
+  h1: ({ children }) => <h1 className="text-2xl font-bold mt-6 mb-3 text-gray-900 dark:text-gray-100">{children}</h1>,
+  h2: ({ children }) => <h2 className="text-xl font-semibold mt-5 mb-2 text-gray-900 dark:text-gray-100">{children}</h2>,
+  h3: ({ children }) => <h3 className="text-base font-semibold mt-4 mb-2 text-gray-900 dark:text-gray-100">{children}</h3>,
+  h4: ({ children }) => <h4 className="text-sm font-semibold mt-4 mb-1 text-gray-900 dark:text-gray-100">{children}</h4>,
+  p:  ({ children }) => <p className="mb-4 text-gray-700 dark:text-gray-300 leading-7">{children}</p>,
+  ul: ({ children }) => <ul className="list-disc pl-6 mb-4 space-y-1 text-gray-700 dark:text-gray-300">{children}</ul>,
+  ol: ({ children }) => <ol className="list-decimal pl-6 mb-4 space-y-1 text-gray-700 dark:text-gray-300">{children}</ol>,
+  li: ({ children }) => <li className="leading-7">{children}</li>,
+  blockquote: ({ children }) => (
+    <blockquote className="border-l-4 border-brand-400 pl-4 italic text-gray-600 dark:text-gray-400 my-4">
+      {children}
+    </blockquote>
+  ),
+  hr: () => <hr className="border-gray-200 dark:border-[#2e2e3a] my-6" />,
+  strong: ({ children }) => <strong className="font-semibold text-gray-900 dark:text-gray-100">{children}</strong>,
+  em: ({ children }) => <em className="italic text-gray-700 dark:text-gray-300">{children}</em>,
+  a: ({ href, children }) => (
+    <a href={href} className="text-brand-600 dark:text-brand-400 underline hover:text-brand-700 dark:hover:text-brand-300 transition-colors">
+      {children}
+    </a>
+  ),
+  pre: ({ children }) => (
+    <pre className="bg-gray-100 dark:bg-[#1e1e28] border border-gray-200 dark:border-[#2e2e3a] rounded-lg p-4 overflow-x-auto mb-4 text-sm">
+      {children}
+    </pre>
+  ),
+  code: ({ className, children, ...props }) => {
+    // Fenced code blocks have a language-* className; inline code does not
+    const isBlock = Boolean(className?.startsWith("language-"));
+    if (isBlock) {
+      return <code className={`${className} font-mono text-sm text-gray-800 dark:text-gray-200`}>{children}</code>;
+    }
+    return (
+      <code className="bg-gray-100 dark:bg-[#1e1e28] text-brand-600 dark:text-brand-400 px-1.5 py-0.5 rounded text-sm font-mono" {...props}>
+        {children}
+      </code>
+    );
+  },
+  table: ({ children }) => (
+    <div className="overflow-x-auto mb-4">
+      <table className="min-w-full divide-y divide-gray-200 dark:divide-[#2e2e3a] text-sm">{children}</table>
+    </div>
+  ),
+  thead: ({ children }) => <thead className="bg-gray-50 dark:bg-[#18181f]">{children}</thead>,
+  th: ({ children }) => <th className="px-4 py-2 text-left text-xs font-semibold text-gray-600 dark:text-gray-400 uppercase tracking-wider">{children}</th>,
+  td: ({ children }) => <td className="px-4 py-2 text-gray-700 dark:text-gray-300 border-t border-gray-100 dark:border-[#2e2e3a]">{children}</td>,
+};
 
 interface LessonViewerProps {
   title: string;
@@ -162,8 +213,8 @@ export function LessonViewer({ title, type, content }: LessonViewerProps) {
         {title}
       </h1>
       {content ? (
-        <div className="prose prose-sm dark:prose-invert max-w-none prose-headings:text-gray-900 dark:prose-headings:text-gray-100 prose-p:text-gray-700 dark:prose-p:text-gray-300 prose-a:text-brand-600 dark:prose-a:text-brand-400 prose-code:text-brand-600 dark:prose-code:text-brand-400 prose-code:bg-gray-100 dark:prose-code:bg-[#1e1e28] prose-code:px-1 prose-code:py-0.5 prose-code:rounded prose-pre:bg-gray-100 dark:prose-pre:bg-[#1e1e28]">
-          <ReactMarkdown>{content}</ReactMarkdown>
+        <div className="max-w-none text-sm">
+          <ReactMarkdown components={mdComponents}>{content}</ReactMarkdown>
         </div>
       ) : (
         <p className="text-sm text-gray-500 dark:text-gray-400">
