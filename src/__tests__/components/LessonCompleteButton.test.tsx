@@ -39,6 +39,7 @@ describe("LessonCompleteButton", () => {
     render(<LessonCompleteButton {...defaultProps} initialCompleted={true} />);
     expect(screen.getByTestId("lesson-completed-state")).toBeInTheDocument();
     expect(screen.queryByTestId("mark-complete-button")).not.toBeInTheDocument();
+    expect(screen.getByTestId("mark-incomplete-button")).toBeInTheDocument();
   });
 
   it("calls fetch with correct URL on button click", async () => {
@@ -121,6 +122,39 @@ describe("LessonCompleteButton", () => {
         "Must be enrolled to track progress",
       );
       expect(screen.getByTestId("mark-complete-button")).not.toBeDisabled();
+    });
+  });
+
+  it("calls DELETE when mark-incomplete is clicked", async () => {
+    const mockFetch = vi.fn().mockResolvedValue({
+      ok: true,
+      json: async () => ({ completed: false }),
+    });
+    vi.stubGlobal("fetch", mockFetch);
+
+    render(<LessonCompleteButton {...defaultProps} initialCompleted={true} />);
+    fireEvent.click(screen.getByTestId("mark-incomplete-button"));
+
+    await waitFor(() => {
+      expect(mockFetch).toHaveBeenCalledWith(
+        "/api/courses/c1/modules/m1/lessons/l1/complete",
+        { method: "DELETE" },
+      );
+    });
+  });
+
+  it("reverts to not-completed state after marking incomplete", async () => {
+    vi.stubGlobal("fetch", vi.fn().mockResolvedValue({
+      ok: true,
+      json: async () => ({ completed: false }),
+    }));
+
+    render(<LessonCompleteButton {...defaultProps} initialCompleted={true} />);
+    fireEvent.click(screen.getByTestId("mark-incomplete-button"));
+
+    await waitFor(() => {
+      expect(screen.getByTestId("mark-complete-button")).toBeInTheDocument();
+      expect(screen.queryByTestId("lesson-completed-state")).not.toBeInTheDocument();
     });
   });
 });

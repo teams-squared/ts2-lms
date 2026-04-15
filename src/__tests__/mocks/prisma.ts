@@ -55,6 +55,7 @@ export const mockPrisma = {
     findUnique: vi.fn(),
     findMany: vi.fn(),
     upsert: vi.fn(),
+    updateMany: vi.fn(),
     delete: vi.fn(),
     count: vi.fn().mockResolvedValue(0),
   },

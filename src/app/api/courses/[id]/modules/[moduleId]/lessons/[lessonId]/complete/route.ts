@@ -79,3 +79,40 @@ export async function POST(_request: Request, { params }: Params) {
     })),
   });
 }
+
+/** DELETE .../lessons/[lessonId]/complete — unmark a lesson as complete (clears completedAt). */
+export async function DELETE(_request: Request, { params }: Params) {
+  const session = await auth();
+  if (!session?.user?.id) {
+    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  }
+
+  const { id: courseId, moduleId, lessonId } = await params;
+  const userId = session.user.id;
+
+  const lesson = await prisma.lesson.findUnique({
+    where: { id: lessonId },
+    include: { module: { select: { courseId: true } } },
+  });
+
+  if (!lesson || lesson.moduleId !== moduleId || lesson.module.courseId !== courseId) {
+    return NextResponse.json({ error: "Lesson not found" }, { status: 404 });
+  }
+
+  const enrollment = await prisma.enrollment.findUnique({
+    where: { userId_courseId: { userId, courseId } },
+  });
+  if (!enrollment) {
+    return NextResponse.json(
+      { error: "Must be enrolled to track progress" },
+      { status: 403 },
+    );
+  }
+
+  await prisma.lessonProgress.updateMany({
+    where: { userId, lessonId },
+    data: { completedAt: null },
+  });
+
+  return NextResponse.json({ completed: false });
+}
