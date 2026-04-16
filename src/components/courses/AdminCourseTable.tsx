@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import { CourseForm } from "./CourseForm";
-import type { NodeOption } from "./CourseForm";
+import type { NodeTreeItem } from "./NodeTreeSelect";
 import { PlusIcon } from "@/components/icons";
 import { Spinner } from "@/components/ui/Spinner";
 import { SkeletonTableRow } from "@/components/ui/Skeleton";
@@ -33,7 +33,7 @@ async function apiFetch<T>(
   return res.json() as Promise<T>;
 }
 
-export default function AdminCourseTable({ nodeOptions = [] }: { nodeOptions?: NodeOption[] }) {
+export default function AdminCourseTable({ nodeTree = [] }: { nodeTree?: NodeTreeItem[] }) {
   const [courses, setCourses] = useState<Course[]>([]);
   const [loading, setLoading] = useState(true);
   const [fetchError, setFetchError] = useState<string | null>(null);
@@ -130,7 +130,7 @@ export default function AdminCourseTable({ nodeOptions = [] }: { nodeOptions?: N
         <h3 className="text-sm font-semibold text-gray-900 dark:text-gray-100 mb-4">
           Create New Course
         </h3>
-        <CourseForm onSubmit={handleCreate} onCancel={() => setShowForm(false)} nodeOptions={nodeOptions} />
+        <CourseForm onSubmit={handleCreate} onCancel={() => setShowForm(false)} nodeTree={nodeTree} />
       </div>
     );
   }

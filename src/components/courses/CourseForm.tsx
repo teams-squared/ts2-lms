@@ -1,13 +1,9 @@
 "use client";
 
 import { useState } from "react";
+import { NodeTreeSelect } from "./NodeTreeSelect";
+import type { NodeTreeItem } from "./NodeTreeSelect";
 import type { CourseStatus } from "@/lib/types";
-
-export interface NodeOption {
-  id: string;
-  name: string;
-  depth: number;
-}
 
 interface CourseFormProps {
   initialData?: {
@@ -17,7 +13,7 @@ interface CourseFormProps {
     status: CourseStatus;
     nodeId?: string | null;
   };
-  nodeOptions?: NodeOption[];
+  nodeTree?: NodeTreeItem[];
   onSubmit: (data: {
     title: string;
     description: string;
@@ -31,7 +27,7 @@ interface CourseFormProps {
 
 export function CourseForm({
   initialData,
-  nodeOptions,
+  nodeTree,
   onSubmit,
   onCancel,
   submitLabel = "Create Course",
@@ -144,27 +140,18 @@ export function CourseForm({
         </select>
       </div>
 
-      {nodeOptions && nodeOptions.length > 0 && (
+      {nodeTree && nodeTree.length > 0 && (
         <div>
           <label
-            htmlFor="course-node"
             className="block text-xs font-medium text-gray-600 dark:text-gray-400 mb-1.5"
           >
             Node
           </label>
-          <select
-            id="course-node"
-            value={nodeId}
-            onChange={(e) => setNodeId(e.target.value)}
-            className="w-full px-3.5 py-2.5 rounded-xl border border-gray-200 dark:border-[#3a3a48] bg-white dark:bg-[#1e1e28] text-sm text-gray-700 dark:text-gray-300 focus:outline-none focus:ring-2 focus:ring-brand-500 cursor-pointer"
-          >
-            <option value="">No node</option>
-            {nodeOptions.map((n) => (
-              <option key={n.id} value={n.id}>
-                {"—".repeat(n.depth)}{n.depth > 0 ? " " : ""}{n.name}
-              </option>
-            ))}
-          </select>
+          <NodeTreeSelect
+            nodes={nodeTree}
+            value={nodeId || null}
+            onChange={(id) => setNodeId(id ?? "")}
+          />
         </div>
       )}
 

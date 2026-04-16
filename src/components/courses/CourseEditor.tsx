@@ -4,6 +4,7 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { SharePointFilePicker } from "./SharePointFilePicker";
 import { QuizBuilder } from "./QuizBuilder";
+import { NodeTreeSelect } from "./NodeTreeSelect";
 import type { CourseStatus, LessonType } from "@/lib/types";
 import type { SharePointDocumentRef } from "@/lib/sharepoint/types";
 
@@ -42,19 +43,13 @@ interface QuizLessonData {
   passingScore: number;
 }
 
-interface NodeOption {
-  id: string;
-  name: string;
-  depth: number;
-}
-
 interface CourseEditorProps {
   courseId: string;
   initialTitle: string;
   initialDescription: string | null;
   initialStatus: CourseStatus;
   initialNodeId: string | null;
-  nodeOptions: NodeOption[];
+  nodeTree: { id: string; name: string; children: any[] }[];
   initialModules: Module[];
   quizDataByLessonId?: Record<string, QuizLessonData>;
 }
@@ -76,7 +71,7 @@ export function CourseEditor({
   initialDescription,
   initialStatus,
   initialNodeId,
-  nodeOptions,
+  nodeTree,
   initialModules,
   quizDataByLessonId = {},
 }: CourseEditorProps) {
@@ -367,18 +362,11 @@ export function CourseEditor({
             <label className="block text-xs font-medium text-gray-600 dark:text-gray-400 mb-1">
               Node
             </label>
-            <select
-              value={nodeId}
-              onChange={(e) => setNodeId(e.target.value)}
-              className="rounded-lg border border-gray-300 dark:border-[#3a3a48] bg-white dark:bg-[#18181f] text-sm text-gray-700 dark:text-gray-300 px-3 py-2 focus:outline-none focus:ring-2 focus:ring-brand-500"
-            >
-              <option value="">No node</option>
-              {nodeOptions.map((n) => (
-                <option key={n.id} value={n.id}>
-                  {"—".repeat(n.depth)}{n.depth > 0 ? " " : ""}{n.name}
-                </option>
-              ))}
-            </select>
+            <NodeTreeSelect
+              nodes={nodeTree}
+              value={nodeId || null}
+              onChange={(id) => setNodeId(id ?? "")}
+            />
           </div>
           {courseError && (
             <p className="text-sm text-red-600 dark:text-red-400">{courseError}</p>

@@ -4,7 +4,6 @@ import Link from "next/link";
 import { CourseEditor } from "@/components/courses/CourseEditor";
 import { loadCourseEditData } from "@/lib/courseEditData";
 import { getNodeTree } from "@/lib/courseNodes";
-import type { NodeWithChildren } from "@/lib/courseNodes";
 import type { Role } from "@/lib/types";
 
 export const dynamic = "force-dynamic";
@@ -27,16 +26,6 @@ export default async function ManagerCourseEditPage({
   ]);
   if (!data) notFound();
 
-  function flattenNodes(nodes: NodeWithChildren[], depth = 0): { id: string; name: string; depth: number }[] {
-    const result: { id: string; name: string; depth: number }[] = [];
-    for (const n of nodes) {
-      result.push({ id: n.id, name: n.name, depth });
-      result.push(...flattenNodes(n.children, depth + 1));
-    }
-    return result;
-  }
-  const nodeOptions = flattenNodes(nodeTree);
-
   return (
     <div>
       <div className="flex items-center gap-3 mb-6">
@@ -56,7 +45,7 @@ export default async function ManagerCourseEditPage({
         initialDescription={data.course.description}
         initialStatus={data.status}
         initialNodeId={data.nodeId}
-        nodeOptions={nodeOptions}
+        nodeTree={nodeTree}
         initialModules={data.modules}
         quizDataByLessonId={data.quizDataByLessonId}
       />

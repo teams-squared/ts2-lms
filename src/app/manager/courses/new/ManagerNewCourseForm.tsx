@@ -2,11 +2,11 @@
 
 import { useRouter } from "next/navigation";
 import { CourseForm } from "@/components/courses/CourseForm";
-import type { NodeOption } from "@/components/courses/CourseForm";
+import type { NodeTreeItem } from "@/components/courses/NodeTreeSelect";
 import { useToast } from "@/components/ui/ToastProvider";
 import type { CourseStatus } from "@/lib/types";
 
-export function ManagerNewCourseForm({ nodeOptions }: { nodeOptions: NodeOption[] }) {
+export function ManagerNewCourseForm({ nodeTree }: { nodeTree: NodeTreeItem[] }) {
   const router = useRouter();
   const { toast } = useToast();
 
@@ -35,7 +35,7 @@ export function ManagerNewCourseForm({ nodeOptions }: { nodeOptions: NodeOption[
     <CourseForm
       onSubmit={handleSubmit}
       onCancel={() => router.push("/manager")}
-      nodeOptions={nodeOptions}
+      nodeTree={nodeTree}
     />
   );
 }
