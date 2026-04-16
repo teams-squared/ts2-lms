@@ -12,8 +12,8 @@ export default function Logo({
   size = 40,
 }: LogoProps) {
   const src = showText ? "/logo_w_text.png" : "/logo.png";
-  // The text logo is wider than it is tall — scale width accordingly
-  const width = showText ? Math.round(size * 2.8) : size;
+  // logo_w_text.png natural dimensions are 96×32 (3:1 ratio)
+  const width = showText ? size * 3 : size;
 
   return (
     <div className={`flex items-center ${className}`}>
@@ -22,7 +22,7 @@ export default function Logo({
         alt="Teams Squared"
         width={width}
         height={size}
-        className="object-contain"
+        unoptimized
       />
     </div>
   );
