@@ -23,7 +23,7 @@ export async function GET() {
 export async function POST(request: Request) {
   const authResult = await requireRole("manager");
   if (authResult instanceof NextResponse) return authResult;
-  const { session } = authResult;
+  const { userId: assignedById } = authResult;
 
   let body: { courseId?: string; userId?: string };
   try {
@@ -67,7 +67,7 @@ export async function POST(request: Request) {
     data: {
       courseId,
       userId,
-      assignedById: session.user.id,
+      assignedById,
     },
     include: {
       user: { select: { id: true, name: true, email: true } },

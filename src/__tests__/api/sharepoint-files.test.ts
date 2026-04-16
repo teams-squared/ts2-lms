@@ -42,8 +42,28 @@ describe("GET /api/sharepoint/files/[driveId]/[itemId]", () => {
     expect(res.status).toBe(401);
   });
 
-  it("streams file with correct headers from cache", async () => {
+  it("returns 403 for employee role", async () => {
     mockAuth.mockResolvedValueOnce(mockSession({ role: "employee" }));
+    const GET = await importGET();
+    const res = await GET(
+      new Request("http://localhost/api/sharepoint/files/d1/i1"),
+      params("d1", "i1")
+    );
+    expect(res.status).toBe(403);
+  });
+
+  it("returns 403 for instructor role", async () => {
+    mockAuth.mockResolvedValueOnce(mockSession({ role: "instructor" }));
+    const GET = await importGET();
+    const res = await GET(
+      new Request("http://localhost/api/sharepoint/files/d1/i1"),
+      params("d1", "i1")
+    );
+    expect(res.status).toBe(403);
+  });
+
+  it("streams file with correct headers from cache", async () => {
+    mockAuth.mockResolvedValueOnce(mockSession({ role: "manager" }));
     mockGetCachedFile.mockResolvedValueOnce({
       data: Buffer.from("pdf-content"),
       meta: { mimeType: "application/pdf", fileName: "test.pdf", etag: "e1", expiresAt: Date.now() + 60000 },
@@ -62,7 +82,7 @@ describe("GET /api/sharepoint/files/[driveId]/[itemId]", () => {
   });
 
   it("returns 404 when file not found in Graph", async () => {
-    mockAuth.mockResolvedValueOnce(mockSession({ role: "employee" }));
+    mockAuth.mockResolvedValueOnce(mockSession({ role: "admin" }));
     mockGetCachedFile.mockResolvedValueOnce(null);
     mockGetDriveItemMetadata.mockRejectedValueOnce(new Error("Not found (404)"));
 
@@ -78,7 +98,7 @@ describe("GET /api/sharepoint/files/[driveId]/[itemId]", () => {
   });
 
   it("fetches from Graph on cache miss and caches result", async () => {
-    mockAuth.mockResolvedValueOnce(mockSession({ role: "employee" }));
+    mockAuth.mockResolvedValueOnce(mockSession({ role: "manager" }));
     mockGetCachedFile.mockResolvedValueOnce(null);
     mockGetDriveItemMetadata.mockResolvedValueOnce({
       id: "i1",

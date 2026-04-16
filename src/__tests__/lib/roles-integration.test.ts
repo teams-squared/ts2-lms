@@ -2,6 +2,7 @@ import { describe, it, expect, vi, beforeEach } from "vitest";
 import { mockPrisma } from "../mocks/prisma";
 
 vi.mock("@/lib/prisma", () => ({ prisma: mockPrisma }));
+vi.mock("@/lib/auth", () => ({ auth: vi.fn() }));
 
 // Import after mock is registered
 const { getUserRole } = await import("@/lib/roles");

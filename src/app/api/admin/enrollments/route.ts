@@ -24,7 +24,7 @@ export async function GET() {
 export async function POST(request: Request) {
   const authResult = await requireRole("manager");
   if (authResult instanceof NextResponse) return authResult;
-  const { session } = authResult;
+  const { userId: enrolledBy } = authResult;
 
   let body: { courseId?: string; userId?: string };
   try {
@@ -84,7 +84,7 @@ export async function POST(request: Request) {
 
   // Award XP and track event
   const { newAchievements } = await awardXp(userId, 5);
-  trackEvent(userId, "course_enrolled", { courseId, enrolledBy: session.user.id });
+  trackEvent(userId, "course_enrolled", { courseId, enrolledBy });
 
   return NextResponse.json(
     {

@@ -24,12 +24,12 @@ describe("GET /api/admin/users/[userId]/clearances", () => {
     expect(res.status).toBe(403);
   });
 
-  it("returns 403 when unauthenticated", async () => {
+  it("returns 401 when unauthenticated", async () => {
     mockAuth.mockResolvedValue(null);
     const res = await GET(new Request("http://localhost"), {
       params: Promise.resolve({ userId: "u1" }),
     });
-    expect(res.status).toBe(403);
+    expect(res.status).toBe(401);
   });
 
   it("returns list of clearances for admin", async () => {

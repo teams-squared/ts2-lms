@@ -24,12 +24,12 @@ describe("DELETE /api/admin/users/[userId]/clearances/[clearance]", () => {
     expect(res.status).toBe(403);
   });
 
-  it("returns 403 when unauthenticated", async () => {
+  it("returns 401 when unauthenticated", async () => {
     mockAuth.mockResolvedValue(null);
     const res = await DELETE(new Request("http://localhost"), {
       params: Promise.resolve({ userId: "u1", clearance: "secret" }),
     });
-    expect(res.status).toBe(403);
+    expect(res.status).toBe(401);
   });
 
   it("returns 404 when clearance not found", async () => {

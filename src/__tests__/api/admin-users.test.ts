@@ -12,10 +12,10 @@ describe("GET /api/admin/users", () => {
     vi.clearAllMocks();
   });
 
-  it("returns 403 when no session", async () => {
+  it("returns 401 when no session", async () => {
     mockAuth.mockResolvedValue(null);
     const res = await GET();
-    expect(res.status).toBe(403);
+    expect(res.status).toBe(401);
   });
 
   it("returns 403 when non-admin", async () => {
