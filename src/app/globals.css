@@ -72,6 +72,30 @@ body {
 }
 .animate-slide-in-left { animation: slideInLeft .25s ease-out forwards; }
 
+@keyframes scaleIn {
+  from { opacity: 0; transform: scale(0.95); }
+  to   { opacity: 1; transform: scale(1);    }
+}
+.animate-scale-in { animation: scaleIn .4s ease-out forwards; }
+
+@keyframes pulseAttention {
+  0%, 100% { opacity: 1; }
+  50%      { opacity: 0.4; }
+}
+.animate-pulse-attention { animation: pulseAttention 1.5s ease-in-out infinite; }
+
+/* Initial hidden state for elements that animate in */
+.animate-init { opacity: 0; }
+
+/* Accessibility: disable animations for users who prefer reduced motion */
+@media (prefers-reduced-motion: reduce) {
+  .animate-init { opacity: 1; }
+  .animate-fade-in,
+  .animate-slide-up,
+  .animate-slide-in-left,
+  .animate-scale-in { animation: none; }
+}
+
 /* ── Background gradients ──────────────────────────────────────────────────── */
 .bg-brand-gradient {
   background: linear-gradient(90deg, #e9d5ff 0%, #ffffff 50%, #d4b3ff 100%);
