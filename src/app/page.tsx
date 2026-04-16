@@ -6,12 +6,9 @@ import { computeDeadline, getDeadlineStatus, formatDeadlineRelative } from "@/li
 import type { DeadlineStatus } from "@/lib/deadlines";
 import type { Role } from "@/lib/types";
 import { WelcomeBar } from "@/components/dashboard/WelcomeBar";
-import { HeroNextStep } from "@/components/dashboard/HeroNextStep";
-import { CourseProgressGrid } from "@/components/dashboard/CourseProgressGrid";
-import { DeadlinesPanel } from "@/components/dashboard/DeadlinesPanel";
-import { StatsStrip } from "@/components/dashboard/StatsStrip";
-import { RecentActivity } from "@/components/dashboard/RecentActivity";
-import { QuickLinksRow } from "@/components/dashboard/QuickLinksRow";
+import { NextStepBanner } from "@/components/dashboard/NextStepBanner";
+import { DeadlineAlerts } from "@/components/dashboard/DeadlineAlerts";
+import { CourseProgressList } from "@/components/dashboard/CourseProgressList";
 
 export const dynamic = "force-dynamic";
 
@@ -54,9 +51,8 @@ export default async function HomePage() {
   const userRole = (session.user?.role as Role) || "employee";
   const firstName = session.user?.name?.split(" ")[0] || "there";
 
-  // Fetch enrollments (with full course/module/lesson structure for progress computation),
-  // recent lesson completions, and user stats — all in parallel.
-  const [enrollments, recentProgress, userStats] = await Promise.all([
+  // Fetch enrollments (with full course/module/lesson structure) and user stats in parallel.
+  const [enrollments, userStats] = await Promise.all([
     prisma.enrollment.findMany({
       where: { userId },
       include: {
@@ -78,23 +74,6 @@ export default async function HomePage() {
         },
       },
       orderBy: { enrolledAt: "desc" },
-    }),
-    prisma.lessonProgress.findMany({
-      where: { userId, completedAt: { not: null } },
-      orderBy: { completedAt: "desc" },
-      take: 5,
-      include: {
-        lesson: {
-          select: {
-            title: true,
-            module: {
-              select: {
-                course: { select: { id: true, title: true } },
-              },
-            },
-          },
-        },
-      },
     }),
     prisma.userStats.findUnique({ where: { userId } }),
   ]);
@@ -155,7 +134,6 @@ export default async function HomePage() {
       (statusPriority[a.status] ?? 3) - (statusPriority[b.status] ?? 3) ||
       a.absoluteDeadline.getTime() - b.absoluteDeadline.getTime(),
   );
-  const topDeadlines = deadlineItems.slice(0, 5);
 
   const enrichedEnrollments = enrollments.map((e) => {
     const allLessons = e.course.modules.flatMap((m) => m.lessons);
@@ -164,87 +142,78 @@ export default async function HomePage() {
     const percentComplete =
       totalLessons === 0 ? 0 : Math.round((completedLessons / totalLessons) * 100);
     const isComplete = totalLessons > 0 && completedLessons === totalLessons;
-    const firstIncompleteLessonId =
-      allLessons.find((l) => !completedIdSet.has(l.id))?.id ?? allLessons[0]?.id;
+    const firstIncompleteLesson =
+      allLessons.find((l) => !completedIdSet.has(l.id)) ?? allLessons[0];
+    const firstIncompleteLessonId = firstIncompleteLesson?.id;
+    const firstIncompleteLessonTitle = firstIncompleteLesson?.title ?? "";
     const continueUrl = firstIncompleteLessonId
       ? `/courses/${e.course.id}/lessons/${firstIncompleteLessonId}`
       : `/courses/${e.course.id}`;
-    return { ...e, totalLessons, completedLessons, percentComplete, isComplete, continueUrl };
+    return {
+      ...e,
+      totalLessons,
+      completedLessons,
+      percentComplete,
+      isComplete,
+      continueUrl,
+      firstIncompleteLessonId,
+      firstIncompleteLessonTitle,
+    };
   });
 
   const inProgressCourses = enrichedEnrollments.filter((c) => !c.isComplete && c.totalLessons > 0);
   const completedCourses = enrichedEnrollments.filter((c) => c.isComplete);
 
-  // Split: first in-progress course is the hero, rest go in the grid
-  const heroNextCourse = inProgressCourses[0] ?? null;
-  const remainingCourses = inProgressCourses.slice(1);
-  const totalCompletedLessons = completedIdSet.size;
+  // Sort in-progress courses by percentComplete DESC so nearly-finished courses appear first,
+  // encouraging completion.
+  const sortedInProgressCourses = [...inProgressCourses].sort(
+    (a, b) => b.percentComplete - a.percentComplete,
+  );
 
-  // Flatten recent activity for the component
-  const activityItems = recentProgress.map((p) => ({
-    id: p.id,
-    completedAt: p.completedAt!,
-    lessonTitle: p.lesson.title,
-    courseId: p.lesson.module.course.id,
-    courseTitle: p.lesson.module.course.title,
-  }));
+  // The next step is the most-progressed in-progress course.
+  const nextStepCourse = sortedInProgressCourses[0] ?? null;
+  const nextStepIsOverdue =
+    nextStepCourse != null &&
+    deadlineItems.some(
+      (d) => d.lessonId === nextStepCourse.firstIncompleteLessonId && d.status === "overdue",
+    );
 
   return (
     <div>
-      {/* ── Compact welcome bar ──────────────────────────────────────────── */}
       <WelcomeBar
         firstName={firstName}
-        email={session.user?.email ?? ""}
-        userRole={userRole}
         xp={userStats?.xp ?? 0}
         streak={userStats?.streak ?? 0}
-        completedCount={completedCourses.length}
       />
 
-      {/* ── Two-column dashboard layout ──────────────────────────────────── */}
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-          {/* Primary column */}
-          <div className="lg:col-span-2 space-y-6">
-            <HeroNextStep
-              course={heroNextCourse ? {
-                courseTitle: heroNextCourse.course.title,
-                completedLessons: heroNextCourse.completedLessons,
-                totalLessons: heroNextCourse.totalLessons,
-                percentComplete: heroNextCourse.percentComplete,
-                continueUrl: heroNextCourse.continueUrl,
-              } : null}
-            />
+      <div className="max-w-4xl mx-auto px-4 sm:px-6 py-4 space-y-6">
+        {nextStepCourse && (
+          <NextStepBanner
+            courseTitle={nextStepCourse.course.title}
+            lessonTitle={nextStepCourse.firstIncompleteLessonTitle}
+            completedLessons={nextStepCourse.completedLessons}
+            totalLessons={nextStepCourse.totalLessons}
+            percentComplete={nextStepCourse.percentComplete}
+            continueUrl={nextStepCourse.continueUrl}
+            isOverdue={nextStepIsOverdue}
+          />
+        )}
 
-            <CourseProgressGrid
-              courses={remainingCourses.map((c) => ({
-                courseId: c.course.id,
-                courseTitle: c.course.title,
-                completedLessons: c.completedLessons,
-                totalLessons: c.totalLessons,
-                percentComplete: c.percentComplete,
-                continueUrl: c.continueUrl,
-              }))}
-              hasEnrollments={enrichedEnrollments.length > 0}
-              userRole={userRole}
-            />
+        <DeadlineAlerts deadlines={deadlineItems} />
 
-            <StatsStrip
-              xp={userStats?.xp ?? 0}
-              streak={userStats?.streak ?? 0}
-              completedCoursesCount={completedCourses.length}
-              completedLessonsCount={totalCompletedLessons}
-            />
-
-            <RecentActivity items={activityItems} />
-          </div>
-
-          {/* Sidebar */}
-          <div className="space-y-6 lg:sticky lg:top-[4.5rem] lg:self-start">
-            <DeadlinesPanel deadlines={topDeadlines} />
-            <QuickLinksRow userRole={userRole} />
-          </div>
-        </div>
+        <CourseProgressList
+          courses={sortedInProgressCourses.map((c) => ({
+            courseId: c.course.id,
+            courseTitle: c.course.title,
+            completedLessons: c.completedLessons,
+            totalLessons: c.totalLessons,
+            percentComplete: c.percentComplete,
+            continueUrl: c.continueUrl,
+          }))}
+          completedCount={completedCourses.length}
+          hasEnrollments={enrichedEnrollments.length > 0}
+          userRole={userRole}
+        />
       </div>
     </div>
   );

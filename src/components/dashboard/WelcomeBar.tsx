@@ -1,70 +1,40 @@
-import { RoleBadge } from "@/components/ui/Badge";
-import type { Role } from "@/lib/types";
+import { calculateLevel } from "@/lib/levels";
 
 interface WelcomeBarProps {
   firstName: string;
-  email: string;
-  userRole: Role;
   xp: number;
   streak: number;
-  completedCount: number;
 }
 
-export function WelcomeBar({
-  firstName,
-  email,
-  userRole,
-  xp,
-  streak,
-  completedCount,
-}: WelcomeBarProps) {
-  return (
-    <div className="bg-brand-gradient-subtle animate-fade-in">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
-        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
-          {/* Greeting */}
-          <div className="flex items-center gap-3 min-w-0">
-            <h1 className="text-lg sm:text-xl font-bold text-gray-900 dark:text-gray-100 tracking-tight truncate">
-              Welcome back, {firstName}
-            </h1>
-            <RoleBadge role={userRole} />
-          </div>
+export function WelcomeBar({ firstName, xp, streak }: WelcomeBarProps) {
+  const { level, currentXp, nextLevelXp } = calculateLevel(xp);
 
-          {/* Stats chips */}
-          <div className="flex flex-wrap items-center gap-4 text-sm">
-            <span className="text-xs text-gray-500 dark:text-gray-400 hidden sm:inline">
-              {email}
+  return (
+    <div className="max-w-4xl mx-auto px-4 sm:px-6 pt-6 pb-2">
+      <div className="flex flex-col sm:flex-row sm:items-baseline sm:justify-between gap-2">
+        <h1 className="text-xl sm:text-2xl font-bold text-gray-900 dark:text-gray-100 tracking-tight">
+          Welcome back, {firstName}
+        </h1>
+        <div className="flex flex-wrap items-center gap-3 text-xs text-gray-500 dark:text-gray-400">
+          <span className="inline-flex items-center gap-1.5">
+            <span className="font-semibold text-brand-600 dark:text-brand-400">
+              Lv. {level}
             </span>
-            {xp > 0 && (
-              <div className="flex items-center gap-1.5">
-                <span aria-hidden="true">⚡</span>
-                <span className="font-semibold text-gray-900 dark:text-gray-100">
-                  {xp.toLocaleString()}
-                </span>
-                <span className="text-gray-500 dark:text-gray-400">XP</span>
-              </div>
-            )}
-            {streak > 0 && (
-              <div className="flex items-center gap-1.5">
+            <span className="tabular-nums">
+              {currentXp}/{nextLevelXp} XP
+            </span>
+          </span>
+          {streak > 0 && (
+            <>
+              <span className="text-gray-300 dark:text-gray-700">·</span>
+              <span className="inline-flex items-center gap-1">
                 <span aria-hidden="true">🔥</span>
-                <span className="font-semibold text-gray-900 dark:text-gray-100">
-                  {streak}
+                <span className="tabular-nums">
+                  {streak}-day streak
                 </span>
-                <span className="text-gray-500 dark:text-gray-400">day streak</span>
-              </div>
-            )}
-            {completedCount > 0 && (
-              <div className="flex items-center gap-1.5">
-                <span aria-hidden="true">🎓</span>
-                <span className="font-semibold text-gray-900 dark:text-gray-100">
-                  {completedCount}
-                </span>
-                <span className="text-gray-500 dark:text-gray-400">
-                  complete
-                </span>
-              </div>
-            )}
-          </div>
+              </span>
+            </>
+          )}
         </div>
       </div>
     </div>
