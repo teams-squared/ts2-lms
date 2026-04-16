@@ -1,20 +1,13 @@
 import { NextResponse } from "next/server";
-import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
+import { requireRole } from "@/lib/roles";
 import { awardXp } from "@/lib/xp";
 import { trackEvent } from "@/lib/posthog-server";
 
 /** GET /api/admin/enrollments — list all enrollments (admin/manager only) */
 export async function GET() {
-  const session = await auth();
-  if (!session?.user?.id) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-  }
-  const isPrivileged =
-    session.user.role === "admin" || session.user.role === "manager";
-  if (!isPrivileged) {
-    return NextResponse.json({ error: "Forbidden" }, { status: 403 });
-  }
+  const authResult = await requireRole("manager");
+  if (authResult instanceof NextResponse) return authResult;
 
   const enrollments = await prisma.enrollment.findMany({
     include: {
@@ -29,15 +22,9 @@ export async function GET() {
 
 /** POST /api/admin/enrollments — enroll a user in a course (admin/manager only) */
 export async function POST(request: Request) {
-  const session = await auth();
-  if (!session?.user?.id) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-  }
-  const isPrivileged =
-    session.user.role === "admin" || session.user.role === "manager";
-  if (!isPrivileged) {
-    return NextResponse.json({ error: "Forbidden" }, { status: 403 });
-  }
+  const authResult = await requireRole("manager");
+  if (authResult instanceof NextResponse) return authResult;
+  const { session } = authResult;
 
   let body: { courseId?: string; userId?: string };
   try {

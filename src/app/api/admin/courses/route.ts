@@ -1,14 +1,12 @@
 import { NextResponse } from "next/server";
-import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
+import { requireRole } from "@/lib/roles";
 import { prismaStatusToApp } from "@/lib/types";
 
 /** GET /api/admin/courses — all courses regardless of status (admin only). */
 export async function GET() {
-  const session = await auth();
-  if (!session || session.user?.role !== "admin") {
-    return NextResponse.json({ error: "Forbidden" }, { status: 403 });
-  }
+  const authResult = await requireRole("admin");
+  if (authResult instanceof NextResponse) return authResult;
 
   const courses = await prisma.course.findMany({
     include: { createdBy: { select: { name: true, email: true } } },

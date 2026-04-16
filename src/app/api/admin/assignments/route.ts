@@ -1,18 +1,11 @@
 import { NextResponse } from "next/server";
-import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
+import { requireRole } from "@/lib/roles";
 
 /** GET /api/admin/assignments — list all assignments (admin/manager only) */
 export async function GET() {
-  const session = await auth();
-  if (!session?.user?.id) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-  }
-  const isPrivileged =
-    session.user.role === "admin" || session.user.role === "manager";
-  if (!isPrivileged) {
-    return NextResponse.json({ error: "Forbidden" }, { status: 403 });
-  }
+  const authResult = await requireRole("manager");
+  if (authResult instanceof NextResponse) return authResult;
 
   const assignments = await prisma.assignment.findMany({
     include: {
@@ -28,15 +21,9 @@ export async function GET() {
 
 /** POST /api/admin/assignments — assign course(s) to user(s) (admin/manager only) */
 export async function POST(request: Request) {
-  const session = await auth();
-  if (!session?.user?.id) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-  }
-  const isPrivileged =
-    session.user.role === "admin" || session.user.role === "manager";
-  if (!isPrivileged) {
-    return NextResponse.json({ error: "Forbidden" }, { status: 403 });
-  }
+  const authResult = await requireRole("manager");
+  if (authResult instanceof NextResponse) return authResult;
+  const { session } = authResult;
 
   let body: { courseId?: string; userId?: string };
   try {

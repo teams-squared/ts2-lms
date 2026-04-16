@@ -1,22 +1,14 @@
 import { NextResponse } from "next/server";
-import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
-import { hasAccess, getUserRole } from "@/lib/roles";
+import { requireRole } from "@/lib/roles";
 
 /**
  * GET /api/admin/analytics — aggregate LMS analytics for admins.
  * Returns overview stats, per-course metrics, and per-user metrics.
  */
 export async function GET() {
-  const session = await auth();
-  if (!session?.user?.email || !session.user.id) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-  }
-
-  const role = await getUserRole(session.user.email);
-  if (!hasAccess(role, "admin")) {
-    return NextResponse.json({ error: "Forbidden" }, { status: 403 });
-  }
+  const authResult = await requireRole("admin");
+  if (authResult instanceof NextResponse) return authResult;
 
   const sevenDaysAgo = new Date();
   sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);

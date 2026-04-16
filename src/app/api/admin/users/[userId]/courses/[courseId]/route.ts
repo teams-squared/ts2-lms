@@ -1,15 +1,13 @@
 import { NextResponse } from "next/server";
-import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
+import { requireRole } from "@/lib/roles";
 
 type Params = { params: Promise<{ userId: string; courseId: string }> };
 
 /** DELETE /api/admin/users/[userId]/courses/[courseId] — remove instructor course assignment */
 export async function DELETE(_request: Request, { params }: Params) {
-  const session = await auth();
-  if (!session || session.user?.role !== "admin") {
-    return NextResponse.json({ error: "Forbidden" }, { status: 403 });
-  }
+  const authResult = await requireRole("admin");
+  if (authResult instanceof NextResponse) return authResult;
 
   const { userId, courseId } = await params;
 

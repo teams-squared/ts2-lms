@@ -1,15 +1,13 @@
 import { NextResponse } from "next/server";
-import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
+import { requireRole } from "@/lib/roles";
 
 type Params = { params: Promise<{ userId: string }> };
 
 /** GET /api/admin/users/[userId]/courses — list instructor course assignments */
 export async function GET(_request: Request, { params }: Params) {
-  const session = await auth();
-  if (!session || session.user?.role !== "admin") {
-    return NextResponse.json({ error: "Forbidden" }, { status: 403 });
-  }
+  const authResult = await requireRole("admin");
+  if (authResult instanceof NextResponse) return authResult;
 
   const { userId } = await params;
 
@@ -32,10 +30,8 @@ export async function GET(_request: Request, { params }: Params) {
 
 /** POST /api/admin/users/[userId]/courses — assign a course to an instructor */
 export async function POST(request: Request, { params }: Params) {
-  const session = await auth();
-  if (!session || session.user?.role !== "admin") {
-    return NextResponse.json({ error: "Forbidden" }, { status: 403 });
-  }
+  const authResult = await requireRole("admin");
+  if (authResult instanceof NextResponse) return authResult;
 
   const { userId } = await params;
 

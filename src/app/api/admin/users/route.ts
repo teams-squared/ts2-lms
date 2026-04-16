@@ -1,14 +1,12 @@
 import { NextResponse } from "next/server";
-import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
+import { requireRole } from "@/lib/roles";
 import { prismaRoleToApp, appRoleToPrisma } from "@/lib/types";
 import type { Role } from "@/lib/types";
 
 export async function GET() {
-  const session = await auth();
-  if (!session || session.user?.role !== "admin") {
-    return NextResponse.json({ error: "Forbidden" }, { status: 403 });
-  }
+  const authResult = await requireRole("admin");
+  if (authResult instanceof NextResponse) return authResult;
 
   const users = await prisma.user.findMany({
     select: { id: true, email: true, name: true, role: true, createdAt: true },
@@ -24,10 +22,8 @@ export async function GET() {
 }
 
 export async function PATCH(request: Request) {
-  const session = await auth();
-  if (!session || session.user?.role !== "admin") {
-    return NextResponse.json({ error: "Forbidden" }, { status: 403 });
-  }
+  const authResult = await requireRole("admin");
+  if (authResult instanceof NextResponse) return authResult;
 
   const { userId, role } = (await request.json()) as {
     userId: string;
