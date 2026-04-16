@@ -49,7 +49,7 @@ function DeadlineRow({ item }: { item: DeadlineItem }) {
     >
       <div className="flex-shrink-0">
         {item.status === "overdue" ? (
-          <AlertTriangleIcon className="w-4 h-4 text-red-500" />
+          <AlertTriangleIcon className="w-4 h-4 text-red-500 animate-pulse-attention" />
         ) : (
           <ClockIcon
             className={`w-4 h-4 ${

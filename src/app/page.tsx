@@ -61,6 +61,7 @@ export default async function HomePage() {
             id: true,
             title: true,
             thumbnail: true,
+            category: true,
             modules: {
               orderBy: { order: "asc" },
               include: {
@@ -205,6 +206,7 @@ export default async function HomePage() {
           courses={sortedInProgressCourses.map((c) => ({
             courseId: c.course.id,
             courseTitle: c.course.title,
+            category: c.course.category,
             completedLessons: c.completedLessons,
             totalLessons: c.totalLessons,
             percentComplete: c.percentComplete,

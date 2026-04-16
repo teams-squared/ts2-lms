@@ -84,6 +84,44 @@ body {
 }
 .animate-pulse-attention { animation: pulseAttention 1.5s ease-in-out infinite; }
 
+/* Progress-bar shimmer: moving highlight overlay */
+@keyframes shimmer {
+  0%   { transform: translateX(-100%); }
+  100% { transform: translateX(200%);  }
+}
+.animate-shimmer { animation: shimmer 2.2s ease-in-out infinite; }
+
+/* Soft glow pulse for "almost there" badges */
+@keyframes glow {
+  0%, 100% { box-shadow: 0 0 0 0 rgba(245, 158, 11, 0.4); }
+  50%      { box-shadow: 0 0 0 6px rgba(245, 158, 11, 0);  }
+}
+.animate-glow { animation: glow 2s ease-in-out infinite; }
+
+/* Flame flicker for streak indicator */
+@keyframes flicker {
+  0%, 100% { transform: translateY(0)   rotate(-2deg) scale(1);    }
+  50%      { transform: translateY(-1px) rotate(2deg) scale(1.08); }
+}
+.animate-flicker { animation: flicker 1.4s ease-in-out infinite; display: inline-block; }
+
+/* Gentle float for celebratory icons */
+@keyframes float {
+  0%, 100% { transform: translateY(0);    }
+  50%      { transform: translateY(-3px); }
+}
+.animate-float { animation: float 2.4s ease-in-out infinite; display: inline-block; }
+
+/* Gradient drift for hero background */
+@keyframes gradientDrift {
+  0%, 100% { background-position:   0% 50%; }
+  50%      { background-position: 100% 50%; }
+}
+.animate-gradient-drift {
+  background-size: 200% 200%;
+  animation: gradientDrift 8s ease-in-out infinite;
+}
+
 /* Initial hidden state for elements that animate in */
 .animate-init { opacity: 0; }
 
@@ -93,7 +131,12 @@ body {
   .animate-fade-in,
   .animate-slide-up,
   .animate-slide-in-left,
-  .animate-scale-in { animation: none; }
+  .animate-scale-in,
+  .animate-shimmer,
+  .animate-glow,
+  .animate-flicker,
+  .animate-float,
+  .animate-gradient-drift { animation: none; }
 }
 
 /* ── Background gradients ──────────────────────────────────────────────────── */
