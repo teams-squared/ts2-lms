@@ -9,7 +9,10 @@ export async function GET() {
   if (authResult instanceof NextResponse) return authResult;
 
   const courses = await prisma.course.findMany({
-    include: { createdBy: { select: { name: true, email: true } } },
+    include: {
+      createdBy: { select: { name: true, email: true } },
+      node: { select: { id: true, name: true } },
+    },
     orderBy: { createdAt: "desc" },
   });
 
@@ -21,6 +24,7 @@ export async function GET() {
       thumbnail: c.thumbnail,
       status: prismaStatusToApp(c.status),
       createdBy: c.createdBy,
+      node: c.node ?? null,
       createdAt: c.createdAt,
       updatedAt: c.updatedAt,
     }))
