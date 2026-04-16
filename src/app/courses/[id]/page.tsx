@@ -4,14 +4,12 @@ import { auth } from "@/lib/auth";
 import { redirect, notFound } from "next/navigation";
 import { prisma } from "@/lib/prisma";
 import { prismaStatusToApp, prismaLessonTypeToApp } from "@/lib/types";
-import { checkCourseEligibility } from "@/lib/course-eligibility";
 import { CourseStatusBadge } from "@/components/courses/CourseStatusBadge";
 import { UserAvatar } from "@/components/ui/UserAvatar";
 import { ModuleList } from "@/components/courses/ModuleList";
-import { LockIcon, GraduationCapIcon } from "@/components/icons";
+import { GraduationCapIcon } from "@/components/icons";
 import { Breadcrumbs } from "@/components/ui/Breadcrumbs";
 import { EnrollButton } from "@/components/courses/EnrollButton";
-import type { Role } from "@/lib/types";
 
 export const dynamic = "force-dynamic";
 
@@ -44,6 +42,9 @@ export default async function CourseDetailPage({
 
   if (!course) notFound();
 
+  const isPrivileged =
+    session.user?.role === "admin" || session.user?.role === "manager";
+
   // Non-privileged users can only see published courses
   if (
     course.status !== "PUBLISHED" &&
@@ -53,18 +54,15 @@ export default async function CourseDetailPage({
     notFound();
   }
 
-  // Check course eligibility
-  const eligibility = await checkCourseEligibility(
-    userId,
-    (session.user?.role ?? "employee") as Role,
-    id,
-  );
-  const isLocked = !eligibility.eligible;
-
-  // Fetch enrollment + progress
+  // Fetch enrollment
   const enrollment = await prisma.enrollment.findUnique({
     where: { userId_courseId: { userId, courseId: id } },
   });
+
+  // Non-privileged users must be enrolled to view the course
+  if (!enrollment && !isPrivileged) {
+    notFound();
+  }
 
   const allLessonsFlat = course.modules.flatMap((m) => m.lessons);
   const allLessonIds = allLessonsFlat.map((l) => l.id);
@@ -141,52 +139,16 @@ export default async function CourseDetailPage({
           </p>
         )}
 
-        {/* Primary CTA — enroll or continue */}
-        <EnrollButton
-          courseId={id}
-          isLocked={isLocked}
-          enrolled={!!enrollment}
-          isComplete={isCourseComplete}
-          firstLessonUrl={firstLessonUrl}
-          continueUrl={continueUrl}
-        />
-
-        {/* Lock banner */}
-        {isLocked && (
-          <div className="rounded-xl border border-amber-200 dark:border-amber-800/40 bg-amber-50 dark:bg-amber-900/20 px-5 py-4 mb-4">
-            <div className="flex items-start gap-3">
-              <LockIcon className="w-5 h-5 text-amber-600 dark:text-amber-400 flex-shrink-0 mt-0.5" />
-              <div>
-                <p className="text-sm font-semibold text-amber-800 dark:text-amber-200">
-                  This course is locked
-                </p>
-                {eligibility.missingPrerequisites.length > 0 && (
-                  <div className="mt-2">
-                    <p className="text-xs text-amber-700 dark:text-amber-300 mb-1">
-                      Complete these courses first:
-                    </p>
-                    <ul className="space-y-1">
-                      {eligibility.missingPrerequisites.map((prereq) => (
-                        <li key={prereq.id}>
-                          <Link
-                            href={`/courses/${prereq.id}`}
-                            className="text-xs text-brand-600 dark:text-brand-400 hover:underline"
-                          >
-                            {prereq.title}
-                          </Link>
-                        </li>
-                      ))}
-                    </ul>
-                  </div>
-                )}
-                {eligibility.missingClearance && (
-                  <p className="text-xs text-amber-700 dark:text-amber-300 mt-2">
-                    Requires <span className="font-medium">{eligibility.missingClearance.toUpperCase()}</span> clearance — contact your administrator.
-                  </p>
-                )}
-              </div>
-            </div>
-          </div>
+        {/* Primary CTA — continue or review (only for enrolled users) */}
+        {enrollment && (
+          <EnrollButton
+            courseId={id}
+            isLocked={false}
+            enrolled={true}
+            isComplete={isCourseComplete}
+            firstLessonUrl={firstLessonUrl}
+            continueUrl={continueUrl}
+          />
         )}
 
         {/* Progress bar (shown when enrolled and course has lessons) */}

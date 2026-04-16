@@ -21,6 +21,19 @@ export async function POST(request: Request, { params }: Params) {
   const { id: courseId, moduleId, lessonId } = await params;
   const userId = session.user.id;
 
+  // Non-admin users must be enrolled to submit quiz attempts
+  const isPrivileged =
+    session.user.role === "admin" || session.user.role === "manager";
+  const enrollment = await prisma.enrollment.findUnique({
+    where: { userId_courseId: { userId, courseId } },
+  });
+  if (!enrollment && !isPrivileged) {
+    return NextResponse.json(
+      { error: "You are not enrolled in this course" },
+      { status: 403 },
+    );
+  }
+
   // Verify lesson exists and belongs to the correct module/course
   const lesson = await prisma.lesson.findUnique({
     where: { id: lessonId },
@@ -151,14 +164,8 @@ export async function POST(request: Request, { params }: Params) {
     })),
   });
 
-  // If passed: auto-enroll (idempotent) and auto-complete the lesson
+  // If passed: auto-complete the lesson
   if (passed) {
-    await prisma.enrollment.upsert({
-      where: { userId_courseId: { userId, courseId } },
-      create: { userId, courseId },
-      update: {},
-    });
-
     const now = new Date();
     await prisma.lessonProgress.upsert({
       where: { userId_lessonId: { userId, lessonId } },

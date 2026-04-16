@@ -64,12 +64,27 @@ const mockAttempt = {
 };
 
 describe("POST .../lessons/[lessonId]/quiz/attempt", () => {
-  beforeEach(() => vi.clearAllMocks());
+  beforeEach(() => {
+    vi.clearAllMocks();
+    // Default: user is enrolled (required for non-admin access)
+    mockPrisma.enrollment.findUnique.mockResolvedValue({
+      id: "e1",
+      userId: "test-user-id",
+      courseId: "c1",
+    });
+  });
 
   it("returns 401 when unauthenticated", async () => {
     mockAuth.mockResolvedValue(null);
     const res = await POST(makeRequest({ answers: [] }), makeParams("c1", "m1", "l1"));
     expect(res.status).toBe(401);
+  });
+
+  it("returns 403 when user is not enrolled", async () => {
+    mockAuth.mockResolvedValue(mockSession({ role: "employee" }));
+    mockPrisma.enrollment.findUnique.mockResolvedValue(null);
+    const res = await POST(makeRequest({ answers: [] }), makeParams("c1", "m1", "l1"));
+    expect(res.status).toBe(403);
   });
 
   it("returns 404 when lesson does not exist", async () => {
@@ -141,7 +156,6 @@ describe("POST .../lessons/[lessonId]/quiz/attempt", () => {
     mockPrisma.quizQuestion.findMany.mockResolvedValue(mockQuestions);
     mockPrisma.quizAttempt.create.mockResolvedValue(mockAttempt);
     mockPrisma.quizAnswer.createMany.mockResolvedValue({ count: 2 });
-    mockPrisma.enrollment.upsert.mockResolvedValue({});
     mockPrisma.lessonProgress.upsert.mockResolvedValue({});
 
     const res = await POST(
@@ -194,7 +208,6 @@ describe("POST .../lessons/[lessonId]/quiz/attempt", () => {
     expect(body.passed).toBe(false);
     // auto-complete should NOT be called
     expect(mockPrisma.lessonProgress.upsert).not.toHaveBeenCalled();
-    expect(mockPrisma.enrollment.upsert).not.toHaveBeenCalled();
   });
 
   it("auto-completes lesson when quiz is passed", async () => {
@@ -203,7 +216,6 @@ describe("POST .../lessons/[lessonId]/quiz/attempt", () => {
     mockPrisma.quizQuestion.findMany.mockResolvedValue(mockQuestions);
     mockPrisma.quizAttempt.create.mockResolvedValue(mockAttempt);
     mockPrisma.quizAnswer.createMany.mockResolvedValue({ count: 2 });
-    mockPrisma.enrollment.upsert.mockResolvedValue({});
     mockPrisma.lessonProgress.upsert.mockResolvedValue({});
 
     await POST(
@@ -216,11 +228,6 @@ describe("POST .../lessons/[lessonId]/quiz/attempt", () => {
       makeParams("c1", "m1", "l1"),
     );
 
-    expect(mockPrisma.enrollment.upsert).toHaveBeenCalledWith(
-      expect.objectContaining({
-        where: { userId_courseId: { userId: "test-user-id", courseId: "c1" } },
-      }),
-    );
     expect(mockPrisma.lessonProgress.upsert).toHaveBeenCalledWith(
       expect.objectContaining({
         where: { userId_lessonId: { userId: "test-user-id", lessonId: "l1" } },
@@ -238,7 +245,6 @@ describe("POST .../lessons/[lessonId]/quiz/attempt", () => {
       passed: true,
     });
     mockPrisma.quizAnswer.createMany.mockResolvedValue({ count: 2 });
-    mockPrisma.enrollment.upsert.mockResolvedValue({});
     mockPrisma.lessonProgress.upsert.mockResolvedValue({});
 
     const res = await POST(

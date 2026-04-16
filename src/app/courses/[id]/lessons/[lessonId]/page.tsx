@@ -2,8 +2,7 @@ import { auth } from "@/lib/auth";
 import { redirect, notFound } from "next/navigation";
 import { prisma } from "@/lib/prisma";
 import { prismaLessonTypeToApp } from "@/lib/types";
-import { checkCourseEligibility } from "@/lib/course-eligibility";
-import type { Role } from "@/lib/types";
+
 import { LessonViewer } from "@/components/courses/LessonViewer";
 import { QuizViewer } from "@/components/courses/QuizViewer";
 import { QuizBuilder } from "@/components/courses/QuizBuilder";
@@ -53,22 +52,16 @@ export default async function LessonPage({
     notFound();
   }
 
-  // Check eligibility — redirect to course page if locked
-  const eligibility = await checkCourseEligibility(
-    userId,
-    (session.user?.role ?? "employee") as Role,
-    courseId,
-  );
-  if (!eligibility.eligible) {
-    redirect(`/courses/${courseId}`);
-  }
+  // Non-admin users must be enrolled to access lessons
+  const isPrivilegedUser =
+    session.user?.role === "admin" || session.user?.role === "manager";
 
-  // Auto-enroll the user (idempotent) so progress tracking is available immediately
-  await prisma.enrollment.upsert({
+  const enrollment = await prisma.enrollment.findUnique({
     where: { userId_courseId: { userId, courseId } },
-    create: { userId, courseId },
-    update: {},
   });
+  if (!enrollment && !isPrivilegedUser) {
+    redirect("/courses");
+  }
 
   // Fetch all modules + lessons for the sidebar (and progress computation)
   const modules = await prisma.module.findMany({

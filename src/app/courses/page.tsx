@@ -23,9 +23,10 @@ export default async function CourseCatalogPage({
   if (!session) redirect("/login");
 
   const { q: searchQuery, status: statusFilter, tab, category: categoryFilter } = await searchParams;
-  const activeTab = tab === "my" ? "my" : "all";
   const isPrivileged =
     session.user?.role === "admin" || session.user?.role === "manager";
+  // Non-privileged users only see their enrolled courses — no "All Courses" tab
+  const activeTab = isPrivileged && tab !== "my" ? "all" : "my";
   const userId = session.user?.id;
 
   // ─── My Courses tab ────────────────────────────────────────────────────────
@@ -183,29 +184,31 @@ export default async function CourseCatalogPage({
       </div>
       <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 pb-10">
 
-      {/* Tabs */}
-      <div className="flex items-center gap-1 mb-6 border-b border-gray-200 dark:border-[#2e2e3a]">
-        <Link
-          href="/courses?tab=my"
-          className={`px-4 py-2 text-sm font-medium border-b-2 transition-colors ${
-            activeTab === "my"
-              ? "border-brand-600 text-brand-600 dark:text-brand-400 dark:border-brand-400"
-              : "border-transparent text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200"
-          }`}
-        >
-          My Courses
-        </Link>
-        <Link
-          href="/courses"
-          className={`px-4 py-2 text-sm font-medium border-b-2 transition-colors ${
-            activeTab === "all"
-              ? "border-brand-600 text-brand-600 dark:text-brand-400 dark:border-brand-400"
-              : "border-transparent text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200"
-          }`}
-        >
-          All Courses
-        </Link>
-      </div>
+      {/* Tabs — only shown for admins/managers who have both views */}
+      {isPrivileged && (
+        <div className="flex items-center gap-1 mb-6 border-b border-gray-200 dark:border-[#2e2e3a]">
+          <Link
+            href="/courses?tab=my"
+            className={`px-4 py-2 text-sm font-medium border-b-2 transition-colors ${
+              activeTab === "my"
+                ? "border-brand-600 text-brand-600 dark:text-brand-400 dark:border-brand-400"
+                : "border-transparent text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200"
+            }`}
+          >
+            My Courses
+          </Link>
+          <Link
+            href="/courses"
+            className={`px-4 py-2 text-sm font-medium border-b-2 transition-colors ${
+              activeTab === "all"
+                ? "border-brand-600 text-brand-600 dark:text-brand-400 dark:border-brand-400"
+                : "border-transparent text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200"
+            }`}
+          >
+            All Courses
+          </Link>
+        </div>
+      )}
 
       {/* All Courses tab content */}
       {activeTab === "all" && (
@@ -326,15 +329,19 @@ export default async function CourseCatalogPage({
                 No courses yet
               </p>
               <p className="text-sm text-gray-500 dark:text-gray-400 mb-6">
-                You haven&apos;t enrolled in or been assigned any courses yet.
+                {isPrivileged
+                  ? "You haven\u2019t enrolled in or been assigned any courses yet."
+                  : "No courses have been assigned to you yet. Contact your administrator."}
               </p>
-              <Link
-                href="/courses"
-                className="inline-flex items-center gap-1 text-sm font-medium text-brand-600 dark:text-brand-400 hover:underline"
-              >
-                Browse all courses
-                <ChevronRightIcon className="w-4 h-4" />
-              </Link>
+              {isPrivileged && (
+                <Link
+                  href="/courses"
+                  className="inline-flex items-center gap-1 text-sm font-medium text-brand-600 dark:text-brand-400 hover:underline"
+                >
+                  Browse all courses
+                  <ChevronRightIcon className="w-4 h-4" />
+                </Link>
+              )}
             </div>
           ) : (
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">

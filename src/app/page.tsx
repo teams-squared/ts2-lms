@@ -228,20 +228,24 @@ export default async function HomePage() {
               <GraduationCapIcon className="w-8 h-8 text-gray-300 dark:text-gray-600 mx-auto mb-3" />
               <p className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
                 {enrichedEnrollments.length === 0
-                  ? "You haven't enrolled in any courses yet"
+                  ? "No courses have been assigned to you yet"
                   : "All enrolled courses complete!"}
               </p>
               <p className="text-xs text-gray-500 dark:text-gray-400 mb-4">
                 {enrichedEnrollments.length === 0
-                  ? "Browse the catalog to find courses that match your goals."
-                  : "Keep going — browse for more courses to expand your skills."}
+                  ? (userRole === "admin"
+                      ? "Browse the catalog to find courses."
+                      : "Contact your administrator to get enrolled in courses.")
+                  : "Great work! Check back for new courses."}
               </p>
-              <Link
-                href="/courses"
-                className="text-xs font-medium text-brand-600 dark:text-brand-400 hover:underline"
-              >
-                Browse the catalog →
-              </Link>
+              {userRole === "admin" && (
+                <Link
+                  href="/courses"
+                  className="text-xs font-medium text-brand-600 dark:text-brand-400 hover:underline"
+                >
+                  Browse the catalog →
+                </Link>
+              )}
             </div>
           ) : (
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
@@ -320,15 +324,15 @@ export default async function HomePage() {
           </h2>
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <Link
-              href="/courses"
+              href={userRole === "admin" ? "/courses" : "/courses?tab=my"}
               className="p-5 rounded-xl border border-gray-200/80 dark:border-[#2e2e3a] bg-white dark:bg-[#1c1c24] shadow-card hover:shadow-elevated hover-lift"
             >
               <GraduationCapIcon className="w-5 h-5 text-brand-600 dark:text-brand-400 mb-2.5" />
               <h3 className="text-sm font-semibold text-gray-900 dark:text-gray-100 mb-0.5">
-                Course Catalog
+                {userRole === "admin" ? "Course Catalog" : "My Courses"}
               </h3>
               <p className="text-xs text-gray-500 dark:text-gray-400">
-                Browse all available courses
+                {userRole === "admin" ? "Browse all available courses" : "View your enrolled courses"}
               </p>
             </Link>
 
@@ -345,18 +349,20 @@ export default async function HomePage() {
               </p>
             </Link>
 
-            <Link
-              href="/courses?tab=my"
-              className="p-5 rounded-xl border border-gray-200/80 dark:border-[#2e2e3a] bg-white dark:bg-[#1c1c24] shadow-card hover:shadow-elevated hover-lift"
-            >
-              <BookOpenIcon className="w-5 h-5 text-brand-600 dark:text-brand-400 mb-2.5" />
-              <h3 className="text-sm font-semibold text-gray-900 dark:text-gray-100 mb-0.5">
-                My Courses
-              </h3>
-              <p className="text-xs text-gray-500 dark:text-gray-400">
-                View your enrolled and assigned courses
-              </p>
-            </Link>
+            {userRole === "admin" && (
+              <Link
+                href="/courses?tab=my"
+                className="p-5 rounded-xl border border-gray-200/80 dark:border-[#2e2e3a] bg-white dark:bg-[#1c1c24] shadow-card hover:shadow-elevated hover-lift"
+              >
+                <BookOpenIcon className="w-5 h-5 text-brand-600 dark:text-brand-400 mb-2.5" />
+                <h3 className="text-sm font-semibold text-gray-900 dark:text-gray-100 mb-0.5">
+                  My Courses
+                </h3>
+                <p className="text-xs text-gray-500 dark:text-gray-400">
+                  View your enrolled and assigned courses
+                </p>
+              </Link>
+            )}
 
             {userRole === "admin" && (
               <Link

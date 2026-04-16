@@ -21,6 +21,8 @@ export async function GET(request: Request) {
   const isPrivileged =
     session.user.role === "admin" || session.user.role === "manager";
 
+  // Non-privileged users only see published courses they are enrolled in.
+  // Admins/managers see all published courses + their own drafts.
   const where = {
     ...(search
       ? { title: { contains: search, mode: "insensitive" as const } }
@@ -32,7 +34,12 @@ export async function GET(request: Request) {
             { createdById: session.user.id },
           ],
         }
-      : { status: "PUBLISHED" as const }),
+      : {
+          AND: [
+            { status: "PUBLISHED" as const },
+            { enrollments: { some: { userId: session.user.id } } },
+          ],
+        }),
   };
 
   const courses = await prisma.course.findMany({
