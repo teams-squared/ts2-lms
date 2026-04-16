@@ -5,7 +5,7 @@ import userEvent from "@testing-library/user-event";
 const mockSetTheme = vi.fn();
 const mockUseTheme = vi.fn();
 
-vi.mock("next-themes", () => ({
+vi.mock("@/components/theme/ThemeProvider", () => ({
   useTheme: (...args: unknown[]) => mockUseTheme(...args),
 }));
 

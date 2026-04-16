@@ -1,6 +1,7 @@
 import type { Metadata, Viewport } from "next";
 import { Inter } from "next/font/google";
 import { Suspense } from "react";
+import Script from "next/script";
 import Providers from "@/components/auth/Providers";
 import NavBar from "@/components/layout/NavBar";
 import PostHogPageView from "@/components/analytics/PostHogPageView";
@@ -29,6 +30,9 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en" className={`${inter.variable} h-full antialiased`} suppressHydrationWarning>
+      <head>
+        <Script id="theme-detect" strategy="beforeInteractive">{`(function(){try{var t=localStorage.getItem('theme')||'system';var d=window.matchMedia('(prefers-color-scheme: dark)').matches;if(t==='dark'||(t==='system'&&d)){document.documentElement.classList.add('dark')}else{document.documentElement.classList.remove('dark')}}catch(e){}})();`}</Script>
+      </head>
       <body className="min-h-full flex flex-col bg-[#f5f5f8] dark:bg-[#0f0f14]">
         <Providers>
           <Suspense fallback={null}>
