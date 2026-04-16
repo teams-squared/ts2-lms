@@ -112,7 +112,7 @@ export default async function AdminPage() {
         ))}
       </div>
 
-      {/* Overdue stat */}
+      {/* Overdue lessons */}
       {overdueCount > 0 && (
         <div className="mb-8 rounded-xl border border-red-200/80 dark:border-red-800/30 bg-red-50 dark:bg-red-900/10 shadow-card overflow-hidden">
           <div className="h-1 bg-gradient-to-r from-red-500 to-red-400" />
@@ -127,6 +127,35 @@ export default async function AdminPage() {
               </div>
             </div>
           </div>
+          <table className="w-full text-sm">
+            <thead>
+              <tr className="border-t border-red-200/60 dark:border-red-800/20 text-left">
+                <th className="px-4 py-3 text-xs font-medium text-red-700/70 dark:text-red-300/70">User</th>
+                <th className="px-4 py-3 text-xs font-medium text-red-700/70 dark:text-red-300/70">Course</th>
+                <th className="px-4 py-3 text-xs font-medium text-red-700/70 dark:text-red-300/70">Lesson</th>
+                <th className="px-4 py-3 text-xs font-medium text-red-700/70 dark:text-red-300/70 text-right">Due Date</th>
+                <th className="px-4 py-3 text-xs font-medium text-red-700/70 dark:text-red-300/70 text-right">Days Overdue</th>
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-red-200/40 dark:divide-red-800/20">
+              {overdueItems.slice(0, 10).map((item, i) => (
+                <tr key={i}>
+                  <td className="px-4 py-3">
+                    <p className="text-gray-900 dark:text-gray-100 font-medium">{item.userName}</p>
+                    <p className="text-xs text-gray-500 dark:text-gray-400">{item.userEmail}</p>
+                  </td>
+                  <td className="px-4 py-3 text-gray-700 dark:text-gray-300">{item.courseTitle}</td>
+                  <td className="px-4 py-3 text-gray-700 dark:text-gray-300">{item.lessonTitle}</td>
+                  <td className="px-4 py-3 text-right text-gray-500 dark:text-gray-400">
+                    {item.dueDate.toLocaleDateString()}
+                  </td>
+                  <td className="px-4 py-3 text-right">
+                    <span className="text-red-600 dark:text-red-400 font-medium">{item.daysOverdue}d</span>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
         </div>
       )}
 
@@ -202,45 +231,6 @@ export default async function AdminPage() {
         </div>
       </div>
 
-      {/* Overdue lessons panel */}
-      {overdueItems.length > 0 && (
-        <div className="mt-8">
-          <h2 className="text-sm font-semibold text-gray-900 dark:text-gray-100 mb-3">
-            Overdue Lessons
-          </h2>
-          <div className="rounded-xl border border-gray-200/80 dark:border-[#2e2e3a] bg-white dark:bg-[#1c1c24] shadow-card overflow-hidden">
-            <table className="w-full text-sm">
-              <thead>
-                <tr className="border-b border-gray-100 dark:border-[#2e2e3a] text-left">
-                  <th className="px-4 py-3 text-xs font-medium text-gray-500 dark:text-gray-400">User</th>
-                  <th className="px-4 py-3 text-xs font-medium text-gray-500 dark:text-gray-400">Course</th>
-                  <th className="px-4 py-3 text-xs font-medium text-gray-500 dark:text-gray-400">Lesson</th>
-                  <th className="px-4 py-3 text-xs font-medium text-gray-500 dark:text-gray-400 text-right">Due Date</th>
-                  <th className="px-4 py-3 text-xs font-medium text-gray-500 dark:text-gray-400 text-right">Days Overdue</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-gray-100 dark:divide-[#2e2e3a]">
-                {overdueItems.slice(0, 10).map((item, i) => (
-                  <tr key={i}>
-                    <td className="px-4 py-3">
-                      <p className="text-gray-900 dark:text-gray-100 font-medium">{item.userName}</p>
-                      <p className="text-xs text-gray-500 dark:text-gray-400">{item.userEmail}</p>
-                    </td>
-                    <td className="px-4 py-3 text-gray-700 dark:text-gray-300">{item.courseTitle}</td>
-                    <td className="px-4 py-3 text-gray-700 dark:text-gray-300">{item.lessonTitle}</td>
-                    <td className="px-4 py-3 text-right text-gray-500 dark:text-gray-400">
-                      {item.dueDate.toLocaleDateString()}
-                    </td>
-                    <td className="px-4 py-3 text-right">
-                      <span className="text-red-600 dark:text-red-400 font-medium">{item.daysOverdue}d</span>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        </div>
-      )}
     </div>
   );
 }
