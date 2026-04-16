@@ -4,6 +4,7 @@ import Link from "next/link";
 import { CourseEditor } from "@/components/courses/CourseEditor";
 import { loadCourseEditData } from "@/lib/courseEditData";
 import { getNodeTree } from "@/lib/courseNodes";
+import { prisma } from "@/lib/prisma";
 import type { Role } from "@/lib/types";
 
 export const dynamic = "force-dynamic";
@@ -19,9 +20,14 @@ export default async function CourseEditPage({
   }
 
   const { id: courseId } = await params;
-  const [data, nodeTree] = await Promise.all([
+  const [data, nodeTree, subs] = await Promise.all([
     loadCourseEditData(courseId, session.user!.id!, session.user!.role as Role),
     getNodeTree(),
+    prisma.courseEmailSubscription.findMany({
+      where: { courseId },
+      select: { email: true },
+      orderBy: { createdAt: "asc" },
+    }),
   ]);
   if (!data) notFound();
 
@@ -49,6 +55,7 @@ export default async function CourseEditPage({
         nodeTree={nodeTree}
         initialModules={data.modules}
         quizDataByLessonId={data.quizDataByLessonId}
+        initialSubscriptions={subs.map((s) => s.email)}
       />
     </div>
   );

@@ -53,6 +53,7 @@ interface CourseEditorProps {
   nodeTree: NodeTreeItem[];
   initialModules: Module[];
   quizDataByLessonId?: Record<string, QuizLessonData>;
+  initialSubscriptions?: string[];
 }
 
 async function apiFetch<T>(url: string, options?: RequestInit): Promise<T> {
@@ -75,6 +76,7 @@ export function CourseEditor({
   nodeTree,
   initialModules,
   quizDataByLessonId = {},
+  initialSubscriptions = [],
 }: CourseEditorProps) {
   const router = useRouter();
 
@@ -118,6 +120,13 @@ export function CourseEditor({
   const [deletingModuleId, setDeletingModuleId] = useState<string | null>(null);
   const [deletingLessonId, setDeletingLessonId] = useState<string | null>(null);
 
+  // Email subscription state
+  const [subscriptions, setSubscriptions] = useState<string[]>(initialSubscriptions);
+  const [newEmail, setNewEmail] = useState("");
+  const [subError, setSubError] = useState<string | null>(null);
+  const [addingSub, setAddingSub] = useState(false);
+  const [removingSub, setRemovingSub] = useState<string | null>(null);
+
   // Inline quiz builder state
   const [expandedQuizLessons, setExpandedQuizLessons] = useState<Set<string>>(new Set());
 
@@ -150,6 +159,51 @@ export function CourseEditor({
       setCourseError(err instanceof Error ? err.message : "Failed to save");
     } finally {
       setCourseSaving(false);
+    }
+  };
+
+  // ─── Email subscription actions ─────────────────────────────────────────────
+
+  const handleAddSubscription = async () => {
+    const email = newEmail.trim().toLowerCase();
+    if (!email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+      setSubError("Enter a valid email address");
+      return;
+    }
+    if (subscriptions.includes(email)) {
+      setSubError("Already subscribed");
+      return;
+    }
+    setAddingSub(true);
+    setSubError(null);
+    try {
+      await apiFetch(`/api/courses/${courseId}/subscriptions`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email }),
+      });
+      setSubscriptions([...subscriptions, email]);
+      setNewEmail("");
+    } catch (err) {
+      setSubError(err instanceof Error ? err.message : "Failed to add");
+    } finally {
+      setAddingSub(false);
+    }
+  };
+
+  const handleRemoveSubscription = async (email: string) => {
+    setRemovingSub(email);
+    try {
+      await apiFetch(`/api/courses/${courseId}/subscriptions`, {
+        method: "DELETE",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email }),
+      });
+      setSubscriptions(subscriptions.filter((e) => e !== email));
+    } catch {
+      // silently ignore — user can retry
+    } finally {
+      setRemovingSub(null);
     }
   };
 
@@ -380,6 +434,62 @@ export function CourseEditor({
             {courseSaving ? "Saving…" : "Save course"}
           </button>
         </div>
+      </section>
+
+      {/* Completion Alerts */}
+      <section className="rounded-xl border border-gray-200 dark:border-[#2e2e3a] bg-white dark:bg-[#1c1c24] p-6">
+        <h2 className="text-sm font-semibold text-gray-900 dark:text-gray-100 mb-1">
+          Completion Alerts
+        </h2>
+        <p className="text-xs text-gray-500 dark:text-gray-400 mb-4">
+          Email addresses that will be notified when an employee completes this course.
+        </p>
+
+        <div className="flex items-center gap-2 mb-3">
+          <input
+            type="email"
+            value={newEmail}
+            onChange={(e) => { setNewEmail(e.target.value); setSubError(null); }}
+            onKeyDown={(e) => { if (e.key === "Enter") void handleAddSubscription(); }}
+            placeholder="email@example.com"
+            className="flex-1 rounded-lg border border-gray-300 dark:border-[#3a3a48] bg-white dark:bg-[#18181f] text-sm text-gray-900 dark:text-gray-100 px-3 py-2 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-brand-500"
+          />
+          <button
+            onClick={() => void handleAddSubscription()}
+            disabled={addingSub}
+            className="rounded-lg bg-brand-600 hover:bg-brand-700 disabled:opacity-50 text-white text-sm font-medium px-4 py-2 transition-colors"
+          >
+            {addingSub ? "Adding…" : "Add"}
+          </button>
+        </div>
+
+        {subError && (
+          <p className="text-xs text-red-600 dark:text-red-400 mb-3">{subError}</p>
+        )}
+
+        {subscriptions.length === 0 ? (
+          <p className="text-xs text-gray-400 dark:text-gray-500 italic">
+            No subscribers yet.
+          </p>
+        ) : (
+          <ul className="space-y-1">
+            {subscriptions.map((email) => (
+              <li
+                key={email}
+                className="flex items-center justify-between rounded-lg px-3 py-2 bg-gray-50 dark:bg-[#18181f]"
+              >
+                <span className="text-sm text-gray-700 dark:text-gray-300">{email}</span>
+                <button
+                  onClick={() => void handleRemoveSubscription(email)}
+                  disabled={removingSub === email}
+                  className="text-xs text-red-500 hover:text-red-700 disabled:opacity-50"
+                >
+                  {removingSub === email ? "Removing…" : "Remove"}
+                </button>
+              </li>
+            ))}
+          </ul>
+        )}
       </section>
 
       {/* Modules & Lessons */}

@@ -3,6 +3,7 @@ import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { awardXp } from "@/lib/xp";
 import { trackEvent } from "@/lib/posthog-server";
+import { sendCourseCompletionEmail } from "@/lib/email";
 
 type Params = { params: Promise<{ id: string; moduleId: string; lessonId: string }> };
 
@@ -62,6 +63,20 @@ export async function POST(_request: Request, { params }: Params) {
       if (completedCount >= allLessonIds.length) {
         await awardXp(userId, 100);
         trackEvent(userId, "course_completed", { courseId });
+
+        // Send completion alert emails
+        const [subs, courseData, userData] = await Promise.all([
+          prisma.courseEmailSubscription.findMany({ where: { courseId }, select: { email: true } }),
+          prisma.course.findUnique({ where: { id: courseId }, select: { title: true } }),
+          prisma.user.findUnique({ where: { id: userId }, select: { name: true, email: true } }),
+        ]);
+        if (subs.length > 0) {
+          sendCourseCompletionEmail(
+            subs.map((s) => s.email),
+            userData?.name ?? userData?.email ?? "A user",
+            courseData?.title ?? "a course",
+          ).catch((err) => console.error("[email] completion alert failed:", err));
+        }
       }
     }
   } catch {

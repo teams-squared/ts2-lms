@@ -3,6 +3,7 @@ import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { awardXp } from "@/lib/xp";
 import { trackEvent } from "@/lib/posthog-server";
+import { sendCourseCompletionEmail } from "@/lib/email";
 
 type Params = { params: Promise<{ id: string; moduleId: string; lessonId: string }> };
 
@@ -195,6 +196,42 @@ export async function POST(request: Request, { params }: Params) {
     percentage,
     passed,
   });
+
+  // Check if entire course is now complete (quiz may have been the last lesson)
+  if (passed) {
+    try {
+      const allModules = await prisma.module.findMany({
+        where: { courseId },
+        include: { lessons: { select: { id: true } } },
+      });
+      const allLessonIds = allModules.flatMap((m) => m.lessons.map((l) => l.id));
+      if (allLessonIds.length > 0) {
+        const completedCount = await prisma.lessonProgress.count({
+          where: { userId, lessonId: { in: allLessonIds }, completedAt: { not: null } },
+        });
+        if (completedCount >= allLessonIds.length) {
+          await awardXp(userId, 100);
+          trackEvent(userId, "course_completed", { courseId });
+
+          // Send completion alert emails
+          const [subs, courseData, userData] = await Promise.all([
+            prisma.courseEmailSubscription.findMany({ where: { courseId }, select: { email: true } }),
+            prisma.course.findUnique({ where: { id: courseId }, select: { title: true } }),
+            prisma.user.findUnique({ where: { id: userId }, select: { name: true, email: true } }),
+          ]);
+          if (subs.length > 0) {
+            sendCourseCompletionEmail(
+              subs.map((s) => s.email),
+              userData?.name ?? userData?.email ?? "A user",
+              courseData?.title ?? "a course",
+            ).catch((err) => console.error("[email] completion alert failed:", err));
+          }
+        }
+      }
+    } catch {
+      // Course completion check is non-critical
+    }
+  }
 
   return NextResponse.json({
     score: correctCount,
