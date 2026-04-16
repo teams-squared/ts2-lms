@@ -1,7 +1,7 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
 import { NextResponse } from "next/server";
 import { mockPrisma } from "../mocks/prisma";
-import { mockAuth, mockSession } from "../mocks/auth";
+import { mockAuth } from "../mocks/auth";
 
 vi.mock("@/lib/prisma", () => ({ prisma: mockPrisma }));
 vi.mock("@/lib/auth", () => ({ auth: mockAuth }));
@@ -107,7 +107,7 @@ describe("POST /api/admin/enrollments/batch", () => {
         course: { id: "c2", title: "Course Two" },
       });
 
-    mockPrisma.$transaction.mockImplementation(async (cb: Function) => cb(mockTx));
+    mockPrisma.$transaction.mockImplementation(async (cb: (tx: typeof mockTx) => Promise<unknown>) => cb(mockTx));
 
     const res = await POST(makeReq({ userId: "u1", courseIds: ["c1", "c2"] }));
     expect(res.status).toBe(201);
@@ -141,7 +141,7 @@ describe("POST /api/admin/enrollments/batch", () => {
       course: { id: "c2", title: "Course Two" },
     });
 
-    mockPrisma.$transaction.mockImplementation(async (cb: Function) => cb(mockTx));
+    mockPrisma.$transaction.mockImplementation(async (cb: (tx: typeof mockTx) => Promise<unknown>) => cb(mockTx));
 
     const res = await POST(makeReq({ userId: "u1", courseIds: ["c1", "c2"] }));
     expect(res.status).toBe(201);
