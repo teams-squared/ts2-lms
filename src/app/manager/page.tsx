@@ -85,7 +85,7 @@ export default async function ManagerPage() {
               href="/manager/assignments"
               className="inline-flex items-center gap-2 rounded-lg border border-gray-300 dark:border-[#3a3a48] bg-white dark:bg-[#1c1c24] text-gray-700 dark:text-gray-300 text-sm font-medium px-4 py-2.5 transition-colors hover:bg-gray-50 dark:hover:bg-[#1e1e28]"
             >
-              Manage assignments
+              Manage enrollments
             </Link>
           </>
         )}

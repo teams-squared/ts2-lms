@@ -94,12 +94,14 @@ export const mockPrisma = {
     deleteMany: vi.fn(),
   },
   $transaction: vi.fn((ops: unknown[]) => Promise.all(ops)),
-  assignment: {
+  courseNode: {
     findUnique: vi.fn(),
     findMany: vi.fn(),
     create: vi.fn(),
+    update: vi.fn(),
     delete: vi.fn(),
-    count: vi.fn(),
+    updateMany: vi.fn(),
+    aggregate: vi.fn(),
   },
   notification: {
     findMany: vi.fn(),

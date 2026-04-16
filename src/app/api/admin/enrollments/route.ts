@@ -65,7 +65,7 @@ export async function POST(request: Request) {
   }
 
   const enrollment = await prisma.enrollment.create({
-    data: { userId, courseId },
+    data: { userId, courseId, enrolledById: enrolledBy },
     include: {
       user: { select: { id: true, name: true, email: true } },
       course: { select: { id: true, title: true } },

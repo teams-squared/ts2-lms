@@ -7,7 +7,8 @@ const TABS = [
   { href: "/admin", label: "Overview", exact: true },
   { href: "/admin/users", label: "Users", exact: false },
   { href: "/admin/courses", label: "Courses", exact: false },
-  { href: "/admin/assignments", label: "Assignments", exact: false },
+  { href: "/admin/nodes", label: "Nodes", exact: false },
+  { href: "/admin/assignments", label: "Enrollments", exact: false },
   { href: "/admin/analytics", label: "Analytics", exact: false },
 ];
 

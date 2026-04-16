@@ -5,29 +5,46 @@ import Link from "next/link";
 import { prisma } from "@/lib/prisma";
 import { prismaStatusToApp } from "@/lib/types";
 import { checkCourseEligibility } from "@/lib/course-eligibility";
+import { getNodeTree, getDescendantCourseIds, countCoursesInSubtree } from "@/lib/courseNodes";
 import { CourseCard } from "@/components/courses/CourseCard";
 import { SearchBar } from "@/components/courses/SearchBar";
+import { CatalogSidebar } from "@/components/courses/CatalogSidebar";
 import { GraduationCapIcon, BookOpenIcon, ChevronRightIcon } from "@/components/icons";
 import { Breadcrumbs } from "@/components/ui/Breadcrumbs";
 import type { Prisma } from "@prisma/client";
 import type { Role } from "@/lib/types";
+import type { SidebarNode } from "@/components/courses/CatalogSidebar";
+import type { NodeWithChildren } from "@/lib/courseNodes";
 
 export const dynamic = "force-dynamic";
+
+/** Convert NodeWithChildren to SidebarNode (with recursive course counts) */
+function toSidebarNode(node: NodeWithChildren): SidebarNode {
+  return {
+    id: node.id,
+    name: node.name,
+    courseCount: countCoursesInSubtree(node),
+    children: node.children.map(toSidebarNode),
+  };
+}
 
 export default async function CourseCatalogPage({
   searchParams,
 }: {
-  searchParams: Promise<{ q?: string; status?: string; tab?: string; category?: string }>;
+  searchParams: Promise<{ q?: string; status?: string; tab?: string; node?: string; category?: string }>;
 }) {
   const session = await auth();
   if (!session) redirect("/login");
 
-  const { q: searchQuery, status: statusFilter, tab, category: categoryFilter } = await searchParams;
+  const { q: searchQuery, status: statusFilter, tab, node: nodeFilter } = await searchParams;
   const isPrivileged =
     session.user?.role === "admin" || session.user?.role === "manager";
-  // Non-privileged users only see their enrolled courses — no "All Courses" tab
   const activeTab = isPrivileged && tab !== "my" ? "all" : "my";
   const userId = session.user?.id;
+
+  // Fetch node tree for sidebar (only needed for "all" tab, but light query)
+  const nodeTree = await getNodeTree({ publishedOnly: true });
+  const sidebarNodes = nodeTree.map(toSidebarNode);
 
   // ─── My Courses tab ────────────────────────────────────────────────────────
   type CourseWithMeta = {
@@ -37,7 +54,6 @@ export default async function CourseCatalogPage({
     thumbnail: string | null;
     status: string;
     createdBy: { name: string | null; email: string };
-    source: "enrolled" | "assigned";
     progressPercent?: number;
     completedLessons?: number;
     totalLessons?: number;
@@ -46,31 +62,20 @@ export default async function CourseCatalogPage({
   const myCourses: CourseWithMeta[] = await (async () => {
     if (activeTab !== "my" || !userId) return [];
 
-    const [enrollments, assignments] = await Promise.all([
-      prisma.enrollment.findMany({
-        where: { userId },
-        include: {
-          course: {
-            include: {
-              createdBy: { select: { name: true, email: true } },
-              modules: {
-                include: { lessons: { select: { id: true } } },
-              },
+    const enrollments = await prisma.enrollment.findMany({
+      where: { userId },
+      include: {
+        course: {
+          include: {
+            createdBy: { select: { name: true, email: true } },
+            modules: {
+              include: { lessons: { select: { id: true } } },
             },
           },
         },
-      }),
-      prisma.assignment.findMany({
-        where: { userId },
-        include: {
-          course: {
-            include: { createdBy: { select: { name: true, email: true } } },
-          },
-        },
-      }),
-    ]);
+      },
+    });
 
-    // Compute progress for enrolled courses in a single batch query
     const allLessonIds = enrollments.flatMap((e) =>
       e.course.modules.flatMap((m) => m.lessons.map((l) => l.id)),
     );
@@ -98,24 +103,9 @@ export default async function CourseCatalogPage({
           thumbnail: e.course.thumbnail,
           status: prismaStatusToApp(e.course.status),
           createdBy: e.course.createdBy,
-          source: "enrolled",
           progressPercent: total > 0 ? Math.round((completed / total) * 100) : undefined,
           completedLessons: total > 0 ? completed : undefined,
           totalLessons: total > 0 ? total : undefined,
-        });
-      }
-    }
-    for (const a of assignments) {
-      if (!seen.has(a.courseId)) {
-        seen.add(a.courseId);
-        result.push({
-          id: a.course.id,
-          title: a.course.title,
-          description: a.course.description,
-          thumbnail: a.course.thumbnail,
-          status: prismaStatusToApp(a.course.status),
-          createdBy: a.course.createdBy,
-          source: "assigned",
         });
       }
     }
@@ -151,14 +141,21 @@ export default async function CourseCatalogPage({
     };
   }
 
-  let categoryWhere: Prisma.CourseWhereInput = {};
-  if (categoryFilter && categoryFilter !== "all") {
-    categoryWhere = { category: categoryFilter };
+  // Node-based filtering: get all descendant course IDs
+  let nodeWhere: Prisma.CourseWhereInput = {};
+  if (nodeFilter) {
+    const descendantIds = getDescendantCourseIds(nodeTree, nodeFilter);
+    if (descendantIds.length > 0) {
+      nodeWhere = { id: { in: descendantIds } };
+    } else {
+      // Node exists but has no courses — show nothing
+      nodeWhere = { id: { equals: "___none___" } };
+    }
   }
 
   const filters: Prisma.CourseWhereInput[] = [visibilityFilter];
   if (searchQuery?.trim()) filters.push(searchFilter);
-  if (categoryFilter && categoryFilter !== "all") filters.push(categoryWhere);
+  if (nodeFilter) filters.push(nodeWhere);
 
   const where: Prisma.CourseWhereInput =
     filters.length > 1 ? { AND: filters } : filters[0];
@@ -198,7 +195,7 @@ export default async function CourseCatalogPage({
   return (
     <div>
       <div className="bg-page-header-gradient">
-        <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 pt-10 pb-6">
+        <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 pt-10 pb-6">
           <Breadcrumbs items={[{ label: "Home", href: "/" }, { label: "Courses" }]} />
           <h1 className="text-2xl font-bold text-gray-900 dark:text-gray-100 tracking-tight mb-1 flex items-center gap-2">
             <GraduationCapIcon className="w-6 h-6" />
@@ -209,7 +206,7 @@ export default async function CourseCatalogPage({
           </p>
         </div>
       </div>
-      <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 pb-10">
+      <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 pb-10">
 
       {/* Tabs — only shown for admins/managers who have both views */}
       {isPrivileged && (
@@ -237,114 +234,128 @@ export default async function CourseCatalogPage({
         </div>
       )}
 
-      {/* All Courses tab content */}
+      {/* All Courses tab content — with sidebar layout */}
       {activeTab === "all" && (
-        <>
-          {/* Category filter */}
-          <div className="flex items-center gap-2 mb-4">
-            <span className="text-xs text-gray-500 dark:text-gray-400">Category:</span>
-            {["all", "onboarding", "cybersecurity", "hr"].map((cat) => {
-              const CATEGORY_LABELS: Record<string, string> = {
-                all: "All",
-                onboarding: "Onboarding",
-                cybersecurity: "Cybersecurity",
-                hr: "HR",
-              };
-              const isActive = cat === "all" ? !categoryFilter || categoryFilter === "all" : categoryFilter === cat;
-              const base = "/courses";
-              const qp = new URLSearchParams();
-              if (searchQuery) qp.set("q", searchQuery);
-              if (statusFilter) qp.set("status", statusFilter);
-              if (cat !== "all") qp.set("category", cat);
-              const href = qp.toString() ? `${base}?${qp.toString()}` : base;
-              return (
+        <div className="flex gap-6">
+          {/* Sidebar */}
+          {sidebarNodes.length > 0 && (
+            <aside className="hidden lg:block w-56 flex-shrink-0">
+              <div className="sticky top-[4.5rem] rounded-xl border border-gray-200/80 dark:border-[#2e2e3a] bg-white dark:bg-[#1c1c24] shadow-card p-3">
+                <p className="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider mb-2 px-2">
+                  Categories
+                </p>
+                <Suspense fallback={null}>
+                  <CatalogSidebar nodes={sidebarNodes} activeNodeId={nodeFilter ?? null} />
+                </Suspense>
+              </div>
+            </aside>
+          )}
+
+          {/* Main content */}
+          <div className="flex-1 min-w-0">
+            <div className="flex flex-wrap items-center gap-3 mb-6">
+              <Suspense fallback={null}>
+                <SearchBar initialQuery={searchQuery ?? ""} />
+              </Suspense>
+
+              {isPrivileged && (
+                <div className="flex items-center gap-2">
+                  <span className="text-xs text-gray-500 dark:text-gray-400">Status:</span>
+                  {["all", "published", "draft", "archived"].map((s) => {
+                    const isActive = s === "all" ? !statusFilter : statusFilter === s;
+                    const href =
+                      s === "all"
+                        ? `/courses${searchQuery ? `?q=${encodeURIComponent(searchQuery)}` : ""}${nodeFilter ? `${searchQuery ? "&" : "?"}node=${nodeFilter}` : ""}`
+                        : `/courses?${searchQuery ? `q=${encodeURIComponent(searchQuery)}&` : ""}status=${s}${nodeFilter ? `&node=${nodeFilter}` : ""}`;
+                    return (
+                      <a
+                        key={s}
+                        href={href}
+                        className={`text-xs px-2.5 py-1 rounded-full border transition-colors capitalize ${
+                          isActive
+                            ? "border-brand-500 bg-brand-50 dark:bg-brand-950/20 text-brand-700 dark:text-brand-300"
+                            : "border-gray-200 dark:border-[#3a3a48] text-gray-500 dark:text-gray-400 hover:border-brand-400"
+                        }`}
+                      >
+                        {s}
+                      </a>
+                    );
+                  })}
+                </div>
+              )}
+            </div>
+
+            {/* Mobile node filter (pills for small screens) */}
+            {sidebarNodes.length > 0 && (
+              <div className="flex flex-wrap items-center gap-2 mb-4 lg:hidden">
+                <span className="text-xs text-gray-500 dark:text-gray-400">Category:</span>
                 <a
-                  key={cat}
-                  href={href}
+                  href={`/courses${searchQuery ? `?q=${encodeURIComponent(searchQuery)}` : ""}${statusFilter ? `${searchQuery ? "&" : "?"}status=${statusFilter}` : ""}`}
                   className={`text-xs px-2.5 py-1 rounded-full border transition-colors ${
-                    isActive
+                    !nodeFilter
                       ? "border-brand-500 bg-brand-50 dark:bg-brand-950/20 text-brand-700 dark:text-brand-300"
                       : "border-gray-200 dark:border-[#3a3a48] text-gray-500 dark:text-gray-400 hover:border-brand-400"
                   }`}
                 >
-                  {CATEGORY_LABELS[cat] ?? cat}
+                  All
                 </a>
-              );
-            })}
-          </div>
+                {sidebarNodes.map((n) => (
+                  <a
+                    key={n.id}
+                    href={`/courses?node=${n.id}${searchQuery ? `&q=${encodeURIComponent(searchQuery)}` : ""}${statusFilter ? `&status=${statusFilter}` : ""}`}
+                    className={`text-xs px-2.5 py-1 rounded-full border transition-colors ${
+                      nodeFilter === n.id
+                        ? "border-brand-500 bg-brand-50 dark:bg-brand-950/20 text-brand-700 dark:text-brand-300"
+                        : "border-gray-200 dark:border-[#3a3a48] text-gray-500 dark:text-gray-400 hover:border-brand-400"
+                    }`}
+                  >
+                    {n.name}
+                  </a>
+                ))}
+              </div>
+            )}
 
-          <div className="flex flex-wrap items-center gap-3 mb-6">
-            <Suspense fallback={null}>
-              <SearchBar initialQuery={searchQuery ?? ""} />
-            </Suspense>
+            {searchQuery && (
+              <p className="text-sm text-gray-500 dark:text-gray-400 mb-4">
+                {allCourses.length} result{allCourses.length !== 1 ? "s" : ""} for &ldquo;{searchQuery}&rdquo;
+              </p>
+            )}
 
-            {isPrivileged && (
-              <div className="flex items-center gap-2">
-                <span className="text-xs text-gray-500 dark:text-gray-400">Status:</span>
-                {["all", "published", "draft", "archived"].map((s) => {
-                  const isActive = s === "all" ? !statusFilter : statusFilter === s;
-                  const href =
-                    s === "all"
-                      ? `/courses${searchQuery ? `?q=${encodeURIComponent(searchQuery)}` : ""}`
-                      : `/courses?${searchQuery ? `q=${encodeURIComponent(searchQuery)}&` : ""}status=${s}`;
+            {allCourses.length === 0 ? (
+              <div className="text-center py-20">
+                <GraduationCapIcon className="w-12 h-12 text-gray-300 dark:text-gray-600 mx-auto mb-4" />
+                <p className="text-base font-medium text-gray-700 dark:text-gray-300 mb-2">
+                  {searchQuery ? "No courses found" : "No courses available yet"}
+                </p>
+                <p className="text-sm text-gray-500 dark:text-gray-400 max-w-sm mx-auto">
+                  {searchQuery
+                    ? `We couldn\u2019t find any courses matching \u201c${searchQuery}\u201d. Try a different search term.`
+                    : "New courses are being added regularly. Check back soon!"}
+                </p>
+              </div>
+            ) : (
+              <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-5">
+                {allCourses.map((course) => {
+                  const elig = eligibilityMap.get(course.id);
                   return (
-                    <a
-                      key={s}
-                      href={href}
-                      className={`text-xs px-2.5 py-1 rounded-full border transition-colors capitalize ${
-                        isActive
-                          ? "border-brand-500 bg-brand-50 dark:bg-brand-950/20 text-brand-700 dark:text-brand-300"
-                          : "border-gray-200 dark:border-[#3a3a48] text-gray-500 dark:text-gray-400 hover:border-brand-400"
-                      }`}
-                    >
-                      {s}
-                    </a>
+                    <CourseCard
+                      key={course.id}
+                      id={course.id}
+                      title={course.title}
+                      description={course.description}
+                      status={prismaStatusToApp(course.status)}
+                      thumbnail={course.thumbnail}
+                      createdBy={course.createdBy}
+                      locked={elig?.locked}
+                      lockReason={elig?.lockReason}
+                      showStatus={isPrivileged}
+                    />
                   );
                 })}
               </div>
             )}
           </div>
-
-          {searchQuery && (
-            <p className="text-sm text-gray-500 dark:text-gray-400 mb-4">
-              {allCourses.length} result{allCourses.length !== 1 ? "s" : ""} for &ldquo;{searchQuery}&rdquo;
-            </p>
-          )}
-
-          {allCourses.length === 0 ? (
-            <div className="text-center py-20">
-              <GraduationCapIcon className="w-12 h-12 text-gray-300 dark:text-gray-600 mx-auto mb-4" />
-              <p className="text-base font-medium text-gray-700 dark:text-gray-300 mb-2">
-                {searchQuery ? "No courses found" : "No courses available yet"}
-              </p>
-              <p className="text-sm text-gray-500 dark:text-gray-400 max-w-sm mx-auto">
-                {searchQuery
-                  ? `We couldn\u2019t find any courses matching \u201c${searchQuery}\u201d. Try a different search term.`
-                  : "New courses are being added regularly. Check back soon!"}
-              </p>
-            </div>
-          ) : (
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
-              {allCourses.map((course) => {
-                const elig = eligibilityMap.get(course.id);
-                return (
-                  <CourseCard
-                    key={course.id}
-                    id={course.id}
-                    title={course.title}
-                    description={course.description}
-                    status={prismaStatusToApp(course.status)}
-                    thumbnail={course.thumbnail}
-                    createdBy={course.createdBy}
-                    locked={elig?.locked}
-                    lockReason={elig?.lockReason}
-                    showStatus={isPrivileged}
-                  />
-                );
-              })}
-            </div>
-          )}
-        </>
+        </div>
       )}
 
       {/* My Courses tab content */}
@@ -358,7 +369,7 @@ export default async function CourseCatalogPage({
               </p>
               <p className="text-sm text-gray-500 dark:text-gray-400 mb-6">
                 {isPrivileged
-                  ? "You haven\u2019t enrolled in or been assigned any courses yet."
+                  ? "You haven\u2019t been enrolled in any courses yet."
                   : "No courses have been assigned to you yet. Contact your administrator."}
               </p>
               {isPrivileged && (
@@ -374,27 +385,19 @@ export default async function CourseCatalogPage({
           ) : (
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
               {myCourses.map((course) => (
-                <div key={course.id} className="relative">
-                  {course.source === "assigned" && (
-                    <div className="absolute top-2 right-2 z-10">
-                      <span className="text-xs font-semibold px-2 py-0.5 rounded-full bg-amber-100 dark:bg-amber-900/30 text-amber-700 dark:text-amber-300 border border-amber-200 dark:border-amber-700/50">
-                        Assigned
-                      </span>
-                    </div>
-                  )}
-                  <CourseCard
-                    id={course.id}
-                    title={course.title}
-                    description={course.description}
-                    status={course.status as import("@/lib/types").CourseStatus}
-                    thumbnail={course.thumbnail}
-                    createdBy={course.createdBy}
-                    showStatus={isPrivileged}
-                    progressPercent={course.progressPercent}
-                    completedLessons={course.completedLessons}
-                    totalLessons={course.totalLessons}
-                  />
-                </div>
+                <CourseCard
+                  key={course.id}
+                  id={course.id}
+                  title={course.title}
+                  description={course.description}
+                  status={course.status as import("@/lib/types").CourseStatus}
+                  thumbnail={course.thumbnail}
+                  createdBy={course.createdBy}
+                  showStatus={isPrivileged}
+                  progressPercent={course.progressPercent}
+                  completedLessons={course.completedLessons}
+                  totalLessons={course.totalLessons}
+                />
               ))}
             </div>
           )}
