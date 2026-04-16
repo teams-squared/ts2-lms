@@ -110,6 +110,7 @@ export default async function ManagerCourseEditPage({
       type: prismaLessonTypeToApp(l.type),
       content: l.content,
       order: l.order,
+      deadlineDays: l.deadlineDays,
     })),
   }));
 

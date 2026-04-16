@@ -10,7 +10,10 @@ import {
   ChevronRightIcon,
   CheckCircleIcon,
   BookOpenIcon,
+  ClockIcon,
 } from "@/components/icons";
+import { computeDeadline, getDeadlineStatus, formatDeadlineRelative } from "@/lib/deadlines";
+import type { DeadlineStatus } from "@/lib/deadlines";
 import type { Role } from "@/lib/types";
 
 export const dynamic = "force-dynamic";
@@ -86,7 +89,7 @@ export default async function HomePage() {
               include: {
                 lessons: {
                   orderBy: { order: "asc" },
-                  select: { id: true },
+                  select: { id: true, title: true, deadlineDays: true },
                 },
               },
             },
@@ -133,6 +136,45 @@ export default async function HomePage() {
       : [];
 
   const completedIdSet = new Set(completedProgressRecords.map((p) => p.lessonId));
+
+  // Compute upcoming deadlines across all enrollments
+  const deadlineItems: {
+    lessonId: string;
+    lessonTitle: string;
+    courseId: string;
+    courseTitle: string;
+    absoluteDeadline: Date;
+    status: DeadlineStatus;
+    relativeText: string;
+  }[] = [];
+  for (const e of enrollments) {
+    for (const m of e.course.modules) {
+      for (const l of m.lessons) {
+        if (l.deadlineDays == null) continue;
+        if (completedIdSet.has(l.id)) continue; // already done
+        const deadline = computeDeadline(e.enrolledAt, l.deadlineDays);
+        const status = getDeadlineStatus(e.enrolledAt, l.deadlineDays, null);
+        if (status === "none" || status === "completed") continue;
+        deadlineItems.push({
+          lessonId: l.id,
+          lessonTitle: l.title,
+          courseId: e.course.id,
+          courseTitle: e.course.title,
+          absoluteDeadline: deadline,
+          status,
+          relativeText: formatDeadlineRelative(deadline),
+        });
+      }
+    }
+  }
+  // Sort: overdue first, then due-soon, then upcoming — by deadline date
+  const statusPriority: Record<string, number> = { overdue: 0, "due-soon": 1, upcoming: 2 };
+  deadlineItems.sort(
+    (a, b) =>
+      (statusPriority[a.status] ?? 3) - (statusPriority[b.status] ?? 3) ||
+      a.absoluteDeadline.getTime() - b.absoluteDeadline.getTime(),
+  );
+  const topDeadlines = deadlineItems.slice(0, 5);
 
   const enrichedEnrollments = enrollments.map((e) => {
     const allLessons = e.course.modules.flatMap((m) => m.lessons);
@@ -282,6 +324,45 @@ export default async function HomePage() {
             </div>
           )}
         </section>
+
+        {/* ── Upcoming Deadlines ─────────────────────────────────────────── */}
+        {topDeadlines.length > 0 && (
+          <section>
+            <h2 className="text-base font-semibold text-gray-900 dark:text-gray-100 mb-4 flex items-center gap-2">
+              <ClockIcon className="w-4 h-4" />
+              Upcoming Deadlines
+            </h2>
+            <div className="rounded-xl border border-gray-200/80 dark:border-[#2e2e3a] bg-white dark:bg-[#1c1c24] shadow-card divide-y divide-gray-100 dark:divide-[#26262e]">
+              {topDeadlines.map((item) => (
+                <Link
+                  key={item.lessonId}
+                  href={`/courses/${item.courseId}/lessons/${item.lessonId}`}
+                  className="flex items-center justify-between px-4 py-3 hover:bg-gray-50 dark:hover:bg-[#1e1e28] transition-colors"
+                >
+                  <div className="min-w-0">
+                    <p className="text-sm font-medium text-gray-900 dark:text-gray-100 truncate">
+                      {item.lessonTitle}
+                    </p>
+                    <p className="text-xs text-gray-500 dark:text-gray-400 truncate">
+                      {item.courseTitle}
+                    </p>
+                  </div>
+                  <span
+                    className={`flex-shrink-0 ml-3 text-xs font-medium px-2 py-0.5 rounded-full ${
+                      item.status === "overdue"
+                        ? "bg-red-100 dark:bg-red-900/30 text-red-700 dark:text-red-300"
+                        : item.status === "due-soon"
+                          ? "bg-amber-100 dark:bg-amber-900/30 text-amber-700 dark:text-amber-300"
+                          : "bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-400"
+                    }`}
+                  >
+                    {item.relativeText}
+                  </span>
+                </Link>
+              ))}
+            </div>
+          </section>
+        )}
 
         {/* ── Recent Activity ───────────────────────────────────────────────── */}
         {recentProgress.length > 0 && (

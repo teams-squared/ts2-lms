@@ -87,6 +87,7 @@ model Lesson {
   type          LessonType       @default(TEXT)
   content       String?
   order         Int
+  deadlineDays  Int?
   moduleId      String
   module        Module           @relation(fields: [moduleId], references: [id], onDelete: Cascade)
   progress      LessonProgress[]

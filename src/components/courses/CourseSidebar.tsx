@@ -2,8 +2,9 @@
 
 import { useState } from "react";
 import Link from "next/link";
-import { ChevronLeftIcon, CheckCircleIcon, HamburgerIcon, CloseIcon, DocumentTextIcon, VideoIcon, QuizIcon, PaperclipIcon } from "@/components/icons";
+import { ChevronLeftIcon, CheckCircleIcon, HamburgerIcon, CloseIcon, DocumentTextIcon, VideoIcon, QuizIcon, PaperclipIcon, ClockIcon } from "@/components/icons";
 import type { LessonType } from "@/lib/types";
+import type { DeadlineInfo } from "@/lib/deadlines";
 
 interface Lesson {
   id: string;
@@ -33,6 +34,7 @@ export function CourseSidebar({
   courseTitle,
   completedLessonIds = new Set(),
   percentComplete = 0,
+  deadlineInfoMap,
 }: {
   modules: Module[];
   courseId: string;
@@ -40,6 +42,7 @@ export function CourseSidebar({
   courseTitle: string;
   completedLessonIds?: Set<string>;
   percentComplete?: number;
+  deadlineInfoMap?: Record<string, DeadlineInfo>;
 }) {
   const [mobileOpen, setMobileOpen] = useState(false);
   const totalLessons = modules.reduce((sum, m) => sum + m.lessons.length, 0);
@@ -106,6 +109,21 @@ export function CourseSidebar({
                   >
                     {(() => { const LessonIcon = LESSON_TYPE_ICON[lesson.type]; return <LessonIcon className="w-4 h-4 text-gray-400 dark:text-gray-500 flex-shrink-0" />; })()}
                     <span className="line-clamp-1 flex-1" title={lesson.title}>{lesson.title}</span>
+                    {(() => {
+                      const info = deadlineInfoMap?.[lesson.id];
+                      if (!isDone && info && (info.status === "overdue" || info.status === "due-soon")) {
+                        return (
+                          <ClockIcon
+                            className={`w-3.5 h-3.5 flex-shrink-0 ${
+                              info.status === "overdue"
+                                ? "text-red-500 dark:text-red-400"
+                                : "text-amber-500 dark:text-amber-400"
+                            }`}
+                          />
+                        );
+                      }
+                      return null;
+                    })()}
                     {isDone && (
                       <CheckCircleIcon
                         className="w-4 h-4 flex-shrink-0 text-emerald-500"

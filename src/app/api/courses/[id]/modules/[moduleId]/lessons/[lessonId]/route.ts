@@ -32,6 +32,7 @@ export async function GET(_request: Request, { params }: Params) {
     type: prismaLessonTypeToApp(lesson.type),
     content: lesson.content,
     order: lesson.order,
+    deadlineDays: lesson.deadlineDays,
     moduleId: lesson.moduleId,
     courseId: lesson.module.courseId,
   });
@@ -85,6 +86,17 @@ export async function PATCH(request: Request, { params }: Params) {
       }
     }
     data.type = appLessonTypeToPrisma(type);
+  }
+  if (body.deadlineDays !== undefined) {
+    if (body.deadlineDays === null) {
+      data.deadlineDays = null;
+    } else {
+      const days = Number(body.deadlineDays);
+      if (!Number.isInteger(days) || days < 1) {
+        return NextResponse.json({ error: "deadlineDays must be a positive integer" }, { status: 400 });
+      }
+      data.deadlineDays = days;
+    }
   }
 
   const updated = await prisma.lesson.update({

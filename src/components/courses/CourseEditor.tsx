@@ -13,6 +13,7 @@ interface Lesson {
   type: LessonType;
   content: string | null;
   order: number;
+  deadlineDays: number | null;
 }
 
 interface Module {
@@ -98,6 +99,7 @@ export function CourseEditor({
   const [editTitle, setEditTitle] = useState("");
   const [editContent, setEditContent] = useState("");
   const [editType, setEditType] = useState<LessonType>("text");
+  const [editDeadlineDays, setEditDeadlineDays] = useState<number | null>(null);
   const [editError, setEditError] = useState<string | null>(null);
   const [editSaving, setEditSaving] = useState(false);
 
@@ -245,6 +247,7 @@ export function CourseEditor({
     setEditTitle(lesson.title);
     setEditType(lesson.type);
     setEditContent(lesson.content ?? "");
+    setEditDeadlineDays(lesson.deadlineDays);
     setEditError(null);
   };
 
@@ -271,6 +274,7 @@ export function CourseEditor({
             title: editTitle,
             type: editType,
             content: editContent || null,
+            deadlineDays: editDeadlineDays,
           }),
         }
       );
@@ -645,6 +649,26 @@ export function CourseEditor({
                   />
                 </div>
               ) : null}
+
+              {/* Deadline */}
+              <div>
+                <label className="block text-xs font-medium text-gray-600 dark:text-gray-400 mb-1">
+                  Deadline (days after enrollment)
+                </label>
+                <input
+                  type="number"
+                  min="1"
+                  value={editDeadlineDays ?? ""}
+                  onChange={(e) =>
+                    setEditDeadlineDays(e.target.value ? parseInt(e.target.value, 10) : null)
+                  }
+                  placeholder="No deadline"
+                  className="w-full rounded-lg border border-gray-300 dark:border-[#3a3a48] bg-white dark:bg-[#1e1e28] text-sm text-gray-900 dark:text-gray-100 px-3 py-2 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-brand-500"
+                />
+                <p className="text-xs text-gray-400 dark:text-gray-500 mt-1">
+                  Leave empty for no deadline
+                </p>
+              </div>
 
               {editError && (
                 <p className="text-sm text-red-600 dark:text-red-400">{editError}</p>

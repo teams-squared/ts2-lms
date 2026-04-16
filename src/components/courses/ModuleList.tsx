@@ -2,8 +2,10 @@
 
 import { useState } from "react";
 import Link from "next/link";
-import { ChevronDownIcon, ChevronRightIcon, CheckCircleIcon, DocumentTextIcon, VideoIcon, QuizIcon, PaperclipIcon } from "@/components/icons";
+import { ChevronDownIcon, ChevronRightIcon, CheckCircleIcon, DocumentTextIcon, VideoIcon, QuizIcon, PaperclipIcon, ClockIcon } from "@/components/icons";
 import type { LessonType } from "@/lib/types";
+import type { DeadlineInfo } from "@/lib/deadlines";
+import { formatDeadlineRelative } from "@/lib/deadlines";
 
 interface Lesson {
   id: string;
@@ -30,10 +32,12 @@ export function ModuleList({
   modules,
   courseId,
   completedLessonIds,
+  deadlineInfoMap,
 }: {
   modules: Module[];
   courseId: string;
   completedLessonIds?: Set<string>;
+  deadlineInfoMap?: Record<string, DeadlineInfo>;
 }) {
   const [expanded, setExpanded] = useState<Set<string>>(
     new Set(modules.map((m) => m.id))
@@ -89,6 +93,26 @@ export function ModuleList({
                 >
                   {(() => { const LessonIcon = LESSON_TYPE_ICON[lesson.type]; return <LessonIcon className="w-4 h-4 text-gray-400 dark:text-gray-500 flex-shrink-0" />; })()}
                   <span className="flex-1">{lesson.title}</span>
+                  {(() => {
+                    const info = deadlineInfoMap?.[lesson.id];
+                    if (!info || info.status === "none" || info.status === "completed") return null;
+                    const deadline = new Date(info.absoluteDeadline!);
+                    if (info.status === "overdue") return (
+                      <span className="flex items-center gap-1 text-xs text-red-600 dark:text-red-400 flex-shrink-0">
+                        <ClockIcon className="w-3 h-3" />Overdue
+                      </span>
+                    );
+                    if (info.status === "due-soon") return (
+                      <span className="flex items-center gap-1 text-xs text-amber-600 dark:text-amber-400 flex-shrink-0">
+                        <ClockIcon className="w-3 h-3" />Due soon
+                      </span>
+                    );
+                    return (
+                      <span className="flex items-center gap-1 text-xs text-gray-400 dark:text-gray-500 flex-shrink-0">
+                        <ClockIcon className="w-3 h-3" />{formatDeadlineRelative(deadline)}
+                      </span>
+                    );
+                  })()}
                   {completedLessonIds?.has(lesson.id) && (
                     <CheckCircleIcon className="w-4 h-4 flex-shrink-0 text-emerald-500" />
                   )}

@@ -57,12 +57,22 @@ export async function POST(request: Request, { params }: Params) {
     select: { order: true },
   });
 
+  // Validate optional deadlineDays
+  let deadlineDays: number | null = null;
+  if (body.deadlineDays !== undefined && body.deadlineDays !== null) {
+    deadlineDays = Number(body.deadlineDays);
+    if (!Number.isInteger(deadlineDays) || deadlineDays < 1) {
+      return NextResponse.json({ error: "deadlineDays must be a positive integer" }, { status: 400 });
+    }
+  }
+
   const lesson = await prisma.lesson.create({
     data: {
       title,
       type: appLessonTypeToPrisma(type),
       content: body.content?.trim() || null,
       order: (maxOrder?.order ?? 0) + 1,
+      deadlineDays,
       moduleId,
     },
   });

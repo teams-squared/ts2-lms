@@ -8,9 +8,11 @@ import { QuizViewer } from "@/components/courses/QuizViewer";
 import { QuizBuilder } from "@/components/courses/QuizBuilder";
 import { CourseSidebar } from "@/components/courses/CourseSidebar";
 import { LessonCompleteButton } from "@/components/courses/LessonCompleteButton";
-import { CheckCircleIcon } from "@/components/icons";
+import { CheckCircleIcon, ClockIcon, AlertTriangleIcon } from "@/components/icons";
 import { Breadcrumbs } from "@/components/ui/Breadcrumbs";
 import { LessonNavigation } from "@/components/courses/LessonNavigation";
+import { computeDeadline, getDeadlineStatus, formatDeadlineRelative } from "@/lib/deadlines";
+import type { DeadlineInfo } from "@/lib/deadlines";
 
 export const dynamic = "force-dynamic";
 
@@ -69,7 +71,7 @@ export default async function LessonPage({
     include: {
       lessons: {
         orderBy: { order: "asc" },
-        select: { id: true, title: true, type: true, order: true },
+        select: { id: true, title: true, type: true, order: true, deadlineDays: true },
       },
     },
     orderBy: { order: "asc" },
@@ -95,6 +97,29 @@ export default async function LessonPage({
 
   const isCurrentLessonCompleted = completedIds.has(lessonId);
   const isCourseComplete = totalLessons > 0 && completedCount === totalLessons;
+
+  // Compute deadline info for all lessons (for sidebar indicators)
+  const allLessonsFlat2 = modules.flatMap((m) => m.lessons);
+  const deadlineInfoMap: Record<string, DeadlineInfo> = {};
+  if (enrollment) {
+    for (const l of allLessonsFlat2) {
+      if (l.deadlineDays != null) {
+        const completedAt = completedIds.has(l.id) ? new Date() : null;
+        deadlineInfoMap[l.id] = {
+          deadlineDays: l.deadlineDays,
+          absoluteDeadline: computeDeadline(enrollment.enrolledAt, l.deadlineDays).toISOString(),
+          status: getDeadlineStatus(enrollment.enrolledAt, l.deadlineDays, completedAt),
+        };
+      }
+    }
+  }
+
+  // Current lesson deadline info for the banner
+  const currentDeadlineInfo = deadlineInfoMap[lessonId] ?? null;
+  const showDeadlineBanner =
+    currentDeadlineInfo &&
+    !isCurrentLessonCompleted &&
+    (currentDeadlineInfo.status === "due-soon" || currentDeadlineInfo.status === "overdue");
 
   const sidebarModules = modules.map((m) => ({
     id: m.id,
@@ -189,6 +214,7 @@ export default async function LessonPage({
         courseTitle={course.title}
         completedLessonIds={completedIds}
         percentComplete={percentComplete}
+        deadlineInfoMap={deadlineInfoMap}
       />
 
       <main className="flex-1 overflow-y-auto">
@@ -201,6 +227,28 @@ export default async function LessonPage({
               { label: lesson.title },
             ]}
           />
+
+          {/* Deadline warning banner */}
+          {showDeadlineBanner && currentDeadlineInfo && (
+            <div className={`mb-6 flex items-center gap-3 rounded-xl border px-5 py-4 ${
+              currentDeadlineInfo.status === "overdue"
+                ? "border-red-200 dark:border-red-800/40 bg-red-50 dark:bg-red-900/20"
+                : "border-amber-200 dark:border-amber-800/40 bg-amber-50 dark:bg-amber-900/20"
+            }`}>
+              {currentDeadlineInfo.status === "overdue" ? (
+                <AlertTriangleIcon className="w-5 h-5 text-red-600 dark:text-red-400 flex-shrink-0" />
+              ) : (
+                <ClockIcon className="w-5 h-5 text-amber-600 dark:text-amber-400 flex-shrink-0" />
+              )}
+              <p className={`text-sm font-medium ${
+                currentDeadlineInfo.status === "overdue"
+                  ? "text-red-800 dark:text-red-200"
+                  : "text-amber-800 dark:text-amber-200"
+              }`}>
+                {formatDeadlineRelative(new Date(currentDeadlineInfo.absoluteDeadline!))}
+              </p>
+            </div>
+          )}
 
           {/* Course complete banner */}
           {isCourseComplete && (

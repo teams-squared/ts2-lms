@@ -75,6 +75,8 @@ export function appLessonTypeToPrisma(type: LessonType): PrismaLessonType {
 
 // ─── Progress types ────────────────────────────────────────────────────────
 
+import type { DeadlineStatus } from "@/lib/deadlines";
+
 export interface CourseProgress {
   enrolled: boolean;
   enrolledAt: string | null;
@@ -85,5 +87,8 @@ export interface CourseProgress {
     lessonId: string;
     completed: boolean;
     completedAt: string | null;
+    deadlineDays: number | null;
+    absoluteDeadline: string | null;
+    deadlineStatus: DeadlineStatus;
   }[];
 }

@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
+import { computeDeadline, getDeadlineStatus } from "@/lib/deadlines";
 import type { CourseProgress } from "@/lib/types";
 
 type Params = { params: Promise<{ id: string }> };
@@ -22,9 +23,11 @@ export async function GET(_request: Request, { params }: Params) {
   // Fetch all lesson IDs for this course
   const modules = await prisma.module.findMany({
     where: { courseId },
-    include: { lessons: { select: { id: true } } },
+    include: { lessons: { select: { id: true, deadlineDays: true } } },
   });
-  const allLessonIds = modules.flatMap((m) => m.lessons.map((l) => l.id));
+  const allLessons = modules.flatMap((m) => m.lessons);
+  const allLessonIds = allLessons.map((l) => l.id);
+  const lessonDeadlineMap = new Map(allLessons.map((l) => [l.id, l.deadlineDays]));
 
   if (!enrollment) {
     const progress: CourseProgress = {
@@ -37,6 +40,9 @@ export async function GET(_request: Request, { params }: Params) {
         lessonId: id,
         completed: false,
         completedAt: null,
+        deadlineDays: lessonDeadlineMap.get(id) ?? null,
+        absoluteDeadline: null,
+        deadlineStatus: "none" as const,
       })),
     };
     return NextResponse.json(progress);
@@ -60,10 +66,18 @@ export async function GET(_request: Request, { params }: Params) {
     percentComplete,
     lessons: allLessonIds.map((id) => {
       const record = progressMap.get(id);
+      const deadlineDays = lessonDeadlineMap.get(id) ?? null;
+      const completedAt = record?.completedAt ?? null;
+      const absoluteDeadline = deadlineDays != null
+        ? computeDeadline(enrollment.enrolledAt, deadlineDays).toISOString()
+        : null;
       return {
         lessonId: id,
-        completed: record?.completedAt != null,
-        completedAt: record?.completedAt?.toISOString() ?? null,
+        completed: completedAt != null,
+        completedAt: completedAt?.toISOString() ?? null,
+        deadlineDays,
+        absoluteDeadline,
+        deadlineStatus: getDeadlineStatus(enrollment.enrolledAt, deadlineDays, completedAt),
       };
     }),
   };

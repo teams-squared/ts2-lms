@@ -1,4 +1,5 @@
 import { prisma } from "@/lib/prisma";
+import { computeDeadline } from "@/lib/deadlines";
 
 export const dynamic = "force-dynamic";
 
@@ -20,7 +21,7 @@ export default async function AdminAnalyticsPage() {
     select: {
       id: true,
       title: true,
-      modules: { select: { lessons: { select: { id: true } } } },
+      modules: { select: { lessons: { select: { id: true, deadlineDays: true } } } },
       _count: { select: { enrollments: true } },
     },
     orderBy: { title: "asc" },
@@ -52,7 +53,52 @@ export default async function AdminAnalyticsPage() {
       enrolledCount,
       totalLessons: allLessonIds.length,
       avgQuizScore,
+      deadlineCompliance: null as number | null,
     });
+  }
+
+  // Compute deadline compliance per course
+  const allDeadlineLessons = courses.flatMap((c) =>
+    c.modules.flatMap((m) => m.lessons.filter((l) => l.deadlineDays != null).map((l) => ({ ...l, courseId: c.id })))
+  );
+  const hasAnyDeadlines = allDeadlineLessons.length > 0;
+
+  if (hasAnyDeadlines) {
+    const dlLessonIds = allDeadlineLessons.map((l) => l.id);
+    const dlCourseIds = [...new Set(allDeadlineLessons.map((l) => l.courseId))];
+
+    const [dlEnrollments, dlProgress] = await Promise.all([
+      prisma.enrollment.findMany({
+        where: { courseId: { in: dlCourseIds } },
+        select: { userId: true, courseId: true, enrolledAt: true },
+      }),
+      prisma.lessonProgress.findMany({
+        where: { lessonId: { in: dlLessonIds }, completedAt: { not: null } },
+        select: { userId: true, lessonId: true, completedAt: true },
+      }),
+    ]);
+
+    const progressMap = new Map(dlProgress.map((p) => [`${p.userId}:${p.lessonId}`, p.completedAt!]));
+
+    // Per-course compliance: completed on time / total deadline-lesson-enrollments
+    for (const metric of courseMetrics) {
+      const courseDlLessons = allDeadlineLessons.filter((l) => l.courseId === metric.id);
+      if (courseDlLessons.length === 0) continue;
+      const courseEnrollments = dlEnrollments.filter((e) => e.courseId === metric.id);
+      let totalPairs = 0;
+      let onTime = 0;
+      for (const lesson of courseDlLessons) {
+        for (const enrollment of courseEnrollments) {
+          totalPairs++;
+          const completedAt = progressMap.get(`${enrollment.userId}:${lesson.id}`);
+          if (completedAt) {
+            const deadline = computeDeadline(enrollment.enrolledAt, lesson.deadlineDays!);
+            if (completedAt <= deadline) onTime++;
+          }
+        }
+      }
+      metric.deadlineCompliance = totalPairs > 0 ? Math.round((onTime / totalPairs) * 100) : null;
+    }
   }
 
   // User leaderboard (top 20 by XP)
@@ -120,6 +166,11 @@ export default async function AdminAnalyticsPage() {
                 <th className="px-4 py-3 text-xs font-medium text-gray-500 dark:text-gray-400 text-right">
                   Avg Quiz Score
                 </th>
+                {hasAnyDeadlines && (
+                  <th className="px-4 py-3 text-xs font-medium text-gray-500 dark:text-gray-400 text-right">
+                    On-Time
+                  </th>
+                )}
               </tr>
             </thead>
             <tbody className="divide-y divide-gray-100 dark:divide-[#2e2e3a]">
@@ -137,11 +188,16 @@ export default async function AdminAnalyticsPage() {
                   <td className="px-4 py-3 text-right tabular-nums text-gray-700 dark:text-gray-300">
                     {c.avgQuizScore !== null ? `${c.avgQuizScore}%` : "—"}
                   </td>
+                  {hasAnyDeadlines && (
+                    <td className="px-4 py-3 text-right tabular-nums text-gray-700 dark:text-gray-300">
+                      {c.deadlineCompliance !== null ? `${c.deadlineCompliance}%` : "—"}
+                    </td>
+                  )}
                 </tr>
               ))}
               {courseMetrics.length === 0 && (
                 <tr>
-                  <td colSpan={4} className="px-4 py-6 text-center text-gray-400 dark:text-gray-500">
+                  <td colSpan={hasAnyDeadlines ? 5 : 4} className="px-4 py-6 text-center text-gray-400 dark:text-gray-500">
                     No published courses yet
                   </td>
                 </tr>

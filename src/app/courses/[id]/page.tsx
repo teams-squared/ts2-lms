@@ -4,6 +4,8 @@ import { auth } from "@/lib/auth";
 import { redirect, notFound } from "next/navigation";
 import { prisma } from "@/lib/prisma";
 import { prismaStatusToApp, prismaLessonTypeToApp } from "@/lib/types";
+import { computeDeadline, getDeadlineStatus, formatDeadlineRelative } from "@/lib/deadlines";
+import type { DeadlineInfo } from "@/lib/deadlines";
 import { CourseStatusBadge } from "@/components/courses/CourseStatusBadge";
 import { UserAvatar } from "@/components/ui/UserAvatar";
 import { ModuleList } from "@/components/courses/ModuleList";
@@ -33,7 +35,7 @@ export default async function CourseDetailPage({
         include: {
           lessons: {
             orderBy: { order: "asc" },
-            select: { id: true, title: true, type: true, order: true },
+            select: { id: true, title: true, type: true, order: true, deadlineDays: true },
           },
         },
       },
@@ -90,6 +92,21 @@ export default async function CourseDetailPage({
     ? `/courses/${id}/lessons/${firstIncompleteLessonId}`
     : firstLessonUrl;
   const isCourseComplete = totalLessons > 0 && completedLessons === totalLessons;
+
+  // Compute deadline info for each lesson (when enrolled)
+  const deadlineInfoMap = new Map<string, DeadlineInfo>();
+  if (enrollment) {
+    for (const lesson of allLessonsFlat) {
+      if (lesson.deadlineDays != null) {
+        const completedAt = completedLessonIdSet.has(lesson.id) ? new Date() : null;
+        deadlineInfoMap.set(lesson.id, {
+          deadlineDays: lesson.deadlineDays,
+          absoluteDeadline: computeDeadline(enrollment.enrolledAt, lesson.deadlineDays).toISOString(),
+          status: getDeadlineStatus(enrollment.enrolledAt, lesson.deadlineDays, completedAt),
+        });
+      }
+    }
+  }
 
   const status = prismaStatusToApp(course.status);
 
@@ -218,6 +235,7 @@ export default async function CourseDetailPage({
         <ModuleList
           courseId={id}
           completedLessonIds={completedLessonIdSet}
+          deadlineInfoMap={Object.fromEntries(deadlineInfoMap)}
           modules={course.modules.map((m) => ({
             id: m.id,
             title: m.title,
