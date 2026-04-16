@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { SharePointFilePicker } from "./SharePointFilePicker";
 import { QuizBuilder } from "./QuizBuilder";
 import { NodeTreeSelect } from "./NodeTreeSelect";
+import type { NodeTreeItem } from "./NodeTreeSelect";
 import type { CourseStatus, LessonType } from "@/lib/types";
 import type { SharePointDocumentRef } from "@/lib/sharepoint/types";
 
@@ -49,7 +50,7 @@ interface CourseEditorProps {
   initialDescription: string | null;
   initialStatus: CourseStatus;
   initialNodeId: string | null;
-  nodeTree: { id: string; name: string; children: any[] }[];
+  nodeTree: NodeTreeItem[];
   initialModules: Module[];
   quizDataByLessonId?: Record<string, QuizLessonData>;
 }
