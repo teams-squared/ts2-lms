@@ -108,6 +108,68 @@ describe("PATCH /api/courses/[id]", () => {
     expect(res.status).toBe(200);
   });
 
+  it("updates nodeId via PATCH", async () => {
+    mockAuth.mockResolvedValue(mockSession({ role: "admin" }));
+    mockPrisma.course.findUnique.mockResolvedValue({
+      id: "c1",
+      createdById: "other-user",
+      status: "DRAFT",
+    });
+    mockPrisma.course.update.mockResolvedValue({
+      id: "c1",
+      title: "Course",
+      description: null,
+      thumbnail: null,
+      status: "DRAFT",
+      createdBy: { name: "Admin", email: "admin@test.com" },
+      createdAt: new Date(),
+      updatedAt: new Date(),
+    });
+    const req = new Request("http://localhost/api/courses/c1", {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ nodeId: "node-1" }),
+    });
+    const res = await PATCH(req, params("c1"));
+    expect(res.status).toBe(200);
+    expect(mockPrisma.course.update).toHaveBeenCalledWith(
+      expect.objectContaining({
+        data: expect.objectContaining({ nodeId: "node-1" }),
+      }),
+    );
+  });
+
+  it("clears nodeId when set to null", async () => {
+    mockAuth.mockResolvedValue(mockSession({ role: "admin" }));
+    mockPrisma.course.findUnique.mockResolvedValue({
+      id: "c1",
+      createdById: "other-user",
+      status: "DRAFT",
+    });
+    mockPrisma.course.update.mockResolvedValue({
+      id: "c1",
+      title: "Course",
+      description: null,
+      thumbnail: null,
+      status: "DRAFT",
+      createdBy: { name: "Admin", email: "admin@test.com" },
+      createdAt: new Date(),
+      updatedAt: new Date(),
+    });
+    const req = new Request("http://localhost/api/courses/c1", {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ nodeId: null }),
+    });
+    const res = await PATCH(req, params("c1"));
+    expect(res.status).toBe(200);
+    expect(mockPrisma.course.update).toHaveBeenCalledWith(
+      expect.objectContaining({
+        data: expect.objectContaining({ nodeId: null }),
+      }),
+    );
+  });
+
   it("returns 400 for invalid status", async () => {
     mockAuth.mockResolvedValue(mockSession({ role: "admin" }));
     mockPrisma.course.findUnique.mockResolvedValue({

@@ -150,4 +150,48 @@ describe("CourseForm", () => {
     fireEvent.click(screen.getByText("Cancel"));
     expect(mockCancel).toHaveBeenCalled();
   });
+
+  it("renders node tree selector when nodeTree is provided", () => {
+    const nodeTree = [
+      { id: "n1", name: "Law Courses", children: [
+        { id: "n2", name: "Property Law", children: [] },
+      ] },
+      { id: "n3", name: "IT Courses", children: [] },
+    ];
+    render(
+      <CourseForm
+        onSubmit={mockSubmit}
+        onCancel={mockCancel}
+        nodeTree={nodeTree}
+      />,
+    );
+    // The NodeTreeSelect renders a button with "No node" as default
+    expect(screen.getByText("No node")).toBeInTheDocument();
+  });
+
+  it("does not render node selector when nodeTree is empty", () => {
+    render(
+      <CourseForm
+        onSubmit={mockSubmit}
+        onCancel={mockCancel}
+        nodeTree={[]}
+      />,
+    );
+    expect(screen.queryByText("No node")).not.toBeInTheDocument();
+  });
+
+  it("includes nodeId in submit data", async () => {
+    mockSubmit.mockResolvedValue(undefined);
+    render(<CourseForm onSubmit={mockSubmit} onCancel={mockCancel} />);
+    fireEvent.change(screen.getByLabelText(/title/i), {
+      target: { value: "Test" },
+    });
+    fireEvent.click(screen.getByText("Create Course"));
+
+    await waitFor(() => {
+      expect(mockSubmit).toHaveBeenCalledWith(
+        expect.objectContaining({ nodeId: null }),
+      );
+    });
+  });
 });

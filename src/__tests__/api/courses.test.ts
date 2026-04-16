@@ -111,4 +111,31 @@ describe("POST /api/courses", () => {
     const res = await POST(req);
     expect(res.status).toBe(201);
   });
+
+  it("passes nodeId when creating course", async () => {
+    mockAuth.mockResolvedValue(mockSession({ role: "admin" }));
+    mockPrisma.course.create.mockResolvedValue({
+      id: "c3",
+      title: "Node Course",
+      description: null,
+      thumbnail: null,
+      status: "DRAFT",
+      nodeId: "node-1",
+      createdBy: { name: "Test User", email: "test@teamssquared.com" },
+      createdAt: new Date(),
+      updatedAt: new Date(),
+    });
+    const req = new Request("http://localhost/api/courses", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ title: "Node Course", nodeId: "node-1" }),
+    });
+    const res = await POST(req);
+    expect(res.status).toBe(201);
+    expect(mockPrisma.course.create).toHaveBeenCalledWith(
+      expect.objectContaining({
+        data: expect.objectContaining({ nodeId: "node-1" }),
+      }),
+    );
+  });
 });
