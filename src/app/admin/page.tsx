@@ -20,7 +20,7 @@ export default async function AdminPage() {
     prisma.user.count({ where: { role: "EMPLOYEE" } }),
     prisma.course.count(),
     prisma.user.findMany({
-      select: { id: true, email: true, name: true, role: true, createdAt: true },
+      select: { id: true, email: true, name: true, role: true, avatar: true, createdAt: true },
       orderBy: { createdAt: "desc" },
       take: 5,
     }),
@@ -173,7 +173,7 @@ export default async function AdminPage() {
             {recentUsers.map((user) => (
               <div key={user.id} className="flex items-center justify-between px-4 py-3">
                 <div className="flex items-center gap-3 min-w-0">
-                  <UserAvatar name={user.name} size="sm" />
+                  <UserAvatar name={user.name} image={user.avatar} size="sm" />
                   <div className="min-w-0">
                     <p className="text-sm font-medium text-gray-900 dark:text-gray-100 truncate">
                       {user.name || "Unnamed"}

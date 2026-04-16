@@ -9,7 +9,7 @@ export async function GET() {
   if (authResult instanceof NextResponse) return authResult;
 
   const users = await prisma.user.findMany({
-    select: { id: true, email: true, name: true, role: true, createdAt: true },
+    select: { id: true, email: true, name: true, avatar: true, role: true, createdAt: true },
     orderBy: { createdAt: "asc" },
   });
 
@@ -37,7 +37,7 @@ export async function PATCH(request: Request) {
   const updated = await prisma.user.update({
     where: { id: userId },
     data: { role: appRoleToPrisma(role) },
-    select: { id: true, email: true, name: true, role: true, createdAt: true },
+    select: { id: true, email: true, name: true, avatar: true, role: true, createdAt: true },
   });
 
   return NextResponse.json({

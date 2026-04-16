@@ -92,7 +92,7 @@ export default async function ProfilePage() {
 
       <div className="rounded-xl border border-gray-200/80 dark:border-[#2e2e3a] bg-white dark:bg-[#1c1c24] shadow-card overflow-hidden">
         <div className="p-6 flex items-start gap-5 border-b border-gray-100 dark:border-[#2e2e3a]">
-          <UserAvatar name={user.name} size="lg" />
+          <UserAvatar name={user.name} image={user.avatar} size="lg" />
           <div className="flex-1">
             <h2 className="text-lg font-semibold text-gray-900 dark:text-gray-100">
               {user.name || "Unnamed User"}

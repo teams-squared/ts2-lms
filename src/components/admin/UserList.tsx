@@ -9,6 +9,7 @@ interface User {
   id: string;
   email: string;
   name: string | null;
+  avatar: string | null;
   role: Role;
   createdAt: string;
   instructedCoursesCount: number;
@@ -108,7 +109,7 @@ export function UserList({ users }: { users: User[] }) {
                 <tr key={user.id} className="hover:bg-gray-50 dark:hover:bg-[#1e1e28] transition-colors">
                   <td className="px-5 py-3">
                     <div className="flex items-center gap-3">
-                      <UserAvatar name={user.name} size="sm" />
+                      <UserAvatar name={user.name} image={user.avatar} size="sm" />
                       <div>
                         <p className="font-medium text-gray-900 dark:text-gray-100">
                           {user.name || "Unnamed"}

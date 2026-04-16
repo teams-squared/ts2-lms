@@ -31,7 +31,7 @@ export default async function CourseDetailPage({
   const course = await prisma.course.findUnique({
     where: { id },
     include: {
-      createdBy: { select: { name: true, email: true } },
+      createdBy: { select: { name: true, email: true, avatar: true } },
       modules: {
         orderBy: { order: "asc" },
         include: {
@@ -202,7 +202,7 @@ export default async function CourseDetailPage({
 
         {/* Author */}
         <div className="flex items-center gap-3 pt-4 border-t border-gray-100 dark:border-[#2e2e3a]">
-          <UserAvatar name={course.createdBy.name} size="sm" />
+          <UserAvatar name={course.createdBy.name} image={course.createdBy.avatar} size="sm" />
           <div>
             <p className="text-sm font-medium text-gray-900 dark:text-gray-100">
               {course.createdBy.name || course.createdBy.email}

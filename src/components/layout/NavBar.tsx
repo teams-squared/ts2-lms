@@ -73,7 +73,7 @@ export default function NavBar() {
                 aria-haspopup="true"
                 className="flex items-center gap-2 p-2 rounded-lg hover:bg-gray-50 dark:hover:bg-[#1e1e28] transition-colors"
               >
-                <UserAvatar name={session.user?.name} size="sm" />
+                <UserAvatar name={session.user?.name} image={session.user?.image} size="sm" />
                 <span className="hidden sm:block text-sm font-medium text-gray-700 dark:text-gray-300 max-w-[120px] truncate">
                   {session.user?.name?.split(" ")[0]}
                 </span>

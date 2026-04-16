@@ -47,16 +47,21 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
           // before the token is signed.
           const dbUser = await prisma.user.upsert({
             where: { email: user.email },
-            update: { name: user.name ?? undefined },
+            update: {
+              name: user.name ?? undefined,
+              ...(user.image ? { avatar: user.image } : {}),
+            },
             create: {
               email: user.email,
               name: user.name ?? null,
+              avatar: user.image ?? null,
               role: "EMPLOYEE",
             },
-            select: { id: true, role: true },
+            select: { id: true, role: true, avatar: true },
           });
           token.id = dbUser.id;
           token.role = prismaRoleToApp(dbUser.role);
+          token.picture = dbUser.avatar ?? user.image ?? null;
         } catch (err) {
           console.error("[auth] jwt callback DB error:", err);
           token.role = "employee";
