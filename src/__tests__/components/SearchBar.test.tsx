@@ -68,4 +68,15 @@ describe("SearchBar", () => {
 
     expect(mockPush).not.toHaveBeenCalled();
   });
+
+  it("navigates to /courses without q param when search is cleared", async () => {
+    const user = userEvent.setup();
+    render(<SearchBar initialQuery="react" />);
+
+    const input = screen.getByRole("textbox");
+    await user.clear(input);
+    await user.keyboard("{Enter}");
+
+    expect(mockPush).toHaveBeenCalledWith("/courses?");
+  });
 });

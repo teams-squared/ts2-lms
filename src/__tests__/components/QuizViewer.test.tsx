@@ -286,4 +286,40 @@ describe("QuizViewer", () => {
     );
     expect(screen.queryByText(/you passed this quiz/i)).not.toBeInTheDocument();
   });
+
+  it("shows error message when quiz submission network request fails", async () => {
+    vi.stubGlobal("fetch", vi.fn().mockRejectedValue(new Error("Network error")));
+
+    render(<QuizViewer {...defaultProps} />);
+    fireEvent.click(screen.getByText("Start Quiz"));
+    fireEvent.click(screen.getByDisplayValue("o2"));
+    fireEvent.click(screen.getByDisplayValue("o4"));
+    fireEvent.click(screen.getByText("Submit Quiz"));
+
+    await waitFor(() => {
+      expect(
+        screen.getByText(/an unexpected error occurred/i),
+      ).toBeInTheDocument();
+    });
+  });
+
+  it("shows error message when submission returns non-ok response", async () => {
+    vi.stubGlobal(
+      "fetch",
+      vi.fn().mockResolvedValue({
+        ok: false,
+        json: async () => ({ error: "Internal server error" }),
+      }),
+    );
+
+    render(<QuizViewer {...defaultProps} />);
+    fireEvent.click(screen.getByText("Start Quiz"));
+    fireEvent.click(screen.getByDisplayValue("o2"));
+    fireEvent.click(screen.getByDisplayValue("o4"));
+    fireEvent.click(screen.getByText("Submit Quiz"));
+
+    await waitFor(() => {
+      expect(screen.getByText("Internal server error")).toBeInTheDocument();
+    });
+  });
 });

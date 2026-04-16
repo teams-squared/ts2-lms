@@ -18,6 +18,9 @@ export default defineConfig({
         "src/lib/**": {
           statements: 80,
         },
+        "src/components/**": {
+          statements: 70,
+        },
       },
     },
   },
