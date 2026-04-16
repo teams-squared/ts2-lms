@@ -1,18 +1,14 @@
-import { auth } from "@/lib/auth";
+import { NextResponse } from "next/server";
+import { requireRole } from "@/lib/roles";
 import { getDriveItemContent, getDriveItemMetadata } from "@/lib/sharepoint/graph-client";
 import { getCachedFile, setCachedFile } from "@/lib/sharepoint/cache";
 
 type Params = { params: Promise<{ driveId: string; itemId: string }> };
 
-/** GET /api/sharepoint/files/[driveId]/[itemId] — proxy a SharePoint file. */
+/** GET /api/sharepoint/files/[driveId]/[itemId] — proxy a SharePoint file (admin/manager only). */
 export async function GET(_request: Request, { params }: Params) {
-  const session = await auth();
-  if (!session?.user?.id) {
-    return new Response(JSON.stringify({ error: "Unauthorized" }), {
-      status: 401,
-      headers: { "Content-Type": "application/json" },
-    });
-  }
+  const authResult = await requireRole("manager");
+  if (authResult instanceof NextResponse) return authResult;
 
   const { driveId, itemId } = await params;
 
