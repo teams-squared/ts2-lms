@@ -4,6 +4,8 @@ import { auth } from "@/lib/auth";
 import { redirect, notFound } from "next/navigation";
 import { prisma } from "@/lib/prisma";
 import { prismaStatusToApp, prismaLessonTypeToApp } from "@/lib/types";
+import type { Role } from "@/lib/types";
+import { canViewCourse } from "@/lib/courseAccess";
 import { computeDeadline, getDeadlineStatus, formatDeadlineRelative } from "@/lib/deadlines";
 import type { DeadlineInfo } from "@/lib/deadlines";
 import { CourseStatusBadge } from "@/components/courses/CourseStatusBadge";
@@ -44,15 +46,11 @@ export default async function CourseDetailPage({
 
   if (!course) notFound();
 
-  const isPrivileged =
-    session.user?.role === "admin" || session.user?.role === "manager";
+  const role = session.user?.role as Role;
+  const isPrivileged = await canViewCourse(userId, role, id);
 
   // Non-privileged users can only see published courses
-  if (
-    course.status !== "PUBLISHED" &&
-    session.user?.role !== "admin" &&
-    course.createdById !== session.user?.id
-  ) {
+  if (course.status !== "PUBLISHED" && !isPrivileged) {
     notFound();
   }
 

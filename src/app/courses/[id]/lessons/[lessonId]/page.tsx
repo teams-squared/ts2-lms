@@ -2,6 +2,8 @@ import { auth } from "@/lib/auth";
 import { redirect, notFound } from "next/navigation";
 import { prisma } from "@/lib/prisma";
 import { prismaLessonTypeToApp } from "@/lib/types";
+import type { Role } from "@/lib/types";
+import { canViewCourse } from "@/lib/courseAccess";
 
 import { LessonViewer } from "@/components/courses/LessonViewer";
 import { QuizViewer } from "@/components/courses/QuizViewer";
@@ -45,18 +47,14 @@ export default async function LessonPage({
 
   const course = lesson.module.course;
 
+  // Check if user has privileged access (admin, manager-creator, assigned instructor)
+  const role = session.user?.role as Role;
+  const isPrivilegedUser = await canViewCourse(userId, role, courseId);
+
   // Non-privileged users can only view published course lessons
-  if (
-    course.status !== "PUBLISHED" &&
-    session.user?.role !== "admin" &&
-    course.createdById !== session.user?.id
-  ) {
+  if (course.status !== "PUBLISHED" && !isPrivilegedUser) {
     notFound();
   }
-
-  // Non-admin users must be enrolled to access lessons
-  const isPrivilegedUser =
-    session.user?.role === "admin" || session.user?.role === "manager";
 
   const enrollment = await prisma.enrollment.findUnique({
     where: { userId_courseId: { userId, courseId } },
@@ -134,8 +132,7 @@ export default async function LessonPage({
   const lessonType = prismaLessonTypeToApp(lesson.type);
   const isQuiz = lessonType === "quiz";
   const isDocument = lessonType === "document";
-  const isPrivileged =
-    session.user?.role === "admin" || session.user?.role === "manager";
+  const isPrivileged = isPrivilegedUser;
 
   // Compute next lesson URL for quiz "Continue" CTA and lesson navigation
   const allLessonsFlat = sidebarModules.flatMap((m) => m.lessons);

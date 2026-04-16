@@ -32,3 +32,17 @@ export async function canManageCourse(
 
   return false;
 }
+
+/**
+ * Returns true if the given user is allowed to view the given course
+ * regardless of its publish status or enrollment.
+ * Currently delegates to canManageCourse (anyone who can manage can view).
+ * Separated to allow future divergence (e.g. view-only access).
+ */
+export async function canViewCourse(
+  userId: string,
+  role: Role,
+  courseId: string,
+): Promise<boolean> {
+  return canManageCourse(userId, role, courseId);
+}
