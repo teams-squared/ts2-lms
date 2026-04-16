@@ -39,9 +39,27 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
   ],
   callbacks: {
     ...authConfig.callbacks,
-    async jwt({ token, user }) {
+    async jwt({ token, user, account }) {
       if (user?.email) {
         try {
+          // Fetch profile photo from Microsoft Graph API on SSO login
+          let avatar: string | null = null;
+          if (account?.access_token && account.provider === "microsoft-entra-id") {
+            try {
+              const photoRes = await fetch(
+                "https://graph.microsoft.com/v1.0/me/photos/48x48/$value",
+                { headers: { Authorization: `Bearer ${account.access_token}` } },
+              );
+              if (photoRes.ok) {
+                const buf = Buffer.from(await photoRes.arrayBuffer());
+                const contentType = photoRes.headers.get("content-type") || "image/jpeg";
+                avatar = `data:${contentType};base64,${buf.toString("base64")}`;
+              }
+            } catch {
+              // Photo fetch failed — not critical, fall back to initials
+            }
+          }
+
           // Upsert SSO users on first login, then read their role.
           // Must happen here (not in events.signIn) so the role is available
           // before the token is signed.
@@ -49,19 +67,19 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
             where: { email: user.email },
             update: {
               name: user.name ?? undefined,
-              ...(user.image ? { avatar: user.image } : {}),
+              ...(avatar ? { avatar } : {}),
             },
             create: {
               email: user.email,
               name: user.name ?? null,
-              avatar: user.image ?? null,
+              avatar,
               role: "EMPLOYEE",
             },
             select: { id: true, role: true, avatar: true },
           });
           token.id = dbUser.id;
           token.role = prismaRoleToApp(dbUser.role);
-          token.picture = dbUser.avatar ?? user.image ?? null;
+          token.picture = dbUser.avatar ?? null;
         } catch (err) {
           console.error("[auth] jwt callback DB error:", err);
           token.role = "employee";
