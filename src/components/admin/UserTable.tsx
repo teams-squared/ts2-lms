@@ -5,6 +5,7 @@ import Link from "next/link";
 import { UserAvatar } from "@/components/ui/UserAvatar";
 import { Spinner } from "@/components/ui/Spinner";
 import { SkeletonTableRow } from "@/components/ui/Skeleton";
+import { useToast } from "@/components/ui/ToastProvider";
 import type { Role } from "@/lib/types";
 
 interface User {
@@ -16,6 +17,7 @@ interface User {
 }
 
 export default function UserTable() {
+  const { toast } = useToast();
   const [users, setUsers] = useState<User[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -60,6 +62,7 @@ export default function UserTable() {
       setUsers((prev) =>
         prev.map((u) => (u.id === updated.id ? { ...u, role: updated.role } : u))
       );
+      toast(`Role updated to ${newRole}`);
     } catch (err: unknown) {
       setUpdateError(err instanceof Error ? err.message : "Failed to update role");
     } finally {

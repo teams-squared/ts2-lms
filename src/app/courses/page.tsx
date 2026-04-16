@@ -38,6 +38,9 @@ export default async function CourseCatalogPage({
     status: string;
     createdBy: { name: string | null; email: string };
     source: "enrolled" | "assigned";
+    progressPercent?: number;
+    completedLessons?: number;
+    totalLessons?: number;
   };
 
   const myCourses: CourseWithMeta[] = await (async () => {
@@ -48,7 +51,12 @@ export default async function CourseCatalogPage({
         where: { userId },
         include: {
           course: {
-            include: { createdBy: { select: { name: true, email: true } } },
+            include: {
+              createdBy: { select: { name: true, email: true } },
+              modules: {
+                include: { lessons: { select: { id: true } } },
+              },
+            },
           },
         },
       }),
@@ -62,11 +70,27 @@ export default async function CourseCatalogPage({
       }),
     ]);
 
+    // Compute progress for enrolled courses in a single batch query
+    const allLessonIds = enrollments.flatMap((e) =>
+      e.course.modules.flatMap((m) => m.lessons.map((l) => l.id)),
+    );
+    const completedRecords =
+      allLessonIds.length > 0
+        ? await prisma.lessonProgress.findMany({
+            where: { userId: userId!, lessonId: { in: allLessonIds }, completedAt: { not: null } },
+            select: { lessonId: true },
+          })
+        : [];
+    const completedSet = new Set(completedRecords.map((p) => p.lessonId));
+
     const result: CourseWithMeta[] = [];
     const seen = new Set<string>();
     for (const e of enrollments) {
       if (!seen.has(e.courseId)) {
         seen.add(e.courseId);
+        const courseLessons = e.course.modules.flatMap((m) => m.lessons);
+        const total = courseLessons.length;
+        const completed = courseLessons.filter((l) => completedSet.has(l.id)).length;
         result.push({
           id: e.course.id,
           title: e.course.title,
@@ -75,6 +99,9 @@ export default async function CourseCatalogPage({
           status: prismaStatusToApp(e.course.status),
           createdBy: e.course.createdBy,
           source: "enrolled",
+          progressPercent: total > 0 ? Math.round((completed / total) * 100) : undefined,
+          completedLessons: total > 0 ? completed : undefined,
+          totalLessons: total > 0 ? total : undefined,
         });
       }
     }
@@ -311,6 +338,7 @@ export default async function CourseCatalogPage({
                     createdBy={course.createdBy}
                     locked={elig?.locked}
                     lockReason={elig?.lockReason}
+                    showStatus={isPrivileged}
                   />
                 );
               })}
@@ -361,6 +389,10 @@ export default async function CourseCatalogPage({
                     status={course.status as import("@/lib/types").CourseStatus}
                     thumbnail={course.thumbnail}
                     createdBy={course.createdBy}
+                    showStatus={isPrivileged}
+                    progressPercent={course.progressPercent}
+                    completedLessons={course.completedLessons}
+                    totalLessons={course.totalLessons}
                   />
                 </div>
               ))}

@@ -125,9 +125,11 @@ export default async function CourseDetailPage({
           )}
         </div>
 
-        <div className="flex items-center gap-2 mb-3">
-          <CourseStatusBadge status={status} />
-        </div>
+        {isPrivileged && (
+          <div className="flex items-center gap-2 mb-3">
+            <CourseStatusBadge status={status} />
+          </div>
+        )}
 
         <h1 className="text-2xl sm:text-3xl font-bold text-gray-900 dark:text-gray-100 tracking-tight mb-3">
           {course.title}
@@ -215,6 +217,7 @@ export default async function CourseDetailPage({
         </div>
         <ModuleList
           courseId={id}
+          completedLessonIds={completedLessonIdSet}
           modules={course.modules.map((m) => ({
             id: m.id,
             title: m.title,

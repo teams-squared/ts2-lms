@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import Link from "next/link";
-import { ChevronDownIcon, ChevronRightIcon } from "@/components/icons";
+import { ChevronDownIcon, ChevronRightIcon, CheckCircleIcon, DocumentTextIcon, VideoIcon, QuizIcon, PaperclipIcon } from "@/components/icons";
 import type { LessonType } from "@/lib/types";
 
 interface Lesson {
@@ -19,19 +19,21 @@ interface Module {
   lessons: Lesson[];
 }
 
-const LESSON_TYPE_ICON: Record<LessonType, string> = {
-  text: "📄",
-  video: "🎬",
-  quiz: "❓",
-  document: "📎",
+const LESSON_TYPE_ICON: Record<LessonType, React.FC<{ className?: string }>> = {
+  text: DocumentTextIcon,
+  video: VideoIcon,
+  quiz: QuizIcon,
+  document: PaperclipIcon,
 };
 
 export function ModuleList({
   modules,
   courseId,
+  completedLessonIds,
 }: {
   modules: Module[];
   courseId: string;
+  completedLessonIds?: Set<string>;
 }) {
   const [expanded, setExpanded] = useState<Set<string>>(
     new Set(modules.map((m) => m.id))
@@ -71,7 +73,9 @@ export function ModuleList({
               {mod.title}
             </span>
             <span className="ml-auto text-xs text-gray-400">
-              {mod.lessons.length} lesson{mod.lessons.length !== 1 ? "s" : ""}
+              {completedLessonIds
+                ? `${mod.lessons.filter((l) => completedLessonIds.has(l.id)).length} of ${mod.lessons.length} lesson${mod.lessons.length !== 1 ? "s" : ""}`
+                : `${mod.lessons.length} lesson${mod.lessons.length !== 1 ? "s" : ""}`}
             </span>
           </button>
 
@@ -83,8 +87,11 @@ export function ModuleList({
                   href={`/courses/${courseId}/lessons/${lesson.id}`}
                   className="flex items-center gap-2 px-3 py-2 rounded-lg text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-[#1e1e28] transition-colors"
                 >
-                  <span className="text-xs">{LESSON_TYPE_ICON[lesson.type]}</span>
-                  <span>{lesson.title}</span>
+                  {(() => { const LessonIcon = LESSON_TYPE_ICON[lesson.type]; return <LessonIcon className="w-4 h-4 text-gray-400 dark:text-gray-500 flex-shrink-0" />; })()}
+                  <span className="flex-1">{lesson.title}</span>
+                  {completedLessonIds?.has(lesson.id) && (
+                    <CheckCircleIcon className="w-4 h-4 flex-shrink-0 text-emerald-500" />
+                  )}
                 </Link>
               ))}
             </div>

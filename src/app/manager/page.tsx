@@ -76,7 +76,7 @@ export default async function ManagerPage() {
         {!isInstructor && (
           <>
             <Link
-              href="/admin/courses"
+              href="/manager/courses/new"
               className="inline-flex items-center gap-2 rounded-lg bg-brand-600 hover:bg-brand-700 text-white text-sm font-medium px-4 py-2.5 transition-colors"
             >
               + Create new course

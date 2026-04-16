@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import Link from "next/link";
-import { ChevronLeftIcon, CheckCircleIcon, HamburgerIcon, CloseIcon } from "@/components/icons";
+import { ChevronLeftIcon, CheckCircleIcon, HamburgerIcon, CloseIcon, DocumentTextIcon, VideoIcon, QuizIcon, PaperclipIcon } from "@/components/icons";
 import type { LessonType } from "@/lib/types";
 
 interface Lesson {
@@ -19,11 +19,11 @@ interface Module {
   lessons: Lesson[];
 }
 
-const LESSON_TYPE_ICON: Record<LessonType, string> = {
-  text: "\u{1F4C4}",
-  video: "\u{1F3AC}",
-  quiz: "\u{2753}",
-  document: "\u{1F4CE}",
+const LESSON_TYPE_ICON: Record<LessonType, React.FC<{ className?: string }>> = {
+  text: DocumentTextIcon,
+  video: VideoIcon,
+  quiz: QuizIcon,
+  document: PaperclipIcon,
 };
 
 export function CourseSidebar({
@@ -104,9 +104,7 @@ export function CourseSidebar({
                         : "text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-[#1e1e28]"
                     }`}
                   >
-                    <span className="text-sm flex-shrink-0" aria-hidden="true">
-                      {LESSON_TYPE_ICON[lesson.type]}
-                    </span>
+                    {(() => { const LessonIcon = LESSON_TYPE_ICON[lesson.type]; return <LessonIcon className="w-4 h-4 text-gray-400 dark:text-gray-500 flex-shrink-0" />; })()}
                     <span className="line-clamp-1 flex-1" title={lesson.title}>{lesson.title}</span>
                     {isDone && (
                       <CheckCircleIcon

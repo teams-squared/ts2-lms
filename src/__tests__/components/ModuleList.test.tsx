@@ -5,6 +5,11 @@ import { ModuleList } from "@/components/courses/ModuleList";
 vi.mock("@/components/icons", () => ({
   ChevronDownIcon: (props: Record<string, unknown>) => <svg data-testid="chevron-down" {...props} />,
   ChevronRightIcon: (props: Record<string, unknown>) => <svg data-testid="chevron-right" {...props} />,
+  CheckCircleIcon: (props: Record<string, unknown>) => <svg data-testid="check-circle" {...props} />,
+  DocumentTextIcon: (props: Record<string, unknown>) => <svg data-testid="icon-text" {...props} />,
+  VideoIcon: (props: Record<string, unknown>) => <svg data-testid="icon-video" {...props} />,
+  QuizIcon: (props: Record<string, unknown>) => <svg data-testid="icon-quiz" {...props} />,
+  PaperclipIcon: (props: Record<string, unknown>) => <svg data-testid="icon-document" {...props} />,
 }));
 
 vi.mock("next/link", () => ({
@@ -78,9 +83,9 @@ describe("ModuleList", () => {
 
   it("renders lesson type icons", () => {
     render(<ModuleList modules={sampleModules} courseId="c1" />);
-    // text=📄, video=🎬, quiz=❓
-    expect(screen.getByText("📄")).toBeInTheDocument();
-    expect(screen.getByText("🎬")).toBeInTheDocument();
-    expect(screen.getByText("❓")).toBeInTheDocument();
+    // SVG icon components are rendered for each lesson type
+    expect(screen.getAllByTestId("icon-text").length).toBeGreaterThan(0);
+    expect(screen.getAllByTestId("icon-video").length).toBeGreaterThan(0);
+    expect(screen.getAllByTestId("icon-quiz").length).toBeGreaterThan(0);
   });
 });

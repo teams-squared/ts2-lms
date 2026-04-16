@@ -212,7 +212,7 @@ export default async function HomePage() {
             <h2 className="text-base font-semibold text-gray-900 dark:text-gray-100">
               Continue Learning
             </h2>
-            {enrichedEnrollments.length > 0 && (
+            {inProgressCourses.length > 4 && (
               <Link
                 href="/courses?tab=my"
                 className="text-xs text-brand-600 dark:text-brand-400 hover:underline inline-flex items-center gap-0.5"
@@ -345,7 +345,20 @@ export default async function HomePage() {
                 My Profile
               </h3>
               <p className="text-xs text-gray-500 dark:text-gray-400">
-                View your account and achievements
+                View your account and progress
+              </p>
+            </Link>
+
+            <Link
+              href="/profile/achievements"
+              className="p-5 rounded-xl border border-gray-200/80 dark:border-[#2e2e3a] bg-white dark:bg-[#1c1c24] shadow-card hover:shadow-elevated hover-lift"
+            >
+              <CheckCircleIcon className="w-5 h-5 text-brand-600 dark:text-brand-400 mb-2.5" />
+              <h3 className="text-sm font-semibold text-gray-900 dark:text-gray-100 mb-0.5">
+                Achievements
+              </h3>
+              <p className="text-xs text-gray-500 dark:text-gray-400">
+                View your badges and milestones
               </p>
             </Link>
 
@@ -375,6 +388,21 @@ export default async function HomePage() {
                 </h3>
                 <p className="text-xs text-gray-500 dark:text-gray-400">
                   Manage users, courses, and roles
+                </p>
+              </Link>
+            )}
+
+            {(userRole === "manager" || userRole === "instructor") && (
+              <Link
+                href="/manager"
+                className="p-5 rounded-xl border border-gray-200/80 dark:border-[#2e2e3a] bg-white dark:bg-[#1c1c24] shadow-card hover:shadow-elevated hover-lift"
+              >
+                <BookOpenIcon className="w-5 h-5 text-brand-600 dark:text-brand-400 mb-2.5" />
+                <h3 className="text-sm font-semibold text-gray-900 dark:text-gray-100 mb-0.5">
+                  {userRole === "instructor" ? "My Teaching" : "Manager Dashboard"}
+                </h3>
+                <p className="text-xs text-gray-500 dark:text-gray-400">
+                  {userRole === "instructor" ? "View your assigned courses" : "Manage your courses and assignments"}
                 </p>
               </Link>
             )}

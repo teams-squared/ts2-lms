@@ -4,6 +4,7 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { CheckCircleIcon } from "@/components/icons";
 import { Spinner } from "@/components/ui/Spinner";
+import { useToast } from "@/components/ui/ToastProvider";
 
 interface LessonCompleteButtonProps {
   courseId: string;
@@ -19,6 +20,7 @@ export function LessonCompleteButton({
   initialCompleted,
 }: LessonCompleteButtonProps) {
   const router = useRouter();
+  const { toast } = useToast();
   const [isCompleted, setIsCompleted] = useState(initialCompleted);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -35,6 +37,7 @@ export function LessonCompleteButton({
         throw new Error((body as { error?: string }).error ?? "Failed to mark complete");
       }
       setIsCompleted(true);
+      toast("Lesson marked complete");
       router.refresh();
     } catch (err) {
       setError(err instanceof Error ? err.message : "Something went wrong");
@@ -53,6 +56,7 @@ export function LessonCompleteButton({
         throw new Error((body as { error?: string }).error ?? "Failed to unmark complete");
       }
       setIsCompleted(false);
+      toast("Lesson marked incomplete", "info");
       router.refresh();
     } catch (err) {
       setError(err instanceof Error ? err.message : "Something went wrong");

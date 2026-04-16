@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
+import { useToast } from "@/components/ui/ToastProvider";
 
 interface Course {
   id: string;
@@ -43,6 +44,7 @@ export function AssignmentManager({
   initialAssignments,
 }: AssignmentManagerProps) {
   const router = useRouter();
+  const { toast } = useToast();
 
   // ── Enrollment state ─────────────────────────────────────────────────────
   const [enrollments, setEnrollments] = useState<Enrollment[]>(initialEnrollments);
@@ -94,7 +96,8 @@ export function AssignmentManager({
       ]);
       setEnrollCourse("");
       setEnrollUser("");
-      setEnrollSuccess("User enrolled successfully");
+      setEnrollSuccess(null);
+      toast("User enrolled successfully");
       router.refresh();
     } catch {
       setEnrollError("An unexpected error occurred");
@@ -159,7 +162,8 @@ export function AssignmentManager({
       ]);
       setSelectedCourse("");
       setSelectedUser("");
-      setSuccess("Course assigned successfully");
+      setSuccess(null);
+      toast("Course assigned successfully");
       router.refresh();
     } catch {
       setError("An unexpected error occurred");
@@ -187,9 +191,14 @@ export function AssignmentManager({
     <div className="space-y-10">
       {/* ── Enrollments ──────────────────────────────────────────────────── */}
       <section className="space-y-6">
-        <h3 className="text-sm font-semibold text-gray-900 dark:text-gray-100">
-          Enrollments
-        </h3>
+        <div className="flex items-center gap-3">
+          <h3 className="text-base font-semibold text-gray-900 dark:text-gray-100">
+            Enrollments
+          </h3>
+          <span className="text-xs text-gray-400 dark:text-gray-500">
+            Enroll users directly into courses
+          </span>
+        </div>
 
         {/* Enroll form */}
         <div className="rounded-xl border border-gray-200 dark:border-[#2e2e3a] bg-white dark:bg-[#1c1c24] p-5">
@@ -316,11 +325,19 @@ export function AssignmentManager({
         </div>
       </section>
 
+      {/* ── Divider ──────────────────────────────────────────────────────── */}
+      <hr className="border-gray-200 dark:border-[#2e2e3a]" />
+
       {/* ── Assignments ──────────────────────────────────────────────────── */}
       <section className="space-y-6">
-        <h3 className="text-sm font-semibold text-gray-900 dark:text-gray-100">
-          Course Assignments
-        </h3>
+        <div className="flex items-center gap-3">
+          <h3 className="text-base font-semibold text-gray-900 dark:text-gray-100">
+            Course Assignments
+          </h3>
+          <span className="text-xs text-gray-400 dark:text-gray-500">
+            Assign courses as required learning
+          </span>
+        </div>
 
         {/* Assign form */}
         <div className="rounded-xl border border-gray-200 dark:border-[#2e2e3a] bg-white dark:bg-[#1c1c24] p-5">

@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
+import { useToast } from "@/components/ui/ToastProvider";
 
 interface EditNameFormProps {
   currentName: string | null;
@@ -9,6 +10,7 @@ interface EditNameFormProps {
 
 export function EditNameForm({ currentName }: EditNameFormProps) {
   const router = useRouter();
+  const { toast } = useToast();
   const [editing, setEditing] = useState(false);
   const [name, setName] = useState(currentName ?? "");
   const [saving, setSaving] = useState(false);
@@ -34,6 +36,7 @@ export function EditNameForm({ currentName }: EditNameFormProps) {
         return;
       }
       setEditing(false);
+      toast("Name updated");
       router.refresh();
     } catch {
       setError("An unexpected error occurred");

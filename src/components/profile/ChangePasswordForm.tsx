@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { useToast } from "@/components/ui/ToastProvider";
 
 interface ChangePasswordFormProps {
   /** True for SSO-only users who have no local password */
@@ -8,6 +9,7 @@ interface ChangePasswordFormProps {
 }
 
 export function ChangePasswordForm({ isSsoOnly }: ChangePasswordFormProps) {
+  const { toast } = useToast();
   const [open, setOpen] = useState(false);
   const [currentPassword, setCurrentPassword] = useState("");
   const [newPassword, setNewPassword] = useState("");
@@ -50,6 +52,7 @@ export function ChangePasswordForm({ isSsoOnly }: ChangePasswordFormProps) {
       }
       resetFields();
       setSuccess(true);
+      toast("Password updated");
       setOpen(false);
     } catch {
       setError("An unexpected error occurred");

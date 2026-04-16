@@ -13,6 +13,10 @@ interface CourseCardProps {
   createdBy: { name: string | null; email: string };
   locked?: boolean;
   lockReason?: string;
+  showStatus?: boolean;
+  progressPercent?: number;
+  completedLessons?: number;
+  totalLessons?: number;
 }
 
 export function CourseCard({
@@ -24,6 +28,10 @@ export function CourseCard({
   createdBy,
   locked,
   lockReason,
+  showStatus = true,
+  progressPercent,
+  completedLessons,
+  totalLessons,
 }: CourseCardProps) {
   return (
     <Link
@@ -63,7 +71,7 @@ export function CourseCard({
       {/* Content */}
       <div className="p-5">
         <div className="flex items-center gap-2 mb-2">
-          <CourseStatusBadge status={status} />
+          {showStatus && <CourseStatusBadge status={status} />}
           {locked && (
             <span className="text-xs font-semibold px-2 py-0.5 rounded-full bg-gray-100 dark:bg-gray-800 text-gray-500 dark:text-gray-400 border border-gray-200 dark:border-gray-700">
               Locked
@@ -82,6 +90,24 @@ export function CourseCard({
           <p className="text-xs text-amber-600 dark:text-amber-400 mb-1 line-clamp-2">
             {lockReason}
           </p>
+        )}
+        {typeof progressPercent === "number" && typeof totalLessons === "number" && totalLessons > 0 && (
+          <div className="mb-2">
+            <div className="flex items-center justify-between text-xs text-gray-500 dark:text-gray-400 mb-1">
+              <span>
+                {completedLessons} of {totalLessons} lesson{totalLessons !== 1 ? "s" : ""}
+              </span>
+              <span className="font-medium text-gray-700 dark:text-gray-300">
+                {progressPercent}%
+              </span>
+            </div>
+            <div className="h-1.5 bg-gray-100 dark:bg-[#2e2e3a] rounded-full overflow-hidden">
+              <div
+                className="h-full bg-gradient-to-r from-brand-500 to-brand-400 rounded-full transition-all"
+                style={{ width: `${progressPercent}%` }}
+              />
+            </div>
+          </div>
         )}
         <p className="text-xs text-gray-400 dark:text-gray-500">
           by {createdBy.name || createdBy.email}

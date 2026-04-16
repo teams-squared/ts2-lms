@@ -1,3 +1,4 @@
+import React from "react";
 import "@testing-library/jest-dom";
 
 // happy-dom tries to fetch <iframe src="..."> and aborts mid-request during
@@ -27,6 +28,12 @@ Object.defineProperty(window, "matchMedia", {
     dispatchEvent: vi.fn(),
   })),
 });
+
+// Global mock: ToastProvider
+vi.mock("@/components/ui/ToastProvider", () => ({
+  useToast: () => ({ toast: vi.fn() }),
+  ToastProvider: ({ children }: { children: React.ReactNode }) => children,
+}));
 
 // Global mock: next/navigation
 vi.mock("next/navigation", () => ({
