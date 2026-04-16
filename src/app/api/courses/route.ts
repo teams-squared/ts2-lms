@@ -124,6 +124,7 @@ export async function POST(request: Request) {
       thumbnail: body.thumbnail?.trim() || null,
       status: appStatusToPrisma(status),
       createdById: session.user.id,
+      nodeId: body.nodeId?.trim() || null,
     },
     include: { createdBy: { select: { name: true, email: true } } },
   });

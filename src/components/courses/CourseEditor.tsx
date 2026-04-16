@@ -42,11 +42,19 @@ interface QuizLessonData {
   passingScore: number;
 }
 
+interface NodeOption {
+  id: string;
+  name: string;
+  depth: number;
+}
+
 interface CourseEditorProps {
   courseId: string;
   initialTitle: string;
   initialDescription: string | null;
   initialStatus: CourseStatus;
+  initialNodeId: string | null;
+  nodeOptions: NodeOption[];
   initialModules: Module[];
   quizDataByLessonId?: Record<string, QuizLessonData>;
 }
@@ -67,6 +75,8 @@ export function CourseEditor({
   initialTitle,
   initialDescription,
   initialStatus,
+  initialNodeId,
+  nodeOptions,
   initialModules,
   quizDataByLessonId = {},
 }: CourseEditorProps) {
@@ -76,6 +86,7 @@ export function CourseEditor({
   const [title, setTitle] = useState(initialTitle);
   const [description, setDescription] = useState(initialDescription ?? "");
   const [status, setStatus] = useState<CourseStatus>(initialStatus);
+  const [nodeId, setNodeId] = useState<string>(initialNodeId ?? "");
   const [courseError, setCourseError] = useState<string | null>(null);
   const [courseSaving, setCourseSaving] = useState(false);
 
@@ -136,7 +147,7 @@ export function CourseEditor({
       await apiFetch(`/api/courses/${courseId}`, {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ title, description, status }),
+        body: JSON.stringify({ title, description, status, nodeId: nodeId || null }),
       });
       router.refresh();
     } catch (err) {
@@ -350,6 +361,23 @@ export function CourseEditor({
               <option value="draft">Draft</option>
               <option value="published">Published</option>
               <option value="archived">Archived</option>
+            </select>
+          </div>
+          <div>
+            <label className="block text-xs font-medium text-gray-600 dark:text-gray-400 mb-1">
+              Node
+            </label>
+            <select
+              value={nodeId}
+              onChange={(e) => setNodeId(e.target.value)}
+              className="rounded-lg border border-gray-300 dark:border-[#3a3a48] bg-white dark:bg-[#18181f] text-sm text-gray-700 dark:text-gray-300 px-3 py-2 focus:outline-none focus:ring-2 focus:ring-brand-500"
+            >
+              <option value="">No node</option>
+              {nodeOptions.map((n) => (
+                <option key={n.id} value={n.id}>
+                  {"—".repeat(n.depth)}{n.depth > 0 ? " " : ""}{n.name}
+                </option>
+              ))}
             </select>
           </div>
           {courseError && (

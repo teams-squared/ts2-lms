@@ -1,35 +1,20 @@
-"use client";
-
-import { useRouter } from "next/navigation";
-import Link from "next/link";
-import { CourseForm } from "@/components/courses/CourseForm";
-import { useToast } from "@/components/ui/ToastProvider";
+import { getNodeTree } from "@/lib/courseNodes";
+import type { NodeWithChildren } from "@/lib/courseNodes";
+import { ManagerNewCourseForm } from "./ManagerNewCourseForm";
 import { Breadcrumbs } from "@/components/ui/Breadcrumbs";
-import type { CourseStatus } from "@/lib/types";
 
-export default function ManagerNewCoursePage() {
-  const router = useRouter();
-  const { toast } = useToast();
+function flattenNodes(nodes: NodeWithChildren[], depth = 0): { id: string; name: string; depth: number }[] {
+  const result: { id: string; name: string; depth: number }[] = [];
+  for (const n of nodes) {
+    result.push({ id: n.id, name: n.name, depth });
+    result.push(...flattenNodes(n.children, depth + 1));
+  }
+  return result;
+}
 
-  const handleSubmit = async (data: {
-    title: string;
-    description: string;
-    thumbnail: string;
-    status: CourseStatus;
-  }) => {
-    const res = await fetch("/api/courses", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(data),
-    });
-    if (!res.ok) {
-      const body = (await res.json().catch(() => ({}))) as { error?: string };
-      throw new Error(body.error ?? "Failed to create course");
-    }
-    const course = (await res.json()) as { id: string };
-    toast("Course created");
-    router.push(`/manager/courses/${course.id}/edit`);
-  };
+export default async function ManagerNewCoursePage() {
+  const nodeTree = await getNodeTree();
+  const nodeOptions = flattenNodes(nodeTree);
 
   return (
     <div>
@@ -43,10 +28,7 @@ export default function ManagerNewCoursePage() {
         Create New Course
       </h1>
       <div className="max-w-lg">
-        <CourseForm
-          onSubmit={handleSubmit}
-          onCancel={() => router.push("/manager")}
-        />
+        <ManagerNewCourseForm nodeOptions={nodeOptions} />
       </div>
     </div>
   );

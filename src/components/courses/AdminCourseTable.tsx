@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import { CourseForm } from "./CourseForm";
+import type { NodeOption } from "./CourseForm";
 import { PlusIcon } from "@/components/icons";
 import { Spinner } from "@/components/ui/Spinner";
 import { SkeletonTableRow } from "@/components/ui/Skeleton";
@@ -32,12 +33,11 @@ async function apiFetch<T>(
   return res.json() as Promise<T>;
 }
 
-export default function AdminCourseTable() {
+export default function AdminCourseTable({ nodeOptions = [] }: { nodeOptions?: NodeOption[] }) {
   const [courses, setCourses] = useState<Course[]>([]);
   const [loading, setLoading] = useState(true);
   const [fetchError, setFetchError] = useState<string | null>(null);
   const [showForm, setShowForm] = useState(false);
-  const [editingCourse, setEditingCourse] = useState<Course | null>(null);
   const [updatingStatus, setUpdatingStatus] = useState<string | null>(null);
   const [statusError, setStatusError] = useState<string | null>(null);
 
@@ -60,6 +60,7 @@ export default function AdminCourseTable() {
     description: string;
     thumbnail: string;
     status: CourseStatus;
+    nodeId: string | null;
   }) => {
     const course = await apiFetch<Course>("/api/courses", {
       method: "POST",
@@ -68,22 +69,6 @@ export default function AdminCourseTable() {
     });
     setCourses((prev) => [course, ...prev]);
     setShowForm(false);
-  };
-
-  const handleUpdate = async (data: {
-    title: string;
-    description: string;
-    thumbnail: string;
-    status: CourseStatus;
-  }) => {
-    if (!editingCourse) return;
-    const updated = await apiFetch<Course>(`/api/courses/${editingCourse.id}`, {
-      method: "PATCH",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(data),
-    });
-    setCourses((prev) => prev.map((c) => (c.id === updated.id ? updated : c)));
-    setEditingCourse(null);
   };
 
   const handleStatusChange = async (
@@ -145,23 +130,7 @@ export default function AdminCourseTable() {
         <h3 className="text-sm font-semibold text-gray-900 dark:text-gray-100 mb-4">
           Create New Course
         </h3>
-        <CourseForm onSubmit={handleCreate} onCancel={() => setShowForm(false)} />
-      </div>
-    );
-  }
-
-  if (editingCourse) {
-    return (
-      <div className="rounded-xl border border-gray-200/80 dark:border-[#2e2e3a] bg-white dark:bg-[#1c1c24] shadow-card p-6">
-        <h3 className="text-sm font-semibold text-gray-900 dark:text-gray-100 mb-4">
-          Edit Course
-        </h3>
-        <CourseForm
-          initialData={editingCourse}
-          onSubmit={handleUpdate}
-          onCancel={() => setEditingCourse(null)}
-          submitLabel="Save Changes"
-        />
+        <CourseForm onSubmit={handleCreate} onCancel={() => setShowForm(false)} nodeOptions={nodeOptions} />
       </div>
     );
   }
@@ -242,20 +211,12 @@ export default function AdminCourseTable() {
                   {course.createdBy.name || course.createdBy.email}
                 </td>
                 <td className="px-5 py-3 text-right">
-                  <div className="flex items-center justify-end gap-3">
-                    <Link
-                      href={`/admin/courses/${course.id}/edit`}
-                      className="text-xs text-brand-600 dark:text-brand-400 hover:underline font-medium"
-                    >
-                      Full Editor
-                    </Link>
-                    <button
-                      onClick={() => setEditingCourse(course)}
-                      className="text-xs text-brand-600 dark:text-brand-400 hover:underline font-medium"
-                    >
-                      Quick Edit
-                    </button>
-                  </div>
+                  <Link
+                    href={`/admin/courses/${course.id}/edit`}
+                    className="text-xs text-brand-600 dark:text-brand-400 hover:underline font-medium"
+                  >
+                    Edit
+                  </Link>
                 </td>
               </tr>
             ))}

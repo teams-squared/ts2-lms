@@ -106,5 +106,6 @@ export async function loadCourseEditData(
     modules,
     quizDataByLessonId,
     status: prismaStatusToApp(course.status),
+    nodeId: course.nodeId,
   };
 }

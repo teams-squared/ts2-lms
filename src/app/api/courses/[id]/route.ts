@@ -86,6 +86,9 @@ export async function PATCH(request: Request, { params }: Params) {
     }
     data.status = appStatusToPrisma(status);
   }
+  if (body.nodeId !== undefined) {
+    data.nodeId = body.nodeId?.trim() || null;
+  }
 
   const updated = await prisma.course.update({
     where: { id },
