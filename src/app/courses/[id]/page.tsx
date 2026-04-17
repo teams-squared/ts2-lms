@@ -120,7 +120,7 @@ export default async function CourseDetailPage({
 
       {/* Header */}
       <div className="mb-8">
-        <div className="relative aspect-video rounded-xl overflow-hidden mb-6 bg-gray-100 dark:bg-[#18181f]">
+        <div className="relative mb-6 aspect-video overflow-hidden rounded-lg bg-surface-muted">
           {course.thumbnail ? (
             <Image
               src={course.thumbnail}
@@ -131,9 +131,9 @@ export default async function CourseDetailPage({
               unoptimized
             />
           ) : (
-            <div className="absolute inset-0 flex flex-col items-center justify-center bg-gradient-to-br from-brand-100 to-brand-200 dark:from-brand-950/40 dark:to-brand-900/30">
-              <GraduationCapIcon className="w-16 h-16 text-brand-400 dark:text-brand-500 mb-3" />
-              <span className="text-sm font-medium text-brand-600 dark:text-brand-400 px-8 text-center max-w-md">
+            <div className="absolute inset-0 flex flex-col items-center justify-center bg-primary-subtle">
+              <GraduationCapIcon className="mb-3 h-16 w-16 text-primary/70" />
+              <span className="max-w-md px-8 text-center text-sm font-medium text-primary">
                 {course.title}
               </span>
             </div>
@@ -146,12 +146,12 @@ export default async function CourseDetailPage({
           </div>
         )}
 
-        <h1 className="text-2xl sm:text-3xl font-bold text-gray-900 dark:text-gray-100 tracking-tight mb-3">
+        <h1 className="mb-3 font-display text-2xl font-bold tracking-tight text-foreground sm:text-3xl">
           {course.title}
         </h1>
 
         {course.description && (
-          <p className="text-base text-gray-600 dark:text-gray-400 leading-relaxed mb-4">
+          <p className="mb-4 text-base leading-relaxed text-foreground-muted">
             {course.description}
           </p>
         )}
@@ -170,29 +170,29 @@ export default async function CourseDetailPage({
 
         {/* Progress bar (shown when enrolled and course has lessons) */}
         {enrollment && totalLessons > 0 && (
-          <div className="rounded-xl border border-gray-200/80 dark:border-[#2e2e3a] bg-white dark:bg-[#1c1c24] shadow-card px-5 py-4 mb-4">
-            <div className="flex justify-between text-sm text-gray-500 dark:text-gray-400 mb-1.5">
+          <div className="mb-4 rounded-lg border border-border bg-card px-5 py-4 shadow-sm">
+            <div className="mb-1.5 flex justify-between text-sm text-foreground-muted">
               <span>
                 {completedLessons} of {totalLessons} lesson{totalLessons !== 1 ? "s" : ""} complete
               </span>
-              <span className="font-medium text-gray-700 dark:text-gray-300">
+              <span className="font-medium text-foreground">
                 {percentComplete}%
               </span>
             </div>
-            <div className="h-3 bg-gray-100 dark:bg-[#2e2e3a] rounded-full overflow-hidden mb-3">
+            <div className="mb-3 h-3 overflow-hidden rounded-full bg-border">
               <div
-                className="h-full bg-gradient-to-r from-brand-500 to-brand-400 rounded-full shadow-sm shadow-brand-400/30 transition-all duration-300"
+                className="h-full rounded-full bg-primary transition-all duration-300"
                 style={{ width: `${percentComplete}%` }}
               />
             </div>
             {isCourseComplete ? (
-              <p className="text-xs text-emerald-600 dark:text-emerald-400 font-medium">
+              <p className="text-xs font-medium text-success">
                 ✓ Course complete
               </p>
             ) : continueUrl ? (
               <Link
                 href={continueUrl}
-                className="text-xs font-medium text-brand-600 dark:text-brand-400 hover:underline"
+                className="text-xs font-medium text-primary hover:underline"
               >
                 Continue where you left off →
               </Link>
@@ -201,13 +201,13 @@ export default async function CourseDetailPage({
         )}
 
         {/* Author */}
-        <div className="flex items-center gap-3 pt-4 border-t border-gray-100 dark:border-[#2e2e3a]">
+        <div className="flex items-center gap-3 border-t border-border pt-4">
           <UserAvatar name={course.createdBy.name} image={course.createdBy.avatar} size="sm" />
           <div>
-            <p className="text-sm font-medium text-gray-900 dark:text-gray-100">
+            <p className="text-sm font-medium text-foreground">
               {course.createdBy.name || course.createdBy.email}
             </p>
-            <p className="text-xs text-gray-500 dark:text-gray-400">
+            <p className="text-xs text-foreground-muted">
               Created {new Date(course.createdAt).toLocaleDateString("en-US", {
                 year: "numeric",
                 month: "long",
@@ -219,12 +219,12 @@ export default async function CourseDetailPage({
       </div>
 
       {/* Modules & Lessons */}
-      <div className="rounded-xl border border-gray-200/80 dark:border-[#2e2e3a] bg-white dark:bg-[#1c1c24] shadow-card overflow-hidden">
-        <div className="px-5 py-4 border-b border-gray-100 dark:border-[#26262e]">
-          <h2 className="text-base font-semibold text-gray-900 dark:text-gray-100">
+      <div className="overflow-hidden rounded-lg border border-border bg-card shadow-sm">
+        <div className="border-b border-border px-5 py-4">
+          <h2 className="font-display text-base font-semibold text-foreground">
             Course Content
           </h2>
-          <p className="text-xs text-gray-400 mt-0.5">
+          <p className="mt-0.5 text-xs text-foreground-subtle">
             {course.modules.length} module{course.modules.length !== 1 ? "s" : ""} &middot;{" "}
             {totalLessons} lesson
             {totalLessons !== 1 ? "s" : ""}
