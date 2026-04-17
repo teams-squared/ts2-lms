@@ -45,12 +45,15 @@ export function CourseThumbnail({
       )}
     >
       {src ? (
+        // object-contain + padding keeps SVG illustrations (and any image with
+        // a transparent/white background) inside the tinted frame rather than
+        // filling edge-to-edge and washing out the bg-primary-subtle container.
         <Image
           src={src}
           alt=""
           fill
           sizes={sizes}
-          className={cn("object-cover", locked && "grayscale")}
+          className={cn("object-contain p-6", locked && "grayscale")}
         />
       ) : (
         <div className="absolute inset-0 flex flex-col items-center justify-center gap-2 px-4">
