@@ -85,19 +85,19 @@ export default async function ProfilePage() {
   });
 
   return (
-    <div className="max-w-2xl mx-auto px-4 sm:px-6 lg:px-8 py-10">
-      <h1 className="text-2xl font-bold text-gray-900 dark:text-gray-100 tracking-tight mb-6">
+    <div className="mx-auto max-w-2xl px-4 py-10 sm:px-6 lg:px-8">
+      <h1 className="mb-6 font-display text-2xl font-bold tracking-tight text-foreground">
         My Profile
       </h1>
 
-      <div className="rounded-xl border border-gray-200/80 dark:border-[#2e2e3a] bg-white dark:bg-[#1c1c24] shadow-card overflow-hidden">
-        <div className="p-6 flex items-start gap-5 border-b border-gray-100 dark:border-[#2e2e3a]">
+      <div className="overflow-hidden rounded-lg border border-border bg-card shadow-sm">
+        <div className="flex items-start gap-5 border-b border-border p-6">
           <UserAvatar name={user.name} image={user.avatar} size="lg" />
           <div className="flex-1">
-            <h2 className="text-lg font-semibold text-gray-900 dark:text-gray-100">
+            <h2 className="font-display text-lg font-semibold text-foreground">
               {user.name || "Unnamed User"}
             </h2>
-            <p className="text-sm text-gray-500 dark:text-gray-400">{user.email}</p>
+            <p className="text-sm text-foreground-muted">{user.email}</p>
             <div className="mt-2">
               <RoleBadge role={role} />
             </div>
@@ -106,12 +106,12 @@ export default async function ProfilePage() {
           </div>
         </div>
 
-        <div className="divide-y divide-gray-100 dark:divide-[#2e2e3a]">
-          <div className="px-6 py-4 flex justify-between">
-            <span className="text-sm font-medium text-gray-500 dark:text-gray-400">
+        <div className="divide-y divide-border">
+          <div className="flex justify-between px-6 py-4">
+            <span className="text-sm font-medium text-foreground-muted">
               Member since
             </span>
-            <span className="text-sm text-gray-900 dark:text-gray-100">
+            <span className="text-sm text-foreground">
               {user.createdAt.toLocaleDateString("en-US", {
                 year: "numeric",
                 month: "long",
@@ -119,19 +119,19 @@ export default async function ProfilePage() {
               })}
             </span>
           </div>
-          <div className="px-6 py-4 flex justify-between">
-            <span className="text-sm font-medium text-gray-500 dark:text-gray-400">
+          <div className="flex justify-between px-6 py-4">
+            <span className="text-sm font-medium text-foreground-muted">
               Enrolled courses
             </span>
-            <span className="text-sm text-gray-900 dark:text-gray-100">
+            <span className="text-sm text-foreground">
               {enrollments.length}
             </span>
           </div>
-          <div className="px-6 py-4 flex justify-between">
-            <span className="text-sm font-medium text-gray-500 dark:text-gray-400">
+          <div className="flex justify-between px-6 py-4">
+            <span className="text-sm font-medium text-foreground-muted">
               Completed courses
             </span>
-            <span className="text-sm text-gray-900 dark:text-gray-100">
+            <span className="text-sm text-foreground">
               {completedCourses.length}
             </span>
           </div>
@@ -139,10 +139,10 @@ export default async function ProfilePage() {
       </div>
 
       {/* Gamification section */}
-      <div className="mt-8 rounded-xl border border-gray-200/80 dark:border-[#2e2e3a] bg-white dark:bg-[#1c1c24] shadow-card overflow-hidden">
-        <div className="p-6 border-b border-gray-100 dark:border-[#2e2e3a]">
-          <div className="flex items-center justify-between mb-4">
-            <h2 className="text-base font-semibold text-gray-900 dark:text-gray-100">
+      <div className="mt-8 overflow-hidden rounded-lg border border-border bg-card shadow-sm">
+        <div className="border-b border-border p-6">
+          <div className="mb-4 flex items-center justify-between">
+            <h2 className="font-display text-base font-semibold text-foreground">
               Progress
             </h2>
             <StreakBadge streak={streak} />
@@ -152,18 +152,18 @@ export default async function ProfilePage() {
 
         {recentAchievements.length > 0 && (
           <div className="p-6">
-            <div className="flex items-center justify-between mb-3">
-              <h3 className="text-base font-semibold text-gray-900 dark:text-gray-100">
+            <div className="mb-3 flex items-center justify-between">
+              <h3 className="font-display text-base font-semibold text-foreground">
                 Recent Achievements
               </h3>
               <Link
                 href="/profile/achievements"
-                className="text-xs text-brand-600 dark:text-brand-400 hover:underline"
+                className="text-xs text-primary hover:underline"
               >
                 View all
               </Link>
             </div>
-            <div className="grid grid-cols-2 sm:grid-cols-3 gap-4">
+            <div className="grid grid-cols-2 gap-4 sm:grid-cols-3">
               {recentAchievements.map((a) => (
                 <AchievementCard
                   key={a.id}

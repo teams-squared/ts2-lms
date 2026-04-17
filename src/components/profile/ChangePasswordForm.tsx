@@ -63,7 +63,7 @@ export function ChangePasswordForm({ isSsoOnly }: ChangePasswordFormProps) {
 
   if (isSsoOnly) {
     return (
-      <p className="text-xs text-gray-400 dark:text-gray-500 mt-1">
+      <p className="mt-1 text-xs text-foreground-subtle">
         Password change is not available for SSO accounts.
       </p>
     );
@@ -71,16 +71,16 @@ export function ChangePasswordForm({ isSsoOnly }: ChangePasswordFormProps) {
 
   if (!open) {
     return (
-      <div className="flex items-center gap-3 mt-1">
+      <div className="mt-1 flex items-center gap-3">
         <button
           onClick={() => setOpen(true)}
-          className="text-xs text-brand-600 dark:text-brand-400 hover:underline"
+          className="text-xs text-primary hover:underline"
           data-testid="change-password-trigger"
         >
           Change password
         </button>
         {success && (
-          <span className="text-xs text-emerald-600 dark:text-emerald-400">
+          <span className="text-xs text-success">
             Password updated successfully.
           </span>
         )}
@@ -95,7 +95,7 @@ export function ChangePasswordForm({ isSsoOnly }: ChangePasswordFormProps) {
       data-testid="change-password-form"
     >
       <div>
-        <label className="block text-xs font-medium text-gray-600 dark:text-gray-400 mb-1">
+        <label className="mb-1 block text-xs font-medium text-foreground-muted">
           Current password
         </label>
         <input
@@ -104,12 +104,12 @@ export function ChangePasswordForm({ isSsoOnly }: ChangePasswordFormProps) {
           onChange={(e) => setCurrentPassword(e.target.value)}
           required
           autoComplete="current-password"
-          className="w-full rounded-lg border border-gray-300 dark:border-[#3a3a48] bg-white dark:bg-[#1e1e28] text-sm text-gray-900 dark:text-gray-100 px-3 py-1.5 focus:outline-none focus:ring-2 focus:ring-brand-500"
+          className="w-full rounded-md border border-border bg-surface px-3 py-1.5 text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-ring"
           data-testid="current-password-input"
         />
       </div>
       <div>
-        <label className="block text-xs font-medium text-gray-600 dark:text-gray-400 mb-1">
+        <label className="mb-1 block text-xs font-medium text-foreground-muted">
           New password
         </label>
         <input
@@ -119,12 +119,12 @@ export function ChangePasswordForm({ isSsoOnly }: ChangePasswordFormProps) {
           required
           minLength={8}
           autoComplete="new-password"
-          className="w-full rounded-lg border border-gray-300 dark:border-[#3a3a48] bg-white dark:bg-[#1e1e28] text-sm text-gray-900 dark:text-gray-100 px-3 py-1.5 focus:outline-none focus:ring-2 focus:ring-brand-500"
+          className="w-full rounded-md border border-border bg-surface px-3 py-1.5 text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-ring"
           data-testid="new-password-input"
         />
       </div>
       <div>
-        <label className="block text-xs font-medium text-gray-600 dark:text-gray-400 mb-1">
+        <label className="mb-1 block text-xs font-medium text-foreground-muted">
           Confirm new password
         </label>
         <input
@@ -133,12 +133,12 @@ export function ChangePasswordForm({ isSsoOnly }: ChangePasswordFormProps) {
           onChange={(e) => setConfirmPassword(e.target.value)}
           required
           autoComplete="new-password"
-          className="w-full rounded-lg border border-gray-300 dark:border-[#3a3a48] bg-white dark:bg-[#1e1e28] text-sm text-gray-900 dark:text-gray-100 px-3 py-1.5 focus:outline-none focus:ring-2 focus:ring-brand-500"
+          className="w-full rounded-md border border-border bg-surface px-3 py-1.5 text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-ring"
           data-testid="confirm-password-input"
         />
       </div>
       {error && (
-        <p className="text-xs text-red-600 dark:text-red-400" data-testid="password-error">
+        <p className="text-xs text-danger" data-testid="password-error">
           {error}
         </p>
       )}
@@ -146,7 +146,7 @@ export function ChangePasswordForm({ isSsoOnly }: ChangePasswordFormProps) {
         <button
           type="submit"
           disabled={saving}
-          className="rounded-lg bg-brand-600 hover:bg-brand-700 disabled:opacity-50 text-white text-xs font-medium px-3 py-1.5"
+          className="rounded-md bg-primary px-3 py-1.5 text-xs font-medium text-primary-foreground hover:bg-primary/90 disabled:opacity-50"
           data-testid="save-password-button"
         >
           {saving ? "Saving…" : "Save password"}
@@ -158,7 +158,7 @@ export function ChangePasswordForm({ isSsoOnly }: ChangePasswordFormProps) {
             resetFields();
             setSuccess(false);
           }}
-          className="text-xs text-gray-500 hover:text-gray-700"
+          className="text-xs text-foreground-muted hover:text-foreground"
         >
           Cancel
         </button>

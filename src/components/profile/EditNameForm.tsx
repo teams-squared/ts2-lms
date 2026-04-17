@@ -49,7 +49,7 @@ export function EditNameForm({ currentName }: EditNameFormProps) {
     return (
       <button
         onClick={() => setEditing(true)}
-        className="text-xs text-brand-600 dark:text-brand-400 hover:underline"
+        className="text-xs text-primary hover:underline"
       >
         Edit name
       </button>
@@ -57,18 +57,18 @@ export function EditNameForm({ currentName }: EditNameFormProps) {
   }
 
   return (
-    <form onSubmit={handleSubmit} className="flex items-center gap-2 mt-2">
+    <form onSubmit={handleSubmit} className="mt-2 flex items-center gap-2">
       <input
         type="text"
         value={name}
         onChange={(e) => setName(e.target.value)}
         placeholder="Your name"
-        className="rounded-lg border border-gray-300 dark:border-[#3a3a48] bg-white dark:bg-[#1e1e28] text-base sm:text-sm text-gray-900 dark:text-gray-100 px-3 py-2 focus:outline-none focus:ring-2 focus:ring-brand-500"
+        className="rounded-md border border-border bg-surface px-3 py-2 text-base text-foreground focus:outline-none focus:ring-2 focus:ring-ring sm:text-sm"
       />
       <button
         type="submit"
         disabled={saving}
-        className="rounded-lg bg-brand-600 hover:bg-brand-700 disabled:opacity-50 text-white text-sm font-medium px-3 py-2"
+        className="rounded-md bg-primary px-3 py-2 text-sm font-medium text-primary-foreground hover:bg-primary/90 disabled:opacity-50"
       >
         {saving ? "Saving…" : "Save"}
       </button>
@@ -79,12 +79,12 @@ export function EditNameForm({ currentName }: EditNameFormProps) {
           setName(currentName ?? "");
           setError(null);
         }}
-        className="text-xs text-gray-500 hover:text-gray-700"
+        className="text-xs text-foreground-muted hover:text-foreground"
       >
         Cancel
       </button>
       {error && (
-        <span className="text-xs text-red-600 dark:text-red-400">{error}</span>
+        <span className="text-xs text-danger">{error}</span>
       )}
     </form>
   );

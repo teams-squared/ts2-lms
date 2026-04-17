@@ -40,18 +40,18 @@ export default async function AchievementsPage() {
   const earnedCount = userAchievements.length;
 
   return (
-    <div className="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8 py-10">
-      <p className="text-xs text-gray-500 dark:text-gray-400 mb-1">
+    <div className="mx-auto max-w-3xl px-4 py-10 sm:px-6 lg:px-8">
+      <p className="mb-1 text-xs text-foreground-muted">
         <Link href="/profile" className="hover:underline">
           Profile
         </Link>
         {" / "}
-        <span className="text-gray-700 dark:text-gray-300">Achievements</span>
+        <span className="text-foreground">Achievements</span>
       </p>
-      <h1 className="text-2xl font-bold text-gray-900 dark:text-gray-100 tracking-tight mb-2">
+      <h1 className="mb-2 font-display text-2xl font-bold tracking-tight text-foreground">
         Achievements
       </h1>
-      <p className="text-sm text-gray-500 dark:text-gray-400 mb-8">
+      <p className="mb-8 text-sm text-foreground-muted">
         {earnedCount} of {allAchievements.length} unlocked
       </p>
 
@@ -60,10 +60,10 @@ export default async function AchievementsPage() {
           const items = achievements.filter((a) => a.category === category);
           return (
             <div key={category}>
-              <h2 className="text-sm font-semibold text-gray-900 dark:text-gray-100 mb-3">
+              <h2 className="mb-3 font-display text-sm font-semibold text-foreground">
                 {CATEGORY_LABELS[category] ?? category}
               </h2>
-              <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
+              <div className="grid grid-cols-2 gap-3 sm:grid-cols-3">
                 {items.map((a) => (
                   <AchievementCard
                     key={a.id}
