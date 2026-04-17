@@ -196,7 +196,7 @@ export default async function CourseCatalogPage({
 
   return (
     <div>
-      <div className="bg-page-header-gradient">
+      <div className="bg-surface-muted">
         <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 pt-10 pb-6">
           <Breadcrumbs items={[{ label: "Home", href: "/" }, { label: "Courses" }]} />
           <h1 className="mb-1 flex items-center gap-2 font-display text-2xl font-bold tracking-tight text-foreground">

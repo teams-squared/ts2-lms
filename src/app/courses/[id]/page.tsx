@@ -1,4 +1,3 @@
-import Image from "next/image";
 import Link from "next/link";
 import { auth } from "@/lib/auth";
 import { redirect, notFound } from "next/navigation";
@@ -9,9 +8,10 @@ import { canViewCourse } from "@/lib/courseAccess";
 import { computeDeadline, getDeadlineStatus, formatDeadlineRelative } from "@/lib/deadlines";
 import type { DeadlineInfo } from "@/lib/deadlines";
 import { CourseStatusBadge } from "@/components/courses/CourseStatusBadge";
+import { CourseThumbnail } from "@/components/courses/CourseThumbnail";
 import { UserAvatar } from "@/components/ui/UserAvatar";
 import { ModuleList } from "@/components/courses/ModuleList";
-import { GraduationCapIcon } from "@/components/icons";
+import { CheckCircleIcon } from "@/components/icons";
 import { Breadcrumbs } from "@/components/ui/Breadcrumbs";
 import { EnrollButton } from "@/components/courses/EnrollButton";
 
@@ -120,25 +120,13 @@ export default async function CourseDetailPage({
 
       {/* Header */}
       <div className="mb-8">
-        <div className="relative mb-6 aspect-video overflow-hidden rounded-lg bg-surface-muted">
-          {course.thumbnail ? (
-            <Image
-              src={course.thumbnail}
-              alt={course.title}
-              fill
-              sizes="(max-width: 768px) 100vw, 768px"
-              className="object-cover"
-              unoptimized
-            />
-          ) : (
-            <div className="absolute inset-0 flex flex-col items-center justify-center bg-primary-subtle">
-              <GraduationCapIcon className="mb-3 h-16 w-16 text-primary/70" />
-              <span className="max-w-md px-8 text-center text-sm font-medium text-primary">
-                {course.title}
-              </span>
-            </div>
-          )}
-        </div>
+        {/* Thumbnail — design-system §8.2.1: always use CourseThumbnail, object-contain */}
+        <CourseThumbnail
+          title={course.title}
+          src={course.thumbnail}
+          className="mb-6 rounded-lg"
+          sizes="(max-width: 768px) 100vw, 768px"
+        />
 
         {isPrivileged && (
           <div className="flex items-center gap-2 mb-3">
@@ -179,15 +167,16 @@ export default async function CourseDetailPage({
                 {percentComplete}%
               </span>
             </div>
-            <div className="mb-3 h-3 overflow-hidden rounded-full bg-border">
+            <div className="mb-3 h-2 overflow-hidden rounded-full bg-border">
               <div
-                className="h-full rounded-full bg-primary transition-all duration-300"
+                className="h-full rounded-full bg-primary transition-[width] duration-[400ms] ease-out"
                 style={{ width: `${percentComplete}%` }}
               />
             </div>
             {isCourseComplete ? (
-              <p className="text-xs font-medium text-success">
-                ✓ Course complete
+              <p className="flex items-center gap-1 text-xs font-medium text-success">
+                <CheckCircleIcon className="h-3.5 w-3.5" aria-hidden="true" />
+                Course complete
               </p>
             ) : continueUrl ? (
               <Link

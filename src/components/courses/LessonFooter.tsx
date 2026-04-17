@@ -129,7 +129,7 @@ export function LessonFooter({
               data-testid="mark-complete-button"
               className={cn(
                 "inline-flex items-center gap-1.5 rounded-md bg-primary px-3 py-2 text-sm font-medium text-primary-foreground",
-                "transition-colors hover:bg-primary/90 disabled:cursor-not-allowed disabled:opacity-60",
+                "transition-colors hover:bg-primary-hover disabled:cursor-not-allowed disabled:opacity-60",
                 "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background",
               )}
             >

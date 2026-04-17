@@ -108,9 +108,9 @@ export function CourseSidebar({
                     key={lesson.id}
                     href={`/courses/${courseId}/lessons/${lesson.id}`}
                     onClick={() => setMobileOpen(false)}
-                    className={`mx-2 flex items-center gap-2 rounded-md px-3 py-2.5 text-sm transition-colors ${
+                    className={`relative mx-2 flex items-center gap-2 rounded-md px-3 py-2.5 text-sm transition-colors ${
                       isActive
-                        ? "bg-primary-subtle font-medium text-primary"
+                        ? "bg-primary-subtle font-medium text-primary before:absolute before:left-0 before:top-1/2 before:-translate-y-1/2 before:h-5 before:w-[3px] before:rounded-r before:bg-primary"
                         : "text-foreground hover:bg-surface-muted"
                     }`}
                   >

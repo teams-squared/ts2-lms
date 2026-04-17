@@ -6,18 +6,18 @@ import type { Role } from "@/lib/types";
  */
 export const ROLE_STYLES: Record<Role, { badge: string; dot: string; avatar: string }> = {
   admin: {
-    badge: "bg-brand-100 text-brand-700",
+    badge: "bg-primary-subtle text-primary-subtle-foreground",
     dot: "bg-primary",
-    avatar: "bg-brand-200 text-brand-800",
+    avatar: "bg-primary-subtle text-primary-subtle-foreground",
   },
   course_manager: {
-    badge: "bg-blue-100 text-blue-700",
-    dot: "bg-blue-500",
-    avatar: "bg-blue-200 text-blue-800",
+    badge: "bg-surface-muted text-info",
+    dot: "bg-info",
+    avatar: "bg-surface-muted text-info",
   },
   employee: {
-    badge: "bg-gray-100 text-foreground-muted",
-    dot: "bg-gray-400",
-    avatar: "bg-gray-200 text-gray-700",
+    badge: "bg-surface-muted text-foreground-muted",
+    dot: "bg-foreground-subtle",
+    avatar: "bg-surface-muted text-foreground-muted",
   },
 } as const;

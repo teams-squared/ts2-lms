@@ -12,21 +12,24 @@ describe("CourseStatusBadge", () => {
     expect(screen.getByText(capitalized)).toBeInTheDocument();
   });
 
-  it("applies yellow classes for draft", () => {
+  it("applies warning-subtle classes for draft", () => {
     const { container } = render(<CourseStatusBadge status="draft" />);
     const span = container.firstChild as HTMLElement;
-    expect(span.className).toContain("bg-yellow-100");
+    expect(span.className).toContain("bg-warning-subtle");
+    expect(span.className).toContain("text-warning");
   });
 
-  it("applies green classes for published", () => {
+  it("applies success-subtle classes for published", () => {
     const { container } = render(<CourseStatusBadge status="published" />);
     const span = container.firstChild as HTMLElement;
-    expect(span.className).toContain("bg-green-100");
+    expect(span.className).toContain("bg-success-subtle");
+    expect(span.className).toContain("text-success");
   });
 
-  it("applies gray classes for archived", () => {
+  it("applies surface-muted classes for archived", () => {
     const { container } = render(<CourseStatusBadge status="archived" />);
     const span = container.firstChild as HTMLElement;
-    expect(span.className).toContain("bg-gray-100");
+    expect(span.className).toContain("bg-surface-muted");
+    expect(span.className).toContain("text-foreground-muted");
   });
 });

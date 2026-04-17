@@ -34,7 +34,7 @@ export function UserAvatar({ name, image, size = "sm", className = "" }: Props) 
 
   return (
     <div
-      className={`${dim} rounded-full bg-brand-200 dark:bg-brand-900 flex items-center justify-center flex-shrink-0 font-semibold text-brand-800 dark:text-brand-200 ${className}`}
+      className={`${dim} rounded-full bg-primary-subtle text-primary-subtle-foreground flex items-center justify-center flex-shrink-0 font-semibold ${className}`}
     >
       {initial}
     </div>

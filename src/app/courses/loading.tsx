@@ -4,9 +4,9 @@ import { GraduationCapIcon } from "@/components/icons";
 export default function CoursesLoading() {
   return (
     <div>
-      <div className="bg-page-header-gradient">
+      <div className="bg-surface-muted">
         <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 pt-10 pb-6">
-          <h1 className="text-2xl font-bold text-foreground tracking-tight mb-1 flex items-center gap-2">
+          <h1 className="font-display text-2xl font-bold text-foreground tracking-tight mb-1 flex items-center gap-2">
             <GraduationCapIcon className="w-6 h-6" />
             Courses
           </h1>
