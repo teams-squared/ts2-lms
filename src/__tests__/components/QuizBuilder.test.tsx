@@ -145,6 +145,10 @@ describe("QuizBuilder", () => {
     const deleteBtn = screen.getByRole("button", { name: /delete question 1/i });
     fireEvent.click(deleteBtn);
 
+    // Confirm the destructive action in the modal
+    const confirmBtn = await screen.findByRole("button", { name: /delete question$/i });
+    fireEvent.click(confirmBtn);
+
     await waitFor(() => {
       expect(mockFetch).toHaveBeenCalledWith(
         "/api/courses/c1/modules/m1/lessons/l1/quiz/questions/q1",
@@ -167,6 +171,9 @@ describe("QuizBuilder", () => {
 
     const deleteBtn = screen.getByRole("button", { name: /delete question 1/i });
     fireEvent.click(deleteBtn);
+
+    const confirmBtn = await screen.findByRole("button", { name: /delete question$/i });
+    fireEvent.click(confirmBtn);
 
     await waitFor(() => {
       expect(screen.queryByText(/What is 2\+2\?/)).not.toBeInTheDocument();

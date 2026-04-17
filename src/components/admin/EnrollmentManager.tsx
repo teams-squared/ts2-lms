@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { useToast } from "@/components/ui/ToastProvider";
+import { ConfirmDialog } from "@/components/ui/ConfirmDialog";
 import { CourseNodeTree } from "@/components/admin/CourseNodeTree";
 import type { NodeWithChildren } from "@/lib/courseNodes";
 
@@ -44,6 +45,7 @@ export function EnrollmentManager({
   const [selectedUser, setSelectedUser] = useState("");
   const [enrolling, setEnrolling] = useState(false);
   const [unenrollingId, setUnenrollingId] = useState<string | null>(null);
+  const [pendingUnenroll, setPendingUnenroll] = useState<Enrollment | null>(null);
   const [error, setError] = useState<string | null>(null);
 
   const handleEnroll = async () => {
@@ -89,7 +91,9 @@ export function EnrollmentManager({
     }
   };
 
-  const handleUnenroll = async (id: string) => {
+  const handleUnenroll = async () => {
+    if (!pendingUnenroll) return;
+    const id = pendingUnenroll.id;
     setUnenrollingId(id);
     try {
       const res = await fetch(`/api/admin/enrollments/${id}`, {
@@ -97,10 +101,12 @@ export function EnrollmentManager({
       });
       if (res.ok) {
         setEnrollments(enrollments.filter((e) => e.id !== id));
+        toast("Enrollment removed");
         router.refresh();
       }
     } finally {
       setUnenrollingId(null);
+      setPendingUnenroll(null);
     }
   };
 
@@ -213,7 +219,7 @@ export function EnrollmentManager({
                   </td>
                   <td className="px-5 py-3 text-right">
                     <button
-                      onClick={() => void handleUnenroll(e.id)}
+                      onClick={() => setPendingUnenroll(e)}
                       disabled={unenrollingId === e.id}
                       className="text-xs text-danger hover:text-danger disabled:opacity-50"
                       aria-label={`Unenroll ${e.user.name ?? e.user.email}`}
@@ -227,6 +233,30 @@ export function EnrollmentManager({
           </table>
         )}
       </div>
+
+      <ConfirmDialog
+        open={pendingUnenroll !== null}
+        onOpenChange={(open) => !open && setPendingUnenroll(null)}
+        title="Unenroll user?"
+        description={
+          pendingUnenroll ? (
+            <>
+              Remove{" "}
+              <span className="font-medium text-foreground">
+                {pendingUnenroll.user.name ?? pendingUnenroll.user.email}
+              </span>{" "}
+              from{" "}
+              <span className="font-medium text-foreground">
+                {pendingUnenroll.course.title}
+              </span>
+              ? Their progress on this course will be deleted.
+            </>
+          ) : null
+        }
+        confirmLabel="Unenroll"
+        onConfirm={handleUnenroll}
+        loading={unenrollingId !== null}
+      />
     </div>
   );
 }

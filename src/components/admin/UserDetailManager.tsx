@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
+import { ConfirmDialog } from "@/components/ui/ConfirmDialog";
 import type { Role } from "@/lib/types";
 
 interface UserDetailManagerProps {
@@ -37,6 +38,7 @@ export function UserDetailManager({
   const [selectedClearance, setSelectedClearance] = useState("");
   const [grantingClearance, setGrantingClearance] = useState(false);
   const [revokingClearance, setRevokingClearance] = useState<string | null>(null);
+  const [pendingRevoke, setPendingRevoke] = useState<string | null>(null);
   const [clearanceError, setClearanceError] = useState<string | null>(null);
 
   const handleGrantClearance = async () => {
@@ -65,7 +67,9 @@ export function UserDetailManager({
     }
   };
 
-  const handleRevokeClearance = async (clearance: string) => {
+  const handleRevokeClearance = async () => {
+    if (!pendingRevoke) return;
+    const clearance = pendingRevoke;
     setRevokingClearance(clearance);
     setClearanceError(null);
     try {
@@ -84,6 +88,7 @@ export function UserDetailManager({
       setClearanceError("An unexpected error occurred");
     } finally {
       setRevokingClearance(null);
+      setPendingRevoke(null);
     }
   };
 
@@ -193,7 +198,7 @@ export function UserDetailManager({
               >
                 {clearance}
                 <button
-                  onClick={() => handleRevokeClearance(clearance)}
+                  onClick={() => setPendingRevoke(clearance)}
                   disabled={revokingClearance === clearance}
                   aria-label={`Revoke ${clearance} clearance`}
                   className="ml-0.5 text-primary/70 hover:text-danger disabled:opacity-50 transition-colors"
@@ -205,6 +210,24 @@ export function UserDetailManager({
           </div>
         )}
       </div>
+
+      <ConfirmDialog
+        open={pendingRevoke !== null}
+        onOpenChange={(open) => !open && setPendingRevoke(null)}
+        title="Revoke clearance?"
+        description={
+          pendingRevoke ? (
+            <>
+              Revoke the{" "}
+              <span className="font-medium text-foreground">{pendingRevoke}</span>{" "}
+              clearance from this user? They will lose access to courses that require it.
+            </>
+          ) : null
+        }
+        confirmLabel="Revoke"
+        onConfirm={handleRevokeClearance}
+        loading={revokingClearance !== null}
+      />
     </div>
   );
 }

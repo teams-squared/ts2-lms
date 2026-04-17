@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
+import { ConfirmDialog } from "@/components/ui/ConfirmDialog";
 
 interface QuizOption {
   id: string;
@@ -60,6 +61,7 @@ export function QuizBuilder({
 
   // Delete state
   const [deletingId, setDeletingId] = useState<string | null>(null);
+  const [pendingDelete, setPendingDelete] = useState<QuizQuestion | null>(null);
 
   // Inline edit state
   const [editingQuestionId, setEditingQuestionId] = useState<string | null>(null);
@@ -163,7 +165,9 @@ export function QuizBuilder({
 
   // ── Delete ────────────────────────────────────────────────────────────────
 
-  const handleDelete = async (questionId: string) => {
+  const handleDelete = async () => {
+    if (!pendingDelete) return;
+    const questionId = pendingDelete.id;
     setDeletingId(questionId);
     try {
       const res = await fetch(`${questionsApiBase}/${questionId}`, { method: "DELETE" });
@@ -173,6 +177,7 @@ export function QuizBuilder({
       }
     } finally {
       setDeletingId(null);
+      setPendingDelete(null);
     }
   };
 
@@ -426,7 +431,7 @@ export function QuizBuilder({
                       Edit
                     </button>
                     <button
-                      onClick={() => handleDelete(question.id)}
+                      onClick={() => setPendingDelete(question)}
                       disabled={deletingId === question.id}
                       aria-label={`Delete question ${idx + 1}`}
                       className="px-1 text-xs text-danger transition-colors hover:text-danger/80 disabled:opacity-50"
@@ -548,6 +553,26 @@ export function QuizBuilder({
           </div>
         </form>
       )}
+
+      <ConfirmDialog
+        open={pendingDelete !== null}
+        onOpenChange={(open) => !open && setPendingDelete(null)}
+        title="Delete question?"
+        description={
+          pendingDelete ? (
+            <>
+              Delete this question and all of its options? Any learner attempts
+              referencing it will lose this question from their results.
+              <span className="mt-2 block font-medium text-foreground">
+                &ldquo;{pendingDelete.text}&rdquo;
+              </span>
+            </>
+          ) : null
+        }
+        confirmLabel="Delete question"
+        onConfirm={handleDelete}
+        loading={deletingId !== null}
+      />
     </div>
   );
 }

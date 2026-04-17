@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { SharePointFilePicker } from "./SharePointFilePicker";
 import { QuizBuilder } from "./QuizBuilder";
 import { NodeTreeSelect } from "./NodeTreeSelect";
+import { ConfirmDialog } from "@/components/ui/ConfirmDialog";
 import type { NodeTreeItem } from "./NodeTreeSelect";
 import type { CourseStatus, LessonType } from "@/lib/types";
 import type { SharePointDocumentRef } from "@/lib/sharepoint/types";
@@ -120,6 +121,12 @@ export function CourseEditor({
   // Delete state
   const [deletingModuleId, setDeletingModuleId] = useState<string | null>(null);
   const [deletingLessonId, setDeletingLessonId] = useState<string | null>(null);
+  const [pendingDeleteModule, setPendingDeleteModule] = useState<Module | null>(null);
+  const [pendingDeleteLesson, setPendingDeleteLesson] = useState<{
+    moduleId: string;
+    lesson: Lesson;
+  } | null>(null);
+  const [pendingRemoveSub, setPendingRemoveSub] = useState<string | null>(null);
 
   // Email subscription state
   const [subscriptions, setSubscriptions] = useState<string[]>(initialSubscriptions);
@@ -192,7 +199,9 @@ export function CourseEditor({
     }
   };
 
-  const handleRemoveSubscription = async (email: string) => {
+  const handleRemoveSubscription = async () => {
+    if (!pendingRemoveSub) return;
+    const email = pendingRemoveSub;
     setRemovingSub(email);
     try {
       await apiFetch(`/api/courses/${courseId}/subscriptions`, {
@@ -205,6 +214,7 @@ export function CourseEditor({
       // silently ignore — user can retry
     } finally {
       setRemovingSub(null);
+      setPendingRemoveSub(null);
     }
   };
 
@@ -239,8 +249,9 @@ export function CourseEditor({
     }
   };
 
-  const handleDeleteModule = async (moduleId: string) => {
-    if (!confirm("Delete this module and all its lessons?")) return;
+  const handleDeleteModule = async () => {
+    if (!pendingDeleteModule) return;
+    const moduleId = pendingDeleteModule.id;
     setDeletingModuleId(moduleId);
     try {
       await apiFetch(`/api/courses/${courseId}/modules/${moduleId}`, {
@@ -250,6 +261,7 @@ export function CourseEditor({
       router.refresh();
     } finally {
       setDeletingModuleId(null);
+      setPendingDeleteModule(null);
     }
   };
 
@@ -283,8 +295,10 @@ export function CourseEditor({
     }
   };
 
-  const handleDeleteLesson = async (moduleId: string, lessonId: string) => {
-    if (!confirm("Delete this lesson?")) return;
+  const handleDeleteLesson = async () => {
+    if (!pendingDeleteLesson) return;
+    const { moduleId, lesson } = pendingDeleteLesson;
+    const lessonId = lesson.id;
     setDeletingLessonId(lessonId);
     try {
       await apiFetch(
@@ -301,6 +315,7 @@ export function CourseEditor({
       router.refresh();
     } finally {
       setDeletingLessonId(null);
+      setPendingDeleteLesson(null);
     }
   };
 
@@ -493,7 +508,7 @@ export function CourseEditor({
               >
                 <span className="text-sm text-foreground">{email}</span>
                 <button
-                  onClick={() => void handleRemoveSubscription(email)}
+                  onClick={() => setPendingRemoveSub(email)}
                   disabled={removingSub === email}
                   className="text-xs text-red-500 hover:text-red-700 disabled:opacity-50"
                 >
@@ -548,7 +563,7 @@ export function CourseEditor({
                 <button
                   onClick={(e) => {
                     e.stopPropagation();
-                    void handleDeleteModule(module.id);
+                    setPendingDeleteModule(module);
                   }}
                   disabled={deletingModuleId === module.id}
                   className="text-xs text-red-500 hover:text-red-700 disabled:opacity-50 ml-2"
@@ -587,7 +602,7 @@ export function CourseEditor({
                           </button>
                         )}
                         <button
-                          onClick={() => void handleDeleteLesson(module.id, lesson.id)}
+                          onClick={() => setPendingDeleteLesson({ moduleId: module.id, lesson })}
                           disabled={deletingLessonId === lesson.id}
                           className="text-xs text-red-500 hover:text-red-700 disabled:opacity-50"
                           aria-label={`Delete lesson ${lesson.title}`}
@@ -886,6 +901,70 @@ export function CourseEditor({
             ? (m) => m.startsWith("video/")
             : undefined
         }
+      />
+
+      <ConfirmDialog
+        open={pendingDeleteModule !== null}
+        onOpenChange={(open) => !open && setPendingDeleteModule(null)}
+        title="Delete module?"
+        description={
+          pendingDeleteModule ? (
+            <>
+              Delete{" "}
+              <span className="font-medium text-foreground">
+                {pendingDeleteModule.title}
+              </span>{" "}
+              and all{" "}
+              {pendingDeleteModule.lessons.length} lesson
+              {pendingDeleteModule.lessons.length !== 1 ? "s" : ""} inside it? This
+              cannot be undone.
+            </>
+          ) : null
+        }
+        confirmLabel="Delete module"
+        onConfirm={handleDeleteModule}
+        loading={deletingModuleId !== null}
+      />
+
+      <ConfirmDialog
+        open={pendingDeleteLesson !== null}
+        onOpenChange={(open) => !open && setPendingDeleteLesson(null)}
+        title="Delete lesson?"
+        description={
+          pendingDeleteLesson ? (
+            <>
+              Delete{" "}
+              <span className="font-medium text-foreground">
+                {pendingDeleteLesson.lesson.title}
+              </span>
+              ? Learner progress on this lesson will be removed. This cannot be
+              undone.
+            </>
+          ) : null
+        }
+        confirmLabel="Delete lesson"
+        onConfirm={handleDeleteLesson}
+        loading={deletingLessonId !== null}
+      />
+
+      <ConfirmDialog
+        open={pendingRemoveSub !== null}
+        onOpenChange={(open) => !open && setPendingRemoveSub(null)}
+        title="Remove subscriber?"
+        description={
+          pendingRemoveSub ? (
+            <>
+              Remove{" "}
+              <span className="font-medium text-foreground">
+                {pendingRemoveSub}
+              </span>{" "}
+              from the deadline notification list for this course?
+            </>
+          ) : null
+        }
+        confirmLabel="Remove"
+        onConfirm={handleRemoveSubscription}
+        loading={removingSub !== null}
       />
     </div>
   );

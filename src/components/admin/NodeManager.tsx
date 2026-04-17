@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { useToast } from "@/components/ui/ToastProvider";
+import { ConfirmDialog } from "@/components/ui/ConfirmDialog";
 import {
   ChevronRightIcon,
   ChevronDownIcon,
@@ -25,6 +26,12 @@ export function NodeManager({ initialTree }: NodeManagerProps) {
   const [addingParentId, setAddingParentId] = useState<string | null | "root">(null);
   const [newNodeName, setNewNodeName] = useState("");
   const [loading, setLoading] = useState(false);
+  const [pendingDelete, setPendingDelete] = useState<{
+    id: string;
+    name: string;
+    courseCount: number;
+    childCount: number;
+  } | null>(null);
 
   const toggle = (id: string) => {
     setExpanded((prev) => {
@@ -88,11 +95,11 @@ export function NodeManager({ initialTree }: NodeManagerProps) {
     }
   };
 
-  const handleDelete = async (id: string, name: string) => {
-    if (!confirm(`Delete "${name}"? Children will be reparented and courses unassigned.`)) return;
+  const handleDelete = async () => {
+    if (!pendingDelete) return;
     setLoading(true);
     try {
-      const res = await fetch(`/api/admin/nodes/${id}`, { method: "DELETE" });
+      const res = await fetch(`/api/admin/nodes/${pendingDelete.id}`, { method: "DELETE" });
       if (res.ok) {
         toast("Node deleted");
         await refreshTree();
@@ -100,6 +107,7 @@ export function NodeManager({ initialTree }: NodeManagerProps) {
       }
     } finally {
       setLoading(false);
+      setPendingDelete(null);
     }
   };
 
@@ -183,7 +191,14 @@ export function NodeManager({ initialTree }: NodeManagerProps) {
               + Child
             </button>
             <button
-              onClick={() => void handleDelete(node.id, node.name)}
+              onClick={() =>
+                setPendingDelete({
+                  id: node.id,
+                  name: node.name,
+                  courseCount: totalCourses,
+                  childCount: node.children.length,
+                })
+              }
               className="text-xs text-danger hover:text-danger px-1.5 py-0.5"
               title="Delete node"
             >
@@ -301,6 +316,30 @@ export function NodeManager({ initialTree }: NodeManagerProps) {
           tree.map((node) => renderNode(node, 0))
         )}
       </div>
+
+      <ConfirmDialog
+        open={pendingDelete !== null}
+        onOpenChange={(open) => !open && setPendingDelete(null)}
+        title="Delete node?"
+        description={
+          pendingDelete ? (
+            <>
+              Delete{" "}
+              <span className="font-medium text-foreground">
+                &ldquo;{pendingDelete.name}&rdquo;
+              </span>
+              ?{" "}
+              {pendingDelete.childCount > 0 &&
+                `${pendingDelete.childCount} child node${pendingDelete.childCount !== 1 ? "s" : ""} will be reparented. `}
+              {pendingDelete.courseCount > 0 &&
+                `${pendingDelete.courseCount} course${pendingDelete.courseCount !== 1 ? "s" : ""} will be unassigned from this branch.`}
+            </>
+          ) : null
+        }
+        confirmLabel="Delete node"
+        onConfirm={handleDelete}
+        loading={loading}
+      />
     </div>
   );
 }
