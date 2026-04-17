@@ -199,11 +199,11 @@ export default async function CourseCatalogPage({
       <div className="bg-page-header-gradient">
         <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 pt-10 pb-6">
           <Breadcrumbs items={[{ label: "Home", href: "/" }, { label: "Courses" }]} />
-          <h1 className="text-2xl font-bold text-gray-900 dark:text-gray-100 tracking-tight mb-1 flex items-center gap-2">
-            <GraduationCapIcon className="w-6 h-6" />
+          <h1 className="mb-1 flex items-center gap-2 font-display text-2xl font-bold tracking-tight text-foreground">
+            <GraduationCapIcon className="h-6 w-6" />
             Courses
           </h1>
-          <p className="text-sm text-gray-500 dark:text-gray-400">
+          <p className="text-sm text-foreground-muted">
             Browse and track your learning
           </p>
         </div>
@@ -212,23 +212,23 @@ export default async function CourseCatalogPage({
 
       {/* Tabs — only shown for admins/managers who have both views */}
       {isPrivileged && (
-        <div className="flex items-center gap-1 mb-6 border-b border-gray-200 dark:border-[#2e2e3a]">
+        <div className="mb-6 flex items-center gap-1 border-b border-border">
           <Link
             href="/courses?tab=my"
-            className={`px-4 py-2 text-sm font-medium border-b-2 transition-colors ${
+            className={`border-b-2 px-4 py-2 text-sm font-medium transition-colors ${
               activeTab === "my"
-                ? "border-brand-600 text-brand-600 dark:text-brand-400 dark:border-brand-400"
-                : "border-transparent text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200"
+                ? "border-primary text-primary"
+                : "border-transparent text-foreground-muted hover:text-foreground"
             }`}
           >
             My Courses
           </Link>
           <Link
             href="/courses"
-            className={`px-4 py-2 text-sm font-medium border-b-2 transition-colors ${
+            className={`border-b-2 px-4 py-2 text-sm font-medium transition-colors ${
               activeTab === "all"
-                ? "border-brand-600 text-brand-600 dark:text-brand-400 dark:border-brand-400"
-                : "border-transparent text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200"
+                ? "border-primary text-primary"
+                : "border-transparent text-foreground-muted hover:text-foreground"
             }`}
           >
             All Courses
@@ -242,8 +242,8 @@ export default async function CourseCatalogPage({
           {/* Sidebar */}
           {sidebarNodes.length > 0 && (
             <aside className="hidden lg:block w-56 flex-shrink-0">
-              <div className="sticky top-[4.5rem] rounded-xl border border-gray-200/80 dark:border-[#2e2e3a] bg-white dark:bg-[#1c1c24] shadow-card p-3">
-                <p className="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider mb-2 px-2">
+              <div className="sticky top-[4.5rem] rounded-lg border border-border bg-card p-3 shadow-sm">
+                <p className="mb-2 px-2 text-xs font-semibold uppercase tracking-wider text-foreground-muted">
                   Categories
                 </p>
                 <Suspense fallback={null}>
@@ -262,7 +262,7 @@ export default async function CourseCatalogPage({
 
               {isPrivileged && (
                 <div className="flex items-center gap-2">
-                  <span className="text-xs text-gray-500 dark:text-gray-400">Status:</span>
+                  <span className="text-xs text-foreground-muted">Status:</span>
                   {["all", "published", "draft", "archived"].map((s) => {
                     const isActive = s === "all" ? !statusFilter : statusFilter === s;
                     const href =
@@ -273,10 +273,10 @@ export default async function CourseCatalogPage({
                       <a
                         key={s}
                         href={href}
-                        className={`text-xs px-2.5 py-1 rounded-full border transition-colors capitalize ${
+                        className={`rounded-full border px-2.5 py-1 text-xs capitalize transition-colors ${
                           isActive
-                            ? "border-brand-500 bg-brand-50 dark:bg-brand-950/20 text-brand-700 dark:text-brand-300"
-                            : "border-gray-200 dark:border-[#3a3a48] text-gray-500 dark:text-gray-400 hover:border-brand-400"
+                            ? "border-primary bg-primary-subtle text-primary-subtle-foreground"
+                            : "border-border text-foreground-muted hover:border-border-strong"
                         }`}
                       >
                         {s}
@@ -289,14 +289,14 @@ export default async function CourseCatalogPage({
 
             {/* Mobile node filter (pills for small screens) */}
             {sidebarNodes.length > 0 && (
-              <div className="flex flex-wrap items-center gap-2 mb-4 lg:hidden">
-                <span className="text-xs text-gray-500 dark:text-gray-400">Category:</span>
+              <div className="mb-4 flex flex-wrap items-center gap-2 lg:hidden">
+                <span className="text-xs text-foreground-muted">Category:</span>
                 <a
                   href={`/courses${searchQuery ? `?q=${encodeURIComponent(searchQuery)}` : ""}${statusFilter ? `${searchQuery ? "&" : "?"}status=${statusFilter}` : ""}`}
-                  className={`text-xs px-2.5 py-1 rounded-full border transition-colors ${
+                  className={`rounded-full border px-2.5 py-1 text-xs transition-colors ${
                     !nodeFilter
-                      ? "border-brand-500 bg-brand-50 dark:bg-brand-950/20 text-brand-700 dark:text-brand-300"
-                      : "border-gray-200 dark:border-[#3a3a48] text-gray-500 dark:text-gray-400 hover:border-brand-400"
+                      ? "border-primary bg-primary-subtle text-primary-subtle-foreground"
+                      : "border-border text-foreground-muted hover:border-border-strong"
                   }`}
                 >
                   All
@@ -305,10 +305,10 @@ export default async function CourseCatalogPage({
                   <a
                     key={n.id}
                     href={`/courses?node=${n.id}${searchQuery ? `&q=${encodeURIComponent(searchQuery)}` : ""}${statusFilter ? `&status=${statusFilter}` : ""}`}
-                    className={`text-xs px-2.5 py-1 rounded-full border transition-colors ${
+                    className={`rounded-full border px-2.5 py-1 text-xs transition-colors ${
                       nodeFilter === n.id
-                        ? "border-brand-500 bg-brand-50 dark:bg-brand-950/20 text-brand-700 dark:text-brand-300"
-                        : "border-gray-200 dark:border-[#3a3a48] text-gray-500 dark:text-gray-400 hover:border-brand-400"
+                        ? "border-primary bg-primary-subtle text-primary-subtle-foreground"
+                        : "border-border text-foreground-muted hover:border-border-strong"
                     }`}
                   >
                     {n.name}
@@ -318,18 +318,18 @@ export default async function CourseCatalogPage({
             )}
 
             {searchQuery && (
-              <p className="text-sm text-gray-500 dark:text-gray-400 mb-4">
+              <p className="mb-4 text-sm text-foreground-muted">
                 {allCourses.length} result{allCourses.length !== 1 ? "s" : ""} for &ldquo;{searchQuery}&rdquo;
               </p>
             )}
 
             {allCourses.length === 0 ? (
-              <div className="text-center py-20">
-                <GraduationCapIcon className="w-12 h-12 text-gray-300 dark:text-gray-600 mx-auto mb-4" />
-                <p className="text-base font-medium text-gray-700 dark:text-gray-300 mb-2">
+              <div className="py-20 text-center">
+                <GraduationCapIcon className="mx-auto mb-4 h-12 w-12 text-foreground-subtle" />
+                <p className="mb-2 text-base font-medium text-foreground">
                   {searchQuery ? "No courses found" : "No courses available yet"}
                 </p>
-                <p className="text-sm text-gray-500 dark:text-gray-400 max-w-sm mx-auto">
+                <p className="mx-auto max-w-sm text-sm text-foreground-muted">
                   {searchQuery
                     ? `We couldn\u2019t find any courses matching \u201c${searchQuery}\u201d. Try a different search term.`
                     : "New courses are being added regularly. Check back soon!"}
@@ -364,12 +364,12 @@ export default async function CourseCatalogPage({
       {activeTab === "my" && (
         <>
           {myCourses.length === 0 ? (
-            <div className="text-center py-20">
-              <BookOpenIcon className="w-12 h-12 text-gray-300 dark:text-gray-600 mx-auto mb-4" />
-              <p className="text-base font-medium text-gray-700 dark:text-gray-300 mb-2">
+            <div className="py-20 text-center">
+              <BookOpenIcon className="mx-auto mb-4 h-12 w-12 text-foreground-subtle" />
+              <p className="mb-2 text-base font-medium text-foreground">
                 No courses yet
               </p>
-              <p className="text-sm text-gray-500 dark:text-gray-400 mb-6">
+              <p className="mb-6 text-sm text-foreground-muted">
                 {isPrivileged
                   ? "You haven\u2019t been enrolled in any courses yet."
                   : "No courses have been assigned to you yet. Contact your administrator."}
@@ -377,7 +377,7 @@ export default async function CourseCatalogPage({
               {isPrivileged && (
                 <Link
                   href="/courses"
-                  className="inline-flex items-center gap-1 text-sm font-medium text-brand-600 dark:text-brand-400 hover:underline"
+                  className="inline-flex items-center gap-1 text-sm font-medium text-primary hover:underline"
                 >
                   Browse all courses
                   <ChevronRightIcon className="w-4 h-4" />

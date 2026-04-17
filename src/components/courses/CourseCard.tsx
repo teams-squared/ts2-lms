@@ -2,6 +2,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { CourseStatusBadge } from "./CourseStatusBadge";
 import { LockIcon, GraduationCapIcon } from "@/components/icons";
+import { cn } from "@/lib/utils";
 import type { CourseStatus } from "@/lib/types";
 
 interface CourseCardProps {
@@ -36,79 +37,84 @@ export function CourseCard({
   return (
     <Link
       href={`/courses/${id}`}
-      className={`group block rounded-xl border bg-white dark:bg-[#1c1c24] shadow-card hover:shadow-elevated hover-lift overflow-hidden ${
+      className={cn(
+        "group block overflow-hidden rounded-lg border bg-card shadow-sm outline-none transition-[transform,box-shadow,border-color] duration-150 ease-out motion-safe:hover:-translate-y-0.5 hover:shadow-md",
+        "focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background",
         locked
-          ? "border-gray-300/60 dark:border-[#3a3a48] opacity-75"
-          : "border-gray-200/80 dark:border-[#2e2e3a]"
-      }`}
+          ? "border-border opacity-75"
+          : "border-border hover:border-border-strong",
+      )}
     >
       {/* Thumbnail */}
-      <div className="relative aspect-video bg-gray-100 dark:bg-[#18181f] overflow-hidden">
+      <div className="relative aspect-video overflow-hidden bg-surface-muted">
         {thumbnail ? (
           <Image
             src={thumbnail}
             alt={title}
             fill
             sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
-            className={`object-cover ${locked ? "grayscale" : ""}`}
+            className={cn("object-cover", locked && "grayscale")}
           />
         ) : (
-          <div className="absolute inset-0 flex flex-col items-center justify-center bg-gradient-to-br from-brand-100 to-brand-200 dark:from-brand-950/40 dark:to-brand-900/30">
-            <GraduationCapIcon className="w-10 h-10 text-brand-400 dark:text-brand-500 mb-1.5" />
-            <span className="text-xs font-medium text-brand-500 dark:text-brand-400 px-3 text-center line-clamp-2 max-w-[80%]">
+          <div className="absolute inset-0 flex flex-col items-center justify-center bg-primary-subtle">
+            <GraduationCapIcon className="mb-1.5 h-10 w-10 text-primary/70" />
+            <span className="line-clamp-2 max-w-[80%] px-3 text-center text-xs font-medium text-primary">
               {title}
             </span>
           </div>
         )}
         {locked && (
-          <div className="absolute inset-0 flex items-center justify-center bg-black/20 dark:bg-black/40">
-            <LockIcon className="w-8 h-8 text-white/80" />
+          <div className="absolute inset-0 flex items-center justify-center bg-black/30">
+            <LockIcon className="h-8 w-8 text-white/80" />
           </div>
         )}
       </div>
 
       {/* Content */}
       <div className="p-5">
-        <div className="flex items-center gap-2 mb-2">
+        <div className="mb-2 flex items-center gap-2">
           {showStatus && <CourseStatusBadge status={status} />}
           {locked && (
-            <span className="text-xs font-semibold px-2 py-0.5 rounded-full bg-gray-100 dark:bg-gray-800 text-gray-500 dark:text-gray-400 border border-gray-200 dark:border-gray-700">
+            <span className="rounded-full border border-border bg-surface-muted px-2 py-0.5 text-xs font-semibold text-foreground-muted">
               Locked
             </span>
           )}
         </div>
-        <h3 className="text-base font-semibold text-gray-900 dark:text-gray-100 mb-1 group-hover:text-brand-600 dark:group-hover:text-brand-400 transition-colors line-clamp-2">
+        <h3 className="mb-1 line-clamp-2 font-display text-base font-semibold text-foreground transition-colors group-hover:text-primary">
           {title}
         </h3>
         {description && (
-          <p className="text-sm text-gray-500 dark:text-gray-400 leading-relaxed line-clamp-2 mb-2">
+          <p className="mb-2 line-clamp-2 text-sm leading-relaxed text-foreground-muted">
             {description}
           </p>
         )}
         {locked && lockReason && (
-          <p className="text-xs text-amber-600 dark:text-amber-400 mb-1 line-clamp-2">
+          <p className="mb-1 line-clamp-2 text-xs text-warning">
             {lockReason}
           </p>
         )}
-        {typeof progressPercent === "number" && typeof totalLessons === "number" && totalLessons > 0 && (
-          <div className="mb-2">
-            <div className="flex items-center justify-between text-xs text-gray-500 dark:text-gray-400 mb-1">
-              <span>
-                {completedLessons} of {totalLessons} lesson{totalLessons !== 1 ? "s" : ""}
-              </span>
-              <span className="font-medium text-gray-700 dark:text-gray-300">
-                {progressPercent}%
-              </span>
+        {typeof progressPercent === "number" &&
+          typeof totalLessons === "number" &&
+          totalLessons > 0 && (
+            <div className="mb-2">
+              <div className="mb-1 flex items-center justify-between text-xs text-foreground-muted">
+                <span>
+                  {completedLessons} of {totalLessons} lesson
+                  {totalLessons !== 1 ? "s" : ""}
+                </span>
+                <span className="font-medium text-foreground">
+                  {progressPercent}%
+                </span>
+              </div>
+              <div className="h-1.5 overflow-hidden rounded-full bg-border">
+                <div
+                  className="h-full rounded-full bg-primary transition-all"
+                  style={{ width: `${progressPercent}%` }}
+                />
+              </div>
             </div>
-            <div className="h-1.5 bg-gray-100 dark:bg-[#2e2e3a] rounded-full overflow-hidden">
-              <div
-                className="h-full bg-gradient-to-r from-brand-500 to-brand-400 rounded-full transition-all"
-                style={{ width: `${progressPercent}%` }}
-              />
-            </div>
-          </div>
-        )}
-        <p className="text-xs text-gray-400 dark:text-gray-500">
+          )}
+        <p className="text-xs text-foreground-subtle">
           by {createdBy.name || createdBy.email}
         </p>
       </div>
