@@ -453,6 +453,10 @@ All course thumbnails — catalog grid, dashboard rail, "you might also like" ro
 
 **Do NOT** render a bespoke thumbnail inline. Always import `CourseThumbnail` from `@/components/courses/CourseThumbnail`. Changing the empty state in one place must change it everywhere.
 
+The `bg-primary-subtle` container is applied in **both** cases — when a real image exists and when the fallback icon is shown. A course with a real thumbnail renders the image using `object-contain` with padding (`p-6`), centred within the tinted frame. This ensures visual consistency across cards regardless of whether individual courses have thumbnails assigned.
+
+**Never** render a raw image on a white background within a card. The tinted frame is the constant. Using `object-cover` without padding can allow images with white or transparent backgrounds to fill the tile and obscure the tinted frame — defeating the consistency goal.
+
 ### 8.3 Modals / Dialogs
 
 Use shadcn/ui `Dialog` (Radix primitive) as the base.
@@ -627,6 +631,8 @@ This is the learner's primary surface. Follow these rules strictly.
 
 #### 8.7.1 Sticky lesson footer
 
+> **This bar MUST be implemented as a `position: sticky` element anchored at `bottom-0` within the lesson page's scroll container, NOT as inline content at the end of the lesson body. The learner must always see the footer regardless of scroll position.**
+
 The persistent bottom strip is the player's command surface — it travels with the user through every lesson, so its shape must be predictable.
 
 - 64px tall, `sticky bottom-0 z-30`, `bg-background border-t border-border`, `px-4 sm:px-6`
@@ -720,18 +726,49 @@ Gradients appear in exactly these contexts and NOWHERE else:
 - Dashboard greeting: solid `bg-surface-muted` hero with a primary-filled `<LevelAvatar />` circle, neutral text, and a single progress bar. Streak indicator is a `bg-warning` dot, not a fiery pill.
 - Reserve the brand spotlight gradient (§8.10) for login, celebration modals, and certificates. A dashboard is not a celebration.
 
+#### Forbidden hero pattern
+
+```tsx
+// ❌ Creates a large saturated brand block that dominates the page
+//    and violates the design thesis.
+<div className="bg-primary text-primary-foreground rounded-lg p-6">
+  {/* ... */}
+</div>
+```
+
+#### Required hero pattern
+
+```tsx
+// ✅ Neutral container — brand accents live INSIDE it as signals
+<div className="bg-surface-muted border border-border rounded-lg p-6">
+  <div className="text-xs uppercase tracking-wide text-foreground-muted">
+    Good afternoon
+  </div>
+  <h1 className="text-2xl font-display font-semibold text-foreground">
+    Ready to learn, Akil?
+  </h1>
+  {/* LevelAvatar (bg-primary circle) and XP bar (bg-primary fill) are the
+      only brand-coloured elements — they are signals inside a neutral frame. */}
+</div>
+```
+
 ### 8.12 Media viewers (PDF, video)
 
 PDF and video are embedded documents. They are *inside* our UI but not *of* our UI — mute their native chrome so the app shell stays dominant.
 
 **PDF viewer:**
-- Preferred long-term: render with `react-pdf` + a custom toolbar that matches our tokens.
-- Acceptable short-term (current implementation): iframe with `src={proxyUrl}#toolbar=0&navpanes=0&view=FitH`.
-  - `toolbar=0` hides pdf.js's top toolbar
-  - `navpanes=0` hides the thumbnails/sidebar panes
-  - `view=FitH` fits width by default so the document meets the reader halfway
-- Wrap in `rounded-lg border border-border overflow-hidden` with a fixed height (`calc(100vh - 16rem)` today). The frame belongs to us; the document belongs to itself.
-- Provide a download fallback for load failures — never leave the user stranded.
+
+**Preferred:** Custom `react-pdf` implementation with shadcn-styled toolbar (see §16 Known gaps).
+
+**Acceptable fallback (current implementation):** If an iframe-based PDF viewer must be retained temporarily, the iframe URL MUST include the fragment `#toolbar=0&navpanes=0&scrollbar=0&view=FitH` to suppress the native browser PDF chrome:
+- `toolbar=0` — hides pdf.js's top toolbar (zoom, rotate, draw, print, download, save-to-Drive)
+- `navpanes=0` — hides the thumbnails / sidebar panes
+- `scrollbar=0` — hides the browser scrollbar inside the iframe (Chromium)
+- `view=FitH` — fits to width by default so the document meets the reader halfway
+
+Wrap the iframe in `rounded-lg border border-border overflow-hidden` with `border-0` on the iframe itself, and a fixed height (`calc(100vh - 16rem)` today). The frame belongs to us; the document belongs to itself. Provide a download fallback for load failures — never leave the user stranded.
+
+**Never acceptable:** An unmodified iframe exposing Chrome / Firefox / Edge native PDF toolbars (zoom, rotate, draw, print, download, save to Drive, etc.) in production. Every learner should see the lesson content, not a browser file manager.
 
 **Video player:**
 - 16:9 (`aspect-video`), `rounded-lg overflow-hidden bg-black`
@@ -800,6 +837,21 @@ For shadcn/ui components using `tw-animate-css`, use the `motion-safe:` variant 
 - **Images:** all `<Image>` components have `alt` (empty `alt=""` for decorative).
 - **Reduced motion:** respected globally.
 - **Skip-to-content link** at the top of every page for keyboard users.
+
+### 10.1 Focus rings: the canonical pattern
+
+All interactive elements use `focus-visible:` utility variants. Never apply `ring-*` utilities outside a `focus-visible:` (or `focus:`) variant. Doing so causes rings to appear at rest on mouse click.
+
+**Canonical pattern:**
+```tsx
+<button
+  className="focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background ..."
+>
+```
+
+Use `ring-offset-surface` instead of `ring-offset-background` when the button sits on the sidebar (`bg-surface`).
+
+**Detection:** A repo-wide search for `ring-` should return only matches prefixed with `focus-visible:` or `focus:`. Any other match is a bug.
 
 ---
 
@@ -1002,7 +1054,33 @@ If a design decision isn't covered here, default to what Coursera, Sana, or Line
 
 This document describes the target. A few pieces are intentionally behind it, tracked here so contributors know what's real versus aspirational.
 
-- **Custom PDF toolbar.** The lesson player uses an iframe with pdf.js toolbar/nav suppressed (§8.12). The long-term plan is a `react-pdf` implementation with our own controls so the viewer feels native to the app rather than muted-foreign.
+- **Custom PDF toolbar.** The lesson player uses an iframe with pdf.js toolbar/nav/scrollbar suppressed (§8.12). The long-term plan is a `react-pdf` implementation with our own controls so the viewer feels native to the app rather than muted-foreign.
 - **Video duration in lesson meta.** The lesson title meta row (§8.7.2) labels videos as "Video" without a time estimate. Once we surface duration metadata from the SharePoint proxy, append `· N min` the same way text lessons show reading time.
 - **Right rail on lesson player.** The three-column layout in §8.7 documents a notes/transcript rail; the current shell ships two columns. The rail is a deferred feature, not a deleted one — the grid has been kept stable so it can slot in.
 - **Quiz lesson completion.** Quiz lessons suppress the Mark-complete button in the footer (§8.7.1). The quiz flow handles completion itself. When we unify flows, the footer becomes the single mutation point for every lesson type.
+
+---
+
+## 17. Implementation gotchas
+
+Lessons learned from previous iterations. Future contributors should check this list before starting similar work.
+
+### Sticky footers must sit outside the scrolling content
+
+The lesson footer is a `sticky bottom-0` element. It must be rendered either as a direct child of a flex-column parent that also contains the scrolling content area, OR as a child of the scrolling container itself. It must **not** be placed inside the scrolling content as a normal flow element — that makes it appear only at the end of scroll, not pinned to the viewport.
+
+### Brand-subtle backgrounds wrap thumbnails regardless of content
+
+Do not conditionally apply `bg-primary-subtle` only when a thumbnail image is absent. The tinted frame is always present; the image (when available) sits on top of it via `object-contain p-6`. Never use `object-cover` for course thumbnails — it can fill the frame with a white image background and negate the tinted container.
+
+### Ring utilities are focus-visible only
+
+Applying `ring-2 ring-ring` in a default class list causes persistent rings on mouse click. Always prefix with `focus-visible:`. The only exception is the active/pressed state of certain toggle buttons, which should be signaled via background rather than ring.
+
+### PDF iframes need URL fragments to suppress browser chrome
+
+`#toolbar=0&navpanes=0&scrollbar=0&view=FitH` on the `src` URL. Without this, every learner sees Chrome's save-to-Drive button, zoom controls, and rotation buttons in their "lessons." All four parameters are required — omitting `scrollbar=0` leaves a scrollbar inside the iframe on Chromium.
+
+### Hero banners are not brand billboards
+
+A hero banner's background is always a neutral surface (`bg-surface-muted`). The brand accent lives in specific elements within the hero (avatar circles, progress fills, primary CTAs). The moment a hero uses `bg-primary` as its root background, the design thesis has been violated. This is the single most-commonly regressed rule — check it first when reviewing dashboard screenshots.
