@@ -26,6 +26,8 @@ export function UserAvatar({ name, image, size = "sm", className = "" }: Props) 
         onError={() => setImgError(true)}
         className={`${dim} rounded-full object-cover flex-shrink-0 ${className}`}
         referrerPolicy="no-referrer"
+        loading="lazy"
+        decoding="async"
       />
     );
   }

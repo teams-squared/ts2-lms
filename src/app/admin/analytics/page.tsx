@@ -27,35 +27,47 @@ export default async function AdminAnalyticsPage() {
     orderBy: { title: "asc" },
   });
 
-  const courseMetrics = [];
-  for (const course of courses) {
-    const allLessonIds = course.modules.flatMap((m) => m.lessons.map((l) => l.id));
-    const enrolledCount = course._count.enrollments;
-
-    let avgQuizScore: number | null = null;
-    if (allLessonIds.length > 0) {
-      const quizAttempts = await prisma.quizAttempt.findMany({
-        where: { lessonId: { in: allLessonIds } },
-        select: { score: true, totalQuestions: true },
-      });
-      if (quizAttempts.length > 0) {
-        const totalPct = quizAttempts.reduce(
-          (sum, a) => sum + (a.totalQuestions > 0 ? (a.score / a.totalQuestions) * 100 : 0),
-          0,
-        );
-        avgQuizScore = Math.round(totalPct / quizAttempts.length);
-      }
+  // Batch fetch all quiz attempts across all published courses in a SINGLE query,
+  // then aggregate per-course in JS — replaces an N+1 pattern.
+  const lessonToCourseId = new Map<string, string>();
+  for (const c of courses) {
+    for (const m of c.modules) {
+      for (const l of m.lessons) lessonToCourseId.set(l.id, c.id);
     }
+  }
+  const allLessonIdsFlat = [...lessonToCourseId.keys()];
+  const allQuizAttempts =
+    allLessonIdsFlat.length > 0
+      ? await prisma.quizAttempt.findMany({
+          where: { lessonId: { in: allLessonIdsFlat } },
+          select: { lessonId: true, score: true, totalQuestions: true },
+        })
+      : [];
+  const perCourseQuizAgg = new Map<string, { sumPct: number; count: number }>();
+  for (const a of allQuizAttempts) {
+    const courseId = lessonToCourseId.get(a.lessonId);
+    if (!courseId) continue;
+    const pct = a.totalQuestions > 0 ? (a.score / a.totalQuestions) * 100 : 0;
+    const agg = perCourseQuizAgg.get(courseId) ?? { sumPct: 0, count: 0 };
+    agg.sumPct += pct;
+    agg.count += 1;
+    perCourseQuizAgg.set(courseId, agg);
+  }
 
-    courseMetrics.push({
+  const courseMetrics = courses.map((course) => {
+    const allLessonIds = course.modules.flatMap((m) => m.lessons.map((l) => l.id));
+    const agg = perCourseQuizAgg.get(course.id);
+    const avgQuizScore =
+      agg && agg.count > 0 ? Math.round(agg.sumPct / agg.count) : null;
+    return {
       id: course.id,
       title: course.title,
-      enrolledCount,
+      enrolledCount: course._count.enrollments,
       totalLessons: allLessonIds.length,
       avgQuizScore,
       deadlineCompliance: null as number | null,
-    });
-  }
+    };
+  });
 
   // Compute deadline compliance per course
   const allDeadlineLessons = courses.flatMap((c) =>
@@ -80,11 +92,25 @@ export default async function AdminAnalyticsPage() {
 
     const progressMap = new Map(dlProgress.map((p) => [`${p.userId}:${p.lessonId}`, p.completedAt!]));
 
+    // Pre-group lessons and enrollments by courseId (avoids O(courses × N) filtering).
+    const lessonsByCourse = new Map<string, typeof allDeadlineLessons>();
+    for (const l of allDeadlineLessons) {
+      const arr = lessonsByCourse.get(l.courseId);
+      if (arr) arr.push(l);
+      else lessonsByCourse.set(l.courseId, [l]);
+    }
+    const enrollmentsByCourse = new Map<string, typeof dlEnrollments>();
+    for (const e of dlEnrollments) {
+      const arr = enrollmentsByCourse.get(e.courseId);
+      if (arr) arr.push(e);
+      else enrollmentsByCourse.set(e.courseId, [e]);
+    }
+
     // Per-course compliance: completed on time / total deadline-lesson-enrollments
     for (const metric of courseMetrics) {
-      const courseDlLessons = allDeadlineLessons.filter((l) => l.courseId === metric.id);
+      const courseDlLessons = lessonsByCourse.get(metric.id) ?? [];
       if (courseDlLessons.length === 0) continue;
-      const courseEnrollments = dlEnrollments.filter((e) => e.courseId === metric.id);
+      const courseEnrollments = enrollmentsByCourse.get(metric.id) ?? [];
       let totalPairs = 0;
       let onTime = 0;
       for (const lesson of courseDlLessons) {

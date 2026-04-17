@@ -51,7 +51,6 @@ export function CourseCard({
             fill
             sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
             className={`object-cover ${locked ? "grayscale" : ""}`}
-            unoptimized
           />
         ) : (
           <div className="absolute inset-0 flex flex-col items-center justify-center bg-gradient-to-br from-brand-100 to-brand-200 dark:from-brand-950/40 dark:to-brand-900/30">

@@ -1,9 +1,19 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import ReactMarkdown from "react-markdown";
+import dynamic from "next/dynamic";
 import type { Components } from "react-markdown";
 import { Spinner } from "@/components/ui/Spinner";
+
+// react-markdown is ~50 KB and only needed for TEXT lessons. Load on demand.
+const ReactMarkdown = dynamic(() => import("react-markdown"), {
+  ssr: false,
+  loading: () => (
+    <div className="flex items-center justify-center py-8">
+      <Spinner size="md" />
+    </div>
+  ),
+});
 import type { LessonType } from "@/lib/types";
 import type { SharePointDocumentRef } from "@/lib/sharepoint/types";
 

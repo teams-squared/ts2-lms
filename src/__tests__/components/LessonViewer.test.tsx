@@ -7,12 +7,14 @@ vi.mock("react-markdown", () => ({
 }));
 
 describe("LessonViewer", () => {
-  it("renders markdown content for text lessons", () => {
+  it("renders markdown content for text lessons", async () => {
     render(
       <LessonViewer title="My Lesson" type="text" content="# Hello World" />
     );
     expect(screen.getByText("My Lesson")).toBeInTheDocument();
-    expect(screen.getByTestId("markdown")).toHaveTextContent("# Hello World");
+    // ReactMarkdown is now lazy-loaded via next/dynamic; wait for it to resolve.
+    const md = await screen.findByTestId("markdown");
+    expect(md).toHaveTextContent("# Hello World");
   });
 
   it("renders empty state for text lesson without content", () => {
