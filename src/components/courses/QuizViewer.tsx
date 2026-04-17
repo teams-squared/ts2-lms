@@ -142,8 +142,8 @@ export function QuizViewer({
 
   if (questions.length === 0) {
     return (
-      <div className="rounded-xl border border-amber-200 dark:border-amber-800/40 bg-amber-50 dark:bg-amber-900/20 p-8 text-center">
-        <p className="text-sm text-amber-800 dark:text-amber-200">
+      <div className="rounded-lg border border-warning/30 bg-warning-subtle p-8 text-center">
+        <p className="text-sm text-warning">
           No questions have been added to this quiz yet.
         </p>
       </div>
@@ -155,42 +155,42 @@ export function QuizViewer({
     return (
       <div className="space-y-6">
         {bestAttempt?.passed && (
-          <div className="flex items-center justify-between gap-3 rounded-xl border border-emerald-200 dark:border-emerald-800/40 bg-emerald-50 dark:bg-emerald-900/20 px-5 py-3">
+          <div className="flex items-center justify-between gap-3 rounded-lg border border-success/30 bg-success-subtle px-5 py-3">
             <div className="flex items-center gap-2">
-              <span className="text-emerald-600 dark:text-emerald-400 text-base">✓</span>
-              <p className="text-sm font-semibold text-emerald-800 dark:text-emerald-200">
+              <span className="text-base text-success">✓</span>
+              <p className="text-sm font-semibold text-success">
                 You passed this quiz.
               </p>
             </div>
             {nextLessonUrl && (
               <Link
                 href={nextLessonUrl}
-                className="shrink-0 inline-flex items-center gap-1.5 text-xs font-semibold text-brand-600 dark:text-brand-400 hover:underline"
+                className="inline-flex shrink-0 items-center gap-1.5 text-xs font-semibold text-primary hover:underline"
               >
                 Next lesson
-                <ChevronRightIcon className="w-3.5 h-3.5" />
+                <ChevronRightIcon className="h-3.5 w-3.5" />
               </Link>
             )}
           </div>
         )}
-        <div className="rounded-xl border border-gray-200 dark:border-[#3a3a48] bg-gray-50 dark:bg-[#18181f] p-6">
-          <div className="flex items-center justify-between mb-4">
+        <div className="rounded-lg border border-border bg-surface-muted p-6">
+          <div className="mb-4 flex items-center justify-between">
             <div>
-              <p className="text-sm text-gray-500 dark:text-gray-400">
+              <p className="text-sm text-foreground-muted">
                 {questions.length} question{questions.length !== 1 ? "s" : ""}
               </p>
-              <p className="text-sm text-gray-500 dark:text-gray-400">
+              <p className="text-sm text-foreground-muted">
                 Passing score: {passingScore}%
               </p>
             </div>
             {bestAttempt && (
               <div className="text-right">
-                <p className="text-xs text-gray-400 dark:text-gray-500">Best attempt</p>
+                <p className="text-xs text-foreground-subtle">Best attempt</p>
                 <p
                   className={`text-sm font-semibold ${
                     bestAttempt.passed
-                      ? "text-emerald-600 dark:text-emerald-400"
-                      : "text-red-600 dark:text-red-400"
+                      ? "text-success"
+                      : "text-danger"
                   }`}
                 >
                   {bestAttempt.score}/{bestAttempt.totalQuestions} (
@@ -201,7 +201,7 @@ export function QuizViewer({
           </div>
           <button
             onClick={handleStart}
-            className="w-full rounded-lg bg-brand-600 hover:bg-brand-700 text-white text-sm font-medium px-4 py-2.5 transition-colors"
+            className="w-full rounded-md bg-primary px-4 py-2.5 text-sm font-medium text-primary-foreground transition-colors hover:bg-primary/90"
           >
             {bestAttempt ? "Retake Quiz" : "Start Quiz"}
           </button>
@@ -215,10 +215,10 @@ export function QuizViewer({
     return (
       <div className="space-y-6">
         <div className="flex items-center justify-between">
-          <p className="text-sm text-gray-500 dark:text-gray-400">
+          <p className="text-sm text-foreground-muted">
             {questions.length} question{questions.length !== 1 ? "s" : ""} · Passing: {passingScore}%
           </p>
-          <p className="text-sm text-gray-500 dark:text-gray-400">
+          <p className="text-sm text-foreground-muted">
             {Object.keys(selectedAnswers).length}/{questions.length} answered
           </p>
         </div>
@@ -226,19 +226,19 @@ export function QuizViewer({
         {questions.map((question, idx) => (
           <div
             key={question.id}
-            className="rounded-xl border border-gray-200 dark:border-[#3a3a48] p-5"
+            className="rounded-lg border border-border p-5"
           >
-            <p className="text-sm font-medium text-gray-900 dark:text-gray-100 mb-3">
+            <p className="mb-3 text-sm font-medium text-foreground">
               {idx + 1}. {question.text}
             </p>
             <div className="space-y-2">
               {question.options.map((option) => (
                 <label
                   key={option.id}
-                  className={`flex items-center gap-3 rounded-lg border px-4 py-3 cursor-pointer transition-colors ${
+                  className={`flex cursor-pointer items-center gap-3 rounded-md border px-4 py-3 transition-colors ${
                     selectedAnswers[question.id] === option.id
-                      ? "border-brand-500 bg-brand-50 dark:bg-brand-950/20"
-                      : "border-gray-200 dark:border-[#3a3a48] hover:bg-gray-50 dark:hover:bg-[#1e1e28]"
+                      ? "border-primary bg-primary-subtle"
+                      : "border-border hover:bg-surface-muted"
                   }`}
                 >
                   <input
@@ -247,9 +247,9 @@ export function QuizViewer({
                     value={option.id}
                     checked={selectedAnswers[question.id] === option.id}
                     onChange={() => handleSelect(question.id, option.id)}
-                    className="text-brand-600 focus:ring-brand-500"
+                    className="text-primary focus:ring-primary"
                   />
-                  <span className="text-sm text-gray-800 dark:text-gray-200">
+                  <span className="text-sm text-foreground">
                     {option.text}
                   </span>
                 </label>
@@ -259,15 +259,15 @@ export function QuizViewer({
         ))}
 
         {error && (
-          <p className="text-sm text-red-600 dark:text-red-400">{error}</p>
+          <p className="text-sm text-danger">{error}</p>
         )}
 
         <button
           onClick={handleSubmit}
           disabled={!allAnswered || submitting}
-          className="w-full rounded-lg bg-brand-600 hover:bg-brand-700 disabled:opacity-50 disabled:cursor-not-allowed text-white text-sm font-medium px-4 py-2.5 transition-colors"
+          className="w-full rounded-md bg-primary px-4 py-2.5 text-sm font-medium text-primary-foreground transition-colors hover:bg-primary/90 disabled:cursor-not-allowed disabled:opacity-50"
         >
-          {submitting ? <span className="inline-flex items-center gap-2"><Spinner size="sm" className="border-white border-t-transparent" /> Submitting…</span> : "Submit Quiz"}
+          {submitting ? <span className="inline-flex items-center gap-2"><Spinner size="sm" className="border-primary-foreground border-t-transparent" /> Submitting…</span> : "Submit Quiz"}
         </button>
       </div>
     );
@@ -281,41 +281,37 @@ export function QuizViewer({
     <div className="space-y-6">
       {/* Score banner */}
       <div
-        className={`rounded-xl border p-6 text-center ${
+        className={`rounded-lg border p-6 text-center ${
           currentResult.passed
-            ? "border-emerald-200 dark:border-emerald-800/40 bg-emerald-50 dark:bg-emerald-900/20"
-            : "border-red-200 dark:border-red-800/40 bg-red-50 dark:bg-red-900/20"
+            ? "border-success/30 bg-success-subtle"
+            : "border-danger/30 bg-danger-subtle"
         }`}
       >
         <p
-          className={`text-2xl font-bold mb-1 ${
-            currentResult.passed
-              ? "text-emerald-700 dark:text-emerald-300"
-              : "text-red-700 dark:text-red-300"
+          className={`mb-1 text-2xl font-bold ${
+            currentResult.passed ? "text-success" : "text-danger"
           }`}
         >
           {currentResult.percentage}%
         </p>
         <p
           className={`text-sm font-medium ${
-            currentResult.passed
-              ? "text-emerald-600 dark:text-emerald-400"
-              : "text-red-600 dark:text-red-400"
+            currentResult.passed ? "text-success" : "text-danger"
           }`}
         >
           {currentResult.passed ? "Passed!" : "Not passed"} — {currentResult.score}/
           {currentResult.totalQuestions} correct
         </p>
-        <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
+        <p className="mt-1 text-xs text-foreground-muted">
           Passing score: {currentResult.passingScore}%
         </p>
         {currentResult.passed && nextLessonUrl && (
           <Link
             href={nextLessonUrl}
-            className="mt-4 inline-flex items-center gap-2 rounded-lg bg-brand-600 hover:bg-brand-700 text-white text-sm font-semibold px-5 py-2.5 transition-colors"
+            className="mt-4 inline-flex items-center gap-2 rounded-md bg-primary px-5 py-2.5 text-sm font-semibold text-primary-foreground transition-colors hover:bg-primary/90"
           >
             Continue to Next Lesson
-            <ChevronRightIcon className="w-4 h-4" />
+            <ChevronRightIcon className="h-4 w-4" />
           </Link>
         )}
       </div>
@@ -328,19 +324,19 @@ export function QuizViewer({
         return (
           <div
             key={question.id}
-            className="rounded-xl border border-gray-200 dark:border-[#3a3a48] p-5"
+            className="rounded-lg border border-border p-5"
           >
-            <div className="flex items-start gap-2 mb-3">
+            <div className="mb-3 flex items-start gap-2">
               <span
-                className={`shrink-0 text-xs font-semibold px-2 py-0.5 rounded-full ${
+                className={`shrink-0 rounded-full px-2 py-0.5 text-xs font-semibold ${
                   answerResult?.correct
-                    ? "bg-emerald-100 dark:bg-emerald-900/30 text-emerald-700 dark:text-emerald-300"
-                    : "bg-red-100 dark:bg-red-900/30 text-red-700 dark:text-red-300"
+                    ? "bg-success-subtle text-success"
+                    : "bg-danger-subtle text-danger"
                 }`}
               >
                 {answerResult?.correct ? "Correct" : "Incorrect"}
               </span>
-              <p className="text-sm font-medium text-gray-900 dark:text-gray-100">
+              <p className="text-sm font-medium text-foreground">
                 {idx + 1}. {question.text}
               </p>
             </div>
@@ -348,28 +344,25 @@ export function QuizViewer({
               {question.options.map((option) => {
                 const isSelected = answerResult?.selectedOptionId === option.id;
                 const isCorrect = answerResult?.correctOptionId === option.id;
-                let optionClass =
-                  "border-gray-200 dark:border-[#3a3a48] text-gray-700 dark:text-gray-300";
+                let optionClass = "border-border text-foreground";
                 if (isCorrect) {
-                  optionClass =
-                    "border-emerald-300 dark:border-emerald-700 bg-emerald-50 dark:bg-emerald-900/20 text-emerald-700 dark:text-emerald-300";
+                  optionClass = "border-success/40 bg-success-subtle text-success";
                 } else if (isSelected && !isCorrect) {
-                  optionClass =
-                    "border-red-300 dark:border-red-700 bg-red-50 dark:bg-red-900/20 text-red-700 dark:text-red-300";
+                  optionClass = "border-danger/40 bg-danger-subtle text-danger";
                 }
                 return (
                   <div
                     key={option.id}
-                    className={`flex items-center gap-3 rounded-lg border px-4 py-3 ${optionClass}`}
+                    className={`flex items-center gap-3 rounded-md border px-4 py-3 ${optionClass}`}
                   >
                     <span className="text-sm">{option.text}</span>
                     {isCorrect && (
-                      <span className="ml-auto text-xs font-medium text-emerald-600 dark:text-emerald-400">
+                      <span className="ml-auto text-xs font-medium text-success">
                         Correct answer
                       </span>
                     )}
                     {isSelected && !isCorrect && (
-                      <span className="ml-auto text-xs font-medium text-red-600 dark:text-red-400">
+                      <span className="ml-auto text-xs font-medium text-danger">
                         Your answer
                       </span>
                     )}
@@ -384,7 +377,7 @@ export function QuizViewer({
       {!currentResult.passed && (
         <button
           onClick={handleRetry}
-          className="w-full rounded-lg bg-brand-600 hover:bg-brand-700 text-white text-sm font-medium px-4 py-2.5 transition-colors"
+          className="w-full rounded-md bg-primary px-4 py-2.5 text-sm font-medium text-primary-foreground transition-colors hover:bg-primary/90"
         >
           Try Again
         </button>

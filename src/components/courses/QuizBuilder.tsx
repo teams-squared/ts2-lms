@@ -271,15 +271,15 @@ export function QuizBuilder({
   // ── Render ────────────────────────────────────────────────────────────────
 
   return (
-    <div className="mt-8 pt-8 border-t border-gray-100 dark:border-[#2e2e3a]">
-      <div className="flex items-center justify-between mb-4">
+    <div className="mt-8 border-t border-border pt-8">
+      <div className="mb-4 flex items-center justify-between">
         <div>
-          <h2 className="text-base font-semibold text-gray-900 dark:text-gray-100">
+          <h2 className="font-display text-base font-semibold text-foreground">
             Quiz Builder
           </h2>
           {editingPassingScore ? (
-            <div className="flex items-center gap-2 mt-1">
-              <label className="text-xs text-gray-500 dark:text-gray-400">Passing score:</label>
+            <div className="mt-1 flex items-center gap-2">
+              <label className="text-xs text-foreground-muted">Passing score:</label>
               <input
                 type="number"
                 min={1}
@@ -287,13 +287,13 @@ export function QuizBuilder({
                 value={passingScoreDraft}
                 onChange={(e) => setPassingScoreDraft(Number(e.target.value))}
                 aria-label="Passing score"
-                className="w-16 rounded border border-gray-300 dark:border-[#3a3a48] bg-white dark:bg-[#18181f] text-sm text-gray-900 dark:text-gray-100 px-2 py-0.5 focus:outline-none focus:ring-1 focus:ring-brand-500"
+                className="w-16 rounded border border-border bg-surface px-2 py-0.5 text-sm text-foreground focus:outline-none focus:ring-1 focus:ring-ring"
               />
-              <span className="text-xs text-gray-500">%</span>
+              <span className="text-xs text-foreground-muted">%</span>
               <button
                 onClick={handleSavePassingScore}
                 disabled={savingPassingScore}
-                className="text-xs text-brand-600 dark:text-brand-400 hover:underline disabled:opacity-50"
+                className="text-xs text-primary hover:underline disabled:opacity-50"
               >
                 {savingPassingScore ? "Saving…" : "Save"}
               </button>
@@ -302,7 +302,7 @@ export function QuizBuilder({
                   setEditingPassingScore(false);
                   setPassingScoreDraft(currentPassingScore);
                 }}
-                className="text-xs text-gray-500 hover:underline"
+                className="text-xs text-foreground-muted hover:underline"
               >
                 Cancel
               </button>
@@ -314,7 +314,7 @@ export function QuizBuilder({
                 setEditingPassingScore(true);
               }}
               aria-label="Edit passing score"
-              className="text-xs text-gray-500 dark:text-gray-400 mt-0.5 hover:text-brand-600 dark:hover:text-brand-400 transition-colors"
+              className="mt-0.5 text-xs text-foreground-muted transition-colors hover:text-primary"
             >
               Passing score: {currentPassingScore}% ✎
             </button>
@@ -323,7 +323,7 @@ export function QuizBuilder({
         {!showForm && (
           <button
             onClick={() => setShowForm(true)}
-            className="rounded-lg bg-brand-600 hover:bg-brand-700 text-white text-sm font-medium px-3 py-1.5 transition-colors"
+            className="rounded-md bg-primary px-3 py-1.5 text-sm font-medium text-primary-foreground transition-colors hover:bg-primary/90"
           >
             Add question
           </button>
@@ -332,16 +332,16 @@ export function QuizBuilder({
 
       {/* Existing questions */}
       {questions.length === 0 && !showForm && (
-        <p className="text-sm text-gray-400 dark:text-gray-500 italic">
+        <p className="text-sm italic text-foreground-subtle">
           No questions yet. Add one above.
         </p>
       )}
 
-      <div className="space-y-3 mb-4">
+      <div className="mb-4 space-y-3">
         {questions.map((question, idx) => (
           <div
             key={question.id}
-            className="rounded-xl border border-gray-200 dark:border-[#3a3a48] p-4"
+            className="rounded-lg border border-border p-4"
           >
             {editingQuestionId === question.id ? (
               /* Inline edit form */
@@ -351,7 +351,7 @@ export function QuizBuilder({
                   value={editQuestionText}
                   onChange={(e) => setEditQuestionText(e.target.value)}
                   aria-label="Edit question text"
-                  className="w-full rounded-lg border border-gray-300 dark:border-[#3a3a48] bg-white dark:bg-[#18181f] text-sm text-gray-900 dark:text-gray-100 px-3 py-2 focus:outline-none focus:ring-2 focus:ring-brand-500"
+                  className="w-full rounded-md border border-border bg-surface px-3 py-2 text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-ring"
                 />
                 <div className="space-y-2">
                   {editOptions.map((opt, oidx) => (
@@ -362,32 +362,32 @@ export function QuizBuilder({
                         checked={opt.isCorrect}
                         onChange={() => handleEditCorrect(oidx)}
                         title={`Mark option ${oidx + 1} as correct`}
-                        className="text-brand-600 focus:ring-brand-500 shrink-0"
+                        className="shrink-0 text-primary focus:ring-ring"
                       />
                       <input
                         type="text"
                         value={opt.text}
                         onChange={(e) => handleEditOptionText(oidx, e.target.value)}
                         aria-label={`Option ${oidx + 1} text`}
-                        className="flex-1 rounded-lg border border-gray-300 dark:border-[#3a3a48] bg-white dark:bg-[#18181f] text-sm text-gray-900 dark:text-gray-100 px-3 py-1.5 focus:outline-none focus:ring-2 focus:ring-brand-500"
+                        className="flex-1 rounded-md border border-border bg-surface px-3 py-1.5 text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-ring"
                       />
                     </div>
                   ))}
                 </div>
                 {editError && (
-                  <p className="text-xs text-red-600 dark:text-red-400">{editError}</p>
+                  <p className="text-xs text-danger">{editError}</p>
                 )}
                 <div className="flex gap-2">
                   <button
                     onClick={() => handleSaveEdit(question.id)}
                     disabled={savingEditId === question.id}
-                    className="rounded-lg bg-brand-600 hover:bg-brand-700 disabled:opacity-50 text-white text-xs font-medium px-3 py-1.5 transition-colors"
+                    className="rounded-md bg-primary px-3 py-1.5 text-xs font-medium text-primary-foreground transition-colors hover:bg-primary/90 disabled:opacity-50"
                   >
                     {savingEditId === question.id ? "Saving…" : "Save"}
                   </button>
                   <button
                     onClick={cancelEdit}
-                    className="rounded-lg border border-gray-300 dark:border-[#3a3a48] text-xs text-gray-700 dark:text-gray-300 px-3 py-1.5 hover:bg-gray-50 dark:hover:bg-[#1e1e28] transition-colors"
+                    className="rounded-md border border-border px-3 py-1.5 text-xs text-foreground transition-colors hover:bg-surface-muted"
                   >
                     Cancel
                   </button>
@@ -397,16 +397,16 @@ export function QuizBuilder({
               /* Read-only view */
               <>
                 <div className="flex items-start justify-between gap-2">
-                  <p className="text-sm font-medium text-gray-900 dark:text-gray-100">
+                  <p className="text-sm font-medium text-foreground">
                     {idx + 1}. {question.text}
                   </p>
-                  <div className="flex items-center gap-1 shrink-0">
+                  <div className="flex shrink-0 items-center gap-1">
                     {/* Reorder buttons */}
                     <button
                       onClick={() => moveQuestion(idx, "up")}
                       disabled={idx === 0 || reordering}
                       aria-label={`Move question ${idx + 1} up`}
-                      className="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 disabled:opacity-30 text-xs px-1 transition-colors"
+                      className="px-1 text-xs text-foreground-subtle transition-colors hover:text-foreground disabled:opacity-30"
                     >
                       ▲
                     </button>
@@ -414,14 +414,14 @@ export function QuizBuilder({
                       onClick={() => moveQuestion(idx, "down")}
                       disabled={idx === questions.length - 1 || reordering}
                       aria-label={`Move question ${idx + 1} down`}
-                      className="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 disabled:opacity-30 text-xs px-1 transition-colors"
+                      className="px-1 text-xs text-foreground-subtle transition-colors hover:text-foreground disabled:opacity-30"
                     >
                       ▼
                     </button>
                     <button
                       onClick={() => startEdit(question)}
                       aria-label={`Edit question ${idx + 1}`}
-                      className="text-xs text-brand-600 dark:text-brand-400 hover:underline px-1 transition-colors"
+                      className="px-1 text-xs text-primary transition-colors hover:underline"
                     >
                       Edit
                     </button>
@@ -429,7 +429,7 @@ export function QuizBuilder({
                       onClick={() => handleDelete(question.id)}
                       disabled={deletingId === question.id}
                       aria-label={`Delete question ${idx + 1}`}
-                      className="text-xs text-red-500 hover:text-red-700 disabled:opacity-50 px-1 transition-colors"
+                      className="px-1 text-xs text-danger transition-colors hover:text-danger/80 disabled:opacity-50"
                     >
                       {deletingId === question.id ? "Deleting…" : "Delete"}
                     </button>
@@ -437,17 +437,15 @@ export function QuizBuilder({
                 </div>
                 <ul className="mt-2 space-y-1">
                   {question.options.map((opt) => (
-                    <li key={opt.id} className="flex items-center gap-2 text-xs text-gray-500 dark:text-gray-400">
+                    <li key={opt.id} className="flex items-center gap-2 text-xs text-foreground-muted">
                       <span
-                        className={`w-2 h-2 rounded-full shrink-0 ${
-                          opt.isCorrect
-                            ? "bg-emerald-500"
-                            : "bg-gray-300 dark:bg-gray-600"
+                        className={`h-2 w-2 shrink-0 rounded-full ${
+                          opt.isCorrect ? "bg-success" : "bg-border"
                         }`}
                       />
                       {opt.text}
                       {opt.isCorrect && (
-                        <span className="text-emerald-600 dark:text-emerald-400">(correct)</span>
+                        <span className="text-success">(correct)</span>
                       )}
                     </li>
                   ))}
@@ -462,10 +460,10 @@ export function QuizBuilder({
       {showForm && (
         <form
           onSubmit={handleSubmit}
-          className="rounded-xl border border-brand-200 dark:border-brand-800/40 bg-brand-50/30 dark:bg-brand-950/10 p-5 space-y-4"
+          className="space-y-4 rounded-lg border border-primary/20 bg-primary-subtle/30 p-5"
         >
           <div>
-            <label className="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">
+            <label className="mb-1 block text-xs font-medium text-foreground">
               Question text
             </label>
             <input
@@ -473,12 +471,12 @@ export function QuizBuilder({
               value={questionText}
               onChange={(e) => setQuestionText(e.target.value)}
               placeholder="Enter your question…"
-              className="w-full rounded-lg border border-gray-300 dark:border-[#3a3a48] bg-white dark:bg-[#18181f] text-sm text-gray-900 dark:text-gray-100 px-3 py-2 focus:outline-none focus:ring-2 focus:ring-brand-500"
+              className="w-full rounded-md border border-border bg-surface px-3 py-2 text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-ring"
             />
           </div>
 
           <div>
-            <label className="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-2">
+            <label className="mb-2 block text-xs font-medium text-foreground">
               Options (mark one as correct)
             </label>
             <div className="space-y-2">
@@ -490,21 +488,21 @@ export function QuizBuilder({
                     checked={opt.isCorrect}
                     onChange={() => handleCorrectChange(idx)}
                     title={`Mark option ${idx + 1} as correct`}
-                    className="text-brand-600 focus:ring-brand-500 shrink-0"
+                    className="shrink-0 text-primary focus:ring-ring"
                   />
                   <input
                     type="text"
                     value={opt.text}
                     onChange={(e) => handleOptionText(idx, e.target.value)}
                     placeholder={`Option ${idx + 1}`}
-                    className="flex-1 rounded-lg border border-gray-300 dark:border-[#3a3a48] bg-white dark:bg-[#18181f] text-sm text-gray-900 dark:text-gray-100 px-3 py-1.5 focus:outline-none focus:ring-2 focus:ring-brand-500"
+                    className="flex-1 rounded-md border border-border bg-surface px-3 py-1.5 text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-ring"
                   />
                   {options.length > 2 && (
                     <button
                       type="button"
                       onClick={() => handleRemoveOption(idx)}
                       aria-label={`Remove option ${idx + 1}`}
-                      className="text-xs text-red-500 hover:text-red-700 shrink-0"
+                      className="shrink-0 text-xs text-danger hover:text-danger/80"
                     >
                       Remove
                     </button>
@@ -516,7 +514,7 @@ export function QuizBuilder({
               <button
                 type="button"
                 onClick={handleAddOption}
-                className="mt-2 text-xs text-brand-600 dark:text-brand-400 hover:underline"
+                className="mt-2 text-xs text-primary hover:underline"
               >
                 + Add option
               </button>
@@ -524,14 +522,14 @@ export function QuizBuilder({
           </div>
 
           {error && (
-            <p className="text-sm text-red-600 dark:text-red-400">{error}</p>
+            <p className="text-sm text-danger">{error}</p>
           )}
 
           <div className="flex gap-2">
             <button
               type="submit"
               disabled={submitting}
-              className="rounded-lg bg-brand-600 hover:bg-brand-700 disabled:opacity-50 text-white text-sm font-medium px-4 py-2 transition-colors"
+              className="rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground transition-colors hover:bg-primary/90 disabled:opacity-50"
             >
               {submitting ? "Adding…" : "Add question"}
             </button>
@@ -543,7 +541,7 @@ export function QuizBuilder({
                 setQuestionText("");
                 setOptions(EMPTY_OPTIONS);
               }}
-              className="rounded-lg border border-gray-300 dark:border-[#3a3a48] text-sm text-gray-700 dark:text-gray-300 px-4 py-2 hover:bg-gray-50 dark:hover:bg-[#1e1e28] transition-colors"
+              className="rounded-md border border-border px-4 py-2 text-sm text-foreground transition-colors hover:bg-surface-muted"
             >
               Cancel
             </button>
