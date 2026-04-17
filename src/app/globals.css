@@ -54,6 +54,7 @@
   --ring: oklch(0.42 0.28 285 / 0.4);
 
   /* Radii */
+  --radius: 10px;                 /* shadcn base; our md value */
   --radius-sm: 6px;
   --radius-md: 10px;
   --radius-lg: 14px;
@@ -143,6 +144,33 @@
   --color-info-foreground: var(--info-foreground);
 
   --color-ring: var(--ring);
+
+  /* ── shadcn/ui compatibility aliases ───────────────────────────────────
+   * shadcn components reference these token names by convention.
+   * Mapping them to our semantic tokens lets generated components work
+   * without per-file edits. See design-system Section 11.4.
+   * ──────────────────────────────────────────────────────────────────── */
+  --color-card: var(--surface);
+  --color-card-foreground: var(--foreground);
+  --color-popover: var(--surface);
+  --color-popover-foreground: var(--foreground);
+  --color-secondary: var(--surface-muted);
+  --color-secondary-foreground: var(--foreground);
+  --color-muted: var(--surface-muted);
+  --color-muted-foreground: var(--foreground-muted);
+  --color-accent: var(--surface-muted);
+  --color-accent-foreground: var(--foreground);
+  --color-destructive: var(--danger);
+  --color-destructive-foreground: var(--danger-foreground);
+  --color-input: var(--border-strong);
+  --color-sidebar: var(--surface);
+  --color-sidebar-foreground: var(--foreground);
+  --color-sidebar-primary: var(--primary);
+  --color-sidebar-primary-foreground: var(--primary-foreground);
+  --color-sidebar-accent: var(--surface-muted);
+  --color-sidebar-accent-foreground: var(--foreground);
+  --color-sidebar-border: var(--border);
+  --color-sidebar-ring: var(--ring);
 
   --radius-sm: var(--radius-sm);
   --radius-md: var(--radius-md);
