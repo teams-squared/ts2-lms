@@ -4,7 +4,7 @@ import { Suspense } from "react";
 import Link from "next/link";
 import { prisma } from "@/lib/prisma";
 import { prismaStatusToApp } from "@/lib/types";
-import { checkCourseEligibility } from "@/lib/course-eligibility";
+import { checkCourseEligibilityBatch } from "@/lib/course-eligibility";
 import { getNodeTree, getDescendantCourseIds, countCoursesInSubtree } from "@/lib/courseNodes";
 import { CourseCard } from "@/components/courses/CourseCard";
 import { SearchBar } from "@/components/courses/SearchBar";
@@ -169,27 +169,29 @@ export default async function CourseCatalogPage({
         })
       : [];
 
-  // Check eligibility for each course
+  // Check eligibility for each course — batched (constant # of queries regardless of count)
   const eligibilityMap = new Map<string, { locked: boolean; lockReason?: string }>();
   if (activeTab === "all" && userId) {
-    const results = await Promise.all(
-      allCourses.map((c) => checkCourseEligibility(userId, (session.user?.role ?? "employee") as Role, c.id)),
+    const results = await checkCourseEligibilityBatch(
+      userId,
+      (session.user?.role ?? "employee") as Role,
+      allCourses.map((c) => c.id),
     );
-    allCourses.forEach((c, i) => {
-      const elig = results[i];
-      if (!elig.eligible) {
+    for (const c of allCourses) {
+      const elig = results.get(c.id);
+      if (!elig || !elig.eligible) {
         const parts: string[] = [];
-        if (elig.missingPrerequisites.length > 0) {
+        if (elig?.missingPrerequisites.length) {
           parts.push(`Complete: ${elig.missingPrerequisites.map((p) => p.title).join(", ")}`);
         }
-        if (elig.missingClearance) {
+        if (elig?.missingClearance) {
           parts.push(`Requires ${elig.missingClearance.toUpperCase()} clearance`);
         }
         eligibilityMap.set(c.id, { locked: true, lockReason: parts.join(". ") });
       } else {
         eligibilityMap.set(c.id, { locked: false });
       }
-    });
+    }
   }
 
   return (
