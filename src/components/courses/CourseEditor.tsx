@@ -115,6 +115,7 @@ export function CourseEditor({
   // SharePoint picker state
   const [pickerOpen, setPickerOpen] = useState(false);
   const [pickerTarget, setPickerTarget] = useState<"edit" | null>(null);
+  const [videoSource, setVideoSource] = useState<"sharepoint" | "url">("sharepoint");
 
   // Delete state
   const [deletingModuleId, setDeletingModuleId] = useState<string | null>(null);
@@ -310,6 +311,18 @@ export function CourseEditor({
     setEditContent(lesson.content ?? "");
     setEditDeadlineDays(lesson.deadlineDays);
     setEditError(null);
+
+    // For video lessons, detect whether content is a SharePoint ref (JSON) or an external URL.
+    if (lesson.type === "video" && lesson.content) {
+      try {
+        const parsed = JSON.parse(lesson.content);
+        setVideoSource(parsed?.driveId && parsed?.itemId ? "sharepoint" : "url");
+      } catch {
+        setVideoSource("url");
+      }
+    } else {
+      setVideoSource("sharepoint");
+    }
   };
 
   const handleSaveLesson = async () => {
@@ -722,11 +735,32 @@ export function CourseEditor({
                 </select>
               </div>
 
-              {editType === "document" ? (
+              {editType === "document" || (editType === "video" && videoSource === "sharepoint") ? (
                 <div>
                   <label className="block text-xs font-medium text-gray-600 dark:text-gray-400 mb-1">
-                    Document
+                    {editType === "video" ? "SharePoint video" : "Document"}
                   </label>
+                  {editType === "video" && (
+                    <div className="mb-2 inline-flex rounded-lg border border-gray-300 dark:border-[#3a3a48] p-0.5 text-xs">
+                      <button
+                        type="button"
+                        onClick={() => setVideoSource("sharepoint")}
+                        className={`px-3 py-1 rounded-md transition-colors ${videoSource === "sharepoint" ? "bg-brand-600 text-white" : "text-gray-600 dark:text-gray-400"}`}
+                      >
+                        SharePoint
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setVideoSource("url");
+                          setEditContent("");
+                        }}
+                        className={`px-3 py-1 rounded-md transition-colors ${(videoSource as string) === "url" ? "bg-brand-600 text-white" : "text-gray-600 dark:text-gray-400"}`}
+                      >
+                        External URL
+                      </button>
+                    </div>
+                  )}
                   {editContent ? (
                     <div className="flex items-center gap-2">
                       <span className="text-sm text-gray-700 dark:text-gray-300 flex-1 truncate">
@@ -767,6 +801,27 @@ export function CourseEditor({
                   <label className="block text-xs font-medium text-gray-600 dark:text-gray-400 mb-1">
                     {editType === "video" ? "Video URL" : "Content (Markdown)"}
                   </label>
+                  {editType === "video" && (
+                    <div className="mb-2 inline-flex rounded-lg border border-gray-300 dark:border-[#3a3a48] p-0.5 text-xs">
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setVideoSource("sharepoint");
+                          setEditContent("");
+                        }}
+                        className={`px-3 py-1 rounded-md transition-colors ${(videoSource as string) === "sharepoint" ? "bg-brand-600 text-white" : "text-gray-600 dark:text-gray-400"}`}
+                      >
+                        SharePoint
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => setVideoSource("url")}
+                        className={`px-3 py-1 rounded-md transition-colors ${videoSource === "url" ? "bg-brand-600 text-white" : "text-gray-600 dark:text-gray-400"}`}
+                      >
+                        External URL
+                      </button>
+                    </div>
+                  )}
                   <textarea
                     value={editContent}
                     onChange={(e) => setEditContent(e.target.value)}
@@ -826,6 +881,11 @@ export function CourseEditor({
         isOpen={pickerOpen}
         onClose={() => setPickerOpen(false)}
         onSelect={handlePickerSelect}
+        mimeTypeFilter={
+          editType === "video"
+            ? (m) => m.startsWith("video/")
+            : undefined
+        }
       />
     </div>
   );

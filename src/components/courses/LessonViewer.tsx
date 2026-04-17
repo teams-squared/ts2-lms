@@ -71,6 +71,7 @@ interface LessonViewerProps {
   title: string;
   type: LessonType;
   content: string | null;
+  lessonId?: string;
 }
 
 function PdfViewer({ proxyUrl, fileName }: { proxyUrl: string; fileName: string }) {
@@ -152,7 +153,7 @@ function stripLeadingTitle(content: string, title: string): string {
   return content;
 }
 
-export function LessonViewer({ title, type, content }: LessonViewerProps) {
+export function LessonViewer({ title, type, content, lessonId }: LessonViewerProps) {
   if (type === "document") {
     let docRef: SharePointDocumentRef | null = null;
     if (content) {
@@ -203,12 +204,33 @@ export function LessonViewer({ title, type, content }: LessonViewerProps) {
   }
 
   if (type === "video") {
+    let videoRef: SharePointDocumentRef | null = null;
+    if (content) {
+      try {
+        const parsed = JSON.parse(content) as SharePointDocumentRef;
+        if (parsed?.driveId && parsed?.itemId && parsed.mimeType?.startsWith("video/")) {
+          videoRef = parsed;
+        }
+      } catch {
+        videoRef = null;
+      }
+    }
+
     return (
       <div>
         <h1 className="text-2xl font-bold text-gray-900 dark:text-gray-100 mb-6">
           {title}
         </h1>
-        {content ? (
+        {videoRef && lessonId ? (
+          <div className="aspect-video rounded-xl overflow-hidden bg-black">
+            <video
+              src={`/api/lessons/${lessonId}/video`}
+              controls
+              preload="metadata"
+              className="w-full h-full"
+            />
+          </div>
+        ) : content ? (
           <div className="aspect-video rounded-xl overflow-hidden bg-black">
             <iframe
               src={content}

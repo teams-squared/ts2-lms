@@ -109,12 +109,17 @@ export async function listDriveItems(
 /** Get the binary content of a drive item (for streaming to the client). */
 export async function getDriveItemContent(
   driveId: string,
-  itemId: string
+  itemId: string,
+  options?: { range?: string | null }
 ): Promise<Response> {
+  const headers: Record<string, string> = {};
+  if (options?.range) headers.Range = options.range;
   const res = await graphFetch(`/drives/${driveId}/items/${itemId}/content`, {
     redirect: "follow",
+    headers,
   });
-  if (!res.ok) {
+  // Accept 200 (full) and 206 (range) as success
+  if (!res.ok && res.status !== 206) {
     throw new Error(`Failed to get drive item content (${res.status})`);
   }
   return res;

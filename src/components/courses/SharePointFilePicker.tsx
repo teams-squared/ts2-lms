@@ -7,10 +7,12 @@ interface SharePointFilePickerProps {
   isOpen: boolean;
   onClose: () => void;
   onSelect: (ref: SharePointDocumentRef) => void;
+  mimeTypeFilter?: (mimeType: string) => boolean;
 }
 
 function fileIcon(mimeType: string): string {
   if (mimeType === "application/pdf") return "📄";
+  if (mimeType.startsWith("video/")) return "🎬";
   if (mimeType.includes("word")) return "📝";
   if (mimeType.includes("excel") || mimeType.includes("spreadsheet")) return "📊";
   if (mimeType.includes("powerpoint") || mimeType.includes("presentation")) return "📋";
@@ -24,7 +26,7 @@ function formatSize(bytes: number): string {
   return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
 }
 
-export function SharePointFilePicker({ isOpen, onClose, onSelect }: SharePointFilePickerProps) {
+export function SharePointFilePicker({ isOpen, onClose, onSelect, mimeTypeFilter }: SharePointFilePickerProps) {
   const [currentFolderId, setCurrentFolderId] = useState<string | undefined>(undefined);
   const [items, setItems] = useState<SharePointBrowseItem[]>([]);
   const [breadcrumbs, setBreadcrumbs] = useState<SharePointBreadcrumb[]>([]);
@@ -146,9 +148,20 @@ export function SharePointFilePicker({ isOpen, onClose, onSelect }: SharePointFi
             </p>
           )}
 
-          {!loading && !error && items.length > 0 && (
+          {!loading && !error && items.length > 0 && (() => {
+            const visible = mimeTypeFilter
+              ? items.filter((i) => i.type === "folder" || mimeTypeFilter(i.mimeType))
+              : items;
+            if (visible.length === 0) {
+              return (
+                <p className="text-sm text-gray-500 dark:text-gray-400 py-8 text-center">
+                  No matching files in this folder.
+                </p>
+              );
+            }
+            return (
             <ul className="divide-y divide-gray-100 dark:divide-[#2a2a38]">
-              {items.map((item) => (
+              {visible.map((item) => (
                 <li key={item.id}>
                   {item.type === "folder" ? (
                     <button
@@ -185,7 +198,8 @@ export function SharePointFilePicker({ isOpen, onClose, onSelect }: SharePointFi
                 </li>
               ))}
             </ul>
-          )}
+            );
+          })()}
         </div>
 
         {/* Footer */}

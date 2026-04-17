@@ -305,6 +305,7 @@ export default async function LessonPage({
                 title={lesson.title}
                 type={lessonType}
                 content={lesson.content}
+                lessonId={lesson.id}
               />
 
               {/* Mark complete button */}
