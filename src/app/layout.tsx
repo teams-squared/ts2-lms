@@ -1,15 +1,22 @@
 import type { Metadata, Viewport } from "next";
-import { Inter } from "next/font/google";
+import { Inter, Plus_Jakarta_Sans } from "next/font/google";
 import { Suspense } from "react";
-import Script from "next/script";
 import Providers from "@/components/auth/Providers";
 import NavBar from "@/components/layout/NavBar";
 import PostHogPageView from "@/components/analytics/PostHogPageView";
 import "./globals.css";
 
+// Inter — body / UI font (see design-system Section 4.1)
 const inter = Inter({
   subsets: ["latin"],
   variable: "--font-inter",
+});
+
+// Plus Jakarta Sans — display / headings font (design-system Section 4.1)
+const jakarta = Plus_Jakarta_Sans({
+  subsets: ["latin"],
+  variable: "--font-display",
+  weight: ["500", "600", "700"],
 });
 
 export const metadata: Metadata = {
@@ -29,11 +36,12 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en" className={`${inter.variable} h-full antialiased`} suppressHydrationWarning>
-      <head>
-        <Script id="theme-detect" strategy="beforeInteractive">{`(function(){try{var t=localStorage.getItem('theme')||'system';var d=window.matchMedia('(prefers-color-scheme: dark)').matches;if(t==='dark'||(t==='system'&&d)){document.documentElement.classList.add('dark')}else{document.documentElement.classList.remove('dark')}}catch(e){}})();`}</Script>
-      </head>
-      <body className="min-h-full flex flex-col bg-[#f5f5f8] dark:bg-[#0f0f14]">
+    <html
+      lang="en"
+      className={`${inter.variable} ${jakarta.variable} h-full antialiased`}
+      suppressHydrationWarning
+    >
+      <body className="min-h-full flex flex-col bg-[#f5f5f8] dark:bg-[#0f0f14] font-sans">
         <Providers>
           <Suspense fallback={null}>
             <PostHogPageView />
