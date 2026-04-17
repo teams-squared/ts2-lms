@@ -13,7 +13,7 @@ export default function AnalyticsLoading() {
       {/* Course metrics table */}
       <div className="mb-8">
         <Skeleton className="h-5 w-32 mb-3" />
-        <div className="rounded-xl border border-border bg-card overflow-hidden">
+        <div className="rounded-lg border border-border bg-card overflow-hidden">
           <table className="w-full">
             <thead>
               <tr className="bg-surface-muted">
@@ -36,7 +36,7 @@ export default function AnalyticsLoading() {
       {/* Leaderboard */}
       <div>
         <Skeleton className="h-5 w-28 mb-3" />
-        <div className="rounded-xl border border-border bg-card overflow-hidden">
+        <div className="rounded-lg border border-border bg-card overflow-hidden">
           <table className="w-full">
             <thead>
               <tr className="bg-surface-muted">

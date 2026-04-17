@@ -85,7 +85,7 @@ export function WelcomeBar({ firstName, xp, streak }: WelcomeBarProps) {
 
   return (
     <div className="max-w-4xl mx-auto px-4 sm:px-6 pt-6 pb-2">
-      <div className="relative rounded-2xl p-5 sm:p-6 shadow-card overflow-hidden bg-brand-600">
+      <div className="relative rounded-2xl p-5 sm:p-6 shadow-sm overflow-hidden bg-primary">
         <div className="relative flex items-center gap-4 sm:gap-5">
           <LevelRing level={level} percent={percent} />
 

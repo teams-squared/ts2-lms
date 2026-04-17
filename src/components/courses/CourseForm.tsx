@@ -64,7 +64,7 @@ export function CourseForm({
   return (
     <form onSubmit={handleSubmit} className="space-y-4">
       {error && (
-        <div className="p-3 rounded-xl bg-red-50 dark:bg-red-950/30 border border-red-100 dark:border-red-900/50 text-danger text-sm">
+        <div className="p-3 rounded-lg bg-danger-subtle border border-danger/30 text-danger text-sm">
           {error}
         </div>
       )}
@@ -82,7 +82,7 @@ export function CourseForm({
           value={title}
           onChange={(e) => setTitle(e.target.value)}
           required
-          className="w-full px-3.5 py-2.5 rounded-xl border border-border bg-surface text-sm text-foreground placeholder-foreground-subtle focus:outline-none focus:ring-2 focus:ring-ring focus:border-transparent transition-all"
+          className="w-full px-3.5 py-2.5 rounded-lg border border-border bg-surface text-sm text-foreground placeholder-foreground-subtle focus:outline-none focus:ring-2 focus:ring-ring focus:border-transparent transition-all"
           placeholder="Introduction to Cybersecurity"
         />
       </div>
@@ -99,7 +99,7 @@ export function CourseForm({
           value={description}
           onChange={(e) => setDescription(e.target.value)}
           rows={3}
-          className="w-full px-3.5 py-2.5 rounded-xl border border-border bg-surface text-sm text-foreground placeholder-foreground-subtle focus:outline-none focus:ring-2 focus:ring-ring focus:border-transparent transition-all resize-none"
+          className="w-full px-3.5 py-2.5 rounded-lg border border-border bg-surface text-sm text-foreground placeholder-foreground-subtle focus:outline-none focus:ring-2 focus:ring-ring focus:border-transparent transition-all resize-none"
           placeholder="A comprehensive introduction to..."
         />
       </div>
@@ -116,7 +116,7 @@ export function CourseForm({
           type="url"
           value={thumbnail}
           onChange={(e) => setThumbnail(e.target.value)}
-          className="w-full px-3.5 py-2.5 rounded-xl border border-border bg-surface text-sm text-foreground placeholder-foreground-subtle focus:outline-none focus:ring-2 focus:ring-ring focus:border-transparent transition-all"
+          className="w-full px-3.5 py-2.5 rounded-lg border border-border bg-surface text-sm text-foreground placeholder-foreground-subtle focus:outline-none focus:ring-2 focus:ring-ring focus:border-transparent transition-all"
           placeholder="https://example.com/image.jpg"
         />
       </div>
@@ -132,7 +132,7 @@ export function CourseForm({
           id="course-status"
           value={status}
           onChange={(e) => setStatus(e.target.value as CourseStatus)}
-          className="w-full px-3.5 py-2.5 rounded-xl border border-border bg-surface text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-ring cursor-pointer"
+          className="w-full px-3.5 py-2.5 rounded-lg border border-border bg-surface text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-ring cursor-pointer"
         >
           <option value="draft">Draft</option>
           <option value="published">Published</option>
@@ -159,14 +159,14 @@ export function CourseForm({
         <button
           type="submit"
           disabled={loading}
-          className="px-4 py-2.5 rounded-xl bg-brand-600 text-white text-sm font-semibold hover:bg-brand-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors shadow-sm"
+          className="px-4 py-2.5 rounded-lg bg-primary text-white text-sm font-semibold hover:bg-primary/90 disabled:opacity-50 disabled:cursor-not-allowed transition-colors shadow-sm"
         >
           {loading ? "Saving..." : submitLabel}
         </button>
         <button
           type="button"
           onClick={onCancel}
-          className="px-4 py-2.5 rounded-xl border border-border text-sm font-medium text-foreground hover:bg-surface-muted transition-colors"
+          className="px-4 py-2.5 rounded-lg border border-border text-sm font-medium text-foreground hover:bg-surface-muted transition-colors"
         >
           Cancel
         </button>

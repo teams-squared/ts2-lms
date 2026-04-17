@@ -32,7 +32,7 @@ export function AchievementToast({ achievements, onDismiss }: AchievementToastPr
       {achievements.map((a) => (
         <div
           key={a.key}
-          className="flex items-center gap-3 px-4 py-3 rounded-xl bg-brand-600 dark:bg-brand-700 text-white shadow-elevated"
+          className="flex items-center gap-3 px-4 py-3 rounded-lg bg-primary text-white shadow-elevated"
         >
           <span className="text-2xl" role="img" aria-label={a.title}>
             {a.icon}

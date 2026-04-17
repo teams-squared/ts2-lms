@@ -114,7 +114,7 @@ export function UserDetailManager({
   return (
     <div className="space-y-6">
       {/* Role card */}
-      <div className="rounded-xl border border-border bg-card p-6">
+      <div className="rounded-lg border border-border bg-card p-6">
         <h3 className="text-sm font-semibold text-foreground mb-4">Role</h3>
         <div className="flex items-center gap-3">
           <select
@@ -147,7 +147,7 @@ export function UserDetailManager({
       </div>
 
       {/* Clearances */}
-      <div className="rounded-xl border border-border bg-card p-6">
+      <div className="rounded-lg border border-border bg-card p-6">
         <h3 className="text-sm font-semibold text-foreground mb-4">
           Clearances
         </h3>

@@ -7,7 +7,7 @@ import type { Role } from "@/lib/types";
 export const ROLE_STYLES: Record<Role, { badge: string; dot: string; avatar: string }> = {
   admin: {
     badge: "bg-brand-100 text-brand-700",
-    dot: "bg-brand-500",
+    dot: "bg-primary",
     avatar: "bg-brand-200 text-brand-800",
   },
   course_manager: {
@@ -16,7 +16,7 @@ export const ROLE_STYLES: Record<Role, { badge: string; dot: string; avatar: str
     avatar: "bg-blue-200 text-blue-800",
   },
   employee: {
-    badge: "bg-gray-100 text-gray-600",
+    badge: "bg-gray-100 text-foreground-muted",
     dot: "bg-gray-400",
     avatar: "bg-gray-200 text-gray-700",
   },

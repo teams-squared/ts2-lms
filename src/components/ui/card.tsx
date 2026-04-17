@@ -6,7 +6,7 @@ import { cn } from "@/lib/utils"
  * Card — design-system Section 8.2.
  *
  * Neutral surface (bg-card → --surface) with a default border and small shadow.
- * Use rounded-lg (14px) for standard cards; reserve rounded-xl for hero/feature
+ * Use rounded-lg (14px) for standard cards; reserve rounded-lg for hero/feature
  * cards per Section 6. Hover lift is opt-in via the `hover-lift` modifier class.
  */
 function Card({ className, ...props }: React.ComponentProps<"div">) {

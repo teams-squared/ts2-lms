@@ -69,8 +69,8 @@ export function CatalogSidebar({ nodes, activeNodeId }: CatalogSidebarProps) {
         <div
           className={`flex items-center gap-1 py-1.5 px-2 rounded-lg cursor-pointer transition-colors text-sm ${
             isActive
-              ? "bg-brand-50 dark:bg-brand-950/20 text-brand-700 dark:text-brand-300 font-medium"
-              : "text-gray-600 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-[#1e1e28] hover:text-gray-900 dark:hover:text-gray-200"
+              ? "bg-primary-subtle text-primary font-medium"
+              : "text-foreground-muted dark:text-foreground-subtle hover:bg-surface-muted hover:text-foreground"
           }`}
           style={{ paddingLeft: `${depth * 16 + 8}px` }}
         >
@@ -95,7 +95,7 @@ export function CatalogSidebar({ nodes, activeNodeId }: CatalogSidebarProps) {
             {node.name}
           </button>
           {node.courseCount > 0 && (
-            <span className="text-xs text-gray-400 dark:text-gray-500 tabular-nums">
+            <span className="text-xs text-foreground-subtle tabular-nums">
               {node.courseCount}
             </span>
           )}
@@ -113,8 +113,8 @@ export function CatalogSidebar({ nodes, activeNodeId }: CatalogSidebarProps) {
         onClick={() => navigate(null)}
         className={`w-full flex items-center gap-1 py-1.5 px-2 rounded-lg text-sm transition-colors text-left ${
           !activeNodeId
-            ? "bg-brand-50 dark:bg-brand-950/20 text-brand-700 dark:text-brand-300 font-medium"
-            : "text-gray-600 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-[#1e1e28] hover:text-gray-900 dark:hover:text-gray-200"
+            ? "bg-primary-subtle text-primary font-medium"
+            : "text-foreground-muted dark:text-foreground-subtle hover:bg-surface-muted hover:text-foreground"
         }`}
       >
         <span className="w-4" />

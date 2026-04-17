@@ -14,7 +14,7 @@ const sizeClasses = {
 export function Spinner({ size = "md", className = "" }: SpinnerProps) {
   return (
     <div
-      className={`${sizeClasses[size]} border-brand-600 dark:border-brand-400 border-t-transparent rounded-full animate-spin ${className}`}
+      className={`${sizeClasses[size]} border-primary border-t-transparent rounded-full animate-spin ${className}`}
       role="status"
       aria-label="Loading"
     >

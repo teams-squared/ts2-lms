@@ -68,12 +68,12 @@ export function UserList({ users }: { users: User[] }) {
           value={search}
           onChange={(e) => handleSearch(e.target.value)}
           placeholder="Search by name or email…"
-          className="flex-1 px-3.5 py-2.5 rounded-xl border border-border bg-surface text-sm text-foreground placeholder-foreground-subtle focus:outline-none focus:ring-2 focus:ring-ring transition-all"
+          className="flex-1 px-3.5 py-2.5 rounded-lg border border-border bg-surface text-sm text-foreground placeholder-foreground-subtle focus:outline-none focus:ring-2 focus:ring-ring transition-all"
         />
         <select
           value={roleFilter}
           onChange={(e) => handleRoleFilter(e.target.value as Role | "all")}
-          className="px-3.5 py-2.5 rounded-xl border border-border bg-surface text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-ring cursor-pointer"
+          className="px-3.5 py-2.5 rounded-lg border border-border bg-surface text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-ring cursor-pointer"
         >
           <option value="all">All roles</option>
           <option value="admin">Admin</option>

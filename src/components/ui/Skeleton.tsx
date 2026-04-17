@@ -29,7 +29,7 @@ function SkeletonCard({ className = "" }: { className?: string }) {
   return (
     <div
       className={cn(
-        "rounded-xl border border-gray-200/80 dark:border-[#2e2e3a] bg-white dark:bg-[#1c1c24] p-5",
+        "rounded-lg border border-border bg-card p-5",
         className,
       )}
       aria-hidden="true"
@@ -44,7 +44,7 @@ function SkeletonCard({ className = "" }: { className?: string }) {
 function SkeletonCourseCard() {
   return (
     <div
-      className="rounded-xl border border-gray-200/80 dark:border-[#2e2e3a] bg-white dark:bg-[#1c1c24] overflow-hidden"
+      className="rounded-lg border border-border bg-card overflow-hidden"
       aria-hidden="true"
     >
       <Skeleton className="aspect-video rounded-none" />

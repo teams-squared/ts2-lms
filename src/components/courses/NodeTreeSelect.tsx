@@ -107,7 +107,7 @@ export function NodeTreeSelect({ nodes, value, onChange }: NodeTreeSelectProps) 
           ) : (
             <span className="w-4" />
           )}
-          <svg className="w-3.5 h-3.5 text-brand-500 flex-shrink-0" viewBox="0 0 20 20" fill="currentColor">
+          <svg className="w-3.5 h-3.5 text-primary flex-shrink-0" viewBox="0 0 20 20" fill="currentColor">
             <path d="M2 6a2 2 0 012-2h5l2 2h5a2 2 0 012 2v6a2 2 0 01-2 2H4a2 2 0 01-2-2V6z" />
           </svg>
           <span className="truncate">{node.name}</span>
@@ -133,7 +133,7 @@ export function NodeTreeSelect({ nodes, value, onChange }: NodeTreeSelectProps) 
 
       {/* Dropdown tree */}
       {open && (
-        <div className="absolute z-50 mt-1 w-full max-h-64 overflow-y-auto rounded-xl border border-border bg-card shadow-lg p-1">
+        <div className="absolute z-50 mt-1 w-full max-h-64 overflow-y-auto rounded-lg border border-border bg-card shadow-lg p-1">
           {/* "No node" option */}
           <div
             className={`flex items-center gap-1.5 py-1.5 px-2 rounded-lg cursor-pointer transition-colors text-sm ${

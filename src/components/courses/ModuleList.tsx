@@ -54,7 +54,7 @@ export function ModuleList({
 
   if (modules.length === 0) {
     return (
-      <p className="text-xs text-gray-500 dark:text-gray-400 py-4 text-center">
+      <p className="text-xs text-foreground-muted py-4 text-center">
         No modules yet.
       </p>
     );
@@ -66,17 +66,17 @@ export function ModuleList({
         <div key={mod.id}>
           <button
             onClick={() => toggle(mod.id)}
-            className="w-full flex items-center gap-2 px-4 py-3 text-left hover:bg-gray-50 dark:hover:bg-[#1e1e28] transition-colors"
+            className="w-full flex items-center gap-2 px-4 py-3 text-left hover:bg-surface-muted transition-colors"
           >
             {expanded.has(mod.id) ? (
-              <ChevronDownIcon className="w-4 h-4 text-gray-400 flex-shrink-0" />
+              <ChevronDownIcon className="w-4 h-4 text-foreground-subtle flex-shrink-0" />
             ) : (
-              <ChevronRightIcon className="w-4 h-4 text-gray-400 flex-shrink-0" />
+              <ChevronRightIcon className="w-4 h-4 text-foreground-subtle flex-shrink-0" />
             )}
-            <span className="text-sm font-medium text-gray-900 dark:text-gray-100">
+            <span className="text-sm font-medium text-foreground">
               {mod.title}
             </span>
-            <span className="ml-auto text-xs text-gray-400">
+            <span className="ml-auto text-xs text-foreground-subtle">
               {completedLessonIds
                 ? `${mod.lessons.filter((l) => completedLessonIds.has(l.id)).length} of ${mod.lessons.length} lesson${mod.lessons.length !== 1 ? "s" : ""}`
                 : `${mod.lessons.length} lesson${mod.lessons.length !== 1 ? "s" : ""}`}
@@ -89,9 +89,9 @@ export function ModuleList({
                 <Link
                   key={lesson.id}
                   href={`/courses/${courseId}/lessons/${lesson.id}`}
-                  className="flex items-center gap-2 px-3 py-2 rounded-lg text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-[#1e1e28] transition-colors"
+                  className="flex items-center gap-2 px-3 py-2 rounded-lg text-sm text-foreground-muted hover:bg-surface-muted transition-colors"
                 >
-                  {(() => { const LessonIcon = LESSON_TYPE_ICON[lesson.type]; return <LessonIcon className="w-4 h-4 text-gray-400 dark:text-gray-500 flex-shrink-0" />; })()}
+                  {(() => { const LessonIcon = LESSON_TYPE_ICON[lesson.type]; return <LessonIcon className="w-4 h-4 text-foreground-subtle flex-shrink-0" />; })()}
                   <span className="flex-1">{lesson.title}</span>
                   {(() => {
                     const info = deadlineInfoMap?.[lesson.id];
@@ -108,7 +108,7 @@ export function ModuleList({
                       </span>
                     );
                     return (
-                      <span className="flex items-center gap-1 text-xs text-gray-400 dark:text-gray-500 flex-shrink-0">
+                      <span className="flex items-center gap-1 text-xs text-foreground-subtle flex-shrink-0">
                         <ClockIcon className="w-3 h-3" />{formatDeadlineRelative(deadline)}
                       </span>
                     );

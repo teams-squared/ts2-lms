@@ -19,12 +19,12 @@ const VARIANT_STYLES: Record<ToastVariant, { bg: string; icon: string; border: s
   error: {
     bg: "bg-red-50 dark:bg-red-950/40",
     icon: "text-red-600 dark:text-red-400",
-    border: "border-red-200 dark:border-red-800/40",
+    border: "border-danger/30",
   },
   info: {
-    bg: "bg-brand-50 dark:bg-brand-950/20",
-    icon: "text-brand-600 dark:text-brand-400",
-    border: "border-brand-200 dark:border-brand-800/40",
+    bg: "bg-primary-subtle",
+    icon: "text-primary",
+    border: "border-primary/30",
   },
 };
 
@@ -78,17 +78,17 @@ export function Toast({ message, variant, onDismiss }: ToastProps) {
 
   return (
     <div
-      className={`flex items-center gap-3 px-4 py-3 rounded-xl border shadow-elevated animate-slide-up ${styles.bg} ${styles.border}`}
+      className={`flex items-center gap-3 px-4 py-3 rounded-lg border shadow-elevated animate-slide-up ${styles.bg} ${styles.border}`}
       role="status"
       aria-live="polite"
     >
       <IconComponent className={`w-5 h-5 flex-shrink-0 ${styles.icon}`} />
-      <p className="text-sm font-medium text-gray-800 dark:text-gray-200 flex-1">
+      <p className="text-sm font-medium text-foreground flex-1">
         {message}
       </p>
       <button
         onClick={onDismiss}
-        className="flex-shrink-0 p-1 rounded-lg text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 transition-colors"
+        className="flex-shrink-0 p-1 rounded-lg text-foreground-subtle hover:text-foreground transition-colors"
         aria-label="Dismiss"
       >
         <XIcon className="w-4 h-4" />

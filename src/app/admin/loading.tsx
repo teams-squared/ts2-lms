@@ -15,7 +15,7 @@ export default function AdminLoading() {
         {Array.from({ length: 4 }).map((_, i) => (
           <div
             key={i}
-            className="p-5 rounded-xl border border-border bg-card"
+            className="p-5 rounded-lg border border-border bg-card"
           >
             <Skeleton className="w-5 h-5 mb-3" />
             <Skeleton className="h-5 w-32 mb-2" />
@@ -27,7 +27,7 @@ export default function AdminLoading() {
       {/* Table skeleton */}
       <div>
         <Skeleton className="h-5 w-24 mb-3" />
-        <div className="rounded-xl border border-border bg-card overflow-hidden">
+        <div className="rounded-lg border border-border bg-card overflow-hidden">
           <table className="w-full">
             <thead>
               <tr className="bg-surface-muted">

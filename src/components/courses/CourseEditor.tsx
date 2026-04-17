@@ -385,7 +385,7 @@ export function CourseEditor({
   return (
     <div className="space-y-8">
       {/* Course Details */}
-      <section className="rounded-xl border border-border bg-card p-6">
+      <section className="rounded-lg border border-border bg-card p-6">
         <h2 className="text-sm font-semibold text-foreground mb-4">
           Course Details
         </h2>
@@ -450,7 +450,7 @@ export function CourseEditor({
       </section>
 
       {/* Completion Alerts */}
-      <section className="rounded-xl border border-border bg-card p-6">
+      <section className="rounded-lg border border-border bg-card p-6">
         <h2 className="text-sm font-semibold text-foreground mb-1">
           Completion Alerts
         </h2>
@@ -529,7 +529,7 @@ export function CourseEditor({
           {modules.map((module) => (
             <div
               key={module.id}
-              className="rounded-xl border border-border bg-card overflow-hidden"
+              className="rounded-lg border border-border bg-card overflow-hidden"
             >
               {/* Module header */}
               <div
@@ -560,7 +560,7 @@ export function CourseEditor({
 
               {/* Module lessons */}
               {expandedModules.has(module.id) && (
-                <div className="border-t border-gray-100 dark:border-[#2a2a38] px-4 py-3 space-y-2">
+                <div className="border-t border-border px-4 py-3 space-y-2">
                   {module.lessons.map((lesson) => (
                     <div key={lesson.id}>
                       <div className="flex items-center gap-2 rounded-lg px-3 py-2 bg-surface-muted">
@@ -600,7 +600,7 @@ export function CourseEditor({
                         if (!qData) return null;
                         return (
                           <div
-                            className="mt-1 mb-1 rounded-xl border border-brand-200 dark:border-brand-800/40 bg-brand-50/30 dark:bg-brand-950/10 px-4 pb-4"
+                            className="mt-1 mb-1 rounded-lg border border-primary/30 bg-primary-subtle/30 px-4 pb-4"
                             data-testid={`quiz-builder-panel-${lesson.id}`}
                           >
                             <QuizBuilder
@@ -640,7 +640,7 @@ export function CourseEditor({
                       <button
                         onClick={() => void handleAddLesson(module.id)}
                         disabled={addingLesson}
-                        className="rounded-lg bg-brand-600 text-white text-xs px-3 py-1.5 disabled:opacity-50"
+                        className="rounded-lg bg-primary text-white text-xs px-3 py-1.5 disabled:opacity-50"
                       >
                         Add
                       </button>
@@ -682,7 +682,7 @@ export function CourseEditor({
             <button
               onClick={() => void handleAddModule()}
               disabled={addingModule}
-              className="rounded-lg bg-brand-600 text-white text-sm px-4 py-2 disabled:opacity-50"
+              className="rounded-lg bg-primary text-white text-sm px-4 py-2 disabled:opacity-50"
             >
               {addingModule ? "Adding…" : "Add"}
             </button>
@@ -699,7 +699,7 @@ export function CourseEditor({
       {/* Lesson edit modal */}
       {editingLesson && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50">
-          <div className="w-full max-w-lg bg-white dark:bg-[#1a1a24] rounded-2xl shadow-2xl border border-border p-6">
+          <div className="w-full max-w-lg bg-card rounded-2xl shadow-2xl border border-border p-6">
             <h3 className="text-base font-semibold text-foreground mb-4">
               Edit Lesson
             </h3>
@@ -745,7 +745,7 @@ export function CourseEditor({
                       <button
                         type="button"
                         onClick={() => setVideoSource("sharepoint")}
-                        className={`px-3 py-1 rounded-md transition-colors ${videoSource === "sharepoint" ? "bg-brand-600 text-white" : "text-foreground-muted"}`}
+                        className={`px-3 py-1 rounded-md transition-colors ${videoSource === "sharepoint" ? "bg-primary text-white" : "text-foreground-muted"}`}
                       >
                         SharePoint
                       </button>
@@ -755,7 +755,7 @@ export function CourseEditor({
                           setVideoSource("url");
                           setEditContent("");
                         }}
-                        className={`px-3 py-1 rounded-md transition-colors ${(videoSource as string) === "url" ? "bg-brand-600 text-white" : "text-foreground-muted"}`}
+                        className={`px-3 py-1 rounded-md transition-colors ${(videoSource as string) === "url" ? "bg-primary text-white" : "text-foreground-muted"}`}
                       >
                         External URL
                       </button>
@@ -790,7 +790,7 @@ export function CourseEditor({
                         setPickerTarget("edit");
                         setPickerOpen(true);
                       }}
-                      className="rounded-lg border border-dashed border-border px-4 py-3 text-sm text-primary w-full text-center hover:bg-brand-50 dark:hover:bg-brand-950/20 transition-colors"
+                      className="rounded-lg border border-dashed border-border px-4 py-3 text-sm text-primary w-full text-center hover:bg-primary-subtle transition-colors"
                     >
                       Browse SharePoint…
                     </button>
@@ -809,14 +809,14 @@ export function CourseEditor({
                           setVideoSource("sharepoint");
                           setEditContent("");
                         }}
-                        className={`px-3 py-1 rounded-md transition-colors ${(videoSource as string) === "sharepoint" ? "bg-brand-600 text-white" : "text-foreground-muted"}`}
+                        className={`px-3 py-1 rounded-md transition-colors ${(videoSource as string) === "sharepoint" ? "bg-primary text-white" : "text-foreground-muted"}`}
                       >
                         SharePoint
                       </button>
                       <button
                         type="button"
                         onClick={() => setVideoSource("url")}
-                        className={`px-3 py-1 rounded-md transition-colors ${videoSource === "url" ? "bg-brand-600 text-white" : "text-foreground-muted"}`}
+                        className={`px-3 py-1 rounded-md transition-colors ${videoSource === "url" ? "bg-primary text-white" : "text-foreground-muted"}`}
                       >
                         External URL
                       </button>

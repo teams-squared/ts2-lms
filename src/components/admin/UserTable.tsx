@@ -103,7 +103,7 @@ export default function UserTable() {
   return (
     <div className="space-y-3">
       {updateError && (
-        <div className="px-4 py-2.5 rounded-xl bg-danger-subtle border border-danger/20 text-danger text-sm">
+        <div className="px-4 py-2.5 rounded-lg bg-danger-subtle border border-danger/20 text-danger text-sm">
           {updateError}
         </div>
       )}

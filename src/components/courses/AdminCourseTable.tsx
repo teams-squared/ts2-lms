@@ -247,12 +247,12 @@ export default function AdminCourseTable({ nodeTree = [] }: { nodeTree?: NodeTre
   }
 
   const selectClass =
-    "px-3 py-2.5 rounded-xl border border-border bg-surface text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-ring cursor-pointer";
+    "px-3 py-2.5 rounded-lg border border-border bg-surface text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-ring cursor-pointer";
 
   return (
     <div>
       {statusError && (
-        <div className="mb-3 px-4 py-2.5 rounded-xl bg-red-50 dark:bg-red-950/30 border border-red-100 dark:border-red-900/50 text-danger text-sm">
+        <div className="mb-3 px-4 py-2.5 rounded-lg bg-danger-subtle border border-danger/30 text-danger text-sm">
           {statusError}
         </div>
       )}
@@ -267,12 +267,12 @@ export default function AdminCourseTable({ nodeTree = [] }: { nodeTree?: NodeTre
               value={search}
               onChange={(e) => { setSearch(e.target.value); resetPage(); }}
               placeholder="Search courses…"
-              className="w-full pl-9 pr-3 py-2.5 rounded-xl border border-border bg-surface text-sm text-foreground placeholder-foreground-subtle focus:outline-none focus:ring-2 focus:ring-ring transition-all"
+              className="w-full pl-9 pr-3 py-2.5 rounded-lg border border-border bg-surface text-sm text-foreground placeholder-foreground-subtle focus:outline-none focus:ring-2 focus:ring-ring transition-all"
             />
           </div>
           <button
             onClick={() => setShowForm(true)}
-            className="flex items-center gap-1.5 px-3 py-2.5 rounded-xl bg-brand-600 text-white text-sm font-medium hover:bg-brand-700 transition-colors shadow-sm whitespace-nowrap"
+            className="flex items-center gap-1.5 px-3 py-2.5 rounded-lg bg-primary text-white text-sm font-medium hover:bg-primary/90 transition-colors shadow-sm whitespace-nowrap"
           >
             <PlusIcon className="w-4 h-4" />
             New Course

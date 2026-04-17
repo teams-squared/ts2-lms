@@ -107,7 +107,7 @@ export function EnrollmentManager({
   return (
     <div className="space-y-6">
       {/* Enroll form */}
-      <div className="rounded-xl border border-border bg-card p-5 space-y-4">
+      <div className="rounded-lg border border-border bg-card p-5 space-y-4">
         <p className="text-xs font-medium text-foreground-muted">
           Select courses from the tree and a user to enroll
         </p>
@@ -159,7 +159,7 @@ export function EnrollmentManager({
       </div>
 
       {/* Enrollment list */}
-      <div className="rounded-xl border border-border bg-card overflow-hidden">
+      <div className="rounded-lg border border-border bg-card overflow-hidden">
         <div className="px-5 py-3 border-b border-border">
           <p className="text-sm font-medium text-foreground">
             {enrollments.length} enrollment{enrollments.length !== 1 ? "s" : ""}

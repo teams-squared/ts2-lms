@@ -92,7 +92,7 @@ export function SharePointFilePicker({ isOpen, onClose, onSelect, mimeTypeFilter
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50">
-      <div className="w-full max-w-2xl bg-white dark:bg-[#1a1a24] rounded-2xl shadow-2xl border border-border flex flex-col max-h-[80vh]">
+      <div className="w-full max-w-2xl bg-card rounded-2xl shadow-2xl border border-border flex flex-col max-h-[80vh]">
         {/* Header */}
         <div className="flex items-center justify-between px-6 py-4 border-b border-border">
           <h2 className="text-lg font-semibold text-foreground">
@@ -100,7 +100,7 @@ export function SharePointFilePicker({ isOpen, onClose, onSelect, mimeTypeFilter
           </h2>
           <button
             onClick={onClose}
-            className="text-foreground-subtle hover:text-foreground dark:hover:text-gray-200 transition-colors"
+            className="text-foreground-subtle hover:text-foreground transition-colors"
             aria-label="Close"
           >
             ✕
@@ -108,10 +108,10 @@ export function SharePointFilePicker({ isOpen, onClose, onSelect, mimeTypeFilter
         </div>
 
         {/* Breadcrumbs */}
-        <div className="flex items-center gap-1 px-6 py-2 text-sm text-foreground-muted border-b border-gray-100 dark:border-[#2a2a38]">
+        <div className="flex items-center gap-1 px-6 py-2 text-sm text-foreground-muted border-b border-border">
           <button
             onClick={() => handleBreadcrumbClick(null)}
-            className="hover:text-brand-600 dark:hover:text-brand-400 transition-colors"
+            className="hover:text-primary dark:hover:text-primary transition-colors"
           >
             Root
           </button>
@@ -120,7 +120,7 @@ export function SharePointFilePicker({ isOpen, onClose, onSelect, mimeTypeFilter
               <span>/</span>
               <button
                 onClick={() => handleBreadcrumbClick(crumb.id)}
-                className="hover:text-brand-600 dark:hover:text-brand-400 transition-colors"
+                className="hover:text-primary dark:hover:text-primary transition-colors"
               >
                 {crumb.name}
               </button>
@@ -137,7 +137,7 @@ export function SharePointFilePicker({ isOpen, onClose, onSelect, mimeTypeFilter
           )}
 
           {error && !loading && (
-            <div className="rounded-xl bg-danger-subtle border border-danger/30 p-4 text-sm text-red-800 dark:text-red-300">
+            <div className="rounded-lg bg-danger-subtle border border-danger/30 p-4 text-sm text-danger">
               {error}
             </div>
           )}
@@ -166,7 +166,7 @@ export function SharePointFilePicker({ isOpen, onClose, onSelect, mimeTypeFilter
                   {item.type === "folder" ? (
                     <button
                       onClick={() => handleFolderClick(item.id)}
-                      className="w-full flex items-center gap-3 py-3 text-left hover:bg-gray-50 dark:hover:bg-[#22222e] rounded-lg px-2 transition-colors"
+                      className="w-full flex items-center gap-3 py-3 text-left hover:bg-surface-muted dark:hover:bg-[#22222e] rounded-lg px-2 transition-colors"
                     >
                       <span className="text-xl">📁</span>
                       <div className="flex-1 min-w-0">
@@ -182,7 +182,7 @@ export function SharePointFilePicker({ isOpen, onClose, onSelect, mimeTypeFilter
                   ) : (
                     <button
                       onClick={() => handleFileClick(item)}
-                      className="w-full flex items-center gap-3 py-3 text-left hover:bg-brand-50 dark:hover:bg-brand-950/20 rounded-lg px-2 transition-colors"
+                      className="w-full flex items-center gap-3 py-3 text-left hover:bg-primary-subtle rounded-lg px-2 transition-colors"
                     >
                       <span className="text-xl">{fileIcon(item.mimeType)}</span>
                       <div className="flex-1 min-w-0">

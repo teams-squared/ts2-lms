@@ -61,10 +61,10 @@ export function NotificationBell() {
       <button
         onClick={() => void handleOpen()}
         aria-label={`Notifications${unreadCount > 0 ? ` (${unreadCount} unread)` : ""}`}
-        className="relative p-2.5 rounded-lg hover:bg-gray-50 dark:hover:bg-[#1e1e28] transition-colors"
+        className="relative p-2.5 rounded-lg hover:bg-surface-muted transition-colors"
       >
         <svg
-          className="w-5 h-5 text-gray-500 dark:text-gray-400"
+          className="w-5 h-5 text-foreground-muted"
           fill="none"
           viewBox="0 0 24 24"
           stroke="currentColor"
@@ -87,51 +87,51 @@ export function NotificationBell() {
       {open && (
         <>
           <div className="fixed inset-0 z-40" onClick={() => setOpen(false)} aria-hidden="true" />
-          <div className="absolute right-0 mt-1 z-50 w-80 rounded-xl border border-gray-200 dark:border-[#2e2e3a] bg-white dark:bg-[#1c1c24] shadow-elevated">
-            <div className="px-4 py-3 border-b border-gray-100 dark:border-[#2e2e3a] flex items-center justify-between">
-              <p className="text-sm font-semibold text-gray-900 dark:text-gray-100">
+          <div className="absolute right-0 mt-1 z-50 w-80 rounded-lg border border-border bg-card shadow-elevated">
+            <div className="px-4 py-3 border-b border-border flex items-center justify-between">
+              <p className="text-sm font-semibold text-foreground">
                 Notifications
               </p>
               <div className="flex items-center gap-2">
                 {loading && <Spinner size="sm" />}
                 <button
                   onClick={() => setOpen(false)}
-                  className="p-1 rounded-md hover:bg-gray-100 dark:hover:bg-[#2e2e3a] transition-colors"
+                  className="p-1 rounded-md hover:bg-surface-muted transition-colors"
                   aria-label="Close notifications"
                 >
-                  <CloseIcon className="w-4 h-4 text-gray-400 dark:text-gray-500" />
+                  <CloseIcon className="w-4 h-4 text-foreground-subtle" />
                 </button>
               </div>
             </div>
             <div className="max-h-72 overflow-y-auto">
               {notifications.length === 0 ? (
-                <p className="text-sm text-gray-400 dark:text-gray-500 px-4 py-6 text-center">
+                <p className="text-sm text-foreground-subtle px-4 py-6 text-center">
                   No notifications yet.
                 </p>
               ) : (
-                <ul className="divide-y divide-gray-100 dark:divide-[#2e2e3a]">
+                <ul className="divide-y divide-border">
                   {notifications.map((n) => (
                     <li
                       key={n.id}
                       className={`px-4 py-3 text-sm ${
                         !n.read
-                          ? "bg-brand-50 dark:bg-brand-950/10"
+                          ? "bg-primary-subtle"
                           : ""
                       }`}
                     >
-                      <p className="text-gray-800 dark:text-gray-200">
+                      <p className="text-foreground">
                         {n.message}
                       </p>
                       {n.courseId && (
                         <a
                           href={`/courses/${n.courseId}`}
-                          className="text-xs text-brand-600 dark:text-brand-400 hover:underline mt-0.5 block"
+                          className="text-xs text-primary hover:underline mt-0.5 block"
                           onClick={() => setOpen(false)}
                         >
                           View course →
                         </a>
                       )}
-                      <p className="text-xs text-gray-400 mt-1">
+                      <p className="text-xs text-foreground-subtle mt-1">
                         {new Date(n.createdAt).toLocaleDateString()}
                       </p>
                     </li>

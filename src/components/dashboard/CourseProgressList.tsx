@@ -247,7 +247,7 @@ export function CourseProgressList({
   return (
     <section className="animate-fade-in animate-init" style={{ animationDelay: "200ms" }}>
       <div className="flex items-center justify-between mb-3">
-        <h2 className="text-xs font-medium uppercase tracking-wider text-gray-500 dark:text-gray-400">
+        <h2 className="text-xs font-medium uppercase tracking-wider text-foreground-muted">
           Your courses
         </h2>
         {completedBadge}

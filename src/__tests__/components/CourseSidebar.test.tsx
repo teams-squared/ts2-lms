@@ -171,7 +171,7 @@ describe("CourseSidebar", () => {
       />,
     );
     const activeLink = screen.getByText("Lesson B").closest("a");
-    expect(activeLink?.className).toMatch(/brand/);
+    expect(activeLink?.className).toMatch(/primary/);
   });
 
   it("defaults percentComplete to 0 and completedLessonIds to empty set when not provided", () => {

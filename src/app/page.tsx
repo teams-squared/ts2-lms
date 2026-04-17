@@ -18,28 +18,28 @@ export default async function HomePage() {
   // ── Logged-out landing page ────────────────────────────────────────────────
   if (!session) {
     return (
-      <div className="min-h-screen flex flex-col items-center justify-center px-4 bg-[#f5f5f8] dark:bg-[#0f0f14]">
+      <div className="min-h-screen flex flex-col items-center justify-center px-4 bg-background">
         <div className="w-full max-w-sm text-center space-y-6">
           <div className="flex justify-center mb-2">
             <Logo size={48} showText={false} />
           </div>
           <div className="space-y-2">
-            <h1 className="text-3xl font-bold text-gray-900 dark:text-gray-100 tracking-tight">
+            <h1 className="text-3xl font-bold text-foreground tracking-tight">
               Teams Squared{" "}
-              <span className="text-brand-600 dark:text-brand-400">LMS</span>
+              <span className="text-primary">LMS</span>
             </h1>
-            <p className="text-base text-gray-500 dark:text-gray-400">
+            <p className="text-base text-foreground-muted">
               Sign in to access your learning platform.
             </p>
           </div>
           <Link
             href="/login"
-            className="inline-flex items-center justify-center w-full px-6 py-3 rounded-xl bg-brand-600 text-white font-semibold hover:bg-brand-700 active:bg-brand-800 transition-colors shadow-lg shadow-brand-600/25 text-sm"
+            className="inline-flex items-center justify-center w-full px-6 py-3 rounded-lg bg-primary text-white font-semibold hover:bg-primary/90 active:bg-primary/80 transition-colors shadow-lg shadow-primary/25 text-sm"
           >
             Sign in
           </Link>
         </div>
-        <p className="absolute bottom-6 text-xs text-gray-400 dark:text-gray-600">
+        <p className="absolute bottom-6 text-xs text-foreground-subtle">
           &copy; {new Date().getFullYear()} Teams Squared
         </p>
       </div>
