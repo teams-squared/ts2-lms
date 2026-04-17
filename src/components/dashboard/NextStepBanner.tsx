@@ -40,20 +40,12 @@ export function NextStepBanner({
       </p>
       <Link
         href={continueUrl}
-        className={`group relative block rounded-2xl overflow-hidden shadow-card hover:shadow-elevated transition-all p-5 sm:p-6 hover-lift ${
+        className={`group relative block rounded-2xl overflow-hidden shadow-card hover:shadow-card-hover transition-all p-5 sm:p-6 hover-lift bg-white dark:bg-[#1c1c24] ${
           isOverdue
-            ? "border-l-4 border-l-red-500 bg-white dark:bg-[#1c1c24] border-y border-r border-y-gray-200/80 border-r-gray-200/80 dark:border-y-[#2e2e3a] dark:border-r-[#2e2e3a]"
-            : "border border-brand-200/60 dark:border-brand-900/50 bg-gradient-to-br from-brand-50 via-white to-brand-100/60 dark:from-[#1a1230] dark:via-[#1c1c24] dark:to-[#2a1450]"
+            ? "border-l-4 border-l-red-500 border-y border-r border-y-gray-200/80 border-r-gray-200/80 dark:border-y-[#2e2e3a] dark:border-r-[#2e2e3a]"
+            : "border border-gray-200/80 dark:border-[#2e2e3a]"
         }`}
       >
-        {/* Decorative accent blur (only on non-overdue) */}
-        {!isOverdue && (
-          <div
-            aria-hidden
-            className="absolute -top-16 -right-16 w-48 h-48 rounded-full bg-brand-400/20 dark:bg-brand-500/20 blur-3xl pointer-events-none transition-opacity group-hover:opacity-60"
-          />
-        )}
-
         <div className="relative flex items-center gap-4 sm:gap-6">
           <div className="flex-1 min-w-0">
             <div className="flex items-center gap-2 mb-1">
@@ -76,13 +68,13 @@ export function NextStepBanner({
             <div className="flex items-center gap-3">
               <div className="flex-1 relative h-2 bg-gray-100 dark:bg-[#2e2e3a] rounded-full overflow-hidden">
                 <div
-                  className="h-full bg-gradient-to-r from-brand-500 via-fuchsia-500 to-brand-400 rounded-full transition-all duration-700"
+                  className="h-full bg-brand-600 rounded-full transition-all duration-700"
                   style={{ width: `${percentComplete}%` }}
                 />
-                {/* Shimmer overlay while in progress */}
+                {/* Subtle shimmer while in progress */}
                 {percentComplete > 0 && percentComplete < 100 && (
                   <div
-                    className="absolute inset-y-0 left-0 w-1/3 bg-gradient-to-r from-transparent via-white/60 to-transparent animate-shimmer pointer-events-none"
+                    className="absolute inset-y-0 left-0 w-1/4 bg-gradient-to-r from-transparent via-white/30 to-transparent animate-shimmer pointer-events-none"
                   />
                 )}
               </div>
@@ -91,7 +83,7 @@ export function NextStepBanner({
               </span>
             </div>
           </div>
-          <span className="flex-shrink-0 inline-flex items-center gap-1.5 px-4 sm:px-5 py-2.5 rounded-xl bg-gradient-to-r from-brand-600 to-brand-500 hover:from-brand-700 hover:to-brand-600 text-white font-semibold text-sm shadow-lg shadow-brand-600/30 transition-all group-hover:scale-[1.03]">
+          <span className="flex-shrink-0 inline-flex items-center gap-1.5 px-4 sm:px-5 py-2.5 rounded-xl bg-brand-600 hover:bg-brand-700 text-white font-semibold text-sm shadow-sm transition-colors">
             Continue
             <ChevronRightIcon className="w-4 h-4 transition-transform group-hover:translate-x-0.5" />
           </span>
