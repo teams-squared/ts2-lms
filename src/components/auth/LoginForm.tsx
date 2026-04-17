@@ -3,7 +3,12 @@
 import { signIn } from "next-auth/react";
 import { useState } from "react";
 import { useSearchParams } from "next/navigation";
-import { Spinner } from "@/components/ui/Spinner";
+import { Loader2 } from "lucide-react";
+
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Alert, AlertDescription } from "@/components/ui/alert";
 
 export default function LoginForm({
   hasMicrosoftProvider,
@@ -41,29 +46,35 @@ export default function LoginForm({
 
   return (
     <div className="space-y-5">
-      {/* Microsoft sign-in */}
+      {/* Microsoft SSO */}
       {hasMicrosoftProvider && (
         <>
-          <button
+          <Button
+            type="button"
             onClick={() => signIn("microsoft-entra-id", { callbackUrl })}
-            className="w-full flex items-center justify-center gap-3 px-4 py-2.5 rounded-xl bg-brand-600 text-white font-medium hover:bg-brand-700 transition-colors text-sm shadow-sm"
+            className="w-full"
           >
-            <svg className="w-4.5 h-4.5 flex-shrink-0" viewBox="0 0 23 23" fill="none">
+            <svg
+              className="h-4 w-4 shrink-0"
+              viewBox="0 0 23 23"
+              fill="none"
+              aria-hidden="true"
+            >
               <path d="M0 0h11v11H0z" fill="#f25022" />
               <path d="M12 0h11v11H12z" fill="#7fba00" />
               <path d="M0 12h11v11H0z" fill="#00a4ef" />
               <path d="M12 12h11v11H12z" fill="#ffb900" />
             </svg>
             Sign in with Microsoft
-          </button>
+          </Button>
 
           {!isProduction && (
             <div className="relative">
               <div className="absolute inset-0 flex items-center">
-                <div className="w-full border-t border-gray-200 dark:border-[#2e2e3a]" />
+                <div className="w-full border-t border-border" />
               </div>
               <div className="relative flex justify-center text-xs">
-                <span className="px-3 bg-white dark:bg-[#1c1c24] text-gray-400">
+                <span className="bg-card px-3 text-foreground-subtle">
                   or sign in with email
                 </span>
               </div>
@@ -76,54 +87,52 @@ export default function LoginForm({
       {!isProduction && (
         <form onSubmit={handleCredentialLogin} className="space-y-4">
           {error && (
-            <div className="p-3 rounded-xl bg-red-50 dark:bg-red-950/30 border border-red-100 dark:border-red-900/50 text-red-600 dark:text-red-400 text-sm">
-              {error}
-            </div>
+            <Alert variant="destructive">
+              <AlertDescription>{error}</AlertDescription>
+            </Alert>
           )}
 
-          <div>
-            <label
-              htmlFor="email"
-              className="block text-xs font-medium text-gray-600 dark:text-gray-400 mb-1.5"
-            >
-              Email
-            </label>
-            <input
+          <div className="space-y-1.5">
+            <Label htmlFor="email">Email</Label>
+            <Input
               id="email"
               type="email"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               required
-              className="w-full px-3.5 py-2.5 rounded-xl border border-gray-200 dark:border-[#3a3a48] bg-white dark:bg-[#1e1e28] text-sm text-gray-900 dark:text-gray-100 placeholder-gray-400 dark:placeholder-gray-600 focus:outline-none focus:ring-2 focus:ring-brand-500 focus:border-transparent transition-all"
               placeholder="you@teamssquared.com"
+              autoComplete="email"
             />
           </div>
 
-          <div>
-            <label
-              htmlFor="password"
-              className="block text-xs font-medium text-gray-600 dark:text-gray-400 mb-1.5"
-            >
-              Password
-            </label>
-            <input
+          <div className="space-y-1.5">
+            <Label htmlFor="password">Password</Label>
+            <Input
               id="password"
               type="password"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
               required
-              className="w-full px-3.5 py-2.5 rounded-xl border border-gray-200 dark:border-[#3a3a48] bg-white dark:bg-[#1e1e28] text-sm text-gray-900 dark:text-gray-100 placeholder-gray-400 dark:placeholder-gray-600 focus:outline-none focus:ring-2 focus:ring-brand-500 focus:border-transparent transition-all"
               placeholder="Enter your password"
+              autoComplete="current-password"
             />
           </div>
 
-          <button
+          <Button
             type="submit"
+            variant="secondary"
             disabled={loading}
-            className="w-full px-4 py-2.5 rounded-xl bg-gray-900 dark:bg-gray-100 text-white dark:text-gray-900 text-sm font-semibold hover:bg-gray-800 dark:hover:bg-white disabled:opacity-50 disabled:cursor-not-allowed transition-colors shadow-sm"
+            className="w-full"
           >
-            {loading ? <span className="inline-flex items-center gap-2"><Spinner size="sm" className="border-white border-t-transparent" /> Signing in…</span> : "Sign In"}
-          </button>
+            {loading ? (
+              <>
+                <Loader2 className="h-4 w-4 animate-spin" aria-hidden="true" />
+                Signing in…
+              </>
+            ) : (
+              "Sign In"
+            )}
+          </Button>
         </form>
       )}
     </div>
