@@ -117,6 +117,20 @@ async function main() {
     ALTER TYPE "LessonType" ADD VALUE IF NOT EXISTS 'DOCUMENT';
   `);
 
+  // Role restructure: add COURSE_MANAGER, migrate legacy rows, then drop old values
+  await client.query(`
+    ALTER TYPE "Role" ADD VALUE IF NOT EXISTS 'COURSE_MANAGER';
+  `);
+  // Must commit before using a newly added enum value in DML
+  await client.query(`COMMIT`);
+  await client.query(`BEGIN`);
+  await client.query(`
+    UPDATE "User" SET "role" = 'COURSE_MANAGER' WHERE "role" = 'MANAGER';
+  `);
+  await client.query(`
+    UPDATE "User" SET "role" = 'EMPLOYEE' WHERE "role" = 'INSTRUCTOR';
+  `);
+
   // Create SharePointCache table (idempotent)
   await client.query(`
     CREATE TABLE IF NOT EXISTS "SharePointCache" (
