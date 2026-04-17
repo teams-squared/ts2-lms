@@ -7,7 +7,7 @@ import { requireRole } from "@/lib/roles";
  * Returns overview stats, per-course metrics, and per-user metrics.
  */
 export async function GET() {
-  const authResult = await requireRole("admin");
+  const authResult = await requireRole("course_manager");
   if (authResult instanceof NextResponse) return authResult;
 
   const sevenDaysAgo = new Date();

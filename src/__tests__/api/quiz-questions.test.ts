@@ -168,8 +168,8 @@ describe("POST .../quiz/questions", () => {
     expect(body.options).toHaveLength(2);
   });
 
-  it("creates question successfully for manager", async () => {
-    mockAuth.mockResolvedValue(mockSession({ role: "manager" }));
+  it("creates question successfully for course_manager", async () => {
+    mockAuth.mockResolvedValue(mockSession({ role: "course_manager" }));
     mockPrisma.course.findUnique.mockResolvedValue({ createdById: "test-user-id" });
     mockPrisma.lesson.findUnique.mockResolvedValue(mockLesson);
     mockPrisma.quizQuestion.count.mockResolvedValue(2);

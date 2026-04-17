@@ -189,8 +189,8 @@ describe("PATCH /api/courses/[id]", () => {
 describe("DELETE /api/courses/[id]", () => {
   beforeEach(() => vi.clearAllMocks());
 
-  it("returns 403 for non-admin", async () => {
-    mockAuth.mockResolvedValue(mockSession({ role: "manager" }));
+  it("returns 403 for employee", async () => {
+    mockAuth.mockResolvedValue(mockSession({ role: "employee" }));
     const req = new Request("http://localhost/api/courses/c1", {
       method: "DELETE",
     });

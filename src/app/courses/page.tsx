@@ -38,7 +38,7 @@ export default async function CourseCatalogPage({
 
   const { q: searchQuery, status: statusFilter, tab, node: nodeFilter } = await searchParams;
   const isPrivileged =
-    session.user?.role === "admin" || session.user?.role === "manager";
+    session.user?.role === "admin" || session.user?.role === "course_manager";
   const activeTab = isPrivileged && tab !== "my" ? "all" : "my";
   const userId = session.user?.id;
 

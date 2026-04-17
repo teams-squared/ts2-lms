@@ -106,7 +106,7 @@ describe("DELETE /api/courses/[id]/modules/[moduleId]", () => {
   });
 
   it("deletes module for course owner", async () => {
-    mockAuth.mockResolvedValue(mockSession({ id: "user-1", role: "manager" }));
+    mockAuth.mockResolvedValue(mockSession({ id: "user-1", role: "course_manager" }));
     mockPrisma.course.findUnique.mockResolvedValue({ id: "c1", createdById: "user-1" });
     mockPrisma.module.findUnique.mockResolvedValue({ id: "m1", courseId: "c1" });
     mockPrisma.module.delete.mockResolvedValue({ id: "m1" });

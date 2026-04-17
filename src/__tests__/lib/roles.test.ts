@@ -11,13 +11,13 @@ describe("hasAccess", () => {
   const cases: [Role, Role, boolean][] = [
     // userRole, requiredRole, expected
     ["admin",    "admin",    true],
-    ["admin",    "manager",  true],
+    ["admin",    "course_manager",  true],
     ["admin",    "employee", true],
-    ["manager",  "admin",    false],
-    ["manager",  "manager",  true],
-    ["manager",  "employee", true],
+    ["course_manager",  "admin",    false],
+    ["course_manager",  "course_manager",  true],
+    ["course_manager",  "employee", true],
     ["employee", "admin",    false],
-    ["employee", "manager",  false],
+    ["employee", "course_manager",  false],
     ["employee", "employee", true],
   ];
 
@@ -47,10 +47,10 @@ describe("requireAuth", () => {
   });
 
   it("returns AuthResult when authenticated", async () => {
-    mockAuth.mockResolvedValue(mockSession({ id: "u1", role: "manager" }));
+    mockAuth.mockResolvedValue(mockSession({ id: "u1", role: "course_manager" }));
     const result = await requireAuth();
     expect(result).not.toBeInstanceOf(NextResponse);
-    expect(result).toMatchObject({ userId: "u1", role: "manager" });
+    expect(result).toMatchObject({ userId: "u1", role: "course_manager" });
   });
 });
 
@@ -66,21 +66,21 @@ describe("requireRole", () => {
 
   it("returns 403 when role is insufficient", async () => {
     mockAuth.mockResolvedValue(mockSession({ id: "u1", role: "employee" }));
-    const result = await requireRole("manager");
+    const result = await requireRole("course_manager");
     expect(result).toBeInstanceOf(NextResponse);
     expect((result as NextResponse).status).toBe(403);
   });
 
   it("returns AuthResult when role matches exactly", async () => {
-    mockAuth.mockResolvedValue(mockSession({ id: "u1", role: "manager" }));
-    const result = await requireRole("manager");
+    mockAuth.mockResolvedValue(mockSession({ id: "u1", role: "course_manager" }));
+    const result = await requireRole("course_manager");
     expect(result).not.toBeInstanceOf(NextResponse);
-    expect(result).toMatchObject({ userId: "u1", role: "manager" });
+    expect(result).toMatchObject({ userId: "u1", role: "course_manager" });
   });
 
   it("returns AuthResult when role exceeds requirement (admin >= manager)", async () => {
     mockAuth.mockResolvedValue(mockSession({ id: "u1", role: "admin" }));
-    const result = await requireRole("manager");
+    const result = await requireRole("course_manager");
     expect(result).not.toBeInstanceOf(NextResponse);
     expect(result).toMatchObject({ userId: "u1", role: "admin" });
   });

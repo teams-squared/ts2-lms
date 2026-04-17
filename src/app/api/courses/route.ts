@@ -19,7 +19,7 @@ export async function GET(request: Request) {
   const search = searchParams.get("search")?.trim() || "";
 
   const isPrivileged =
-    session.user.role === "admin" || session.user.role === "manager";
+    session.user.role === "admin" || session.user.role === "course_manager";
 
   // Non-privileged users only see published courses they are enrolled in.
   // Admins/managers see all published courses + their own drafts.
@@ -96,7 +96,7 @@ export async function POST(request: Request) {
   if (!session?.user?.id) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
-  if (session.user.role !== "admin" && session.user.role !== "manager") {
+  if (session.user.role !== "admin" && session.user.role !== "course_manager") {
     return NextResponse.json({ error: "Forbidden" }, { status: 403 });
   }
 

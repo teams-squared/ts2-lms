@@ -15,7 +15,7 @@ export default async function CourseEditPage({
   params: Promise<{ id: string }>;
 }) {
   const session = await auth();
-  if (!session || (session.user?.role !== "admin" && session.user?.role !== "manager")) {
+  if (!session || (session.user?.role !== "admin" && session.user?.role !== "course_manager")) {
     redirect("/");
   }
 
@@ -31,7 +31,7 @@ export default async function CourseEditPage({
   ]);
   if (!data) notFound();
 
-  const backHref = session.user?.role === "manager" ? "/manager" : "/admin/courses";
+  const backHref = "/admin/courses";
 
   return (
     <div>

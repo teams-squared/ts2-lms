@@ -8,8 +8,7 @@ datasource db {
 
 enum Role {
   ADMIN
-  MANAGER
-  INSTRUCTOR
+  COURSE_MANAGER
   EMPLOYEE
 }
 
@@ -23,7 +22,6 @@ model User {
   createdAt      DateTime         @default(now())
   updatedAt      DateTime         @updatedAt
   createdCourses      Course[]         @relation("CreatedCourses")
-  instructedCourses   CourseInstructor[]
   enrollments         Enrollment[]
   enrollmentsMade     Enrollment[]     @relation("EnrolledBy")
   lessonProgress      LessonProgress[]
@@ -67,7 +65,6 @@ model Course {
   createdBy         User         @relation("CreatedCourses", fields: [createdById], references: [id])
   modules           Module[]
   enrollments       Enrollment[]
-  instructors       CourseInstructor[]
   prerequisites     CoursePrerequisite[] @relation("CoursePrereqs")
   prerequisiteOf    CoursePrerequisite[] @relation("PrereqOf")
   emailSubscriptions CourseEmailSubscription[]
@@ -272,17 +269,6 @@ model UserStats {
 
   @@index([lastActivityDate])
   @@index([xp(sort: Desc)])
-}
-
-model CourseInstructor {
-  courseId   String
-  userId     String
-  assignedAt DateTime @default(now())
-
-  course Course @relation(fields: [courseId], references: [id], onDelete: Cascade)
-  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
-
-  @@id([courseId, userId])
 }
 
 model UserClearance {

@@ -112,8 +112,8 @@ describe("POST .../quiz/questions/reorder", () => {
     expect(Array.isArray(body)).toBe(true);
   });
 
-  it("reorders successfully for manager", async () => {
-    mockAuth.mockResolvedValue(mockSession({ role: "manager" }));
+  it("reorders successfully for course_manager", async () => {
+    mockAuth.mockResolvedValue(mockSession({ role: "course_manager" }));
     mockPrisma.course.findUnique.mockResolvedValue({ createdById: "test-user-id" });
     mockPrisma.lesson.findUnique.mockResolvedValue(mockLesson);
     mockPrisma.quizQuestion.findMany

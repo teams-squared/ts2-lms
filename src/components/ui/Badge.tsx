@@ -6,12 +6,18 @@ interface RoleBadgeProps {
   className?: string;
 }
 
+const ROLE_LABEL: Record<Role, string> = {
+  admin: "Admin",
+  course_manager: "Course Manager",
+  employee: "Employee",
+};
+
 export function RoleBadge({ role, className = "" }: RoleBadgeProps) {
   return (
     <span
       className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium ${ROLE_STYLES[role].badge} ${className}`}
     >
-      {role.charAt(0).toUpperCase() + role.slice(1)}
+      {ROLE_LABEL[role]}
     </span>
   );
 }

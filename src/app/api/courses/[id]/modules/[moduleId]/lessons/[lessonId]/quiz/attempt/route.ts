@@ -24,7 +24,7 @@ export async function POST(request: Request, { params }: Params) {
 
   // Non-admin users must be enrolled to submit quiz attempts
   const isPrivileged =
-    session.user.role === "admin" || session.user.role === "manager";
+    session.user.role === "admin" || session.user.role === "course_manager";
   const enrollment = await prisma.enrollment.findUnique({
     where: { userId_courseId: { userId, courseId } },
   });

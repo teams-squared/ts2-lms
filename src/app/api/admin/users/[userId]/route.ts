@@ -5,7 +5,7 @@ import { prismaRoleToApp } from "@/lib/types";
 
 type Params = { params: Promise<{ userId: string }> };
 
-/** GET /api/admin/users/[userId] — fetch user details with instructor course assignments */
+/** GET /api/admin/users/[userId] — fetch user details */
 export async function GET(_request: Request, { params }: Params) {
   const authResult = await requireRole("admin");
   if (authResult instanceof NextResponse) return authResult;
@@ -20,13 +20,6 @@ export async function GET(_request: Request, { params }: Params) {
       name: true,
       role: true,
       createdAt: true,
-      instructedCourses: {
-        select: {
-          assignedAt: true,
-          course: { select: { id: true, title: true, status: true } },
-        },
-        orderBy: { assignedAt: "asc" },
-      },
     },
   });
 
@@ -37,9 +30,5 @@ export async function GET(_request: Request, { params }: Params) {
   return NextResponse.json({
     ...user,
     role: prismaRoleToApp(user.role),
-    instructedCourses: user.instructedCourses.map((ic) => ({
-      assignedAt: ic.assignedAt,
-      course: ic.course,
-    })),
   });
 }

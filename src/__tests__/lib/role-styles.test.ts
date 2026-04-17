@@ -3,7 +3,7 @@ import { ROLE_STYLES } from "@/lib/role-styles";
 import type { Role } from "@/lib/types";
 
 describe("ROLE_STYLES", () => {
-  const roles: Role[] = ["admin", "manager", "instructor", "employee"];
+  const roles: Role[] = ["admin", "course_manager", "employee"];
 
   it.each(roles)("has entry for '%s' role", (role) => {
     expect(ROLE_STYLES[role]).toBeDefined();

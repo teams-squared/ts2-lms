@@ -103,8 +103,8 @@ describe("GET .../lessons/[lessonId]/quiz", () => {
     expect(body.questions[0].options[1]).toHaveProperty("isCorrect", true);
   });
 
-  it("returns questions with isCorrect for manager", async () => {
-    mockAuth.mockResolvedValue(mockSession({ role: "manager" }));
+  it("returns questions with isCorrect for course_manager", async () => {
+    mockAuth.mockResolvedValue(mockSession({ role: "course_manager" }));
     mockPrisma.lesson.findUnique.mockResolvedValue(mockLesson);
     mockPrisma.quizQuestion.findMany.mockResolvedValue(mockQuestions);
     mockPrisma.quizAttempt.findMany.mockResolvedValue([]);

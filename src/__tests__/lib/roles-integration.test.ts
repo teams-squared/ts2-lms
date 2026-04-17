@@ -28,9 +28,9 @@ describe("getUserRole", () => {
     expect(role).toBe("employee");
   });
 
-  it("returns 'manager' for MANAGER role", async () => {
-    mockPrisma.user.findUnique.mockResolvedValue({ role: "MANAGER" });
+  it("returns 'course_manager' for COURSE_MANAGER role", async () => {
+    mockPrisma.user.findUnique.mockResolvedValue({ role: "COURSE_MANAGER" });
     const role = await getUserRole("manager@teamssquared.com");
-    expect(role).toBe("manager");
+    expect(role).toBe("course_manager");
   });
 });

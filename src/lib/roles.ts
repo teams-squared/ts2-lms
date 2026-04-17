@@ -7,8 +7,7 @@ import type { Session } from "next-auth";
 
 const ROLE_LEVEL: Record<Role, number> = {
   employee: 1,
-  instructor: 2,
-  manager: 3,
+  course_manager: 3,
   admin: 4,
 };
 

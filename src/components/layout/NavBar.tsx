@@ -19,14 +19,13 @@ export default function NavBar() {
   if (pathname === "/login") return null;
   if (!session) return null;
 
-  const isAdmin = session.user?.role === "admin";
-  const isManager = session.user?.role === "manager";
+  const canManage =
+    session.user?.role === "admin" || session.user?.role === "course_manager";
 
   const navLinks = [
     { href: "/", label: "Home", icon: HomeIcon },
     { href: "/courses", label: "Courses", icon: GraduationCapIcon },
-    ...(isManager ? [{ href: "/manager", label: "Manager", icon: GraduationCapIcon }] : []),
-    ...(isAdmin ? [{ href: "/admin", label: "Admin", icon: ShieldIcon }] : []),
+    ...(canManage ? [{ href: "/admin", label: "Admin", icon: ShieldIcon }] : []),
   ];
 
   return (

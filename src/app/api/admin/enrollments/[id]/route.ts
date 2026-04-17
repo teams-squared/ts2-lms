@@ -7,7 +7,7 @@ type Params = { params: Promise<{ id: string }> };
 /** DELETE /api/admin/enrollments/[id] — unenroll a user (admin/manager only).
  *  Deletes the Enrollment record but preserves LessonProgress and QuizAttempt data. */
 export async function DELETE(_request: Request, { params }: Params) {
-  const authResult = await requireRole("manager");
+  const authResult = await requireRole("course_manager");
   if (authResult instanceof NextResponse) return authResult;
 
   const { id } = await params;

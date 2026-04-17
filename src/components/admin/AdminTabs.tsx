@@ -2,22 +2,26 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import { useSession } from "next-auth/react";
 
 const TABS = [
-  { href: "/admin", label: "Overview", exact: true },
-  { href: "/admin/users", label: "Users", exact: false },
-  { href: "/admin/courses", label: "Courses", exact: false },
-  { href: "/admin/nodes", label: "Nodes", exact: false },
-  { href: "/admin/assignments", label: "Enrollments", exact: false },
-  { href: "/admin/analytics", label: "Analytics", exact: false },
+  { href: "/admin", label: "Overview", exact: true, adminOnly: false },
+  { href: "/admin/users", label: "Users", exact: false, adminOnly: true },
+  { href: "/admin/courses", label: "Courses", exact: false, adminOnly: false },
+  { href: "/admin/nodes", label: "Nodes", exact: false, adminOnly: false },
+  { href: "/admin/assignments", label: "Enrollments", exact: false, adminOnly: false },
+  { href: "/admin/analytics", label: "Analytics", exact: false, adminOnly: false },
 ];
 
 export function AdminTabs() {
   const pathname = usePathname();
+  const { data: session } = useSession();
+  const isAdmin = session?.user?.role === "admin";
+  const visibleTabs = TABS.filter((t) => isAdmin || !t.adminOnly);
 
   return (
     <nav className="flex gap-1 mb-6 border-b border-gray-200 dark:border-[#2e2e3a]">
-      {TABS.map((tab) => {
+      {visibleTabs.map((tab) => {
         const isActive = tab.exact
           ? pathname === tab.href
           : pathname.startsWith(tab.href);

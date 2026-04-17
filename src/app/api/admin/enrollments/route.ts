@@ -6,7 +6,7 @@ import { trackEvent } from "@/lib/posthog-server";
 
 /** GET /api/admin/enrollments — list all enrollments (admin/manager only) */
 export async function GET() {
-  const authResult = await requireRole("manager");
+  const authResult = await requireRole("course_manager");
   if (authResult instanceof NextResponse) return authResult;
 
   const enrollments = await prisma.enrollment.findMany({
@@ -22,7 +22,7 @@ export async function GET() {
 
 /** POST /api/admin/enrollments — enroll a user in a course (admin/manager only) */
 export async function POST(request: Request) {
-  const authResult = await requireRole("manager");
+  const authResult = await requireRole("course_manager");
   if (authResult instanceof NextResponse) return authResult;
   const { userId: enrolledBy } = authResult;
 

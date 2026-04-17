@@ -75,7 +75,7 @@ describe("GET /api/sharepoint/browse", () => {
   });
 
   it("fetches from Graph API on cache miss", async () => {
-    mockAuth.mockResolvedValueOnce(mockSession({ role: "manager" }));
+    mockAuth.mockResolvedValueOnce(mockSession({ role: "course_manager" }));
     mockGetCachedMetadata.mockResolvedValueOnce(null);
     mockGetSiteId.mockResolvedValueOnce("site-1");
     // First call: root listing to find LMS Materials folder

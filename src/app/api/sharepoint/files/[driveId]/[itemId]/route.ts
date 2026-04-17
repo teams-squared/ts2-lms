@@ -7,7 +7,7 @@ type Params = { params: Promise<{ driveId: string; itemId: string }> };
 
 /** GET /api/sharepoint/files/[driveId]/[itemId] — proxy a SharePoint file (admin/manager only). */
 export async function GET(_request: Request, { params }: Params) {
-  const authResult = await requireRole("manager");
+  const authResult = await requireRole("course_manager");
   if (authResult instanceof NextResponse) return authResult;
 
   const { driveId, itemId } = await params;

@@ -79,7 +79,7 @@ describe("UserTable", () => {
         id: "2",
         email: "emp@test.com",
         name: "Employee",
-        role: "manager",
+        role: "course_manager",
         createdAt: "2024-02-01T00:00:00.000Z",
       })
     );
@@ -97,14 +97,14 @@ describe("UserTable", () => {
       name: /Role for Employee/i,
     });
 
-    await user.selectOptions(empSelect, "manager");
+    await user.selectOptions(empSelect, "course_manager");
 
     // Verify PATCH was called
     await waitFor(() => {
       expect(fetchMock).toHaveBeenCalledWith("/api/admin/users", {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ userId: "2", role: "manager" }),
+        body: JSON.stringify({ userId: "2", role: "course_manager" }),
       });
     });
   });
@@ -129,7 +129,7 @@ describe("UserTable", () => {
     const empSelect = screen.getByRole("combobox", {
       name: /Role for Employee/i,
     });
-    await user.selectOptions(empSelect, "manager");
+    await user.selectOptions(empSelect, "course_manager");
 
     await waitFor(() => {
       expect(screen.getByText("Forbidden")).toBeInTheDocument();

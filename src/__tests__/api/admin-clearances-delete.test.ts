@@ -16,7 +16,7 @@ describe("DELETE /api/admin/users/[userId]/clearances/[clearance]", () => {
 
   it("returns 403 when not admin", async () => {
     mockAuth.mockResolvedValue(
-      mockSession({ id: "mgr-id", role: "manager" }),
+      mockSession({ id: "mgr-id", role: "course_manager" }),
     );
     const res = await DELETE(new Request("http://localhost"), {
       params: Promise.resolve({ userId: "u1", clearance: "secret" }),

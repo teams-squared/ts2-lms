@@ -6,7 +6,7 @@ import { trackEvent } from "@/lib/posthog-server";
 
 /** POST /api/admin/enrollments/batch — enroll a user in multiple courses at once */
 export async function POST(request: Request) {
-  const authResult = await requireRole("manager");
+  const authResult = await requireRole("course_manager");
   if (authResult instanceof NextResponse) return authResult;
   const { userId: enrolledBy } = authResult;
 

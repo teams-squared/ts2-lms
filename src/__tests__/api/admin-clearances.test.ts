@@ -16,7 +16,7 @@ describe("GET /api/admin/users/[userId]/clearances", () => {
 
   it("returns 403 when not admin", async () => {
     mockAuth.mockResolvedValue(
-      mockSession({ id: "mgr-id", role: "manager" }),
+      mockSession({ id: "mgr-id", role: "course_manager" }),
     );
     const res = await GET(new Request("http://localhost"), {
       params: Promise.resolve({ userId: "u1" }),
@@ -60,7 +60,7 @@ describe("POST /api/admin/users/[userId]/clearances", () => {
 
   it("returns 403 when not admin", async () => {
     mockAuth.mockResolvedValue(
-      mockSession({ id: "mgr-id", role: "manager" }),
+      mockSession({ id: "mgr-id", role: "course_manager" }),
     );
     const req = new Request("http://localhost", {
       method: "POST",

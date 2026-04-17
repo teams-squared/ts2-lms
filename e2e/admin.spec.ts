@@ -32,7 +32,7 @@ test.describe("Admin page", () => {
     // Find a select dropdown and change it
     const select = page.locator("table select").first();
     const currentValue = await select.inputValue();
-    const newRole = currentValue === "admin" ? "manager" : "admin";
+    const newRole = currentValue === "admin" ? "course_manager" : "admin";
     await select.selectOption(newRole);
 
     // Verify the select updated (role change happened without page reload)

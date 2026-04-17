@@ -4,21 +4,13 @@ import { prisma } from "@/lib/prisma";
 
 type Params = { params: Promise<{ id: string }> };
 
-/** Verify caller is admin, or manager who created the course. */
-async function authorize(courseId: string) {
+/** Verify caller is admin or course_manager. */
+async function authorize(_courseId: string) {
   const session = await auth();
   if (!session?.user?.email) return null;
 
   const { role } = session.user;
-  if (role === "admin") return session;
-
-  if (role === "manager") {
-    const course = await prisma.course.findUnique({
-      where: { id: courseId },
-      select: { createdById: true },
-    });
-    if (course && course.createdById === session.user.id) return session;
-  }
+  if (role === "admin" || role === "course_manager") return session;
 
   return null;
 }

@@ -4,13 +4,18 @@ import { RoleBadge } from "@/components/ui/Badge";
 import { ROLE_STYLES } from "@/lib/role-styles";
 import type { Role } from "@/lib/types";
 
+const LABELS: Record<Role, string> = {
+  admin: "Admin",
+  course_manager: "Course Manager",
+  employee: "Employee",
+};
+
 describe("RoleBadge", () => {
-  const roles: Role[] = ["admin", "manager", "employee"];
+  const roles: Role[] = ["admin", "course_manager", "employee"];
 
   it.each(roles)("renders '%s' role text", (role) => {
     render(<RoleBadge role={role} />);
-    const capitalized = role.charAt(0).toUpperCase() + role.slice(1);
-    expect(screen.getByText(capitalized)).toBeInTheDocument();
+    expect(screen.getByText(LABELS[role])).toBeInTheDocument();
   });
 
   it.each(roles)("applies correct ROLE_STYLES classes for '%s'", (role) => {

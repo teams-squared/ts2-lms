@@ -1,5 +1,6 @@
 import Link from "next/link";
-import { notFound } from "next/navigation";
+import { notFound, redirect } from "next/navigation";
+import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { prismaRoleToApp } from "@/lib/types";
 import { UserDetailManager } from "@/components/admin/UserDetailManager";
@@ -11,6 +12,11 @@ export default async function AdminUserDetailPage({
 }: {
   params: Promise<{ userId: string }>;
 }) {
+  const session = await auth();
+  if (!session || session.user?.role !== "admin") {
+    redirect("/admin");
+  }
+
   const { userId } = await params;
 
   const user = await prisma.user.findUnique({
@@ -21,23 +27,12 @@ export default async function AdminUserDetailPage({
       name: true,
       role: true,
       createdAt: true,
-      instructedCourses: {
-        select: {
-          assignedAt: true,
-          course: { select: { id: true, title: true, status: true } },
-        },
-        orderBy: { assignedAt: "asc" },
-      },
     },
   });
 
   if (!user) notFound();
 
-  const [allCourses, userClearances, distinctClearances] = await Promise.all([
-    prisma.course.findMany({
-      select: { id: true, title: true, status: true },
-      orderBy: { title: "asc" },
-    }),
+  const [userClearances, distinctClearances] = await Promise.all([
     prisma.userClearance.findMany({
       where: { userId },
       orderBy: { grantedAt: "asc" },
@@ -49,7 +44,6 @@ export default async function AdminUserDetailPage({
     }),
   ]);
 
-  const assignedCourseIds = new Set(user.instructedCourses.map((ic) => ic.course.id));
   const availableClearances = distinctClearances
     .map((c) => c.requiredClearance!)
     .filter((cl) => !userClearances.some((uc) => uc.clearance === cl));
@@ -71,19 +65,6 @@ export default async function AdminUserDetailPage({
       <UserDetailManager
         userId={user.id}
         initialRole={prismaRoleToApp(user.role)}
-        initialAssignedCourses={user.instructedCourses.map((ic) => ({
-          id: ic.course.id,
-          title: ic.course.title,
-          status: ic.course.status.toLowerCase() as "draft" | "published" | "archived",
-          assignedAt: ic.assignedAt.toISOString(),
-        }))}
-        allCourses={allCourses
-          .filter((c) => !assignedCourseIds.has(c.id))
-          .map((c) => ({
-            id: c.id,
-            title: c.title,
-            status: c.status.toLowerCase() as "draft" | "published" | "archived",
-          }))}
         initialClearances={userClearances.map((uc) => uc.clearance)}
         availableClearances={availableClearances}
       />

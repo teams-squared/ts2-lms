@@ -52,18 +52,8 @@ describe("GET /api/sharepoint/files/[driveId]/[itemId]", () => {
     expect(res.status).toBe(403);
   });
 
-  it("returns 403 for instructor role", async () => {
-    mockAuth.mockResolvedValueOnce(mockSession({ role: "instructor" }));
-    const GET = await importGET();
-    const res = await GET(
-      new Request("http://localhost/api/sharepoint/files/d1/i1"),
-      params("d1", "i1")
-    );
-    expect(res.status).toBe(403);
-  });
-
   it("streams file with correct headers from cache", async () => {
-    mockAuth.mockResolvedValueOnce(mockSession({ role: "manager" }));
+    mockAuth.mockResolvedValueOnce(mockSession({ role: "course_manager" }));
     mockGetCachedFile.mockResolvedValueOnce({
       data: Buffer.from("pdf-content"),
       meta: { mimeType: "application/pdf", fileName: "test.pdf", etag: "e1", expiresAt: Date.now() + 60000 },
@@ -98,7 +88,7 @@ describe("GET /api/sharepoint/files/[driveId]/[itemId]", () => {
   });
 
   it("fetches from Graph on cache miss and caches result", async () => {
-    mockAuth.mockResolvedValueOnce(mockSession({ role: "manager" }));
+    mockAuth.mockResolvedValueOnce(mockSession({ role: "course_manager" }));
     mockGetCachedFile.mockResolvedValueOnce(null);
     mockGetDriveItemMetadata.mockResolvedValueOnce({
       id: "i1",

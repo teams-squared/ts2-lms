@@ -13,10 +13,10 @@ const prisma = new PrismaClient({ adapter });
 
 const DEMO_USERS = [
   { email: "admin@teamssquared.com", name: "Admin User", password: "admin123", role: Role.ADMIN },
-  { email: "manager@teamssquared.com", name: "Manager User", password: "manager123", role: Role.MANAGER },
+  { email: "manager@teamssquared.com", name: "Manager User", password: "manager123", role: Role.COURSE_MANAGER },
   { email: "employee@teamssquared.com", name: "Employee User", password: "employee123", role: Role.EMPLOYEE },
   { email: "sarah@teamssquared.com", name: "Sarah Admin", password: "admin123", role: Role.ADMIN },
-  { email: "carol@teamssquared.com", name: "Carol Manager", password: "manager123", role: Role.MANAGER },
+  { email: "carol@teamssquared.com", name: "Carol Manager", password: "manager123", role: Role.COURSE_MANAGER },
 ];
 
 async function main() {

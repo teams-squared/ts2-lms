@@ -41,7 +41,7 @@ function makeMockTx() {
 describe("POST /api/admin/enrollments/batch", () => {
   beforeEach(() => vi.clearAllMocks());
 
-  it("returns 403 for non-admin/non-manager", async () => {
+  it("returns 403 for non-admin/non-course_manager", async () => {
     mockRequireRole.mockResolvedValue(
       NextResponse.json({ error: "Forbidden" }, { status: 403 }),
     );

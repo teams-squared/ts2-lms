@@ -156,8 +156,7 @@ export default function UserTable() {
                       className="px-3 py-2 rounded-lg border border-gray-200 dark:border-[#3a3a48] bg-white dark:bg-[#1e1e28] text-base sm:text-sm text-gray-700 dark:text-gray-300 focus:outline-none focus:ring-2 focus:ring-brand-500 disabled:opacity-50 cursor-pointer"
                     >
                       <option value="admin">Admin</option>
-                      <option value="manager">Manager</option>
-                      <option value="instructor">Instructor</option>
+                      <option value="course_manager">Course Manager</option>
                       <option value="employee">Employee</option>
                     </select>
                     {updating === user.id && <Spinner size="sm" />}

@@ -151,8 +151,7 @@ export default async function AdminPage() {
   const [
     totalUsers,
     adminCount,
-    managerCount,
-    instructorCount,
+    courseManagerCount,
     employeeCount,
     totalCourses,
     recentUsers,
@@ -160,8 +159,7 @@ export default async function AdminPage() {
   ] = await Promise.all([
     prisma.user.count(),
     prisma.user.count({ where: { role: "ADMIN" } }),
-    prisma.user.count({ where: { role: "MANAGER" } }),
-    prisma.user.count({ where: { role: "INSTRUCTOR" } }),
+    prisma.user.count({ where: { role: "COURSE_MANAGER" } }),
     prisma.user.count({ where: { role: "EMPLOYEE" } }),
     prisma.course.count(),
     prisma.user.findMany({
@@ -179,8 +177,7 @@ export default async function AdminPage() {
   const stats = [
     { value: totalUsers, label: "Total Users" },
     { value: adminCount, label: "Admins" },
-    { value: managerCount, label: "Managers" },
-    { value: instructorCount, label: "Instructors" },
+    { value: courseManagerCount, label: "Course Managers" },
     { value: employeeCount, label: "Employees" },
     { value: totalCourses, label: "Courses" },
   ];

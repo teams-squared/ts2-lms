@@ -7,7 +7,7 @@ export async function PATCH(
   request: Request,
   { params }: { params: Promise<{ id: string }> },
 ) {
-  const authResult = await requireRole("admin");
+  const authResult = await requireRole("course_manager");
   if (authResult instanceof NextResponse) return authResult;
 
   const { id } = await params;
@@ -51,7 +51,7 @@ export async function DELETE(
   _request: Request,
   { params }: { params: Promise<{ id: string }> },
 ) {
-  const authResult = await requireRole("admin");
+  const authResult = await requireRole("course_manager");
   if (authResult instanceof NextResponse) return authResult;
 
   const { id } = await params;

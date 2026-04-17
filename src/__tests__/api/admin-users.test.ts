@@ -48,7 +48,6 @@ describe("GET /api/admin/users", () => {
 
     const body = await res.json();
     expect(body).toHaveLength(2);
-    // Verify role mapping: Prisma ADMIN → app "admin"
     expect(body[0].role).toBe("admin");
     expect(body[1].role).toBe("employee");
   });
@@ -60,11 +59,11 @@ describe("PATCH /api/admin/users", () => {
   });
 
   it("returns 403 when non-admin", async () => {
-    mockAuth.mockResolvedValue(mockSession({ role: "manager" }));
+    mockAuth.mockResolvedValue(mockSession({ role: "course_manager" }));
     const req = new Request("http://localhost/api/admin/users", {
       method: "PATCH",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ userId: "1", role: "manager" }),
+      body: JSON.stringify({ userId: "1", role: "course_manager" }),
     });
     const res = await PATCH(req);
     expect(res.status).toBe(403);
@@ -75,7 +74,7 @@ describe("PATCH /api/admin/users", () => {
     const req = new Request("http://localhost/api/admin/users", {
       method: "PATCH",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ role: "manager" }),
+      body: JSON.stringify({ role: "course_manager" }),
     });
     const res = await PATCH(req);
     expect(res.status).toBe(400);
@@ -92,24 +91,15 @@ describe("PATCH /api/admin/users", () => {
     expect(res.status).toBe(400);
   });
 
-  it("accepts instructor as a valid role", async () => {
+  it("rejects instructor as invalid role", async () => {
     mockAuth.mockResolvedValue(mockSession({ role: "admin" }));
-    mockPrisma.user.update.mockResolvedValue({
-      id: "1",
-      email: "user@test.com",
-      name: "User",
-      role: "INSTRUCTOR",
-      createdAt: new Date("2024-01-01"),
-    });
     const req = new Request("http://localhost/api/admin/users", {
       method: "PATCH",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ userId: "1", role: "instructor" }),
     });
     const res = await PATCH(req);
-    expect(res.status).toBe(200);
-    const body = await res.json();
-    expect(body.role).toBe("instructor");
+    expect(res.status).toBe(400);
   });
 
   it("returns 200 with updated user", async () => {
@@ -118,20 +108,20 @@ describe("PATCH /api/admin/users", () => {
       id: "1",
       email: "user@test.com",
       name: "User",
-      role: "MANAGER",
+      role: "COURSE_MANAGER",
       createdAt: new Date("2024-01-01"),
     });
 
     const req = new Request("http://localhost/api/admin/users", {
       method: "PATCH",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ userId: "1", role: "manager" }),
+      body: JSON.stringify({ userId: "1", role: "course_manager" }),
     });
     const res = await PATCH(req);
     expect(res.status).toBe(200);
 
     const body = await res.json();
-    expect(body.role).toBe("manager"); // Prisma MANAGER → app "manager"
+    expect(body.role).toBe("course_manager");
     expect(body.id).toBe("1");
   });
 });

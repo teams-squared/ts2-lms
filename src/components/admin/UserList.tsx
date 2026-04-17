@@ -12,14 +12,18 @@ interface User {
   avatar: string | null;
   role: Role;
   createdAt: string;
-  instructedCoursesCount: number;
 }
 
 const ROLE_COLORS: Record<Role, string> = {
   admin: "bg-red-100 dark:bg-red-900/30 text-red-700 dark:text-red-300",
-  manager: "bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300",
-  instructor: "bg-purple-100 dark:bg-purple-900/30 text-purple-700 dark:text-purple-300",
+  course_manager: "bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300",
   employee: "bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-400",
+};
+
+const ROLE_LABELS: Record<Role, string> = {
+  admin: "admin",
+  course_manager: "course manager",
+  employee: "employee",
 };
 
 const PAGE_SIZE = 25;
@@ -73,8 +77,7 @@ export function UserList({ users }: { users: User[] }) {
         >
           <option value="all">All roles</option>
           <option value="admin">Admin</option>
-          <option value="manager">Manager</option>
-          <option value="instructor">Instructor</option>
+          <option value="course_manager">Course Manager</option>
           <option value="employee">Employee</option>
         </select>
       </div>
@@ -120,12 +123,7 @@ export function UserList({ users }: { users: User[] }) {
                   </td>
                   <td className="px-5 py-3">
                     <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium ${ROLE_COLORS[user.role]}`}>
-                      {user.role}
-                      {user.role === "instructor" && user.instructedCoursesCount > 0 && (
-                        <span className="ml-1 opacity-70">
-                          · {user.instructedCoursesCount} course{user.instructedCoursesCount !== 1 ? "s" : ""}
-                        </span>
-                      )}
+                      {ROLE_LABELS[user.role]}
                     </span>
                   </td>
                   <td className="px-5 py-3 text-xs text-gray-500 dark:text-gray-500">

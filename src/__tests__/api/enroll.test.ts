@@ -27,8 +27,8 @@ describe("POST /api/courses/[id]/enroll (self-enrollment disabled)", () => {
     expect(body.error).toContain("Self-enrollment is disabled");
   });
 
-  it("returns 403 for manager", async () => {
-    mockAuth.mockResolvedValue(mockSession({ role: "manager" }));
+  it("returns 403 for course_manager", async () => {
+    mockAuth.mockResolvedValue(mockSession({ role: "course_manager" }));
     const req = new Request("http://localhost/api/courses/c1/enroll", { method: "POST" });
     const res = await POST(req, makeParams("c1"));
     expect(res.status).toBe(403);

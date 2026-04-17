@@ -5,7 +5,7 @@ import { getNodeTree } from "@/lib/courseNodes";
 
 /** GET /api/admin/nodes — full node tree with course counts */
 export async function GET() {
-  const authResult = await requireRole("admin");
+  const authResult = await requireRole("course_manager");
   if (authResult instanceof NextResponse) return authResult;
 
   const tree = await getNodeTree();
@@ -14,7 +14,7 @@ export async function GET() {
 
 /** POST /api/admin/nodes — create a node */
 export async function POST(request: Request) {
-  const authResult = await requireRole("admin");
+  const authResult = await requireRole("course_manager");
   if (authResult instanceof NextResponse) return authResult;
 
   let body: { name?: string; parentId?: string | null; description?: string };

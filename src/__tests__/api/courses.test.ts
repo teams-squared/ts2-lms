@@ -91,8 +91,8 @@ describe("POST /api/courses", () => {
     expect(body.status).toBe("draft");
   });
 
-  it("creates course for manager", async () => {
-    mockAuth.mockResolvedValue(mockSession({ role: "manager" }));
+  it("creates course for course_manager", async () => {
+    mockAuth.mockResolvedValue(mockSession({ role: "course_manager" }));
     mockPrisma.course.create.mockResolvedValue({
       id: "c2",
       title: "Manager Course",

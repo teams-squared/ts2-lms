@@ -13,7 +13,7 @@ export async function GET(_request: Request, { params }: Params) {
 
   const { id: courseId, moduleId, lessonId } = await params;
   const userId = session.user.id;
-  const isPrivileged = session.user.role === "admin" || session.user.role === "manager";
+  const isPrivileged = session.user.role === "admin" || session.user.role === "course_manager";
 
   // Verify lesson exists and belongs to the correct module/course
   const lesson = await prisma.lesson.findUnique({

@@ -55,8 +55,8 @@ describe("DELETE /api/admin/enrollments/[id]", () => {
     });
   });
 
-  it("deletes enrollment for manager", async () => {
-    mockAuth.mockResolvedValue(mockSession({ role: "manager" }));
+  it("deletes enrollment for course_manager", async () => {
+    mockAuth.mockResolvedValue(mockSession({ role: "course_manager" }));
     mockPrisma.enrollment.findUnique.mockResolvedValue({
       id: "e1",
       userId: "u1",

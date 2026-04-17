@@ -48,8 +48,8 @@ describe("GET /api/admin/enrollments", () => {
     expect(body[0].id).toBe("e1");
   });
 
-  it("returns enrollments list for manager", async () => {
-    mockAuth.mockResolvedValue(mockSession({ role: "manager" }));
+  it("returns enrollments list for course_manager", async () => {
+    mockAuth.mockResolvedValue(mockSession({ role: "course_manager" }));
     mockPrisma.enrollment.findMany.mockResolvedValue([]);
     const res = await GET();
     expect(res.status).toBe(200);

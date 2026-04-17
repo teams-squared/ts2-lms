@@ -28,6 +28,7 @@ export async function GET(_request: Request, { params }: Params) {
   if (
     course.status !== "PUBLISHED" &&
     session.user.role !== "admin" &&
+    session.user.role !== "course_manager" &&
     course.createdById !== session.user.id
   ) {
     return NextResponse.json({ error: "Not found" }, { status: 404 });
@@ -58,8 +59,12 @@ export async function PATCH(request: Request, { params }: Params) {
     return NextResponse.json({ error: "Not found" }, { status: 404 });
   }
 
-  // Only admin or the course creator can edit
-  if (session.user.role !== "admin" && course.createdById !== session.user.id) {
+  // Admin and course_manager can edit any course; others only if they created it.
+  if (
+    session.user.role !== "admin" &&
+    session.user.role !== "course_manager" &&
+    course.createdById !== session.user.id
+  ) {
     return NextResponse.json({ error: "Forbidden" }, { status: 403 });
   }
 
@@ -117,10 +122,13 @@ export async function PATCH(request: Request, { params }: Params) {
   });
 }
 
-/** DELETE /api/courses/[id] — delete course (admin only). */
+/** DELETE /api/courses/[id] — delete course (admin / course_manager). */
 export async function DELETE(_request: Request, { params }: Params) {
   const session = await auth();
-  if (!session || session.user?.role !== "admin") {
+  if (
+    !session ||
+    (session.user?.role !== "admin" && session.user?.role !== "course_manager")
+  ) {
     return NextResponse.json({ error: "Forbidden" }, { status: 403 });
   }
 

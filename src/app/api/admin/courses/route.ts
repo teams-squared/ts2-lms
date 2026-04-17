@@ -3,9 +3,9 @@ import { prisma } from "@/lib/prisma";
 import { requireRole } from "@/lib/roles";
 import { prismaStatusToApp } from "@/lib/types";
 
-/** GET /api/admin/courses — all courses regardless of status (admin only). */
+/** GET /api/admin/courses — all courses regardless of status (admin / course_manager). */
 export async function GET() {
-  const authResult = await requireRole("admin");
+  const authResult = await requireRole("course_manager");
   if (authResult instanceof NextResponse) return authResult;
 
   const courses = await prisma.course.findMany({

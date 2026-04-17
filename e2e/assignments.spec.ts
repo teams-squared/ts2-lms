@@ -23,9 +23,9 @@ test.describe("Assignment Flow", () => {
     await expect(page).not.toHaveURL(/\/admin\/assignments/);
   });
 
-  test("manager can access manager assignments page", async ({ page }) => {
-    await login(page, USERS.manager.email, USERS.manager.password);
-    await page.goto("/manager/assignments");
+  test("course_manager can access admin assignments page", async ({ page }) => {
+    await login(page, USERS.courseManager.email, USERS.courseManager.password);
+    await page.goto("/admin/assignments");
 
     await expect(page.getByText(/course assignments/i)).toBeVisible();
   });

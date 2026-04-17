@@ -13,7 +13,7 @@ export async function GET(request: Request) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
-  if (session.user.role !== "admin" && session.user.role !== "manager") {
+  if (session.user.role !== "admin" && session.user.role !== "course_manager") {
     return NextResponse.json({ error: "Forbidden" }, { status: 403 });
   }
 
