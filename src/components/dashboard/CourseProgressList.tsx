@@ -87,7 +87,6 @@ function ScrollableRow({ courses }: { courses: CourseItem[] }) {
           const iconBgColor = CATEGORY_COLORS[categoryKey];
           const accentColor = CATEGORY_ACCENT_COLORS[categoryKey];
           const isAlmostDone = course.percentComplete >= 75 && course.percentComplete < 100;
-          const isInProgress = course.percentComplete > 0 && course.percentComplete < 100;
 
           return (
             <Link
@@ -129,14 +128,18 @@ function ScrollableRow({ courses }: { courses: CourseItem[] }) {
 
               <div className="mt-3">
                 <div className="mb-1.5 flex items-center gap-2">
-                  <div className="relative h-1.5 flex-1 overflow-hidden rounded-full bg-border">
+                  <div
+                    className="relative h-1.5 flex-1 overflow-hidden rounded-full bg-border"
+                    role="progressbar"
+                    aria-label={`${course.courseTitle} progress`}
+                    aria-valuenow={course.percentComplete}
+                    aria-valuemin={0}
+                    aria-valuemax={100}
+                  >
                     <div
-                      className="h-full rounded-full bg-primary transition-all duration-700"
+                      className="h-full rounded-full bg-primary transition-[width] duration-[400ms] ease-out"
                       style={{ width: `${course.percentComplete}%` }}
                     />
-                    {isInProgress && (
-                      <div className="pointer-events-none absolute inset-y-0 left-0 w-1/4 animate-shimmer bg-gradient-to-r from-transparent via-white/40 to-transparent" />
-                    )}
                   </div>
                   <span className="shrink-0 text-xs font-semibold tabular-nums text-primary">
                     {course.percentComplete}%
@@ -156,9 +159,9 @@ function ScrollableRow({ courses }: { courses: CourseItem[] }) {
       <button
         type="button"
         onClick={() => scrollBy("left")}
-        aria-label="Scroll courses left"
+        aria-label="Scroll to previous courses"
         disabled={!canScrollLeft}
-        className={`absolute left-0 top-1/2 z-10 h-9 w-9 -translate-y-1/2 rounded-full border border-border bg-card text-foreground shadow-sm transition-all hover:shadow-md ${
+        className={`absolute left-0 top-1/2 z-10 h-9 w-9 -translate-y-1/2 rounded-full border border-border bg-card text-foreground shadow-sm transition-all hover:shadow-md focus:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background ${
           canScrollLeft ? "opacity-100" : "pointer-events-none opacity-0"
         }`}
       >
@@ -169,9 +172,9 @@ function ScrollableRow({ courses }: { courses: CourseItem[] }) {
       <button
         type="button"
         onClick={() => scrollBy("right")}
-        aria-label="Scroll courses right"
+        aria-label="Scroll to more courses"
         disabled={!canScrollRight}
-        className={`absolute right-0 top-1/2 z-10 h-9 w-9 -translate-y-1/2 rounded-full border border-border bg-card text-foreground shadow-sm transition-all hover:shadow-md ${
+        className={`absolute right-0 top-1/2 z-10 h-9 w-9 -translate-y-1/2 rounded-full border border-border bg-card text-foreground shadow-sm transition-all hover:shadow-md focus:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background ${
           canScrollRight ? "opacity-100" : "pointer-events-none opacity-0"
         }`}
       >

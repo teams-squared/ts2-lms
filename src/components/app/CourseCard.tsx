@@ -1,11 +1,11 @@
 import * as React from "react"
 import Link from "next/link"
-import Image from "next/image"
 import { Clock, BookOpen } from "lucide-react"
 
 import { cn } from "@/lib/utils"
 import { Badge } from "@/components/ui/Badge"
 import { ProgressBar } from "@/components/app/ProgressBar"
+import { CourseThumbnail } from "@/components/courses/CourseThumbnail"
 
 /**
  * CourseCard — design-system Section 8.2.
@@ -59,21 +59,7 @@ export function CourseCard({
         className,
       )}
     >
-      <div className="relative aspect-video bg-surface-muted">
-        {thumbnail ? (
-          <Image
-            src={thumbnail}
-            alt=""
-            fill
-            sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
-            className="object-cover"
-          />
-        ) : (
-          <div className="flex h-full w-full items-center justify-center text-foreground-subtle">
-            <BookOpen className="h-8 w-8" aria-hidden="true" />
-          </div>
-        )}
-      </div>
+      <CourseThumbnail title={title} src={thumbnail} />
 
       <div className="flex flex-col gap-2 p-4">
         {category && (

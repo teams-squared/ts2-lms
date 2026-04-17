@@ -20,9 +20,16 @@ export function XpProgressBar({ xp }: XpProgressBarProps) {
           {currentXp} / {nextLevelXp} XP
         </span>
       </div>
-      <div className="h-3.5 rounded-full bg-surface-muted overflow-hidden">
+      <div
+        className="h-2 rounded-full bg-border overflow-hidden"
+        role="progressbar"
+        aria-label={`Level ${level} XP progress`}
+        aria-valuenow={Math.round(progressPercent)}
+        aria-valuemin={0}
+        aria-valuemax={100}
+      >
         <div
-          className="h-full rounded-full bg-gradient-to-r from-brand-500 to-brand-400 shadow-sm shadow-brand-400/30 transition-all duration-500"
+          className="h-full rounded-full bg-primary transition-[width] duration-[400ms] ease-out"
           style={{ width: `${progressPercent}%` }}
         />
       </div>

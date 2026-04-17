@@ -1,7 +1,7 @@
-import Image from "next/image";
 import Link from "next/link";
 import { CourseStatusBadge } from "./CourseStatusBadge";
-import { LockIcon, GraduationCapIcon } from "@/components/icons";
+import { CourseThumbnail } from "./CourseThumbnail";
+import { LockIcon } from "@/components/icons";
 import { cn } from "@/lib/utils";
 import type { CourseStatus } from "@/lib/types";
 
@@ -45,24 +45,9 @@ export function CourseCard({
           : "border-border hover:border-border-strong",
       )}
     >
-      {/* Thumbnail */}
-      <div className="relative aspect-video overflow-hidden bg-surface-muted">
-        {thumbnail ? (
-          <Image
-            src={thumbnail}
-            alt={title}
-            fill
-            sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
-            className={cn("object-cover", locked && "grayscale")}
-          />
-        ) : (
-          <div className="absolute inset-0 flex flex-col items-center justify-center bg-primary-subtle">
-            <GraduationCapIcon className="mb-1.5 h-10 w-10 text-primary/70" />
-            <span className="line-clamp-2 max-w-[80%] px-3 text-center text-xs font-medium text-primary">
-              {title}
-            </span>
-          </div>
-        )}
+      {/* Thumbnail — design-system Section 8.2.1 */}
+      <div className="relative">
+        <CourseThumbnail title={title} src={thumbnail} locked={locked} />
         {locked && (
           <div className="absolute inset-0 flex items-center justify-center bg-black/30">
             <LockIcon className="h-8 w-8 text-white/80" />

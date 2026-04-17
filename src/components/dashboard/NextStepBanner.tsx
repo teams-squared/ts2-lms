@@ -80,17 +80,18 @@ export function NextStepBanner({
               {nudge}
             </p>
             <div className="flex items-center gap-3">
-              <div className="relative h-2 flex-1 overflow-hidden rounded-full bg-border">
+              <div
+                className="relative h-2 flex-1 overflow-hidden rounded-full bg-border"
+                role="progressbar"
+                aria-label={`${courseTitle} progress`}
+                aria-valuenow={percentComplete}
+                aria-valuemin={0}
+                aria-valuemax={100}
+              >
                 <div
-                  className="h-full rounded-full bg-primary transition-all duration-700"
+                  className="h-full rounded-full bg-primary transition-[width] duration-[400ms] ease-out"
                   style={{ width: `${percentComplete}%` }}
                 />
-                {percentComplete > 0 && percentComplete < 100 && (
-                  <div
-                    className="pointer-events-none absolute inset-y-0 left-0 w-1/4 animate-shimmer bg-gradient-to-r from-transparent via-white/30 to-transparent"
-                    aria-hidden="true"
-                  />
-                )}
               </div>
               <span className="shrink-0 text-xs font-medium tabular-nums text-foreground-subtle">
                 {completedLessons}/{totalLessons}

@@ -31,9 +31,14 @@ interface TopBarProps {
   className?: string;
   /** Provided on the lesson-player shell where we want slim padding. */
   compact?: boolean;
+  /**
+   * Slim mode for the lesson player: hides the search input so the lesson
+   * content dominates. Profile menu + notifications + theme toggle remain.
+   */
+  slim?: boolean;
 }
 
-export function TopBar({ className, compact = false }: TopBarProps) {
+export function TopBar({ className, compact = false, slim = false }: TopBarProps) {
   const router = useRouter();
   const { data: session } = useSession();
   const [query, setQuery] = React.useState("");
@@ -53,7 +58,10 @@ export function TopBar({ className, compact = false }: TopBarProps) {
         className,
       )}
     >
-      {/* Search — centered flex grow */}
+      {/* Search — centered flex grow; suppressed in slim mode */}
+      {slim ? (
+        <div className="flex-1" aria-hidden="true" />
+      ) : (
       <form
         role="search"
         onSubmit={handleSearchSubmit}
@@ -71,13 +79,14 @@ export function TopBar({ className, compact = false }: TopBarProps) {
             onChange={(e) => setQuery(e.target.value)}
             placeholder="Search courses"
             className={cn(
-              "h-10 w-full rounded-md border border-border bg-surface pl-9 pr-3 text-sm",
+              "h-10 w-full rounded-md border border-border-strong bg-surface pl-9 pr-3 text-sm",
               "text-foreground placeholder:text-foreground-subtle",
-              "transition-colors focus:border-primary focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-0",
+              "transition-colors focus:border-primary focus:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-0",
             )}
           />
         </label>
       </form>
+      )}
 
       {/* Right cluster */}
       <div className="flex items-center gap-1">

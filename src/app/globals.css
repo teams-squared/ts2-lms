@@ -98,7 +98,7 @@
   --warning: oklch(0.75 0.15 80);
   --warning-subtle: oklch(0.25 0.08 80);
   --danger: oklch(0.65 0.20 25);
-  --danger-subtle: oklch(0.25 0.10 25);
+  --danger-subtle: oklch(0.22 0.06 25);         /* parity with light: muted, not loud */
   --info: oklch(0.72 0.14 230);
 
   --ring: oklch(0.65 0.22 290 / 0.5);

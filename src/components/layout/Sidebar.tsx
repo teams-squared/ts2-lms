@@ -132,8 +132,8 @@ export function Sidebar({ onCollapseChange, className }: SidebarProps) {
         </ul>
       </nav>
 
-      {/* Collapse toggle */}
-      <div className="border-t border-border p-2">
+      {/* Collapse toggle — bottom breathing room per §8.6 */}
+      <div className="border-t border-border px-2 pt-2 pb-3">
         <button
           type="button"
           onClick={() => setCollapsed((v) => !v)}

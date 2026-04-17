@@ -61,7 +61,7 @@ export function NotificationBell() {
       <button
         onClick={() => void handleOpen()}
         aria-label={`Notifications${unreadCount > 0 ? ` (${unreadCount} unread)` : ""}`}
-        className="relative p-2.5 rounded-lg hover:bg-surface-muted transition-colors"
+        className="relative p-2.5 rounded-lg text-foreground-muted hover:bg-surface-muted transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background"
       >
         <svg
           className="w-5 h-5 text-foreground-muted"
@@ -96,7 +96,7 @@ export function NotificationBell() {
                 {loading && <Spinner size="sm" />}
                 <button
                   onClick={() => setOpen(false)}
-                  className="p-1 rounded-md hover:bg-surface-muted transition-colors"
+                  className="p-1 rounded-md hover:bg-surface-muted transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background"
                   aria-label="Close notifications"
                 >
                   <CloseIcon className="w-4 h-4 text-foreground-subtle" />

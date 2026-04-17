@@ -24,7 +24,6 @@ function getSubline(firstName: string): string {
     `Welcome back, ${firstName}.`,
     `Make today count, ${firstName}.`,
   ];
-  // Seed by hour-of-year so the message changes every hour but is stable within.
   const now = new Date();
   const hourOfYear =
     Math.floor(
@@ -34,45 +33,21 @@ function getSubline(firstName: string): string {
   return options[hourOfYear % options.length];
 }
 
-/** Circular SVG ring showing level progress. */
-function LevelRing({ level, percent }: { level: number; percent: number }) {
-  const size = 56;
-  const stroke = 4;
-  const radius = (size - stroke) / 2;
-  const circumference = 2 * Math.PI * radius;
-  const offset = circumference - (percent / 100) * circumference;
-
+/**
+ * Level avatar — solid brand-primary circle with white "Lv N" text.
+ * Hero background is neutral, so the avatar reads as the focal accent
+ * per design-system Section 8.11 ("brand as signal, not wallpaper").
+ */
+function LevelAvatar({ level }: { level: number }) {
   return (
-    <div className="relative flex-shrink-0" style={{ width: size, height: size }}>
-      <svg width={size} height={size} className="-rotate-90">
-        <circle
-          cx={size / 2}
-          cy={size / 2}
-          r={radius}
-          fill="none"
-          stroke="currentColor"
-          strokeWidth={stroke}
-          className="text-white/20"
-        />
-        <circle
-          cx={size / 2}
-          cy={size / 2}
-          r={radius}
-          fill="none"
-          stroke="#fbbf24"
-          strokeWidth={stroke}
-          strokeLinecap="round"
-          strokeDasharray={circumference}
-          strokeDashoffset={offset}
-          style={{ transition: "stroke-dashoffset 0.8s ease-out" }}
-        />
-      </svg>
-      <div className="absolute inset-0 flex flex-col items-center justify-center">
-        <span className="text-[10px] font-medium uppercase tracking-wider text-white/70 leading-none">
-          Lv
-        </span>
-        <span className="text-base font-bold text-white leading-tight">{level}</span>
-      </div>
+    <div
+      className="flex h-14 w-14 flex-shrink-0 flex-col items-center justify-center rounded-full bg-primary text-primary-foreground shadow-sm"
+      aria-label={`Level ${level}`}
+    >
+      <span className="text-[10px] font-medium uppercase tracking-wider leading-none opacity-80">
+        Lv
+      </span>
+      <span className="text-base font-bold leading-tight">{level}</span>
     </div>
   );
 }
@@ -85,42 +60,49 @@ export function WelcomeBar({ firstName, xp, streak }: WelcomeBarProps) {
 
   return (
     <div className="max-w-4xl mx-auto px-4 sm:px-6 pt-6 pb-2">
-      <div className="relative rounded-2xl p-5 sm:p-6 shadow-sm overflow-hidden bg-primary">
+      <div className="relative rounded-lg border border-border bg-surface-muted p-6 sm:p-8 overflow-hidden">
         <div className="relative flex items-center gap-4 sm:gap-5">
-          <LevelRing level={level} percent={percent} />
+          <LevelAvatar level={level} />
 
           <div className="flex-1 min-w-0">
-            <p className="text-xs font-medium uppercase tracking-wider text-white/70">
+            <p className="text-xs font-medium uppercase tracking-wider text-foreground-muted">
               {greeting}
             </p>
-            <h1 className="text-xl sm:text-2xl font-bold text-white tracking-tight truncate">
+            <h1 className="font-display text-xl sm:text-2xl font-bold text-foreground tracking-tight truncate">
               {subline}
             </h1>
-            <div className="mt-2 flex flex-wrap items-center gap-x-3 gap-y-1 text-xs">
-              <span className="inline-flex items-center gap-1.5 text-white/90">
-                <span className="font-semibold tabular-nums">{currentXp}</span>
-                <span className="text-white/60">/</span>
-                <span className="tabular-nums text-white/70">{nextLevelXp} XP</span>
+            <div className="mt-2 flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-foreground-muted">
+              <span className="inline-flex items-center gap-1.5">
+                <span className="font-semibold tabular-nums text-foreground">{currentXp}</span>
+                <span className="text-foreground-subtle">/</span>
+                <span className="tabular-nums">{nextLevelXp} XP</span>
               </span>
               {streak > 0 && (
                 <>
-                  <span className="text-white/30">·</span>
-                  <span className="inline-flex items-center gap-1.5 text-white/90">
+                  <span className="text-foreground-subtle">·</span>
+                  <span className="inline-flex items-center gap-1.5">
                     <span
                       aria-hidden="true"
-                      className="w-1.5 h-1.5 rounded-full bg-amber-400"
+                      className="w-1.5 h-1.5 rounded-full bg-warning"
                     />
-                    <span className="tabular-nums font-medium">
+                    <span className="tabular-nums">
                       {streak}-day streak
                     </span>
                   </span>
                 </>
               )}
             </div>
-            {/* XP progress bar beneath stats */}
-            <div className="mt-2.5 h-1.5 bg-white/15 rounded-full overflow-hidden max-w-xs">
+            {/* XP progress bar — solid brand fill on neutral track, 8px tall */}
+            <div
+              className="mt-3 h-2 w-full max-w-xs overflow-hidden rounded-full bg-border"
+              role="progressbar"
+              aria-label={`Level ${level} progress`}
+              aria-valuenow={percent}
+              aria-valuemin={0}
+              aria-valuemax={100}
+            >
               <div
-                className="h-full bg-amber-400 rounded-full transition-all duration-700"
+                className="h-full rounded-full bg-primary transition-[width] duration-[400ms] ease-out"
                 style={{ width: `${percent}%` }}
               />
             </div>

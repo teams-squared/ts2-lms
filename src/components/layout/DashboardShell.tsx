@@ -38,11 +38,15 @@ export function DashboardShell({ children }: DashboardShellProps) {
     return <>{children}</>;
   }
 
+  // Lesson-player pages get a slim top bar (no search) so the lesson content
+  // dominates the viewport. See design-system §8.6.
+  const isLessonPlayer = /^\/courses\/[^/]+\/lessons\/[^/]+/.test(pathname ?? "");
+
   return (
     <div className="flex min-h-screen w-full bg-background text-foreground">
       <Sidebar />
       <div className="flex min-w-0 flex-1 flex-col">
-        <TopBar />
+        <TopBar slim={isLessonPlayer} />
         <main
           className={cn(
             "flex-1",
