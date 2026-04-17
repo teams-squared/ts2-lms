@@ -49,16 +49,16 @@ export function CourseSidebar({
 
   const sidebarContent = (
     <>
-      {/* Back to course */}
-      <div className="border-b border-border px-4 py-3">
+      {/* Back to course + title — course name takes precedence per §8.7.3 */}
+      <div className="space-y-1 border-b border-border px-4 py-3">
         <Link
           href={`/courses/${courseId}`}
-          className="flex items-center gap-1.5 text-sm text-foreground-muted transition-colors hover:text-foreground"
+          className="inline-flex items-center gap-1 text-xs text-foreground-subtle transition-colors hover:text-foreground"
         >
-          <ChevronLeftIcon className="h-4 w-4" />
+          <ChevronLeftIcon className="h-3.5 w-3.5" />
           Back to course
         </Link>
-        <h2 className="mt-1.5 line-clamp-2 font-display text-sm font-semibold text-foreground">
+        <h2 className="line-clamp-2 font-display text-base font-semibold text-foreground">
           {courseTitle}
         </h2>
       </div>
@@ -73,9 +73,16 @@ export function CourseSidebar({
             <span>Progress</span>
             <span data-testid="progress-percent">{percentComplete}%</span>
           </div>
-          <div className="h-2 overflow-hidden rounded-full bg-border">
+          <div
+            className="h-2 overflow-hidden rounded-full bg-border"
+            role="progressbar"
+            aria-label="Course progress"
+            aria-valuenow={percentComplete}
+            aria-valuemin={0}
+            aria-valuemax={100}
+          >
             <div
-              className="h-full rounded-full bg-primary transition-all duration-300"
+              className="h-full rounded-full bg-primary transition-[width] duration-[400ms] ease-out"
               style={{ width: `${percentComplete}%` }}
               data-testid="progress-bar"
             />

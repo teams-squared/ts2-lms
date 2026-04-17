@@ -16,6 +16,7 @@ const ReactMarkdown = dynamic(() => import("react-markdown"), {
 });
 import type { LessonType } from "@/lib/types";
 import type { SharePointDocumentRef } from "@/lib/sharepoint/types";
+import { LessonTitleHeader, estimateReadingMinutes } from "@/components/courses/LessonTitleHeader";
 
 /** Explicit Tailwind styling for every markdown element — no typography plugin needed. */
 const mdComponents: Components = {
@@ -130,8 +131,11 @@ function PdfViewer({ proxyUrl, fileName }: { proxyUrl: string; fileName: string 
           </div>
         </div>
       ) : ready ? (
+        // PDF viewer quick-fix per §8.12: hide pdf.js toolbar/sidebar and
+        // fit-to-width by default so the viewer chrome doesn't compete with
+        // the app shell. A custom react-pdf toolbar is the long-term target.
         <iframe
-          src={proxyUrl}
+          src={`${proxyUrl}#toolbar=0&navpanes=0&view=FitH`}
           title={fileName}
           className="h-full w-full"
         />
@@ -171,9 +175,17 @@ export function LessonViewer({ title, type, content, lessonId }: LessonViewerPro
 
     return (
       <div>
-        <h1 className="mb-6 font-display text-2xl font-bold text-foreground">
-          {title}
-        </h1>
+        <LessonTitleHeader
+          title={title}
+          type="document"
+          formatLabel={
+            docRef?.mimeType === "application/pdf"
+              ? "PDF document"
+              : docRef?.fileName
+                ? "Document"
+                : "Document"
+          }
+        />
         {!docRef ? (
           <p className="text-sm text-foreground-muted">
             No document attached.
@@ -218,9 +230,7 @@ export function LessonViewer({ title, type, content, lessonId }: LessonViewerPro
 
     return (
       <div>
-        <h1 className="mb-6 font-display text-2xl font-bold text-foreground">
-          {title}
-        </h1>
+        <LessonTitleHeader title={title} type="video" />
         {videoRef && lessonId ? (
           <div className="aspect-video overflow-hidden rounded-lg bg-black">
             <video
@@ -252,11 +262,14 @@ export function LessonViewer({ title, type, content, lessonId }: LessonViewerPro
   }
 
   // Default: text (markdown) — also handles any other types gracefully
+  const minutes = estimateReadingMinutes(content);
   return (
     <div>
-      <h1 className="mb-6 font-display text-2xl font-bold text-foreground">
-        {title}
-      </h1>
+      <LessonTitleHeader
+        title={title}
+        type="text"
+        estimate={content ? `${minutes} min read` : null}
+      />
       {content ? (
         <div className="max-w-none text-sm">
           <ReactMarkdown components={mdComponents}>{stripLeadingTitle(content, title)}</ReactMarkdown>

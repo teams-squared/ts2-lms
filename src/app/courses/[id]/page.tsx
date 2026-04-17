@@ -77,7 +77,7 @@ export default async function CourseDetailPage({
       where: { userId, lessonId: { in: allLessonIds }, completedAt: { not: null } },
     });
     completedLessons = progressRecords.length;
-    percentComplete = Math.round((completedLessons / totalLessons) * 1000) / 10;
+    percentComplete = Math.round((completedLessons / totalLessons) * 100);
     completedLessonIdSet = new Set(progressRecords.map((p) => p.lessonId));
   }
 

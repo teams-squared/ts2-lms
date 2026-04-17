@@ -9,10 +9,10 @@ import { LessonViewer } from "@/components/courses/LessonViewer";
 import { QuizViewer } from "@/components/courses/QuizViewer";
 import { QuizBuilder } from "@/components/courses/QuizBuilder";
 import { CourseSidebar } from "@/components/courses/CourseSidebar";
-import { LessonCompleteButton } from "@/components/courses/LessonCompleteButton";
+import { LessonFooter } from "@/components/courses/LessonFooter";
+import { LessonTitleHeader } from "@/components/courses/LessonTitleHeader";
 import { CheckCircleIcon, ClockIcon, AlertTriangleIcon } from "@/components/icons";
 import { Breadcrumbs } from "@/components/ui/Breadcrumbs";
-import { LessonNavigation } from "@/components/courses/LessonNavigation";
 import { computeDeadline, getDeadlineStatus, formatDeadlineRelative } from "@/lib/deadlines";
 import type { DeadlineInfo } from "@/lib/deadlines";
 
@@ -91,7 +91,7 @@ export default async function LessonPage({
   const totalLessons = allLessonIds.length;
   const completedCount = completedIds.size;
   const percentComplete =
-    totalLessons === 0 ? 0 : Math.round((completedCount / totalLessons) * 1000) / 10;
+    totalLessons === 0 ? 0 : Math.round((completedCount / totalLessons) * 100);
 
   const isCurrentLessonCompleted = completedIds.has(lessonId);
   const isCourseComplete = totalLessons > 0 && completedCount === totalLessons;
@@ -131,10 +131,9 @@ export default async function LessonPage({
 
   const lessonType = prismaLessonTypeToApp(lesson.type);
   const isQuiz = lessonType === "quiz";
-  const isDocument = lessonType === "document";
   const isPrivileged = isPrivilegedUser;
 
-  // Compute next lesson URL for quiz "Continue" CTA and lesson navigation
+  // Compute prev/next lesson URLs for quiz "Continue" CTA and lesson footer nav
   const allLessonsFlat = sidebarModules.flatMap((m) => m.lessons);
   const currentLessonIdx = allLessonsFlat.findIndex((l) => l.id === lessonId);
   const nextLesson =
@@ -142,6 +141,9 @@ export default async function LessonPage({
       ? allLessonsFlat[currentLessonIdx + 1]
       : null;
   const nextLessonUrl = nextLesson ? `/courses/${courseId}/lessons/${nextLesson.id}` : null;
+  const prevLesson =
+    currentLessonIdx > 0 ? allLessonsFlat[currentLessonIdx - 1] : null;
+  const prevLessonUrl = prevLesson ? `/courses/${courseId}/lessons/${prevLesson.id}` : null;
 
   // Fetch quiz data for quiz-type lessons
   let quizQuestions: {
@@ -214,8 +216,18 @@ export default async function LessonPage({
         deadlineInfoMap={deadlineInfoMap}
       />
 
-      <main className="flex-1 overflow-y-auto">
-        <div className={`${isDocument ? "max-w-5xl" : "max-w-3xl"} mx-auto px-4 sm:px-6 py-8`}>
+      <main className="flex flex-1 flex-col overflow-hidden">
+        <div className="flex-1 overflow-y-auto">
+        {/* Width scale per design-system §8.7: media (pdf/video) gets wider
+            reading column; text/markdown/quiz stays at max-w-3xl for comfortable
+            line length. */}
+        <div
+          className={`${
+            lessonType === "document" || lessonType === "video"
+              ? "max-w-5xl"
+              : "max-w-3xl"
+          } mx-auto px-4 sm:px-6 py-8`}
+        >
           <Breadcrumbs
             items={[
               { label: "Home", href: "/" },
@@ -264,9 +276,15 @@ export default async function LessonPage({
 
           {isQuiz ? (
             <>
-              <h1 className="mb-6 font-display text-2xl font-bold text-foreground">
-                {lesson.title}
-              </h1>
+              <LessonTitleHeader
+                title={lesson.title}
+                type="quiz"
+                estimate={
+                  quizQuestions.length > 0
+                    ? `${quizQuestions.length} question${quizQuestions.length === 1 ? "" : "s"}`
+                    : null
+                }
+              />
               <QuizViewer
                 questions={quizQuestions}
                 passingScore={quizPassingScore}
@@ -293,38 +311,29 @@ export default async function LessonPage({
                   lessonId={lessonId}
                 />
               )}
-              <LessonNavigation
-                courseId={courseId}
-                currentLessonId={lessonId}
-                modules={sidebarModules}
-              />
             </>
           ) : (
-            <>
-              <LessonViewer
-                title={lesson.title}
-                type={lessonType}
-                content={lesson.content}
-                lessonId={lesson.id}
-              />
-
-              {/* Mark complete button */}
-              <div className="mt-8 border-t border-border pt-6">
-                <LessonCompleteButton
-                  courseId={courseId}
-                  moduleId={lesson.moduleId}
-                  lessonId={lessonId}
-                  initialCompleted={isCurrentLessonCompleted}
-                />
-              </div>
-              <LessonNavigation
-                courseId={courseId}
-                currentLessonId={lessonId}
-                modules={sidebarModules}
-              />
-            </>
+            <LessonViewer
+              title={lesson.title}
+              type={lessonType}
+              content={lesson.content}
+              lessonId={lesson.id}
+            />
           )}
         </div>
+        </div>
+        <LessonFooter
+          courseId={courseId}
+          moduleId={lesson.moduleId}
+          lessonId={lessonId}
+          currentIndex={currentLessonIdx >= 0 ? currentLessonIdx + 1 : 1}
+          totalLessons={totalLessons}
+          percentComplete={percentComplete}
+          prevLessonUrl={prevLessonUrl}
+          nextLessonUrl={nextLessonUrl}
+          initialCompleted={isCurrentLessonCompleted}
+          hideMarkComplete={isQuiz}
+        />
       </main>
     </div>
   );

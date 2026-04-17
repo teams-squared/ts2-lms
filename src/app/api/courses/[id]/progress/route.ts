@@ -56,7 +56,7 @@ export async function GET(_request: Request, { params }: Params) {
   const totalLessons = allLessonIds.length;
   const completedLessons = progressRecords.filter((p) => p.completedAt !== null).length;
   const percentComplete =
-    totalLessons === 0 ? 0 : Math.round((completedLessons / totalLessons) * 1000) / 10;
+    totalLessons === 0 ? 0 : Math.round((completedLessons / totalLessons) * 100);
 
   const progress: CourseProgress = {
     enrolled: true,
