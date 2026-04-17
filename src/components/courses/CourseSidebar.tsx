@@ -50,15 +50,15 @@ export function CourseSidebar({
   const sidebarContent = (
     <>
       {/* Back to course */}
-      <div className="px-4 py-3 border-b border-gray-100 dark:border-[#26262e]">
+      <div className="border-b border-border px-4 py-3">
         <Link
           href={`/courses/${courseId}`}
-          className="flex items-center gap-1.5 text-sm text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200 transition-colors"
+          className="flex items-center gap-1.5 text-sm text-foreground-muted transition-colors hover:text-foreground"
         >
-          <ChevronLeftIcon className="w-4 h-4" />
+          <ChevronLeftIcon className="h-4 w-4" />
           Back to course
         </Link>
-        <h2 className="mt-1.5 text-sm font-semibold text-gray-900 dark:text-gray-100 line-clamp-2">
+        <h2 className="mt-1.5 line-clamp-2 font-display text-sm font-semibold text-foreground">
           {courseTitle}
         </h2>
       </div>
@@ -66,16 +66,16 @@ export function CourseSidebar({
       {/* Progress bar */}
       {totalLessons > 0 && (
         <div
-          className="px-4 py-2.5 border-b border-gray-100 dark:border-[#26262e]"
+          className="border-b border-border px-4 py-2.5"
           data-testid="progress-bar-container"
         >
-          <div className="flex justify-between text-xs text-gray-500 dark:text-gray-400 mb-1.5">
+          <div className="mb-1.5 flex justify-between text-xs text-foreground-muted">
             <span>Progress</span>
             <span data-testid="progress-percent">{percentComplete}%</span>
           </div>
-          <div className="h-2 bg-gray-100 dark:bg-[#2e2e3a] rounded-full overflow-hidden">
+          <div className="h-2 overflow-hidden rounded-full bg-border">
             <div
-              className="h-full bg-gradient-to-r from-brand-500 to-brand-400 rounded-full transition-all duration-300"
+              className="h-full rounded-full bg-primary transition-all duration-300"
               style={{ width: `${percentComplete}%` }}
               data-testid="progress-bar"
             />
@@ -88,7 +88,7 @@ export function CourseSidebar({
         {modules.map((mod) => (
           <div key={mod.id} className="mb-1">
             <div className="px-4 py-2">
-              <span className="text-xs font-semibold uppercase tracking-wider text-gray-400 dark:text-gray-500">
+              <span className="text-xs font-semibold uppercase tracking-wider text-foreground-subtle">
                 {mod.title}
               </span>
             </div>
@@ -101,23 +101,23 @@ export function CourseSidebar({
                     key={lesson.id}
                     href={`/courses/${courseId}/lessons/${lesson.id}`}
                     onClick={() => setMobileOpen(false)}
-                    className={`flex items-center gap-2 mx-2 px-3 py-2.5 rounded-lg text-sm transition-colors ${
+                    className={`mx-2 flex items-center gap-2 rounded-md px-3 py-2.5 text-sm transition-colors ${
                       isActive
-                        ? "bg-brand-50 dark:bg-brand-950/20 text-brand-700 dark:text-brand-300 font-medium"
-                        : "text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-[#1e1e28]"
+                        ? "bg-primary-subtle font-medium text-primary"
+                        : "text-foreground hover:bg-surface-muted"
                     }`}
                   >
-                    {(() => { const LessonIcon = LESSON_TYPE_ICON[lesson.type]; return <LessonIcon className="w-4 h-4 text-gray-400 dark:text-gray-500 flex-shrink-0" />; })()}
+                    {(() => { const LessonIcon = LESSON_TYPE_ICON[lesson.type]; return <LessonIcon className="h-4 w-4 flex-shrink-0 text-foreground-subtle" />; })()}
                     <span className="line-clamp-1 flex-1" title={lesson.title}>{lesson.title}</span>
                     {(() => {
                       const info = deadlineInfoMap?.[lesson.id];
                       if (!isDone && info && (info.status === "overdue" || info.status === "due-soon")) {
                         return (
                           <ClockIcon
-                            className={`w-3.5 h-3.5 flex-shrink-0 ${
+                            className={`h-3.5 w-3.5 flex-shrink-0 ${
                               info.status === "overdue"
-                                ? "text-red-500 dark:text-red-400"
-                                : "text-amber-500 dark:text-amber-400"
+                                ? "text-danger"
+                                : "text-warning"
                             }`}
                           />
                         );
@@ -126,7 +126,7 @@ export function CourseSidebar({
                     })()}
                     {isDone && (
                       <CheckCircleIcon
-                        className="w-4 h-4 flex-shrink-0 text-emerald-500"
+                        className="h-4 w-4 flex-shrink-0 text-success"
                         aria-label="Completed"
                         data-testid={`completed-icon-${lesson.id}`}
                       />
@@ -146,30 +146,30 @@ export function CourseSidebar({
       {/* Mobile toggle button */}
       <button
         onClick={() => setMobileOpen(true)}
-        className="lg:hidden fixed bottom-5 left-5 z-30 flex items-center gap-2 px-4 py-3 rounded-xl bg-brand-600 text-white shadow-lg shadow-brand-600/25 text-sm font-medium hover:bg-brand-700 active:bg-brand-800 transition-colors"
+        className="fixed bottom-5 left-5 z-30 flex items-center gap-2 rounded-md bg-primary px-4 py-3 text-sm font-medium text-primary-foreground shadow-lg transition-colors hover:bg-primary/90 active:bg-primary/80 lg:hidden"
         aria-label="Open course navigation"
       >
-        <HamburgerIcon className="w-5 h-5" />
+        <HamburgerIcon className="h-5 w-5" />
         <span className="sr-only sm:not-sr-only">Lessons</span>
       </button>
 
       {/* Mobile overlay sidebar */}
       {mobileOpen && (
-        <div className="lg:hidden fixed inset-0 z-50 flex" role="dialog" aria-modal="true" aria-label="Course navigation">
+        <div className="fixed inset-0 z-50 flex lg:hidden" role="dialog" aria-modal="true" aria-label="Course navigation">
           <div
             className="fixed inset-0 bg-black/40"
             onClick={() => setMobileOpen(false)}
             aria-hidden="true"
           />
-          <aside className="relative w-80 max-w-[85vw] flex-shrink-0 bg-white dark:bg-[#1c1c24] overflow-y-auto animate-slide-in-left">
-            <div className="flex items-center justify-between px-4 py-3 border-b border-gray-100 dark:border-[#26262e]">
-              <span className="text-sm font-semibold text-gray-900 dark:text-gray-100">Course Navigation</span>
+          <aside className="animate-slide-in-left relative w-80 max-w-[85vw] flex-shrink-0 overflow-y-auto bg-card">
+            <div className="flex items-center justify-between border-b border-border px-4 py-3">
+              <span className="text-sm font-semibold text-foreground">Course Navigation</span>
               <button
                 onClick={() => setMobileOpen(false)}
-                className="p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-[#2e2e3a] transition-colors"
+                className="rounded-md p-2 transition-colors hover:bg-surface-muted"
                 aria-label="Close course navigation"
               >
-                <CloseIcon className="w-5 h-5 text-gray-500 dark:text-gray-400" />
+                <CloseIcon className="h-5 w-5 text-foreground-muted" />
               </button>
             </div>
             {sidebarContent}
@@ -178,7 +178,7 @@ export function CourseSidebar({
       )}
 
       {/* Desktop sidebar */}
-      <aside className="hidden lg:block w-72 flex-shrink-0 border-r border-gray-200/80 dark:border-[#2e2e3a] bg-white dark:bg-[#1c1c24] overflow-y-auto">
+      <aside className="hidden w-72 flex-shrink-0 overflow-y-auto border-r border-border bg-card lg:block">
         {sidebarContent}
       </aside>
     </>

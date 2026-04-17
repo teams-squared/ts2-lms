@@ -227,20 +227,20 @@ export default async function LessonPage({
 
           {/* Deadline warning banner */}
           {showDeadlineBanner && currentDeadlineInfo && (
-            <div className={`mb-6 flex items-center gap-3 rounded-xl border px-5 py-4 ${
+            <div className={`mb-6 flex items-center gap-3 rounded-lg border px-5 py-4 ${
               currentDeadlineInfo.status === "overdue"
-                ? "border-red-200 dark:border-red-800/40 bg-red-50 dark:bg-red-900/20"
-                : "border-amber-200 dark:border-amber-800/40 bg-amber-50 dark:bg-amber-900/20"
+                ? "border-danger/30 bg-danger-subtle"
+                : "border-warning/30 bg-warning-subtle"
             }`}>
               {currentDeadlineInfo.status === "overdue" ? (
-                <AlertTriangleIcon className="w-5 h-5 text-red-600 dark:text-red-400 flex-shrink-0" />
+                <AlertTriangleIcon className="h-5 w-5 flex-shrink-0 text-danger" />
               ) : (
-                <ClockIcon className="w-5 h-5 text-amber-600 dark:text-amber-400 flex-shrink-0" />
+                <ClockIcon className="h-5 w-5 flex-shrink-0 text-warning" />
               )}
               <p className={`text-sm font-medium ${
                 currentDeadlineInfo.status === "overdue"
-                  ? "text-red-800 dark:text-red-200"
-                  : "text-amber-800 dark:text-amber-200"
+                  ? "text-danger"
+                  : "text-warning"
               }`}>
                 {formatDeadlineRelative(new Date(currentDeadlineInfo.absoluteDeadline!))}
               </p>
@@ -249,13 +249,13 @@ export default async function LessonPage({
 
           {/* Course complete banner */}
           {isCourseComplete && (
-            <div className="mb-6 flex items-center gap-3 rounded-xl border border-emerald-200 dark:border-emerald-800/40 bg-emerald-50 dark:bg-emerald-900/20 px-5 py-4">
-              <CheckCircleIcon className="w-5 h-5 text-emerald-600 dark:text-emerald-400 flex-shrink-0" />
+            <div className="mb-6 flex items-center gap-3 rounded-lg border border-success/30 bg-success-subtle px-5 py-4">
+              <CheckCircleIcon className="h-5 w-5 flex-shrink-0 text-success" />
               <div>
-                <p className="text-sm font-semibold text-emerald-800 dark:text-emerald-200">
+                <p className="text-sm font-semibold text-success">
                   Course complete!
                 </p>
-                <p className="text-xs text-emerald-700 dark:text-emerald-300 mt-0.5">
+                <p className="mt-0.5 text-xs text-success/80">
                   You&apos;ve finished all {totalLessons} lesson{totalLessons !== 1 ? "s" : ""} in this course.
                 </p>
               </div>
@@ -264,7 +264,7 @@ export default async function LessonPage({
 
           {isQuiz ? (
             <>
-              <h1 className="text-2xl font-bold text-gray-900 dark:text-gray-100 mb-6">
+              <h1 className="mb-6 font-display text-2xl font-bold text-foreground">
                 {lesson.title}
               </h1>
               <QuizViewer
@@ -277,9 +277,9 @@ export default async function LessonPage({
                 nextLessonUrl={nextLessonUrl}
               />
               {isCurrentLessonCompleted && (
-                <div className="mt-6 flex items-center gap-3 rounded-xl border border-emerald-200 dark:border-emerald-800/40 bg-emerald-50 dark:bg-emerald-900/20 px-5 py-4">
-                  <CheckCircleIcon className="w-5 h-5 text-emerald-600 dark:text-emerald-400 flex-shrink-0" />
-                  <p className="text-sm font-semibold text-emerald-800 dark:text-emerald-200">
+                <div className="mt-6 flex items-center gap-3 rounded-lg border border-success/30 bg-success-subtle px-5 py-4">
+                  <CheckCircleIcon className="h-5 w-5 flex-shrink-0 text-success" />
+                  <p className="text-sm font-semibold text-success">
                     Lesson complete — you passed this quiz.
                   </p>
                 </div>
@@ -309,7 +309,7 @@ export default async function LessonPage({
               />
 
               {/* Mark complete button */}
-              <div className="mt-8 pt-6 border-t border-gray-100 dark:border-[#2e2e3a]">
+              <div className="mt-8 border-t border-border pt-6">
                 <LessonCompleteButton
                   courseId={courseId}
                   moduleId={lesson.moduleId}

@@ -19,29 +19,29 @@ import type { SharePointDocumentRef } from "@/lib/sharepoint/types";
 
 /** Explicit Tailwind styling for every markdown element — no typography plugin needed. */
 const mdComponents: Components = {
-  h1: ({ children }) => <h1 className="text-2xl font-bold mt-6 mb-3 text-gray-900 dark:text-gray-100">{children}</h1>,
-  h2: ({ children }) => <h2 className="text-xl font-semibold mt-5 mb-2 text-gray-900 dark:text-gray-100">{children}</h2>,
-  h3: ({ children }) => <h3 className="text-base font-semibold mt-4 mb-2 text-gray-900 dark:text-gray-100">{children}</h3>,
-  h4: ({ children }) => <h4 className="text-sm font-semibold mt-4 mb-1 text-gray-900 dark:text-gray-100">{children}</h4>,
-  p:  ({ children }) => <p className="mb-4 text-gray-700 dark:text-gray-300 leading-7">{children}</p>,
-  ul: ({ children }) => <ul className="list-disc pl-6 mb-4 space-y-1 text-gray-700 dark:text-gray-300">{children}</ul>,
-  ol: ({ children }) => <ol className="list-decimal pl-6 mb-4 space-y-1 text-gray-700 dark:text-gray-300">{children}</ol>,
+  h1: ({ children }) => <h1 className="mb-3 mt-6 font-display text-2xl font-bold text-foreground">{children}</h1>,
+  h2: ({ children }) => <h2 className="mb-2 mt-5 font-display text-xl font-semibold text-foreground">{children}</h2>,
+  h3: ({ children }) => <h3 className="mb-2 mt-4 font-display text-base font-semibold text-foreground">{children}</h3>,
+  h4: ({ children }) => <h4 className="mb-1 mt-4 text-sm font-semibold text-foreground">{children}</h4>,
+  p:  ({ children }) => <p className="mb-4 leading-7 text-foreground">{children}</p>,
+  ul: ({ children }) => <ul className="mb-4 list-disc space-y-1 pl-6 text-foreground">{children}</ul>,
+  ol: ({ children }) => <ol className="mb-4 list-decimal space-y-1 pl-6 text-foreground">{children}</ol>,
   li: ({ children }) => <li className="leading-7">{children}</li>,
   blockquote: ({ children }) => (
-    <blockquote className="border-l-4 border-brand-400 pl-4 italic text-gray-600 dark:text-gray-400 my-4">
+    <blockquote className="my-4 border-l-4 border-primary pl-4 italic text-foreground-muted">
       {children}
     </blockquote>
   ),
-  hr: () => <hr className="border-gray-200 dark:border-[#2e2e3a] my-6" />,
-  strong: ({ children }) => <strong className="font-semibold text-gray-900 dark:text-gray-100">{children}</strong>,
-  em: ({ children }) => <em className="italic text-gray-700 dark:text-gray-300">{children}</em>,
+  hr: () => <hr className="my-6 border-border" />,
+  strong: ({ children }) => <strong className="font-semibold text-foreground">{children}</strong>,
+  em: ({ children }) => <em className="italic text-foreground">{children}</em>,
   a: ({ href, children }) => (
-    <a href={href} className="text-brand-600 dark:text-brand-400 underline hover:text-brand-700 dark:hover:text-brand-300 transition-colors">
+    <a href={href} className="text-primary underline transition-colors hover:text-primary/80">
       {children}
     </a>
   ),
   pre: ({ children }) => (
-    <pre className="bg-gray-100 dark:bg-[#1e1e28] border border-gray-200 dark:border-[#2e2e3a] rounded-lg p-4 overflow-x-auto mb-4 text-sm">
+    <pre className="mb-4 overflow-x-auto rounded-md border border-border bg-surface-muted p-4 text-sm">
       {children}
     </pre>
   ),
@@ -49,22 +49,22 @@ const mdComponents: Components = {
     // Fenced code blocks have a language-* className; inline code does not
     const isBlock = Boolean(className?.startsWith("language-"));
     if (isBlock) {
-      return <code className={`${className} font-mono text-sm text-gray-800 dark:text-gray-200`}>{children}</code>;
+      return <code className={`${className} font-mono text-sm text-foreground`}>{children}</code>;
     }
     return (
-      <code className="bg-gray-100 dark:bg-[#1e1e28] text-brand-600 dark:text-brand-400 px-1.5 py-0.5 rounded text-sm font-mono" {...props}>
+      <code className="rounded bg-surface-muted px-1.5 py-0.5 font-mono text-sm text-primary" {...props}>
         {children}
       </code>
     );
   },
   table: ({ children }) => (
-    <div className="overflow-x-auto mb-4">
-      <table className="min-w-full divide-y divide-gray-200 dark:divide-[#2e2e3a] text-sm">{children}</table>
+    <div className="mb-4 overflow-x-auto">
+      <table className="min-w-full divide-y divide-border text-sm">{children}</table>
     </div>
   ),
-  thead: ({ children }) => <thead className="bg-gray-50 dark:bg-[#18181f]">{children}</thead>,
-  th: ({ children }) => <th className="px-4 py-2 text-left text-xs font-semibold text-gray-600 dark:text-gray-400 uppercase tracking-wider">{children}</th>,
-  td: ({ children }) => <td className="px-4 py-2 text-gray-700 dark:text-gray-300 border-t border-gray-100 dark:border-[#2e2e3a]">{children}</td>,
+  thead: ({ children }) => <thead className="bg-surface-muted">{children}</thead>,
+  th: ({ children }) => <th className="px-4 py-2 text-left text-xs font-semibold uppercase tracking-wider text-foreground-muted">{children}</th>,
+  td: ({ children }) => <td className="border-t border-border px-4 py-2 text-foreground">{children}</td>,
 };
 
 interface LessonViewerProps {
@@ -100,30 +100,30 @@ function PdfViewer({ proxyUrl, fileName }: { proxyUrl: string; fileName: string 
 
   return (
     <div
-      className="rounded-xl overflow-hidden border border-gray-200 dark:border-[#3a3a48]"
+      className="overflow-hidden rounded-lg border border-border"
       style={{ height: "calc(100vh - 16rem)" }}
     >
       {!ready && !error && (
-        <div className="w-full h-full flex items-center justify-center bg-gray-50 dark:bg-[#18181f]">
+        <div className="flex h-full w-full items-center justify-center bg-surface-muted">
           <div className="flex flex-col items-center gap-3">
             <Spinner size="lg" />
-            <p className="text-sm text-gray-500 dark:text-gray-400">Loading document…</p>
+            <p className="text-sm text-foreground-muted">Loading document…</p>
           </div>
         </div>
       )}
       {error ? (
-        <div className="w-full h-full flex items-center justify-center bg-gray-50 dark:bg-[#18181f] p-8">
-          <div className="text-center max-w-sm">
-            <p className="text-sm font-medium text-gray-900 dark:text-gray-100 mb-1">
+        <div className="flex h-full w-full items-center justify-center bg-surface-muted p-8">
+          <div className="max-w-sm text-center">
+            <p className="mb-1 text-sm font-medium text-foreground">
               Unable to display document
             </p>
-            <p className="text-xs text-gray-500 dark:text-gray-400 mb-4">
+            <p className="mb-4 text-xs text-foreground-muted">
               The document could not be loaded. You can download it directly instead.
             </p>
             <a
               href={proxyUrl}
               download={fileName}
-              className="inline-block rounded-lg bg-brand-600 hover:bg-brand-700 text-white text-sm font-medium px-4 py-2 transition-colors"
+              className="inline-block rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground transition-colors hover:bg-primary/90"
             >
               Download {fileName}
             </a>
@@ -133,7 +133,7 @@ function PdfViewer({ proxyUrl, fileName }: { proxyUrl: string; fileName: string 
         <iframe
           src={proxyUrl}
           title={fileName}
-          className="w-full h-full"
+          className="h-full w-full"
         />
       ) : null}
     </div>
@@ -171,29 +171,29 @@ export function LessonViewer({ title, type, content, lessonId }: LessonViewerPro
 
     return (
       <div>
-        <h1 className="text-2xl font-bold text-gray-900 dark:text-gray-100 mb-6">
+        <h1 className="mb-6 font-display text-2xl font-bold text-foreground">
           {title}
         </h1>
         {!docRef ? (
-          <p className="text-sm text-gray-500 dark:text-gray-400">
+          <p className="text-sm text-foreground-muted">
             No document attached.
           </p>
         ) : isPdf ? (
           <PdfViewer proxyUrl={proxyUrl!} fileName={docRef.fileName} />
         ) : (
-          <div className="rounded-xl border border-gray-200 dark:border-[#3a3a48] bg-gray-50 dark:bg-[#18181f] p-6 flex items-center gap-4">
-            <div className="flex-1 min-w-0">
-              <p className="text-sm font-medium text-gray-900 dark:text-gray-100 truncate">
+          <div className="flex items-center gap-4 rounded-lg border border-border bg-surface-muted p-6">
+            <div className="min-w-0 flex-1">
+              <p className="truncate text-sm font-medium text-foreground">
                 {docRef.fileName}
               </p>
-              <p className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">
+              <p className="mt-0.5 text-xs text-foreground-muted">
                 {docRef.mimeType}
               </p>
             </div>
             <a
               href={proxyUrl!}
               download={docRef.fileName}
-              className="shrink-0 rounded-lg bg-brand-600 hover:bg-brand-700 text-white text-sm font-medium px-4 py-2 transition-colors"
+              className="shrink-0 rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground transition-colors hover:bg-primary/90"
             >
               Download
             </a>
@@ -218,31 +218,31 @@ export function LessonViewer({ title, type, content, lessonId }: LessonViewerPro
 
     return (
       <div>
-        <h1 className="text-2xl font-bold text-gray-900 dark:text-gray-100 mb-6">
+        <h1 className="mb-6 font-display text-2xl font-bold text-foreground">
           {title}
         </h1>
         {videoRef && lessonId ? (
-          <div className="aspect-video rounded-xl overflow-hidden bg-black">
+          <div className="aspect-video overflow-hidden rounded-lg bg-black">
             <video
               src={`/api/lessons/${lessonId}/video`}
               controls
               preload="metadata"
-              className="w-full h-full"
+              className="h-full w-full"
             />
           </div>
         ) : content ? (
-          <div className="aspect-video rounded-xl overflow-hidden bg-black">
+          <div className="aspect-video overflow-hidden rounded-lg bg-black">
             <iframe
               src={content}
               title={title}
-              className="w-full h-full"
+              className="h-full w-full"
               allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
               allowFullScreen
             />
           </div>
         ) : (
-          <div className="aspect-video rounded-xl bg-gray-100 dark:bg-[#18181f] flex items-center justify-center">
-            <p className="text-sm text-gray-500 dark:text-gray-400">
+          <div className="flex aspect-video items-center justify-center rounded-lg bg-surface-muted">
+            <p className="text-sm text-foreground-muted">
               No video URL provided.
             </p>
           </div>
@@ -254,7 +254,7 @@ export function LessonViewer({ title, type, content, lessonId }: LessonViewerPro
   // Default: text (markdown) — also handles any other types gracefully
   return (
     <div>
-      <h1 className="text-2xl font-bold text-gray-900 dark:text-gray-100 mb-6">
+      <h1 className="mb-6 font-display text-2xl font-bold text-foreground">
         {title}
       </h1>
       {content ? (
@@ -262,7 +262,7 @@ export function LessonViewer({ title, type, content, lessonId }: LessonViewerPro
           <ReactMarkdown components={mdComponents}>{stripLeadingTitle(content, title)}</ReactMarkdown>
         </div>
       ) : (
-        <p className="text-sm text-gray-500 dark:text-gray-400">
+        <p className="text-sm text-foreground-muted">
           No content yet.
         </p>
       )}

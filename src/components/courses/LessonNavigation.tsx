@@ -36,16 +36,16 @@ export function LessonNavigation({
   if (!prev && !next) return null;
 
   return (
-    <div className="mt-8 pt-6 border-t border-gray-100 dark:border-[#2e2e3a] flex items-stretch gap-3">
+    <div className="mt-8 flex items-stretch gap-3 border-t border-border pt-6">
       {prev ? (
         <Link
           href={`/courses/${courseId}/lessons/${prev.id}`}
-          className="group flex items-center gap-3 flex-1 min-w-0 rounded-xl border border-gray-200 dark:border-[#2e2e3a] bg-white dark:bg-[#1c1c24] px-4 py-3 hover:border-brand-400 dark:hover:border-brand-600 hover:shadow-sm transition-all"
+          className="group flex min-w-0 flex-1 items-center gap-3 rounded-lg border border-border bg-card px-4 py-3 transition-all hover:border-border-strong hover:shadow-sm"
         >
-          <ChevronLeftIcon className="w-4 h-4 flex-shrink-0 text-gray-400 group-hover:text-brand-500 dark:group-hover:text-brand-400 transition-colors" />
+          <ChevronLeftIcon className="h-4 w-4 flex-shrink-0 text-foreground-subtle transition-colors group-hover:text-primary" />
           <div className="min-w-0">
-            <p className="text-xs text-gray-400 dark:text-gray-500 mb-0.5">Previous</p>
-            <p className="text-sm font-medium text-gray-700 dark:text-gray-300 group-hover:text-brand-600 dark:group-hover:text-brand-400 transition-colors truncate">
+            <p className="mb-0.5 text-xs text-foreground-subtle">Previous</p>
+            <p className="truncate text-sm font-medium text-foreground transition-colors group-hover:text-primary">
               {prev.title}
             </p>
           </div>
@@ -57,15 +57,15 @@ export function LessonNavigation({
       {next ? (
         <Link
           href={`/courses/${courseId}/lessons/${next.id}`}
-          className="group flex items-center gap-3 flex-1 min-w-0 rounded-xl border border-gray-200 dark:border-[#2e2e3a] bg-white dark:bg-[#1c1c24] px-4 py-3 hover:border-brand-400 dark:hover:border-brand-600 hover:shadow-sm transition-all justify-end text-right"
+          className="group flex min-w-0 flex-1 items-center justify-end gap-3 rounded-lg border border-border bg-card px-4 py-3 text-right transition-all hover:border-border-strong hover:shadow-sm"
         >
           <div className="min-w-0">
-            <p className="text-xs text-gray-400 dark:text-gray-500 mb-0.5">Next</p>
-            <p className="text-sm font-medium text-gray-700 dark:text-gray-300 group-hover:text-brand-600 dark:group-hover:text-brand-400 transition-colors truncate">
+            <p className="mb-0.5 text-xs text-foreground-subtle">Next</p>
+            <p className="truncate text-sm font-medium text-foreground transition-colors group-hover:text-primary">
               {next.title}
             </p>
           </div>
-          <ChevronRightIcon className="w-4 h-4 flex-shrink-0 text-gray-400 group-hover:text-brand-500 dark:group-hover:text-brand-400 transition-colors" />
+          <ChevronRightIcon className="h-4 w-4 flex-shrink-0 text-foreground-subtle transition-colors group-hover:text-primary" />
         </Link>
       ) : (
         <div className="flex-1" />
