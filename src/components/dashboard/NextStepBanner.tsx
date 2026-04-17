@@ -1,5 +1,7 @@
 import Link from "next/link";
-import { ChevronRightIcon, AlertTriangleIcon } from "@/components/icons";
+import { ChevronRight, AlertTriangle } from "lucide-react";
+
+import { cn } from "@/lib/utils";
 
 interface NextStepBannerProps {
   courseTitle: string;
@@ -13,11 +15,11 @@ interface NextStepBannerProps {
 
 function getNudge(percent: number, isOverdue: boolean): string {
   if (isOverdue) return "This lesson is overdue — let's get it done.";
-  if (percent === 0)  return "Kick things off and earn your first XP.";
-  if (percent < 25)   return "You've started strong — keep the momentum going.";
-  if (percent < 50)   return "You're getting there — one step at a time.";
-  if (percent < 75)   return `You're ${percent}% of the way — more than halfway!`;
-  if (percent < 100)  return "Almost there — push through to finish!";
+  if (percent === 0) return "Kick things off and earn your first XP.";
+  if (percent < 25) return "You've started strong — keep the momentum going.";
+  if (percent < 50) return "You're getting there — one step at a time.";
+  if (percent < 75) return `You're ${percent}% of the way — more than halfway!`;
+  if (percent < 100) return "Almost there — push through to finish!";
   return "Course complete — amazing work!";
 }
 
@@ -34,58 +36,73 @@ export function NextStepBanner({
   const nextLessonNumber = completedLessons + 1;
 
   return (
-    <section className="animate-fade-in animate-init">
-      <p className="text-xs font-medium uppercase tracking-wider text-gray-500 dark:text-gray-400 mb-2">
+    <section className="animate-fade-in">
+      <p className="mb-2 text-xs font-medium uppercase tracking-wider text-foreground-muted">
         Pick up where you left off
       </p>
       <Link
         href={continueUrl}
-        className={`group relative block rounded-2xl overflow-hidden shadow-card hover:shadow-card-hover transition-all p-5 sm:p-6 hover-lift bg-white dark:bg-[#1c1c24] ${
+        className={cn(
+          "group relative block overflow-hidden rounded-lg bg-card p-5 shadow-sm transition-all hover:shadow-md sm:p-6",
+          "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background",
           isOverdue
-            ? "border-l-4 border-l-red-500 border-y border-r border-y-gray-200/80 border-r-gray-200/80 dark:border-y-[#2e2e3a] dark:border-r-[#2e2e3a]"
-            : "border border-gray-200/80 dark:border-[#2e2e3a]"
-        }`}
+            ? "border-y border-r border-l-4 border-y-border border-r-border border-l-danger"
+            : "border border-border hover:border-border-strong",
+        )}
       >
         <div className="relative flex items-center gap-4 sm:gap-6">
-          <div className="flex-1 min-w-0">
-            <div className="flex items-center gap-2 mb-1">
+          <div className="min-w-0 flex-1">
+            <div className="mb-1 flex items-center gap-2">
               {isOverdue && (
-                <AlertTriangleIcon className="w-4 h-4 text-red-500 flex-shrink-0 animate-pulse-attention" />
+                <AlertTriangle
+                  className="h-4 w-4 shrink-0 text-danger animate-pulse-attention"
+                  aria-hidden="true"
+                />
               )}
-              <h2 className="text-base sm:text-lg font-semibold text-gray-900 dark:text-gray-100 group-hover:text-brand-600 dark:group-hover:text-brand-400 transition-colors truncate">
+              <h2 className="truncate font-display text-base font-semibold text-foreground transition-colors group-hover:text-primary sm:text-lg">
                 {courseTitle}
               </h2>
             </div>
-            <p className="text-sm text-gray-600 dark:text-gray-300 truncate mb-1">
-              <span className="text-xs font-medium uppercase tracking-wider text-brand-600 dark:text-brand-400 mr-1.5">
+            <p className="mb-1 truncate text-sm text-foreground-muted">
+              <span className="mr-1.5 text-xs font-medium uppercase tracking-wider text-primary">
                 Lesson {nextLessonNumber}/{totalLessons}
               </span>
               {lessonTitle}
             </p>
-            <p className={`text-xs mb-3 ${isOverdue ? "text-red-600 dark:text-red-400 font-medium" : "text-gray-500 dark:text-gray-400"}`}>
+            <p
+              className={cn(
+                "mb-3 text-xs",
+                isOverdue
+                  ? "font-medium text-danger"
+                  : "text-foreground-subtle",
+              )}
+            >
               {nudge}
             </p>
             <div className="flex items-center gap-3">
-              <div className="flex-1 relative h-2 bg-gray-100 dark:bg-[#2e2e3a] rounded-full overflow-hidden">
+              <div className="relative h-2 flex-1 overflow-hidden rounded-full bg-border">
                 <div
-                  className="h-full bg-brand-600 rounded-full transition-all duration-700"
+                  className="h-full rounded-full bg-primary transition-all duration-700"
                   style={{ width: `${percentComplete}%` }}
                 />
-                {/* Subtle shimmer while in progress */}
                 {percentComplete > 0 && percentComplete < 100 && (
                   <div
-                    className="absolute inset-y-0 left-0 w-1/4 bg-gradient-to-r from-transparent via-white/30 to-transparent animate-shimmer pointer-events-none"
+                    className="pointer-events-none absolute inset-y-0 left-0 w-1/4 animate-shimmer bg-gradient-to-r from-transparent via-white/30 to-transparent"
+                    aria-hidden="true"
                   />
                 )}
               </div>
-              <span className="flex-shrink-0 text-xs font-medium text-gray-500 dark:text-gray-400 tabular-nums">
+              <span className="shrink-0 text-xs font-medium tabular-nums text-foreground-subtle">
                 {completedLessons}/{totalLessons}
               </span>
             </div>
           </div>
-          <span className="flex-shrink-0 inline-flex items-center gap-1.5 px-4 sm:px-5 py-2.5 rounded-xl bg-brand-600 hover:bg-brand-700 text-white font-semibold text-sm shadow-sm transition-colors">
+          <span className="inline-flex shrink-0 items-center gap-1.5 rounded-md bg-primary px-4 py-2.5 text-sm font-semibold text-primary-foreground shadow-sm transition-colors group-hover:bg-primary-hover sm:px-5">
             Continue
-            <ChevronRightIcon className="w-4 h-4 transition-transform group-hover:translate-x-0.5" />
+            <ChevronRight
+              className="h-4 w-4 transition-transform group-hover:translate-x-0.5"
+              aria-hidden="true"
+            />
           </span>
         </div>
       </Link>

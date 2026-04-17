@@ -93,7 +93,7 @@ function ScrollableRow({ courses }: { courses: CourseItem[] }) {
             <Link
               key={course.courseId}
               href={course.continueUrl}
-              className="group relative flex flex-col w-56 h-56 flex-shrink-0 rounded-xl border border-gray-200/80 dark:border-[#2e2e3a] bg-white dark:bg-[#1c1c24] shadow-card hover:shadow-card-hover hover:border-brand-400/50 dark:hover:border-brand-500/50 p-4 pt-5 transition-all animate-slide-up animate-init hover-lift overflow-hidden"
+              className="group relative flex h-56 w-56 flex-col flex-shrink-0 overflow-hidden rounded-lg border border-border bg-card p-4 pt-5 shadow-sm transition-all hover:border-border-strong hover:shadow-md animate-slide-up focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background"
               style={{ animationDelay: `${i * 60}ms` }}
             >
               {/* Top accent strip in category color */}
@@ -115,7 +115,7 @@ function ScrollableRow({ courses }: { courses: CourseItem[] }) {
                 </div>
                 {isAlmostDone && (
                   <span
-                    className="flex-shrink-0 inline-flex items-center text-[10px] font-semibold px-2 py-0.5 rounded-full bg-amber-100 dark:bg-amber-900/40 text-amber-700 dark:text-amber-300 animate-glow whitespace-nowrap"
+                    className="inline-flex shrink-0 items-center whitespace-nowrap rounded-full bg-warning-subtle px-2 py-0.5 text-[10px] font-semibold text-warning animate-glow"
                     title="You're almost done!"
                   >
                     Almost
@@ -123,26 +123,26 @@ function ScrollableRow({ courses }: { courses: CourseItem[] }) {
                 )}
               </div>
 
-              <h3 className="flex-1 text-sm font-semibold text-gray-900 dark:text-gray-100 group-hover:text-brand-600 dark:group-hover:text-brand-400 transition-colors line-clamp-3 leading-snug">
+              <h3 className="line-clamp-3 flex-1 text-sm font-semibold leading-snug text-foreground transition-colors group-hover:text-primary">
                 {course.courseTitle}
               </h3>
 
               <div className="mt-3">
-                <div className="flex items-center gap-2 mb-1.5">
-                  <div className="flex-1 relative h-1.5 bg-gray-100 dark:bg-[#2e2e3a] rounded-full overflow-hidden">
+                <div className="mb-1.5 flex items-center gap-2">
+                  <div className="relative h-1.5 flex-1 overflow-hidden rounded-full bg-border">
                     <div
-                      className="h-full bg-brand-600 rounded-full transition-all duration-700"
+                      className="h-full rounded-full bg-primary transition-all duration-700"
                       style={{ width: `${course.percentComplete}%` }}
                     />
                     {isInProgress && (
-                      <div className="absolute inset-y-0 left-0 w-1/4 bg-gradient-to-r from-transparent via-white/40 to-transparent animate-shimmer pointer-events-none" />
+                      <div className="pointer-events-none absolute inset-y-0 left-0 w-1/4 animate-shimmer bg-gradient-to-r from-transparent via-white/40 to-transparent" />
                     )}
                   </div>
-                  <span className="flex-shrink-0 text-xs font-semibold text-brand-600 dark:text-brand-400 tabular-nums">
+                  <span className="shrink-0 text-xs font-semibold tabular-nums text-primary">
                     {course.percentComplete}%
                   </span>
                 </div>
-                <p className="text-xs text-gray-500 dark:text-gray-400 tabular-nums">
+                <p className="text-xs tabular-nums text-foreground-muted">
                   {course.completedLessons} of {course.totalLessons} lesson
                   {course.totalLessons !== 1 ? "s" : ""}
                 </p>
@@ -158,11 +158,11 @@ function ScrollableRow({ courses }: { courses: CourseItem[] }) {
         onClick={() => scrollBy("left")}
         aria-label="Scroll courses left"
         disabled={!canScrollLeft}
-        className={`absolute left-0 top-1/2 -translate-y-1/2 z-10 w-9 h-9 rounded-full bg-white dark:bg-[#1c1c24] border border-gray-200 dark:border-[#2e2e3a] shadow-card hover:shadow-card-hover text-gray-700 dark:text-gray-200 transition-all ${
-          canScrollLeft ? "opacity-100" : "opacity-0 pointer-events-none"
+        className={`absolute left-0 top-1/2 z-10 h-9 w-9 -translate-y-1/2 rounded-full border border-border bg-card text-foreground shadow-sm transition-all hover:shadow-md ${
+          canScrollLeft ? "opacity-100" : "pointer-events-none opacity-0"
         }`}
       >
-        <ChevronLeftIcon className="w-4 h-4 mx-auto" />
+        <ChevronLeftIcon className="mx-auto h-4 w-4" />
       </button>
 
       {/* Right scroll button */}
@@ -171,11 +171,11 @@ function ScrollableRow({ courses }: { courses: CourseItem[] }) {
         onClick={() => scrollBy("right")}
         aria-label="Scroll courses right"
         disabled={!canScrollRight}
-        className={`absolute right-0 top-1/2 -translate-y-1/2 z-10 w-9 h-9 rounded-full bg-white dark:bg-[#1c1c24] border border-gray-200 dark:border-[#2e2e3a] shadow-card hover:shadow-card-hover text-gray-700 dark:text-gray-200 transition-all ${
-          canScrollRight ? "opacity-100" : "opacity-0 pointer-events-none"
+        className={`absolute right-0 top-1/2 z-10 h-9 w-9 -translate-y-1/2 rounded-full border border-border bg-card text-foreground shadow-sm transition-all hover:shadow-md ${
+          canScrollRight ? "opacity-100" : "pointer-events-none opacity-0"
         }`}
       >
-        <ChevronRightIcon className="w-4 h-4 mx-auto" />
+        <ChevronRightIcon className="mx-auto h-4 w-4" />
       </button>
     </div>
   );
@@ -191,15 +191,15 @@ export function CourseProgressList({
   if (courses.length === 0 && !hasEnrollments) {
     return (
       <section>
-        <h2 className="text-xs font-medium uppercase tracking-wider text-gray-500 dark:text-gray-400 mb-2">
+        <h2 className="mb-2 text-xs font-medium uppercase tracking-wider text-foreground-muted">
           Your courses
         </h2>
-        <div className="rounded-xl border border-dashed border-gray-200 dark:border-[#2e2e3a] p-8 text-center">
-          <GraduationCapIcon className="w-8 h-8 text-gray-300 dark:text-gray-600 mx-auto mb-3" />
-          <p className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+        <div className="rounded-lg border border-dashed border-border p-8 text-center">
+          <GraduationCapIcon className="mx-auto mb-3 h-8 w-8 text-foreground-subtle" />
+          <p className="mb-1 text-sm font-medium text-foreground">
             No courses have been assigned to you yet
           </p>
-          <p className="text-xs text-gray-500 dark:text-gray-400 mb-4">
+          <p className="mb-4 text-xs text-foreground-muted">
             {userRole === "admin"
               ? "Browse the catalog to find courses."
               : "Contact your administrator to get enrolled in courses."}
@@ -207,7 +207,7 @@ export function CourseProgressList({
           {userRole === "admin" && (
             <Link
               href="/courses"
-              className="text-xs font-medium text-brand-600 dark:text-brand-400 hover:underline"
+              className="text-xs font-medium text-primary hover:underline"
             >
               Browse the catalog →
             </Link>
@@ -219,8 +219,8 @@ export function CourseProgressList({
 
   const completedBadge =
     completedCount > 0 ? (
-      <span className="inline-flex items-center gap-1.5 text-xs text-gray-500 dark:text-gray-400">
-        <GraduationCapIcon className="w-3.5 h-3.5 text-brand-600 dark:text-brand-400" />
+      <span className="inline-flex items-center gap-1.5 text-xs text-foreground-muted">
+        <GraduationCapIcon className="h-3.5 w-3.5 text-primary" />
         {completedCount} completed
       </span>
     ) : null;
@@ -230,13 +230,13 @@ export function CourseProgressList({
     return (
       <section>
         <div className="flex items-center justify-between mb-2">
-          <h2 className="text-xs font-medium uppercase tracking-wider text-gray-500 dark:text-gray-400">
+          <h2 className="text-xs font-medium uppercase tracking-wider text-foreground-muted">
             Your courses
           </h2>
           {completedBadge}
         </div>
-        <div className="rounded-xl border border-dashed border-gray-200 dark:border-[#2e2e3a] p-8 text-center">
-          <p className="text-sm text-gray-500 dark:text-gray-400">
+        <div className="rounded-lg border border-dashed border-border p-8 text-center">
+          <p className="text-sm text-foreground-muted">
             You&apos;re all caught up. Great work!
           </p>
         </div>
