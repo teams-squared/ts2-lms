@@ -2,7 +2,7 @@ import type { Metadata, Viewport } from "next";
 import { Inter, Plus_Jakarta_Sans } from "next/font/google";
 import { Suspense } from "react";
 import Providers from "@/components/auth/Providers";
-import NavBar from "@/components/layout/NavBar";
+import { DashboardShell } from "@/components/layout/DashboardShell";
 import PostHogPageView from "@/components/analytics/PostHogPageView";
 import "./globals.css";
 
@@ -41,13 +41,12 @@ export default function RootLayout({
       className={`${inter.variable} ${jakarta.variable} h-full antialiased`}
       suppressHydrationWarning
     >
-      <body className="min-h-full flex flex-col bg-[#f5f5f8] dark:bg-[#0f0f14] font-sans">
+      <body className="min-h-full bg-background text-foreground font-sans">
         <Providers>
           <Suspense fallback={null}>
             <PostHogPageView />
           </Suspense>
-          <NavBar />
-          <main className="flex-1">{children}</main>
+          <DashboardShell>{children}</DashboardShell>
         </Providers>
       </body>
     </html>
