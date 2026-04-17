@@ -231,6 +231,8 @@ In `app/globals.css`, bind the tokens to Tailwind utilities:
 - `bg-gradient-to-r from-purple-500 to-pink-500` or any gradient in product UI unless explicitly allowed in Section 8.10.
 - Opacity-based dimming of brand color as a "hover" state. Use `--primary-hover` token.
 
+**Dark-mode subtle parity:** Light-mode `-subtle` fills use low-chroma pastels with plenty of headroom. Mirror that headroom in dark mode by keeping chroma low (`≤ 0.08`) and lightness around `0.22`. An over-saturated dark-mode subtle (e.g., `oklch(0.25 0.10 25)`) reads as a colored wall rather than a quiet tint — the light/dark flavors must feel like the same family, only lit differently. When tuning a `*-subtle` token, check it against its partner by eye, not just by name.
+
 ---
 
 ## 4. Typography
@@ -435,6 +437,22 @@ transition: all 150ms ease-out;
 
 **Accessibility:** The entire card must be a single clickable region — wrap in `<Link>` or `<button>`. Do NOT nest multiple tap targets (e.g., a "Bookmark" button inside a clickable card). If a secondary action is needed, place it OUTSIDE the card or use a separate detail page.
 
+#### 8.2.1 Course thumbnails
+
+All course thumbnails — catalog grid, dashboard rail, "you might also like" rows — go through the shared `<CourseThumbnail />` component. One component, one visual.
+
+**With image:**
+- 16:9 aspect ratio (`aspect-video`), `object-cover`
+- Locked courses render the image at `grayscale` to cue state without extra chrome
+
+**Without image (empty / fallback):**
+- `bg-primary-subtle` fill
+- Centered icon (`GraduationCap`, `h-9 w-9`) tinted `text-primary-subtle-foreground`
+- Course title underneath, `text-sm font-medium text-primary`, `line-clamp-2`
+- No gradients, no patterns — brand tint only. This is the one place the brand family shows up on cards.
+
+**Do NOT** render a bespoke thumbnail inline. Always import `CourseThumbnail` from `@/components/courses/CourseThumbnail`. Changing the empty state in one place must change it everywhere.
+
 ### 8.3 Modals / Dialogs
 
 Use shadcn/ui `Dialog` (Radix primitive) as the base.
@@ -518,11 +536,15 @@ Use shadcn/ui `Dialog` (Radix primitive) as the base.
 ### 8.5 Progress indicators
 
 **Course/module progress bar:**
-- Height: 6px (small), 8px (prominent)
+- Height scale (pick by context):
+  - `h-1` (4px) — meta rows inside sidebars and sticky footers
+  - `h-1.5` (6px) — compact cards (course rail, course grid)
+  - `h-2` (8px) — prominent placements (dashboard hero, XP bar)
 - `rounded-full`, track `bg-border`, fill `bg-primary`
-- Fill uses solid color, NOT gradient
-- Smooth transition on value change: `transition: width 400ms ease-out`
-- Include `aria-valuenow`, `aria-valuemin`, `aria-valuemax`, `aria-label`
+- **Fill is ALWAYS a solid `bg-primary` — gradients are banned on progress bars.** No `bg-gradient-to-r`, no amber/emerald shifts, no shimmer overlays. Brand as signal, not fireworks.
+- Smooth transition on value change: `transition-[width] duration-[400ms] ease-out` — animate only `width`, not `all`, so color/opacity changes stay instant
+- Include `role="progressbar"`, `aria-valuenow`, `aria-valuemin`, `aria-valuemax`, `aria-label`
+- Render values as rounded integers at display sites (`Math.round(value)`). Stored percentages may be fractional; displayed percentages never are — `66.7%` feels computational, `67%` feels human.
 
 **Completion checkmark:**
 - Circular, `bg-success` fill, white checkmark icon
@@ -562,6 +584,12 @@ Use shadcn/ui `Dialog` (Radix primitive) as the base.
 - 64px tall, `bg-background border-b border-border`
 - Contents: logo (far left, only when sidebar collapsed), search (center, `max-w-[480px]`), notifications bell + profile menu (right)
 - Sticky on scroll
+- Search input uses `border-border-strong` (not `border-border`) — in dark mode the softer border disappears against `bg-background`, so progress-rail weight wins over default card borders for input chrome.
+- **Slim mode** (`<TopBar slim />`): used on lesson-player routes. Hides the search input so the lesson body dominates; notifications + theme toggle + profile menu remain. The shell detects `/courses/[id]/lessons/[lessonId]` and sets the flag automatically.
+
+**Sidebar collapse button:**
+- Lives pinned to the bottom of the sidebar, separated by `border-t border-border`.
+- Container uses `px-2 pt-2 pb-3` — the extra bottom padding keeps the toggle off the viewport edge so a focus ring never gets clipped by the window chrome.
 
 **Breadcrumbs:**
 - Used on pages 2+ levels deep (course → module → lesson)
@@ -589,20 +617,46 @@ This is the learner's primary surface. Follow these rules strictly.
 ```
 
 **Rules:**
-- Content column max-width: 760px. Reading discipline prevents long line fatigue.
+- Content column max-width varies by lesson type (reading comfort ≠ media framing):
+  - **Text / markdown**: `max-w-3xl` (~768px). Long prose needs a short measure.
+  - **Quiz**: `max-w-3xl`. Match the text width so users aren't reaching across the screen to click an option.
+  - **Document (PDF) / Video**: `max-w-5xl` (~1024px). Media is its own figure; give it room.
 - Left rail: collapsible module outline. Current lesson highlighted with `bg-primary-subtle` and left accent bar.
 - Right rail: optional (notes, transcript, resources). Hidden by default on tablet, always hidden on mobile.
-- Sticky bottom bar: 64px tall, `bg-background border-t border-border`, contains:
-  - "Previous" ghost button on left
-  - Central progress indicator (e.g., "Lesson 3 of 8") with thin progress bar
-  - "Next lesson" primary button on right
 - NO sidebar gradients, NO brand wallpaper, NO decorative motion in this view. Content is the figure.
 
-**Video player (if embedded):**
-- 16:9 aspect ratio
-- `rounded-lg overflow-hidden border border-border`
-- Controls use brand color for playhead and progress fill
-- Keyboard controls: space for play/pause, arrow keys for seek, M for mute
+#### 8.7.1 Sticky lesson footer
+
+The persistent bottom strip is the player's command surface — it travels with the user through every lesson, so its shape must be predictable.
+
+- 64px tall, `sticky bottom-0 z-30`, `bg-background border-t border-border`, `px-4 sm:px-6`
+- **Left:** "Previous" ghost link — `ChevronLeft` + label. Renders as a hidden-sm text + visible icon on mobile. Disabled (empty spacer) on the first lesson.
+- **Center:** position + course progress.
+  - Line 1: `Lesson N of M`, `text-xs tabular-nums text-foreground-muted`
+  - Line 2: 4px solid-primary progress bar, `max-w-[320px]`, with `role="progressbar"` and full aria-value wiring. Fill animates `width 400ms ease-out`.
+- **Right:** Mark-complete button + Next link.
+  - "Mark complete" is a primary button (`bg-primary`). Clicking it flips optimistically to the completed state (`CheckCircleIcon` + "Completed" in `text-success`), fires `POST /api/courses/:id/modules/:m/lessons/:l/complete`, and calls `router.refresh()` so the sidebar, course progress, and dashboard reflect the change without a full reload. A failure reverts the optimistic flip and surfaces a toast.
+  - Quiz lessons hide the Mark-complete button (the quiz flow owns completion); the footer still shows position + Prev/Next.
+  - "Next" is a secondary button (`border-border-strong bg-card`) with `ChevronRight`. Empty spacer on the final lesson.
+- One source of truth: the shared `<LessonFooter />` component handles both display and mutation. Do not re-implement Prev/Next cards elsewhere on the lesson page.
+
+#### 8.7.2 Lesson title + meta row
+
+Every lesson opens with a consistent header so learners can scan the shape of the lesson before reading.
+
+- Title: `font-display text-3xl font-semibold tracking-tight text-foreground`
+- Meta row below the title: icon + format label · optional time estimate, all in `text-sm text-foreground-muted`
+  - **Text / markdown**: `Reading · N min read` (200 wpm estimate, min 1 min)
+  - **Document (PDF)**: `PDF document`
+  - **Video**: `Video`
+  - **Quiz**: `Quiz · N questions`
+- Use the shared `<LessonTitleHeader />` — do not hand-roll h1s per lesson type; the meta convention must be identical across all four.
+
+#### 8.7.3 Module outline (sidebar) hierarchy
+
+- Course name is the primary identity in the sidebar header: `font-display text-base font-semibold text-foreground`.
+- The "Back to course" link sits above it as a smaller utility link: `text-xs text-foreground-subtle`, no heavy weight.
+- Section stack: `space-y-1` — the back link should feel attached to the title, not floating.
 
 ### 8.8 Dashboard
 
@@ -657,6 +711,33 @@ Gradients appear in exactly these contexts and NOWHERE else:
 - Gradients crossing from brand to unrelated hue (e.g., purple to pink). Stay within brand family.
 - Animated gradients. Static only.
 
+### 8.11 Hero banners
+
+"Brand as signal, not wallpaper." Hero banners introduce a page; they are not the page.
+
+- Background: `bg-surface-muted` — neutral, subdued, lets the content and CTA do the talking. No `bg-primary` fills, no brand gradients, no stained-glass washes.
+- Use brand color on one element inside the hero (avatar, progress fill, CTA) — never as the wall.
+- Dashboard greeting: solid `bg-surface-muted` hero with a primary-filled `<LevelAvatar />` circle, neutral text, and a single progress bar. Streak indicator is a `bg-warning` dot, not a fiery pill.
+- Reserve the brand spotlight gradient (§8.10) for login, celebration modals, and certificates. A dashboard is not a celebration.
+
+### 8.12 Media viewers (PDF, video)
+
+PDF and video are embedded documents. They are *inside* our UI but not *of* our UI — mute their native chrome so the app shell stays dominant.
+
+**PDF viewer:**
+- Preferred long-term: render with `react-pdf` + a custom toolbar that matches our tokens.
+- Acceptable short-term (current implementation): iframe with `src={proxyUrl}#toolbar=0&navpanes=0&view=FitH`.
+  - `toolbar=0` hides pdf.js's top toolbar
+  - `navpanes=0` hides the thumbnails/sidebar panes
+  - `view=FitH` fits width by default so the document meets the reader halfway
+- Wrap in `rounded-lg border border-border overflow-hidden` with a fixed height (`calc(100vh - 16rem)` today). The frame belongs to us; the document belongs to itself.
+- Provide a download fallback for load failures — never leave the user stranded.
+
+**Video player:**
+- 16:9 (`aspect-video`), `rounded-lg overflow-hidden bg-black`
+- Native `<video controls>` is acceptable. When we move to a custom player, playhead + progress fill use `bg-primary`.
+- Keyboard controls: space = play/pause, arrows = seek, M = mute.
+
 ---
 
 ## 9. Motion & interaction
@@ -709,7 +790,7 @@ For shadcn/ui components using `tw-animate-css`, use the `motion-safe:` variant 
 ## 10. Accessibility (non-negotiable)
 
 - **WCAG 2.1 AA minimum** across all components. AAA on body text is achievable and preferred.
-- **Focus-visible rings** on every interactive element. Never remove outlines without replacing.
+- **Focus rings use `focus-visible:`, not bare `focus:`.** We only want the keyboard-focus ring on keyboard-focus — showing a full ring on every mouse click pollutes the UI and trains users to ignore it. The canonical string is `focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background` (swap `ring-offset-surface` when the button sits on the sidebar). Never remove outlines without replacing.
 - **Keyboard navigation:** tab order matches visual order; modals trap focus; escape closes overlays.
 - **Color never the only signal:** status badges pair color + icon + text. Error states pair color + icon + message.
 - **Semantic HTML:** use `<button>` for actions, `<a>` for navigation, `<h1>-<h6>` for heading hierarchy (one `<h1>` per page).
@@ -914,3 +995,14 @@ Before marking a component "done":
 - **Mature over flashy.** This is a learning platform for working professionals, not a marketing site.
 
 If a design decision isn't covered here, default to what Coursera, Sana, or Linear would do. They are the benchmarks.
+
+---
+
+## 16. Known gaps
+
+This document describes the target. A few pieces are intentionally behind it, tracked here so contributors know what's real versus aspirational.
+
+- **Custom PDF toolbar.** The lesson player uses an iframe with pdf.js toolbar/nav suppressed (§8.12). The long-term plan is a `react-pdf` implementation with our own controls so the viewer feels native to the app rather than muted-foreign.
+- **Video duration in lesson meta.** The lesson title meta row (§8.7.2) labels videos as "Video" without a time estimate. Once we surface duration metadata from the SharePoint proxy, append `· N min` the same way text lessons show reading time.
+- **Right rail on lesson player.** The three-column layout in §8.7 documents a notes/transcript rail; the current shell ships two columns. The rail is a deferred feature, not a deleted one — the grid has been kept stable so it can slot in.
+- **Quiz lesson completion.** Quiz lessons suppress the Mark-complete button in the footer (§8.7.1). The quiz flow handles completion itself. When we unify flows, the footer becomes the single mutation point for every lesson type.
