@@ -307,11 +307,21 @@ body {
   .animate-slide-up,
   .animate-slide-in-left,
   .animate-scale-in,
+  .animate-pulse-attention,
   .animate-shimmer,
   .animate-glow,
   .animate-flicker,
   .animate-float,
-  .animate-gradient-drift { animation: none; }
+  .animate-gradient-drift,
+  .animate-pulse,
+  .animate-spin,
+  .animate-bounce { animation: none !important; }
+  *, *::before, *::after {
+    transition-duration: 0.01ms !important;
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    scroll-behavior: auto !important;
+  }
 }
 
 /* ── Background gradients ──────────────────────────────────────────────────── */
