@@ -20,7 +20,7 @@ export function AdminTabs() {
   const visibleTabs = TABS.filter((t) => isAdmin || !t.adminOnly);
 
   return (
-    <nav className="flex gap-1 mb-6 border-b border-gray-200 dark:border-[#2e2e3a]">
+    <nav className="flex gap-1 mb-6 border-b border-border">
       {visibleTabs.map((tab) => {
         const isActive = tab.exact
           ? pathname === tab.href
@@ -32,8 +32,8 @@ export function AdminTabs() {
             href={tab.href}
             className={`px-4 py-2.5 text-sm font-medium border-b-2 -mb-px transition-colors ${
               isActive
-                ? "border-brand-600 text-brand-600 dark:border-brand-400 dark:text-brand-400"
-                : "border-transparent text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300"
+                ? "border-primary text-primary"
+                : "border-transparent text-foreground-muted hover:text-foreground"
             }`}
           >
             {tab.label}

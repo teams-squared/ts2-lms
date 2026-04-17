@@ -86,8 +86,8 @@ export function NodeTreeSelect({ nodes, value, onChange }: NodeTreeSelectProps) 
         <div
           className={`flex items-center gap-1.5 py-1.5 px-2 rounded-lg cursor-pointer transition-colors text-sm ${
             isSelected
-              ? "bg-brand-50 dark:bg-brand-950/20 text-brand-700 dark:text-brand-300 font-medium"
-              : "text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-[#1e1e28]"
+              ? "bg-primary-subtle text-primary font-medium"
+              : "text-foreground hover:bg-surface-muted"
           }`}
           style={{ paddingLeft: `${depth * 16 + 8}px` }}
           onClick={() => select(node.id)}
@@ -96,7 +96,7 @@ export function NodeTreeSelect({ nodes, value, onChange }: NodeTreeSelectProps) 
             <button
               type="button"
               onClick={(e) => toggle(node.id, e)}
-              className="w-4 h-4 flex items-center justify-center flex-shrink-0 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300"
+              className="w-4 h-4 flex items-center justify-center flex-shrink-0 text-foreground-subtle hover:text-foreground"
             >
               {isExpanded ? (
                 <ChevronDownIcon className="w-3 h-3" />
@@ -123,23 +123,23 @@ export function NodeTreeSelect({ nodes, value, onChange }: NodeTreeSelectProps) 
       <button
         type="button"
         onClick={() => setOpen(!open)}
-        className="w-full flex items-center justify-between gap-2 rounded-lg border border-gray-300 dark:border-[#3a3a48] bg-white dark:bg-[#18181f] text-sm px-3 py-2 text-left focus:outline-none focus:ring-2 focus:ring-brand-500 transition-colors"
+        className="w-full flex items-center justify-between gap-2 rounded-lg border border-border bg-surface text-sm px-3 py-2 text-left focus:outline-none focus:ring-2 focus:ring-ring transition-colors"
       >
-        <span className={selectedName ? "text-gray-900 dark:text-gray-100" : "text-gray-400 dark:text-gray-500"}>
+        <span className={selectedName ? "text-foreground" : "text-foreground-subtle"}>
           {selectedName ?? "No node"}
         </span>
-        <ChevronDownIcon className="w-3.5 h-3.5 text-gray-400 flex-shrink-0" />
+        <ChevronDownIcon className="w-3.5 h-3.5 text-foreground-subtle flex-shrink-0" />
       </button>
 
       {/* Dropdown tree */}
       {open && (
-        <div className="absolute z-50 mt-1 w-full max-h-64 overflow-y-auto rounded-xl border border-gray-200 dark:border-[#2e2e3a] bg-white dark:bg-[#1c1c24] shadow-lg p-1">
+        <div className="absolute z-50 mt-1 w-full max-h-64 overflow-y-auto rounded-xl border border-border bg-card shadow-lg p-1">
           {/* "No node" option */}
           <div
             className={`flex items-center gap-1.5 py-1.5 px-2 rounded-lg cursor-pointer transition-colors text-sm ${
               !value
-                ? "bg-brand-50 dark:bg-brand-950/20 text-brand-700 dark:text-brand-300 font-medium"
-                : "text-gray-500 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-[#1e1e28]"
+                ? "bg-primary-subtle text-primary font-medium"
+                : "text-foreground-muted hover:bg-surface-muted"
             }`}
             onClick={() => select(null)}
           >

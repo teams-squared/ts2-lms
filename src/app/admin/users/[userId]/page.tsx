@@ -51,15 +51,15 @@ export default async function AdminUserDetailPage({
   return (
     <div>
       <div className="mb-6">
-        <p className="text-xs text-gray-500 dark:text-gray-400 mb-1">
+        <p className="text-xs text-foreground-muted mb-1">
           <Link href="/admin/users" className="hover:underline">Users</Link>
           {" / "}
-          <span className="text-gray-700 dark:text-gray-300">{user.name || user.email}</span>
+          <span className="text-foreground">{user.name || user.email}</span>
         </p>
-        <h2 className="text-base font-semibold text-gray-900 dark:text-gray-100">
+        <h2 className="text-base font-semibold text-foreground">
           {user.name || "Unnamed"}
         </h2>
-        <p className="text-xs text-gray-500 dark:text-gray-400">{user.email}</p>
+        <p className="text-xs text-foreground-muted">{user.email}</p>
       </div>
 
       <UserDetailManager

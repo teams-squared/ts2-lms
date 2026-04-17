@@ -21,7 +21,7 @@ export async function AssignmentsPageContent() {
 
   return (
     <div>
-      <h2 className="text-sm font-semibold text-gray-900 dark:text-gray-100 mb-4">
+      <h2 className="text-sm font-semibold text-foreground mb-4">
         Enrollments
       </h2>
       <EnrollmentManager

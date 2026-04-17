@@ -114,8 +114,8 @@ export function UserDetailManager({
   return (
     <div className="space-y-6">
       {/* Role card */}
-      <div className="rounded-xl border border-gray-200/80 dark:border-[#2e2e3a] bg-white dark:bg-[#1c1c24] p-6">
-        <h3 className="text-sm font-semibold text-gray-900 dark:text-gray-100 mb-4">Role</h3>
+      <div className="rounded-xl border border-border bg-card p-6">
+        <h3 className="text-sm font-semibold text-foreground mb-4">Role</h3>
         <div className="flex items-center gap-3">
           <select
             value={role}
@@ -124,7 +124,7 @@ export function UserDetailManager({
               setRoleSuccess(false);
             }}
             aria-label="User role"
-            className="px-3 py-2 rounded-lg border border-gray-200 dark:border-[#3a3a48] bg-white dark:bg-[#1e1e28] text-sm text-gray-700 dark:text-gray-300 focus:outline-none focus:ring-2 focus:ring-brand-500"
+            className="px-3 py-2 rounded-lg border border-border bg-surface text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-ring"
           >
             {(["admin", "course_manager", "employee"] as Role[]).map((r) => (
               <option key={r} value={r}>{ROLE_LABELS[r]}</option>
@@ -133,22 +133,22 @@ export function UserDetailManager({
           <button
             onClick={handleSaveRole}
             disabled={savingRole || role === initialRole}
-            className="rounded-lg bg-brand-600 hover:bg-brand-700 disabled:opacity-50 text-white text-sm font-medium px-4 py-2 transition-colors"
+            className="rounded-lg bg-primary hover:bg-primary/90 disabled:opacity-50 text-white text-sm font-medium px-4 py-2 transition-colors"
           >
             {savingRole ? "Saving…" : "Save role"}
           </button>
           {roleSuccess && (
-            <span className="text-sm text-emerald-600 dark:text-emerald-400">Saved!</span>
+            <span className="text-sm text-success">Saved!</span>
           )}
         </div>
         {roleError && (
-          <p className="mt-2 text-sm text-red-600 dark:text-red-400">{roleError}</p>
+          <p className="mt-2 text-sm text-danger">{roleError}</p>
         )}
       </div>
 
       {/* Clearances */}
-      <div className="rounded-xl border border-gray-200/80 dark:border-[#2e2e3a] bg-white dark:bg-[#1c1c24] p-6">
-        <h3 className="text-sm font-semibold text-gray-900 dark:text-gray-100 mb-4">
+      <div className="rounded-xl border border-border bg-card p-6">
+        <h3 className="text-sm font-semibold text-foreground mb-4">
           Clearances
         </h3>
 
@@ -157,7 +157,7 @@ export function UserDetailManager({
             value={selectedClearance}
             onChange={(e) => setSelectedClearance(e.target.value)}
             aria-label="Select clearance to grant"
-            className="flex-1 px-3 py-2 rounded-lg border border-gray-200 dark:border-[#3a3a48] bg-white dark:bg-[#1e1e28] text-sm text-gray-700 dark:text-gray-300 focus:outline-none focus:ring-2 focus:ring-brand-500"
+            className="flex-1 px-3 py-2 rounded-lg border border-border bg-surface text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-ring"
           >
             <option value="">Select a clearance…</option>
             {availClearances.map((c) => (
@@ -170,18 +170,18 @@ export function UserDetailManager({
             onClick={handleGrantClearance}
             disabled={!selectedClearance || grantingClearance}
             aria-label="Grant clearance"
-            className="rounded-lg bg-brand-600 hover:bg-brand-700 disabled:opacity-50 text-white text-sm font-medium px-4 py-2 transition-colors"
+            className="rounded-lg bg-primary hover:bg-primary/90 disabled:opacity-50 text-white text-sm font-medium px-4 py-2 transition-colors"
           >
             {grantingClearance ? "Granting…" : "Grant"}
           </button>
         </div>
 
         {clearanceError && (
-          <p className="mb-3 text-sm text-red-600 dark:text-red-400">{clearanceError}</p>
+          <p className="mb-3 text-sm text-danger">{clearanceError}</p>
         )}
 
         {clearances.length === 0 ? (
-          <p className="text-sm text-gray-400 dark:text-gray-500 italic">
+          <p className="text-sm text-foreground-subtle italic">
             No clearances granted.
           </p>
         ) : (
@@ -189,14 +189,14 @@ export function UserDetailManager({
             {clearances.map((clearance) => (
               <span
                 key={clearance}
-                className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-medium bg-brand-50 dark:bg-brand-950/20 text-brand-700 dark:text-brand-300 border border-brand-200 dark:border-brand-800/40"
+                className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-medium bg-primary-subtle text-primary border border-primary/20"
               >
                 {clearance}
                 <button
                   onClick={() => handleRevokeClearance(clearance)}
                   disabled={revokingClearance === clearance}
                   aria-label={`Revoke ${clearance} clearance`}
-                  className="ml-0.5 text-brand-400 hover:text-red-500 disabled:opacity-50 transition-colors"
+                  className="ml-0.5 text-primary/70 hover:text-danger disabled:opacity-50 transition-colors"
                 >
                   {revokingClearance === clearance ? "…" : "×"}
                 </button>

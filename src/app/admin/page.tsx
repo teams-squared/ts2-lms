@@ -92,43 +92,43 @@ async function OverdueSection() {
   const overdueCount = overdueItems.length;
 
   return (
-    <div className="mb-8 rounded-xl border border-red-200/80 dark:border-red-800/30 bg-red-50 dark:bg-red-900/10 shadow-card overflow-hidden">
-      <div className="h-1 bg-gradient-to-r from-red-500 to-red-400" />
+    <div className="mb-8 rounded-lg border border-danger/30 bg-danger-subtle shadow-sm overflow-hidden">
+      <div className="h-1 bg-gradient-to-r from-danger to-danger/80" />
       <div className="p-5 flex items-center gap-3">
-        <AlertTriangleIcon className="w-6 h-6 text-red-500 dark:text-red-400 flex-shrink-0" />
+        <AlertTriangleIcon className="w-6 h-6 text-danger flex-shrink-0" />
         <div>
-          <div className="text-2xl font-bold text-red-600 dark:text-red-400 tabular-nums">
+          <div className="text-2xl font-bold text-danger tabular-nums">
             {overdueCount}
           </div>
-          <div className="text-sm text-red-700 dark:text-red-300 font-medium">
+          <div className="text-sm text-danger font-medium">
             Overdue Lesson{overdueCount !== 1 ? "s" : ""}
           </div>
         </div>
       </div>
       <table className="w-full text-sm">
         <thead>
-          <tr className="border-t border-red-200/60 dark:border-red-800/20 text-left">
-            <th className="px-4 py-3 text-xs font-medium text-red-700/70 dark:text-red-300/70">User</th>
-            <th className="px-4 py-3 text-xs font-medium text-red-700/70 dark:text-red-300/70">Course</th>
-            <th className="px-4 py-3 text-xs font-medium text-red-700/70 dark:text-red-300/70">Lesson</th>
-            <th className="px-4 py-3 text-xs font-medium text-red-700/70 dark:text-red-300/70 text-right">Due Date</th>
-            <th className="px-4 py-3 text-xs font-medium text-red-700/70 dark:text-red-300/70 text-right">Days Overdue</th>
+          <tr className="border-t border-danger/20 text-left">
+            <th className="px-4 py-3 text-xs font-medium text-danger/80">User</th>
+            <th className="px-4 py-3 text-xs font-medium text-danger/80">Course</th>
+            <th className="px-4 py-3 text-xs font-medium text-danger/80">Lesson</th>
+            <th className="px-4 py-3 text-xs font-medium text-danger/80 text-right">Due Date</th>
+            <th className="px-4 py-3 text-xs font-medium text-danger/80 text-right">Days Overdue</th>
           </tr>
         </thead>
-        <tbody className="divide-y divide-red-200/40 dark:divide-red-800/20">
+        <tbody className="divide-y divide-danger/20">
           {overdueItems.slice(0, 10).map((item, i) => (
             <tr key={i}>
               <td className="px-4 py-3">
-                <p className="text-gray-900 dark:text-gray-100 font-medium">{item.userName}</p>
-                <p className="text-xs text-gray-500 dark:text-gray-400">{item.userEmail}</p>
+                <p className="text-foreground font-medium">{item.userName}</p>
+                <p className="text-xs text-foreground-muted">{item.userEmail}</p>
               </td>
-              <td className="px-4 py-3 text-gray-700 dark:text-gray-300">{item.courseTitle}</td>
-              <td className="px-4 py-3 text-gray-700 dark:text-gray-300">{item.lessonTitle}</td>
-              <td className="px-4 py-3 text-right text-gray-500 dark:text-gray-400">
+              <td className="px-4 py-3 text-foreground">{item.courseTitle}</td>
+              <td className="px-4 py-3 text-foreground">{item.lessonTitle}</td>
+              <td className="px-4 py-3 text-right text-foreground-muted">
                 {item.dueDate.toLocaleDateString()}
               </td>
               <td className="px-4 py-3 text-right">
-                <span className="text-red-600 dark:text-red-400 font-medium">{item.daysOverdue}d</span>
+                <span className="text-danger font-medium">{item.daysOverdue}d</span>
               </td>
             </tr>
           ))}
@@ -140,9 +140,9 @@ async function OverdueSection() {
 
 function OverdueSkeleton() {
   return (
-    <div className="mb-8 rounded-xl border border-gray-200/80 dark:border-[#2e2e3a] bg-white dark:bg-[#1c1c24] shadow-card overflow-hidden p-5 animate-pulse">
-      <div className="h-4 w-40 bg-gray-200 dark:bg-[#2e2e3a] rounded mb-3" />
-      <div className="h-3 w-full bg-gray-100 dark:bg-[#26262e] rounded" />
+    <div className="mb-8 rounded-lg border border-border bg-card shadow-sm overflow-hidden p-5 animate-pulse">
+      <div className="h-4 w-40 bg-border rounded mb-3" />
+      <div className="h-3 w-full bg-border rounded" />
     </div>
   );
 }
@@ -189,14 +189,14 @@ export default async function AdminPage() {
         {stats.map(({ value, label }) => (
           <div
             key={label}
-            className="rounded-xl border border-gray-200/80 dark:border-[#2e2e3a] bg-white dark:bg-[#1c1c24] shadow-card hover-lift overflow-hidden"
+            className="rounded-lg border border-border bg-card shadow-sm hover-lift overflow-hidden"
           >
-            <div className="h-1 bg-gradient-to-r from-brand-500 to-brand-400" />
+            <div className="h-1 bg-gradient-to-r from-primary to-primary/80" />
             <div className="p-5">
-              <div className="text-2xl font-bold text-brand-600 dark:text-brand-400 tabular-nums mb-1">
+              <div className="text-2xl font-bold text-primary tabular-nums mb-1">
                 {value}
               </div>
-              <div className="text-sm text-gray-500 dark:text-gray-500 font-medium">{label}</div>
+              <div className="text-sm text-foreground-muted font-medium">{label}</div>
             </div>
           </div>
         ))}
@@ -212,30 +212,30 @@ export default async function AdminPage() {
         {/* Recent signups */}
         <div>
           <div className="flex items-center justify-between mb-3">
-            <h2 className="text-sm font-semibold text-gray-900 dark:text-gray-100">Recent Signups</h2>
-            <Link href="/admin/users" className="text-xs text-brand-600 dark:text-brand-400 hover:underline">
+            <h2 className="text-sm font-semibold text-foreground">Recent Signups</h2>
+            <Link href="/admin/users" className="text-xs text-primary hover:underline">
               View all →
             </Link>
           </div>
-          <div className="rounded-xl border border-gray-200/80 dark:border-[#2e2e3a] bg-white dark:bg-[#1c1c24] shadow-card divide-y divide-gray-100 dark:divide-[#26262e]">
+          <div className="rounded-lg border border-border bg-card shadow-sm divide-y divide-border">
             {recentUsers.map((user) => (
               <div key={user.id} className="flex items-center justify-between px-4 py-3">
                 <div className="flex items-center gap-3 min-w-0">
                   <UserAvatar name={user.name} image={user.avatar} size="sm" />
                   <div className="min-w-0">
-                    <p className="text-sm font-medium text-gray-900 dark:text-gray-100 truncate">
+                    <p className="text-sm font-medium text-foreground truncate">
                       {user.name || "Unnamed"}
                     </p>
-                    <p className="text-xs text-gray-500 dark:text-gray-400 truncate">{user.email}</p>
+                    <p className="text-xs text-foreground-muted truncate">{user.email}</p>
                   </div>
                 </div>
                 <div className="flex items-center gap-3 flex-shrink-0 ml-3">
-                  <span className="text-xs text-gray-400 dark:text-gray-500">
+                  <span className="text-xs text-foreground-subtle">
                     {new Date(user.createdAt).toLocaleDateString()}
                   </span>
                   <Link
                     href={`/admin/users/${user.id}`}
-                    className="text-xs text-brand-600 dark:text-brand-400 hover:underline"
+                    className="text-xs text-primary hover:underline"
                   >
                     Manage →
                   </Link>
@@ -248,19 +248,19 @@ export default async function AdminPage() {
         {/* Recent courses */}
         <div>
           <div className="flex items-center justify-between mb-3">
-            <h2 className="text-sm font-semibold text-gray-900 dark:text-gray-100">Recent Courses</h2>
-            <Link href="/admin/courses" className="text-xs text-brand-600 dark:text-brand-400 hover:underline">
+            <h2 className="text-sm font-semibold text-foreground">Recent Courses</h2>
+            <Link href="/admin/courses" className="text-xs text-primary hover:underline">
               View all →
             </Link>
           </div>
-          <div className="rounded-xl border border-gray-200/80 dark:border-[#2e2e3a] bg-white dark:bg-[#1c1c24] shadow-card divide-y divide-gray-100 dark:divide-[#26262e]">
+          <div className="rounded-lg border border-border bg-card shadow-sm divide-y divide-border">
             {recentCourses.map((course) => (
               <div key={course.id} className="flex items-center justify-between px-4 py-3">
                 <div className="min-w-0">
-                  <p className="text-sm font-medium text-gray-900 dark:text-gray-100 truncate">
+                  <p className="text-sm font-medium text-foreground truncate">
                     {course.title}
                   </p>
-                  <p className="text-xs text-gray-400 dark:text-gray-500 mt-0.5">
+                  <p className="text-xs text-foreground-subtle mt-0.5">
                     {new Date(course.createdAt).toLocaleDateString()}
                   </p>
                 </div>
@@ -268,7 +268,7 @@ export default async function AdminPage() {
                   <CourseStatusBadge status={course.status.toLowerCase() as "draft" | "published" | "archived"} />
                   <Link
                     href={`/admin/courses/${course.id}/edit`}
-                    className="text-xs text-brand-600 dark:text-brand-400 hover:underline"
+                    className="text-xs text-primary hover:underline"
                   >
                     Edit →
                   </Link>

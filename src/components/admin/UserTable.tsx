@@ -73,16 +73,16 @@ export default function UserTable() {
 
   if (loading) {
     return (
-      <div className="rounded-xl border border-gray-200/80 dark:border-[#2e2e3a] bg-white dark:bg-[#1c1c24] shadow-card overflow-hidden">
+      <div className="rounded-lg border border-border bg-card shadow-sm overflow-hidden">
         <table className="w-full text-sm min-w-[600px]">
           <thead>
-            <tr className="bg-gray-50 dark:bg-[#18181f] text-left">
+            <tr className="bg-surface-muted text-left">
               {["User", "Role", "Joined", "Actions"].map((h) => (
-                <th key={h} className="px-5 py-3 font-medium text-gray-500 dark:text-gray-400">{h}</th>
+                <th key={h} className="px-5 py-3 font-medium text-foreground-muted">{h}</th>
               ))}
             </tr>
           </thead>
-          <tbody className="divide-y divide-gray-100 dark:divide-[#26262e]">
+          <tbody className="divide-y divide-border">
             {Array.from({ length: 5 }).map((_, i) => (
               <SkeletonTableRow key={i} cols={4} />
             ))}
@@ -94,7 +94,7 @@ export default function UserTable() {
 
   if (error) {
     return (
-      <div className="text-sm text-red-600 dark:text-red-400 py-8 text-center">
+      <div className="text-sm text-danger py-8 text-center">
         {error}
       </div>
     );
@@ -103,42 +103,42 @@ export default function UserTable() {
   return (
     <div className="space-y-3">
       {updateError && (
-        <div className="px-4 py-2.5 rounded-xl bg-red-50 dark:bg-red-950/30 border border-red-100 dark:border-red-900/50 text-red-600 dark:text-red-400 text-sm">
+        <div className="px-4 py-2.5 rounded-xl bg-danger-subtle border border-danger/20 text-danger text-sm">
           {updateError}
         </div>
       )}
-      <div className="rounded-xl border border-gray-200/80 dark:border-[#2e2e3a] bg-white dark:bg-[#1c1c24] shadow-card overflow-x-auto">
+      <div className="rounded-lg border border-border bg-card shadow-sm overflow-x-auto">
         <table className="w-full text-sm min-w-[600px]">
           <thead>
-            <tr className="bg-gray-50 dark:bg-[#18181f] text-left">
-              <th className="px-5 py-3 font-medium text-gray-500 dark:text-gray-400">
+            <tr className="bg-surface-muted text-left">
+              <th className="px-5 py-3 font-medium text-foreground-muted">
                 User
               </th>
-              <th className="px-5 py-3 font-medium text-gray-500 dark:text-gray-400">
+              <th className="px-5 py-3 font-medium text-foreground-muted">
                 Role
               </th>
-              <th className="px-5 py-3 font-medium text-gray-500 dark:text-gray-400">
+              <th className="px-5 py-3 font-medium text-foreground-muted">
                 Joined
               </th>
-              <th className="px-5 py-3 font-medium text-gray-500 dark:text-gray-400 text-right">
+              <th className="px-5 py-3 font-medium text-foreground-muted text-right">
                 Actions
               </th>
             </tr>
           </thead>
-          <tbody className="divide-y divide-gray-100 dark:divide-[#26262e]">
+          <tbody className="divide-y divide-border">
             {users.map((user) => (
               <tr
                 key={user.id}
-                className="hover:bg-gray-50 dark:hover:bg-[#1e1e28] transition-colors"
+                className="hover:bg-surface-muted transition-colors"
               >
                 <td className="px-5 py-3">
                   <div className="flex items-center gap-3">
                     <UserAvatar name={user.name} image={user.avatar} size="sm" />
                     <div>
-                      <p className="font-medium text-gray-900 dark:text-gray-100">
+                      <p className="font-medium text-foreground">
                         {user.name || "Unnamed"}
                       </p>
-                      <p className="text-xs text-gray-500 dark:text-gray-400">
+                      <p className="text-xs text-foreground-muted">
                         {user.email}
                       </p>
                     </div>
@@ -153,7 +153,7 @@ export default function UserTable() {
                       }
                       disabled={updating === user.id}
                       aria-label={`Role for ${user.name || user.email}`}
-                      className="px-3 py-2 rounded-lg border border-gray-200 dark:border-[#3a3a48] bg-white dark:bg-[#1e1e28] text-base sm:text-sm text-gray-700 dark:text-gray-300 focus:outline-none focus:ring-2 focus:ring-brand-500 disabled:opacity-50 cursor-pointer"
+                      className="px-3 py-2 rounded-lg border border-border bg-surface text-base sm:text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-ring disabled:opacity-50 cursor-pointer"
                     >
                       <option value="admin">Admin</option>
                       <option value="course_manager">Course Manager</option>
@@ -162,13 +162,13 @@ export default function UserTable() {
                     {updating === user.id && <Spinner size="sm" />}
                   </div>
                 </td>
-                <td className="px-5 py-3 text-xs text-gray-500 dark:text-gray-500">
+                <td className="px-5 py-3 text-xs text-foreground-muted">
                   {new Date(user.createdAt).toLocaleDateString()}
                 </td>
                 <td className="px-5 py-3 text-right">
                   <Link
                     href={`/admin/users/${user.id}`}
-                    className="text-xs text-brand-600 dark:text-brand-400 hover:underline"
+                    className="text-xs text-primary hover:underline"
                   >
                     Manage →
                   </Link>

@@ -99,10 +99,10 @@ export function CourseNodeTree({
     <button
       type="button"
       onClick={onClick}
-      className="w-4 h-4 rounded border flex items-center justify-center flex-shrink-0 transition-colors focus:outline-none focus:ring-1 focus:ring-brand-500"
+      className="w-4 h-4 rounded border flex items-center justify-center flex-shrink-0 transition-colors focus:outline-none focus:ring-1 focus:ring-ring"
       style={{
-        borderColor: state === "unchecked" ? "var(--color-gray-300)" : "var(--color-brand-600)",
-        backgroundColor: state !== "unchecked" ? "var(--color-brand-600)" : "transparent",
+        borderColor: state === "unchecked" ? "var(--border)" : "var(--primary)",
+        backgroundColor: state !== "unchecked" ? "var(--primary)" : "transparent",
       }}
     >
       {state === "checked" && (
@@ -127,14 +127,14 @@ export function CourseNodeTree({
     return (
       <div key={node.id}>
         <div
-          className="flex items-center gap-1.5 py-1.5 px-1 rounded hover:bg-gray-50 dark:hover:bg-[#1e1e28] transition-colors"
+          className="flex items-center gap-1.5 py-1.5 px-1 rounded hover:bg-surface-muted transition-colors"
           style={{ paddingLeft: `${depth * 20 + 4}px` }}
         >
           {/* Expand/collapse */}
           <button
             type="button"
             onClick={() => toggle(node.id)}
-            className="w-4 h-4 flex items-center justify-center text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 flex-shrink-0"
+            className="w-4 h-4 flex items-center justify-center text-foreground-subtle hover:text-foreground flex-shrink-0"
           >
             {hasChildren ? (
               isExpanded ? (
@@ -149,14 +149,14 @@ export function CourseNodeTree({
           {totalCourses > 0 && renderCheckbox(checkState, () => toggleNode(node))}
 
           {/* Folder icon + name */}
-          <svg className="w-3.5 h-3.5 text-brand-500 flex-shrink-0" viewBox="0 0 20 20" fill="currentColor">
+          <svg className="w-3.5 h-3.5 text-primary flex-shrink-0" viewBox="0 0 20 20" fill="currentColor">
             <path d="M2 6a2 2 0 012-2h5l2 2h5a2 2 0 012 2v6a2 2 0 01-2 2H4a2 2 0 01-2-2V6z" />
           </svg>
-          <span className="text-sm text-gray-800 dark:text-gray-200 truncate">
+          <span className="text-sm text-foreground truncate">
             {node.name}
           </span>
           {totalCourses > 0 && (
-            <span className="text-xs text-gray-400 dark:text-gray-500 tabular-nums">
+            <span className="text-xs text-foreground-subtle tabular-nums">
               ({totalCourses})
             </span>
           )}
@@ -169,7 +169,7 @@ export function CourseNodeTree({
             {node.courses.map((course) => (
               <div
                 key={course.id}
-                className="flex items-center gap-1.5 py-1 px-1 rounded hover:bg-gray-50 dark:hover:bg-[#1e1e28] transition-colors"
+                className="flex items-center gap-1.5 py-1 px-1 rounded hover:bg-surface-muted transition-colors"
                 style={{ paddingLeft: `${(depth + 1) * 20 + 4}px` }}
               >
                 <span className="w-4" /> {/* spacer for alignment with expand button */}
@@ -177,8 +177,8 @@ export function CourseNodeTree({
                   selectedCourseIds.has(course.id) ? "checked" : "unchecked",
                   () => toggleCourse(course.id),
                 )}
-                <GraduationCapIcon className="w-3.5 h-3.5 text-gray-400 flex-shrink-0" />
-                <span className="text-sm text-gray-600 dark:text-gray-400 truncate">
+                <GraduationCapIcon className="w-3.5 h-3.5 text-foreground-subtle flex-shrink-0" />
+                <span className="text-sm text-foreground-muted truncate">
                   {course.title}
                 </span>
               </div>
@@ -191,14 +191,14 @@ export function CourseNodeTree({
 
   if (nodes.length === 0) {
     return (
-      <p className="text-sm text-gray-400 dark:text-gray-500 py-4 text-center">
+      <p className="text-sm text-foreground-subtle py-4 text-center">
         No course nodes configured. Add nodes in the admin panel first.
       </p>
     );
   }
 
   return (
-    <div className="max-h-72 overflow-y-auto rounded-lg border border-gray-200 dark:border-[#2e2e3a] bg-white dark:bg-[#18181f] p-1">
+    <div className="max-h-72 overflow-y-auto rounded-lg border border-border bg-surface p-1">
       {nodes.map((node) => renderNode(node, 0))}
     </div>
   );

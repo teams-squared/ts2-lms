@@ -13,10 +13,10 @@ export default function AnalyticsLoading() {
       {/* Course metrics table */}
       <div className="mb-8">
         <Skeleton className="h-5 w-32 mb-3" />
-        <div className="rounded-xl border border-gray-200/80 dark:border-[#2e2e3a] bg-white dark:bg-[#1c1c24] overflow-hidden">
+        <div className="rounded-xl border border-border bg-card overflow-hidden">
           <table className="w-full">
             <thead>
-              <tr className="bg-gray-50 dark:bg-[#18181f]">
+              <tr className="bg-surface-muted">
                 {["Course", "Enrollments", "Completion", "Avg Score", "Lessons"].map((h) => (
                   <th key={h} className="px-5 py-3 text-left">
                     <Skeleton className="h-4 w-16" />
@@ -24,7 +24,7 @@ export default function AnalyticsLoading() {
                 ))}
               </tr>
             </thead>
-            <tbody className="divide-y divide-gray-100 dark:divide-[#26262e]">
+            <tbody className="divide-y divide-border">
               {Array.from({ length: 5 }).map((_, i) => (
                 <SkeletonTableRow key={i} cols={5} />
               ))}
@@ -36,10 +36,10 @@ export default function AnalyticsLoading() {
       {/* Leaderboard */}
       <div>
         <Skeleton className="h-5 w-28 mb-3" />
-        <div className="rounded-xl border border-gray-200/80 dark:border-[#2e2e3a] bg-white dark:bg-[#1c1c24] overflow-hidden">
+        <div className="rounded-xl border border-border bg-card overflow-hidden">
           <table className="w-full">
             <thead>
-              <tr className="bg-gray-50 dark:bg-[#18181f]">
+              <tr className="bg-surface-muted">
                 {["User", "XP", "Streak", "Enrolled", "Lessons"].map((h) => (
                   <th key={h} className="px-5 py-3 text-left">
                     <Skeleton className="h-4 w-14" />
@@ -47,7 +47,7 @@ export default function AnalyticsLoading() {
                 ))}
               </tr>
             </thead>
-            <tbody className="divide-y divide-gray-100 dark:divide-[#26262e]">
+            <tbody className="divide-y divide-border">
               {Array.from({ length: 5 }).map((_, i) => (
                 <SkeletonTableRow key={i} cols={5} />
               ))}

@@ -64,7 +64,7 @@ export function CourseForm({
   return (
     <form onSubmit={handleSubmit} className="space-y-4">
       {error && (
-        <div className="p-3 rounded-xl bg-red-50 dark:bg-red-950/30 border border-red-100 dark:border-red-900/50 text-red-600 dark:text-red-400 text-sm">
+        <div className="p-3 rounded-xl bg-red-50 dark:bg-red-950/30 border border-red-100 dark:border-red-900/50 text-danger text-sm">
           {error}
         </div>
       )}
@@ -72,7 +72,7 @@ export function CourseForm({
       <div>
         <label
           htmlFor="course-title"
-          className="block text-xs font-medium text-gray-600 dark:text-gray-400 mb-1.5"
+          className="block text-xs font-medium text-foreground-muted mb-1.5"
         >
           Title *
         </label>
@@ -82,7 +82,7 @@ export function CourseForm({
           value={title}
           onChange={(e) => setTitle(e.target.value)}
           required
-          className="w-full px-3.5 py-2.5 rounded-xl border border-gray-200 dark:border-[#3a3a48] bg-white dark:bg-[#1e1e28] text-sm text-gray-900 dark:text-gray-100 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-brand-500 focus:border-transparent transition-all"
+          className="w-full px-3.5 py-2.5 rounded-xl border border-border bg-surface text-sm text-foreground placeholder-foreground-subtle focus:outline-none focus:ring-2 focus:ring-ring focus:border-transparent transition-all"
           placeholder="Introduction to Cybersecurity"
         />
       </div>
@@ -90,7 +90,7 @@ export function CourseForm({
       <div>
         <label
           htmlFor="course-description"
-          className="block text-xs font-medium text-gray-600 dark:text-gray-400 mb-1.5"
+          className="block text-xs font-medium text-foreground-muted mb-1.5"
         >
           Description
         </label>
@@ -99,7 +99,7 @@ export function CourseForm({
           value={description}
           onChange={(e) => setDescription(e.target.value)}
           rows={3}
-          className="w-full px-3.5 py-2.5 rounded-xl border border-gray-200 dark:border-[#3a3a48] bg-white dark:bg-[#1e1e28] text-sm text-gray-900 dark:text-gray-100 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-brand-500 focus:border-transparent transition-all resize-none"
+          className="w-full px-3.5 py-2.5 rounded-xl border border-border bg-surface text-sm text-foreground placeholder-foreground-subtle focus:outline-none focus:ring-2 focus:ring-ring focus:border-transparent transition-all resize-none"
           placeholder="A comprehensive introduction to..."
         />
       </div>
@@ -107,7 +107,7 @@ export function CourseForm({
       <div>
         <label
           htmlFor="course-thumbnail"
-          className="block text-xs font-medium text-gray-600 dark:text-gray-400 mb-1.5"
+          className="block text-xs font-medium text-foreground-muted mb-1.5"
         >
           Thumbnail URL
         </label>
@@ -116,7 +116,7 @@ export function CourseForm({
           type="url"
           value={thumbnail}
           onChange={(e) => setThumbnail(e.target.value)}
-          className="w-full px-3.5 py-2.5 rounded-xl border border-gray-200 dark:border-[#3a3a48] bg-white dark:bg-[#1e1e28] text-sm text-gray-900 dark:text-gray-100 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-brand-500 focus:border-transparent transition-all"
+          className="w-full px-3.5 py-2.5 rounded-xl border border-border bg-surface text-sm text-foreground placeholder-foreground-subtle focus:outline-none focus:ring-2 focus:ring-ring focus:border-transparent transition-all"
           placeholder="https://example.com/image.jpg"
         />
       </div>
@@ -124,7 +124,7 @@ export function CourseForm({
       <div>
         <label
           htmlFor="course-status"
-          className="block text-xs font-medium text-gray-600 dark:text-gray-400 mb-1.5"
+          className="block text-xs font-medium text-foreground-muted mb-1.5"
         >
           Status
         </label>
@@ -132,7 +132,7 @@ export function CourseForm({
           id="course-status"
           value={status}
           onChange={(e) => setStatus(e.target.value as CourseStatus)}
-          className="w-full px-3.5 py-2.5 rounded-xl border border-gray-200 dark:border-[#3a3a48] bg-white dark:bg-[#1e1e28] text-sm text-gray-700 dark:text-gray-300 focus:outline-none focus:ring-2 focus:ring-brand-500 cursor-pointer"
+          className="w-full px-3.5 py-2.5 rounded-xl border border-border bg-surface text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-ring cursor-pointer"
         >
           <option value="draft">Draft</option>
           <option value="published">Published</option>
@@ -143,7 +143,7 @@ export function CourseForm({
       {nodeTree && nodeTree.length > 0 && (
         <div>
           <label
-            className="block text-xs font-medium text-gray-600 dark:text-gray-400 mb-1.5"
+            className="block text-xs font-medium text-foreground-muted mb-1.5"
           >
             Node
           </label>
@@ -166,7 +166,7 @@ export function CourseForm({
         <button
           type="button"
           onClick={onCancel}
-          className="px-4 py-2.5 rounded-xl border border-gray-200 dark:border-[#3a3a48] text-sm font-medium text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-[#1e1e28] transition-colors"
+          className="px-4 py-2.5 rounded-xl border border-border text-sm font-medium text-foreground hover:bg-surface-muted transition-colors"
         >
           Cancel
         </button>

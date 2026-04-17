@@ -38,12 +38,12 @@ export default async function CourseEditPage({
       <div className="flex items-center gap-3 mb-6">
         <Link
           href={backHref}
-          className="text-sm text-brand-600 dark:text-brand-400 hover:underline"
+          className="text-sm text-primary hover:underline"
         >
           ← Back
         </Link>
       </div>
-      <h1 className="text-xl font-bold text-gray-900 dark:text-gray-100 mb-6">
+      <h1 className="text-xl font-bold text-foreground mb-6">
         Edit: {data.course.title}
       </h1>
       <CourseEditor

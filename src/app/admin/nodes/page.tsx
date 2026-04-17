@@ -10,10 +10,10 @@ export default async function AdminNodesPage() {
     <div>
       <div className="flex items-center justify-between mb-6">
         <div>
-          <h2 className="text-sm font-semibold text-gray-900 dark:text-gray-100">
+          <h2 className="text-sm font-semibold text-foreground">
             Course Nodes
           </h2>
-          <p className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">
+          <p className="text-xs text-foreground-muted mt-0.5">
             Organize courses into a hierarchy for easier enrollment and browsing.
           </p>
         </div>

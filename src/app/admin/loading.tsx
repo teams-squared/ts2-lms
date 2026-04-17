@@ -15,7 +15,7 @@ export default function AdminLoading() {
         {Array.from({ length: 4 }).map((_, i) => (
           <div
             key={i}
-            className="p-5 rounded-xl border border-gray-200/80 dark:border-[#2e2e3a] bg-white dark:bg-[#1c1c24]"
+            className="p-5 rounded-xl border border-border bg-card"
           >
             <Skeleton className="w-5 h-5 mb-3" />
             <Skeleton className="h-5 w-32 mb-2" />
@@ -27,10 +27,10 @@ export default function AdminLoading() {
       {/* Table skeleton */}
       <div>
         <Skeleton className="h-5 w-24 mb-3" />
-        <div className="rounded-xl border border-gray-200/80 dark:border-[#2e2e3a] bg-white dark:bg-[#1c1c24] overflow-hidden">
+        <div className="rounded-xl border border-border bg-card overflow-hidden">
           <table className="w-full">
             <thead>
-              <tr className="bg-gray-50 dark:bg-[#18181f]">
+              <tr className="bg-surface-muted">
                 {["User", "Role", "Joined", "Actions"].map((h) => (
                   <th key={h} className="px-5 py-3 text-left">
                     <Skeleton className="h-4 w-16" />
@@ -38,7 +38,7 @@ export default function AdminLoading() {
                 ))}
               </tr>
             </thead>
-            <tbody className="divide-y divide-gray-100 dark:divide-[#26262e]">
+            <tbody className="divide-y divide-border">
               {Array.from({ length: 5 }).map((_, i) => (
                 <SkeletonTableRow key={i} cols={4} />
               ))}

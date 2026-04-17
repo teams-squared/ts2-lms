@@ -159,12 +159,12 @@ export default async function AdminAnalyticsPage() {
         {overviewStats.map(({ label, value }) => (
           <div
             key={label}
-            className="p-5 rounded-xl border border-gray-200/80 dark:border-[#2e2e3a] bg-white dark:bg-[#1c1c24] shadow-card"
+            className="p-5 rounded-lg border border-border bg-card shadow-sm"
           >
-            <div className="text-2xl font-bold text-brand-600 dark:text-brand-400 tabular-nums mb-1">
+            <div className="text-2xl font-bold text-primary tabular-nums mb-1">
               {value}
             </div>
-            <div className="text-xs text-gray-500 dark:text-gray-500 font-medium">
+            <div className="text-xs text-foreground-muted font-medium">
               {label}
             </div>
           </div>
@@ -173,49 +173,49 @@ export default async function AdminAnalyticsPage() {
 
       {/* Course activity table */}
       <div className="mb-8">
-        <h2 className="text-sm font-semibold text-gray-900 dark:text-gray-100 mb-3">
+        <h2 className="text-sm font-semibold text-foreground mb-3">
           Course Activity
         </h2>
-        <div className="rounded-xl border border-gray-200/80 dark:border-[#2e2e3a] bg-white dark:bg-[#1c1c24] shadow-card overflow-hidden">
+        <div className="rounded-lg border border-border bg-card shadow-sm overflow-hidden">
           <table className="w-full text-sm">
             <thead>
-              <tr className="border-b border-gray-100 dark:border-[#2e2e3a] text-left">
-                <th className="px-4 py-3 text-xs font-medium text-gray-500 dark:text-gray-400">
+              <tr className="border-b border-border text-left">
+                <th className="px-4 py-3 text-xs font-medium text-foreground-muted">
                   Course
                 </th>
-                <th className="px-4 py-3 text-xs font-medium text-gray-500 dark:text-gray-400 text-right">
+                <th className="px-4 py-3 text-xs font-medium text-foreground-muted text-right">
                   Enrolled
                 </th>
-                <th className="px-4 py-3 text-xs font-medium text-gray-500 dark:text-gray-400 text-right">
+                <th className="px-4 py-3 text-xs font-medium text-foreground-muted text-right">
                   Lessons
                 </th>
-                <th className="px-4 py-3 text-xs font-medium text-gray-500 dark:text-gray-400 text-right">
+                <th className="px-4 py-3 text-xs font-medium text-foreground-muted text-right">
                   Avg Quiz Score
                 </th>
                 {hasAnyDeadlines && (
-                  <th className="px-4 py-3 text-xs font-medium text-gray-500 dark:text-gray-400 text-right">
+                  <th className="px-4 py-3 text-xs font-medium text-foreground-muted text-right">
                     On-Time
                   </th>
                 )}
               </tr>
             </thead>
-            <tbody className="divide-y divide-gray-100 dark:divide-[#2e2e3a]">
+            <tbody className="divide-y divide-border">
               {courseMetrics.map((c) => (
                 <tr key={c.id}>
-                  <td className="px-4 py-3 text-gray-900 dark:text-gray-100 font-medium">
+                  <td className="px-4 py-3 text-foreground font-medium">
                     {c.title}
                   </td>
-                  <td className="px-4 py-3 text-right tabular-nums text-gray-700 dark:text-gray-300">
+                  <td className="px-4 py-3 text-right tabular-nums text-foreground">
                     {c.enrolledCount}
                   </td>
-                  <td className="px-4 py-3 text-right tabular-nums text-gray-700 dark:text-gray-300">
+                  <td className="px-4 py-3 text-right tabular-nums text-foreground">
                     {c.totalLessons}
                   </td>
-                  <td className="px-4 py-3 text-right tabular-nums text-gray-700 dark:text-gray-300">
+                  <td className="px-4 py-3 text-right tabular-nums text-foreground">
                     {c.avgQuizScore !== null ? `${c.avgQuizScore}%` : "—"}
                   </td>
                   {hasAnyDeadlines && (
-                    <td className="px-4 py-3 text-right tabular-nums text-gray-700 dark:text-gray-300">
+                    <td className="px-4 py-3 text-right tabular-nums text-foreground">
                       {c.deadlineCompliance !== null ? `${c.deadlineCompliance}%` : "—"}
                     </td>
                   )}
@@ -223,7 +223,7 @@ export default async function AdminAnalyticsPage() {
               ))}
               {courseMetrics.length === 0 && (
                 <tr>
-                  <td colSpan={hasAnyDeadlines ? 5 : 4} className="px-4 py-6 text-center text-gray-400 dark:text-gray-500">
+                  <td colSpan={hasAnyDeadlines ? 5 : 4} className="px-4 py-6 text-center text-foreground-subtle">
                     No published courses yet
                   </td>
                 </tr>
@@ -235,65 +235,65 @@ export default async function AdminAnalyticsPage() {
 
       {/* User leaderboard */}
       <div className="mb-8">
-        <h2 className="text-sm font-semibold text-gray-900 dark:text-gray-100 mb-3">
+        <h2 className="text-sm font-semibold text-foreground mb-3">
           Top Learners
         </h2>
-        <div className="rounded-xl border border-gray-200/80 dark:border-[#2e2e3a] bg-white dark:bg-[#1c1c24] shadow-card overflow-hidden">
+        <div className="rounded-lg border border-border bg-card shadow-sm overflow-hidden">
           <table className="w-full text-sm">
             <thead>
-              <tr className="border-b border-gray-100 dark:border-[#2e2e3a] text-left">
-                <th className="px-4 py-3 text-xs font-medium text-gray-500 dark:text-gray-400">
+              <tr className="border-b border-border text-left">
+                <th className="px-4 py-3 text-xs font-medium text-foreground-muted">
                   User
                 </th>
-                <th className="px-4 py-3 text-xs font-medium text-gray-500 dark:text-gray-400 text-right">
+                <th className="px-4 py-3 text-xs font-medium text-foreground-muted text-right">
                   XP
                 </th>
-                <th className="px-4 py-3 text-xs font-medium text-gray-500 dark:text-gray-400 text-right">
+                <th className="px-4 py-3 text-xs font-medium text-foreground-muted text-right">
                   Streak
                 </th>
-                <th className="px-4 py-3 text-xs font-medium text-gray-500 dark:text-gray-400 text-right">
+                <th className="px-4 py-3 text-xs font-medium text-foreground-muted text-right">
                   Courses
                 </th>
-                <th className="px-4 py-3 text-xs font-medium text-gray-500 dark:text-gray-400 text-right">
+                <th className="px-4 py-3 text-xs font-medium text-foreground-muted text-right">
                   Lessons
                 </th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-gray-100 dark:divide-[#2e2e3a]">
+            <tbody className="divide-y divide-border">
               {topUsers.map((stat, i) => (
                 <tr key={stat.id}>
                   <td className="px-4 py-3">
                     <div className="flex items-center gap-2">
-                      <span className="text-xs text-gray-400 dark:text-gray-500 tabular-nums w-5">
+                      <span className="text-xs text-foreground-subtle tabular-nums w-5">
                         {i + 1}.
                       </span>
                       <div>
-                        <p className="text-gray-900 dark:text-gray-100 font-medium">
+                        <p className="text-foreground font-medium">
                           {stat.user.name || "Unnamed"}
                         </p>
-                        <p className="text-xs text-gray-500 dark:text-gray-400">
+                        <p className="text-xs text-foreground-muted">
                           {stat.user.email}
                         </p>
                       </div>
                     </div>
                   </td>
-                  <td className="px-4 py-3 text-right tabular-nums font-semibold text-brand-600 dark:text-brand-400">
+                  <td className="px-4 py-3 text-right tabular-nums font-semibold text-primary">
                     {stat.xp.toLocaleString()}
                   </td>
-                  <td className="px-4 py-3 text-right tabular-nums text-gray-700 dark:text-gray-300">
+                  <td className="px-4 py-3 text-right tabular-nums text-foreground">
                     {stat.streak > 0 ? `🔥 ${stat.streak}` : "—"}
                   </td>
-                  <td className="px-4 py-3 text-right tabular-nums text-gray-700 dark:text-gray-300">
+                  <td className="px-4 py-3 text-right tabular-nums text-foreground">
                     {stat.user._count.enrollments}
                   </td>
-                  <td className="px-4 py-3 text-right tabular-nums text-gray-700 dark:text-gray-300">
+                  <td className="px-4 py-3 text-right tabular-nums text-foreground">
                     {stat.user._count.lessonProgress}
                   </td>
                 </tr>
               ))}
               {topUsers.length === 0 && (
                 <tr>
-                  <td colSpan={5} className="px-4 py-6 text-center text-gray-400 dark:text-gray-500">
+                  <td colSpan={5} className="px-4 py-6 text-center text-foreground-subtle">
                     No user activity yet
                   </td>
                 </tr>
@@ -306,10 +306,10 @@ export default async function AdminAnalyticsPage() {
       {/* PostHog embed */}
       {dashboardEmbedUrl && (
         <div>
-          <h2 className="text-sm font-semibold text-gray-900 dark:text-gray-100 mb-3">
+          <h2 className="text-sm font-semibold text-foreground mb-3">
             PostHog Dashboard
           </h2>
-          <div className="rounded-xl border border-gray-200/80 dark:border-[#2e2e3a] bg-white dark:bg-[#1c1c24] shadow-card overflow-hidden">
+          <div className="rounded-lg border border-border bg-card shadow-sm overflow-hidden">
             <iframe
               src={dashboardEmbedUrl}
               title="PostHog Analytics Dashboard"

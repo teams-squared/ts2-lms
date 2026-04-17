@@ -107,14 +107,14 @@ export function EnrollmentManager({
   return (
     <div className="space-y-6">
       {/* Enroll form */}
-      <div className="rounded-xl border border-gray-200 dark:border-[#2e2e3a] bg-white dark:bg-[#1c1c24] p-5 space-y-4">
-        <p className="text-xs font-medium text-gray-600 dark:text-gray-400">
+      <div className="rounded-xl border border-border bg-card p-5 space-y-4">
+        <p className="text-xs font-medium text-foreground-muted">
           Select courses from the tree and a user to enroll
         </p>
 
         {/* Course tree */}
         <div>
-          <label className="block text-xs font-medium text-gray-600 dark:text-gray-400 mb-1.5">
+          <label className="block text-xs font-medium text-foreground-muted mb-1.5">
             Courses ({selectedCourseIds.size} selected)
           </label>
           <CourseNodeTree
@@ -127,13 +127,13 @@ export function EnrollmentManager({
         {/* User select + enroll button */}
         <div className="flex flex-wrap items-end gap-3">
           <div>
-            <label className="block text-xs font-medium text-gray-600 dark:text-gray-400 mb-1">
+            <label className="block text-xs font-medium text-foreground-muted mb-1">
               User
             </label>
             <select
               value={selectedUser}
               onChange={(e) => setSelectedUser(e.target.value)}
-              className="rounded-lg border border-gray-300 dark:border-[#3a3a48] bg-white dark:bg-[#18181f] text-sm text-gray-700 dark:text-gray-300 px-3 py-2 focus:outline-none focus:ring-2 focus:ring-brand-500"
+              className="rounded-lg border border-border bg-surface text-sm text-foreground px-3 py-2 focus:outline-none focus:ring-2 focus:ring-ring"
               aria-label="Select user to enroll"
             >
               <option value="">Select user…</option>
@@ -147,75 +147,75 @@ export function EnrollmentManager({
           <button
             onClick={() => void handleEnroll()}
             disabled={enrolling || selectedCourseIds.size === 0 || !selectedUser}
-            className="rounded-lg bg-brand-600 hover:bg-brand-700 disabled:opacity-50 text-white text-sm font-medium px-4 py-2 transition-colors"
+            className="rounded-lg bg-primary hover:bg-primary/90 disabled:opacity-50 text-white text-sm font-medium px-4 py-2 transition-colors"
           >
             {enrolling ? "Enrolling…" : `Enroll in ${selectedCourseIds.size} course${selectedCourseIds.size !== 1 ? "s" : ""}`}
           </button>
         </div>
 
         {error && (
-          <p className="text-sm text-red-600 dark:text-red-400">{error}</p>
+          <p className="text-sm text-danger">{error}</p>
         )}
       </div>
 
       {/* Enrollment list */}
-      <div className="rounded-xl border border-gray-200/80 dark:border-[#2e2e3a] bg-white dark:bg-[#1c1c24] overflow-hidden">
-        <div className="px-5 py-3 border-b border-gray-100 dark:border-[#2e2e3a]">
-          <p className="text-sm font-medium text-gray-700 dark:text-gray-300">
+      <div className="rounded-xl border border-border bg-card overflow-hidden">
+        <div className="px-5 py-3 border-b border-border">
+          <p className="text-sm font-medium text-foreground">
             {enrollments.length} enrollment{enrollments.length !== 1 ? "s" : ""}
           </p>
         </div>
         {enrollments.length === 0 ? (
-          <p className="text-sm text-gray-400 dark:text-gray-500 px-5 py-8 text-center">
+          <p className="text-sm text-foreground-subtle px-5 py-8 text-center">
             No enrollments yet.
           </p>
         ) : (
           <table className="w-full text-sm">
             <thead>
-              <tr className="bg-gray-50 dark:bg-[#18181f] text-left">
-                <th className="px-5 py-3 font-medium text-gray-500 dark:text-gray-400">
+              <tr className="bg-surface-muted text-left">
+                <th className="px-5 py-3 font-medium text-foreground-muted">
                   User
                 </th>
-                <th className="px-5 py-3 font-medium text-gray-500 dark:text-gray-400">
+                <th className="px-5 py-3 font-medium text-foreground-muted">
                   Course
                 </th>
-                <th className="px-5 py-3 font-medium text-gray-500 dark:text-gray-400">
+                <th className="px-5 py-3 font-medium text-foreground-muted">
                   Enrolled by
                 </th>
-                <th className="px-5 py-3 font-medium text-gray-500 dark:text-gray-400">
+                <th className="px-5 py-3 font-medium text-foreground-muted">
                   Date
                 </th>
-                <th className="px-5 py-3 font-medium text-gray-500 dark:text-gray-400 text-right">
+                <th className="px-5 py-3 font-medium text-foreground-muted text-right">
                   Actions
                 </th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-gray-100 dark:divide-[#26262e]">
+            <tbody className="divide-y divide-border">
               {enrollments.map((e) => (
                 <tr
                   key={e.id}
-                  className="hover:bg-gray-50 dark:hover:bg-[#1e1e28] transition-colors"
+                  className="hover:bg-surface-muted transition-colors"
                 >
                   <td className="px-5 py-3">
-                    <p className="font-medium text-gray-900 dark:text-gray-100">
+                    <p className="font-medium text-foreground">
                       {e.user.name ?? e.user.email}
                     </p>
-                    <p className="text-xs text-gray-400">{e.user.email}</p>
+                    <p className="text-xs text-foreground-subtle">{e.user.email}</p>
                   </td>
-                  <td className="px-5 py-3 text-gray-700 dark:text-gray-300">
+                  <td className="px-5 py-3 text-foreground">
                     {e.course.title}
                   </td>
-                  <td className="px-5 py-3 text-xs text-gray-500 dark:text-gray-400">
+                  <td className="px-5 py-3 text-xs text-foreground-muted">
                     {e.enrolledBy ? (e.enrolledBy.name ?? e.enrolledBy.email) : "—"}
                   </td>
-                  <td className="px-5 py-3 text-xs text-gray-500 dark:text-gray-400">
+                  <td className="px-5 py-3 text-xs text-foreground-muted">
                     {new Date(e.enrolledAt).toLocaleDateString()}
                   </td>
                   <td className="px-5 py-3 text-right">
                     <button
                       onClick={() => void handleUnenroll(e.id)}
                       disabled={unenrollingId === e.id}
-                      className="text-xs text-red-500 hover:text-red-700 disabled:opacity-50"
+                      className="text-xs text-danger hover:text-danger disabled:opacity-50"
                       aria-label={`Unenroll ${e.user.name ?? e.user.email}`}
                     >
                       {unenrollingId === e.id ? "Unenrolling…" : "Unenroll"}

@@ -15,9 +15,9 @@ interface User {
 }
 
 const ROLE_COLORS: Record<Role, string> = {
-  admin: "bg-red-100 dark:bg-red-900/30 text-red-700 dark:text-red-300",
+  admin: "bg-danger-subtle text-danger",
   course_manager: "bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300",
-  employee: "bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-400",
+  employee: "bg-surface-muted text-foreground-muted",
 };
 
 const ROLE_LABELS: Record<Role, string> = {
@@ -68,12 +68,12 @@ export function UserList({ users }: { users: User[] }) {
           value={search}
           onChange={(e) => handleSearch(e.target.value)}
           placeholder="Search by name or email…"
-          className="flex-1 px-3.5 py-2.5 rounded-xl border border-gray-200 dark:border-[#3a3a48] bg-white dark:bg-[#1e1e28] text-sm text-gray-900 dark:text-gray-100 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-brand-500 transition-all"
+          className="flex-1 px-3.5 py-2.5 rounded-xl border border-border bg-surface text-sm text-foreground placeholder-foreground-subtle focus:outline-none focus:ring-2 focus:ring-ring transition-all"
         />
         <select
           value={roleFilter}
           onChange={(e) => handleRoleFilter(e.target.value as Role | "all")}
-          className="px-3.5 py-2.5 rounded-xl border border-gray-200 dark:border-[#3a3a48] bg-white dark:bg-[#1e1e28] text-sm text-gray-700 dark:text-gray-300 focus:outline-none focus:ring-2 focus:ring-brand-500 cursor-pointer"
+          className="px-3.5 py-2.5 rounded-xl border border-border bg-surface text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-ring cursor-pointer"
         >
           <option value="all">All roles</option>
           <option value="admin">Admin</option>
@@ -83,41 +83,41 @@ export function UserList({ users }: { users: User[] }) {
       </div>
 
       {/* Count */}
-      <p className="text-xs text-gray-500 dark:text-gray-400 mb-3">
+      <p className="text-xs text-foreground-muted mb-3">
         {filtered.length === users.length
           ? `${users.length} users`
           : `${filtered.length} of ${users.length} users`}
       </p>
 
       {/* Table */}
-      <div className="rounded-xl border border-gray-200/80 dark:border-[#2e2e3a] bg-white dark:bg-[#1c1c24] shadow-card overflow-x-auto">
+      <div className="rounded-lg border border-border bg-card shadow-sm overflow-x-auto">
         <table className="w-full text-sm min-w-[560px]">
           <thead>
-            <tr className="bg-gray-50 dark:bg-[#18181f] text-left">
-              <th className="px-5 py-3 font-medium text-gray-500 dark:text-gray-400">User</th>
-              <th className="px-5 py-3 font-medium text-gray-500 dark:text-gray-400">Role</th>
-              <th className="px-5 py-3 font-medium text-gray-500 dark:text-gray-400">Joined</th>
-              <th className="px-5 py-3 font-medium text-gray-500 dark:text-gray-400 text-right">Actions</th>
+            <tr className="bg-surface-muted text-left">
+              <th className="px-5 py-3 font-medium text-foreground-muted">User</th>
+              <th className="px-5 py-3 font-medium text-foreground-muted">Role</th>
+              <th className="px-5 py-3 font-medium text-foreground-muted">Joined</th>
+              <th className="px-5 py-3 font-medium text-foreground-muted text-right">Actions</th>
             </tr>
           </thead>
-          <tbody className="divide-y divide-gray-100 dark:divide-[#26262e]">
+          <tbody className="divide-y divide-border">
             {pageUsers.length === 0 ? (
               <tr>
-                <td colSpan={4} className="px-5 py-10 text-center text-sm text-gray-400 dark:text-gray-500">
+                <td colSpan={4} className="px-5 py-10 text-center text-sm text-foreground-subtle">
                   No users match your search.
                 </td>
               </tr>
             ) : (
               pageUsers.map((user) => (
-                <tr key={user.id} className="hover:bg-gray-50 dark:hover:bg-[#1e1e28] transition-colors">
+                <tr key={user.id} className="hover:bg-surface-muted transition-colors">
                   <td className="px-5 py-3">
                     <div className="flex items-center gap-3">
                       <UserAvatar name={user.name} image={user.avatar} size="sm" />
                       <div>
-                        <p className="font-medium text-gray-900 dark:text-gray-100">
+                        <p className="font-medium text-foreground">
                           {user.name || "Unnamed"}
                         </p>
-                        <p className="text-xs text-gray-500 dark:text-gray-400">{user.email}</p>
+                        <p className="text-xs text-foreground-muted">{user.email}</p>
                       </div>
                     </div>
                   </td>
@@ -126,13 +126,13 @@ export function UserList({ users }: { users: User[] }) {
                       {ROLE_LABELS[user.role]}
                     </span>
                   </td>
-                  <td className="px-5 py-3 text-xs text-gray-500 dark:text-gray-500">
+                  <td className="px-5 py-3 text-xs text-foreground-muted">
                     {new Date(user.createdAt).toLocaleDateString()}
                   </td>
                   <td className="px-5 py-3 text-right">
                     <Link
                       href={`/admin/users/${user.id}`}
-                      className="text-xs text-brand-600 dark:text-brand-400 hover:underline"
+                      className="text-xs text-primary hover:underline"
                     >
                       Manage →
                     </Link>
@@ -147,21 +147,21 @@ export function UserList({ users }: { users: User[] }) {
       {/* Pagination */}
       {totalPages > 1 && (
         <div className="flex items-center justify-between mt-4 text-sm">
-          <span className="text-xs text-gray-500 dark:text-gray-400">
+          <span className="text-xs text-foreground-muted">
             Page {safePage} of {totalPages}
           </span>
           <div className="flex gap-2">
             <button
               onClick={() => setPage((p) => Math.max(1, p - 1))}
               disabled={safePage === 1}
-              className="px-3 py-1.5 rounded-lg border border-gray-200 dark:border-[#3a3a48] text-xs font-medium text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-[#1e1e28] disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
+              className="px-3 py-1.5 rounded-lg border border-border text-xs font-medium text-foreground hover:bg-surface-muted disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
             >
               Previous
             </button>
             <button
               onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
               disabled={safePage === totalPages}
-              className="px-3 py-1.5 rounded-lg border border-gray-200 dark:border-[#3a3a48] text-xs font-medium text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-[#1e1e28] disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
+              className="px-3 py-1.5 rounded-lg border border-border text-xs font-medium text-foreground hover:bg-surface-muted disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
             >
               Next
             </button>

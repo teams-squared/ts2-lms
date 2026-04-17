@@ -208,16 +208,16 @@ export default function AdminCourseTable({ nodeTree = [] }: { nodeTree?: NodeTre
 
   if (loading) {
     return (
-      <div className="rounded-xl border border-gray-200/80 dark:border-[#2e2e3a] bg-white dark:bg-[#1c1c24] shadow-card overflow-hidden">
+      <div className="rounded-lg border border-border bg-card shadow-sm overflow-hidden">
         <table className="w-full text-sm">
           <thead>
-            <tr className="bg-gray-50 dark:bg-[#18181f] text-left">
+            <tr className="bg-surface-muted text-left">
               {["Course", "Status", "Author", "Actions"].map((h) => (
-                <th key={h} className="px-5 py-3 font-medium text-gray-500 dark:text-gray-400">{h}</th>
+                <th key={h} className="px-5 py-3 font-medium text-foreground-muted">{h}</th>
               ))}
             </tr>
           </thead>
-          <tbody className="divide-y divide-gray-100 dark:divide-[#26262e]">
+          <tbody className="divide-y divide-border">
             {Array.from({ length: 4 }).map((_, i) => (
               <SkeletonTableRow key={i} cols={4} />
             ))}
@@ -229,7 +229,7 @@ export default function AdminCourseTable({ nodeTree = [] }: { nodeTree?: NodeTre
 
   if (fetchError) {
     return (
-      <div className="text-sm text-red-600 dark:text-red-400 py-8 text-center">
+      <div className="text-sm text-danger py-8 text-center">
         {fetchError}
       </div>
     );
@@ -237,8 +237,8 @@ export default function AdminCourseTable({ nodeTree = [] }: { nodeTree?: NodeTre
 
   if (showForm) {
     return (
-      <div className="rounded-xl border border-gray-200/80 dark:border-[#2e2e3a] bg-white dark:bg-[#1c1c24] shadow-card p-6">
-        <h3 className="text-sm font-semibold text-gray-900 dark:text-gray-100 mb-4">
+      <div className="rounded-lg border border-border bg-card shadow-sm p-6">
+        <h3 className="text-sm font-semibold text-foreground mb-4">
           Create New Course
         </h3>
         <CourseForm onSubmit={handleCreate} onCancel={() => setShowForm(false)} nodeTree={nodeTree} />
@@ -247,12 +247,12 @@ export default function AdminCourseTable({ nodeTree = [] }: { nodeTree?: NodeTre
   }
 
   const selectClass =
-    "px-3 py-2.5 rounded-xl border border-gray-200 dark:border-[#3a3a48] bg-white dark:bg-[#1e1e28] text-sm text-gray-700 dark:text-gray-300 focus:outline-none focus:ring-2 focus:ring-brand-500 cursor-pointer";
+    "px-3 py-2.5 rounded-xl border border-border bg-surface text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-ring cursor-pointer";
 
   return (
     <div>
       {statusError && (
-        <div className="mb-3 px-4 py-2.5 rounded-xl bg-red-50 dark:bg-red-950/30 border border-red-100 dark:border-red-900/50 text-red-600 dark:text-red-400 text-sm">
+        <div className="mb-3 px-4 py-2.5 rounded-xl bg-red-50 dark:bg-red-950/30 border border-red-100 dark:border-red-900/50 text-danger text-sm">
           {statusError}
         </div>
       )}
@@ -261,13 +261,13 @@ export default function AdminCourseTable({ nodeTree = [] }: { nodeTree?: NodeTre
       <div className="flex flex-col gap-3 mb-4">
         <div className="flex items-center gap-3">
           <div className="relative flex-1">
-            <SearchIcon className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+            <SearchIcon className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-foreground-subtle" />
             <input
               type="text"
               value={search}
               onChange={(e) => { setSearch(e.target.value); resetPage(); }}
               placeholder="Search courses…"
-              className="w-full pl-9 pr-3 py-2.5 rounded-xl border border-gray-200 dark:border-[#3a3a48] bg-white dark:bg-[#1e1e28] text-sm text-gray-900 dark:text-gray-100 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-brand-500 transition-all"
+              className="w-full pl-9 pr-3 py-2.5 rounded-xl border border-border bg-surface text-sm text-foreground placeholder-foreground-subtle focus:outline-none focus:ring-2 focus:ring-ring transition-all"
             />
           </div>
           <button
@@ -315,7 +315,7 @@ export default function AdminCourseTable({ nodeTree = [] }: { nodeTree?: NodeTre
       </div>
 
       {/* Count */}
-      <p className="text-xs text-gray-500 dark:text-gray-400 mb-3">
+      <p className="text-xs text-foreground-muted mb-3">
         {filtered.length === courses.length
           ? `${courses.length} course${courses.length !== 1 ? "s" : ""}`
           : `${filtered.length} of ${courses.length} courses`}
@@ -323,7 +323,7 @@ export default function AdminCourseTable({ nodeTree = [] }: { nodeTree?: NodeTre
 
       {/* Grouped course table */}
       {paginatedGroups.length === 0 ? (
-        <div className="rounded-xl border border-gray-200/80 dark:border-[#2e2e3a] bg-white dark:bg-[#1c1c24] shadow-card px-5 py-10 text-center text-sm text-gray-400 dark:text-gray-500">
+        <div className="rounded-lg border border-border bg-card shadow-sm px-5 py-10 text-center text-sm text-foreground-subtle">
           No courses match your filters.
         </div>
       ) : (
@@ -333,23 +333,23 @@ export default function AdminCourseTable({ nodeTree = [] }: { nodeTree?: NodeTre
             return (
               <div
                 key={group.key}
-                className="rounded-xl border border-gray-200/80 dark:border-[#2e2e3a] bg-white dark:bg-[#1c1c24] shadow-card overflow-hidden"
+                className="rounded-lg border border-border bg-card shadow-sm overflow-hidden"
               >
                 {/* Group header */}
                 <button
                   type="button"
                   onClick={() => toggleGroup(group.key)}
-                  className="w-full flex items-center gap-2 px-5 py-3 bg-gray-50 dark:bg-[#18181f] text-left hover:bg-gray-100 dark:hover:bg-[#1e1e28] transition-colors"
+                  className="w-full flex items-center gap-2 px-5 py-3 bg-surface-muted text-left hover:bg-surface-muted dark:hover:bg-[#1e1e28] transition-colors"
                 >
                   {isCollapsed ? (
-                    <ChevronRightIcon className="w-4 h-4 text-gray-400" />
+                    <ChevronRightIcon className="w-4 h-4 text-foreground-subtle" />
                   ) : (
-                    <ChevronDownIcon className="w-4 h-4 text-gray-400" />
+                    <ChevronDownIcon className="w-4 h-4 text-foreground-subtle" />
                   )}
-                  <span className="text-sm font-medium text-gray-700 dark:text-gray-300">
+                  <span className="text-sm font-medium text-foreground">
                     {group.label}
                   </span>
-                  <span className="text-xs text-gray-400 dark:text-gray-500">
+                  <span className="text-xs text-foreground-subtle">
                     ({group.courses.length})
                   </span>
                 </button>
@@ -358,25 +358,25 @@ export default function AdminCourseTable({ nodeTree = [] }: { nodeTree?: NodeTre
                 {!isCollapsed && (
                   <table className="w-full text-sm">
                     <thead>
-                      <tr className="border-t border-gray-100 dark:border-[#26262e] text-left">
-                        <th className="px-5 py-2.5 font-medium text-gray-500 dark:text-gray-400 text-xs">Course</th>
-                        <th className="px-5 py-2.5 font-medium text-gray-500 dark:text-gray-400 text-xs">Status</th>
-                        <th className="px-5 py-2.5 font-medium text-gray-500 dark:text-gray-400 text-xs">Author</th>
-                        <th className="px-5 py-2.5 font-medium text-gray-500 dark:text-gray-400 text-xs text-right">Actions</th>
+                      <tr className="border-t border-border text-left">
+                        <th className="px-5 py-2.5 font-medium text-foreground-muted text-xs">Course</th>
+                        <th className="px-5 py-2.5 font-medium text-foreground-muted text-xs">Status</th>
+                        <th className="px-5 py-2.5 font-medium text-foreground-muted text-xs">Author</th>
+                        <th className="px-5 py-2.5 font-medium text-foreground-muted text-xs text-right">Actions</th>
                       </tr>
                     </thead>
-                    <tbody className="divide-y divide-gray-100 dark:divide-[#26262e]">
+                    <tbody className="divide-y divide-border">
                       {group.courses.map((course) => (
                         <tr
                           key={course.id}
-                          className="hover:bg-gray-50 dark:hover:bg-[#1e1e28] transition-colors"
+                          className="hover:bg-surface-muted transition-colors"
                         >
                           <td className="px-5 py-3">
-                            <p className="font-medium text-gray-900 dark:text-gray-100">
+                            <p className="font-medium text-foreground">
                               {course.title}
                             </p>
                             {course.description && (
-                              <p className="text-xs text-gray-500 dark:text-gray-400 line-clamp-1 mt-0.5">
+                              <p className="text-xs text-foreground-muted line-clamp-1 mt-0.5">
                                 {course.description}
                               </p>
                             )}
@@ -390,7 +390,7 @@ export default function AdminCourseTable({ nodeTree = [] }: { nodeTree?: NodeTre
                                 }
                                 disabled={updatingStatus === course.id}
                                 aria-label={`Status for ${course.title}`}
-                                className="px-2 py-1 rounded-lg border border-gray-200 dark:border-[#3a3a48] bg-white dark:bg-[#1e1e28] text-sm text-gray-700 dark:text-gray-300 focus:outline-none focus:ring-2 focus:ring-brand-500 disabled:opacity-50 cursor-pointer"
+                                className="px-2 py-1 rounded-lg border border-border bg-surface text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-ring disabled:opacity-50 cursor-pointer"
                               >
                                 <option value="draft">Draft</option>
                                 <option value="published">Published</option>
@@ -399,13 +399,13 @@ export default function AdminCourseTable({ nodeTree = [] }: { nodeTree?: NodeTre
                               {updatingStatus === course.id && <Spinner size="sm" />}
                             </div>
                           </td>
-                          <td className="px-5 py-3 text-xs text-gray-500 dark:text-gray-400">
+                          <td className="px-5 py-3 text-xs text-foreground-muted">
                             {course.createdBy.name || course.createdBy.email}
                           </td>
                           <td className="px-5 py-3 text-right">
                             <Link
                               href={`/admin/courses/${course.id}/edit`}
-                              className="text-xs text-brand-600 dark:text-brand-400 hover:underline font-medium"
+                              className="text-xs text-primary hover:underline font-medium"
                             >
                               Edit
                             </Link>
@@ -424,21 +424,21 @@ export default function AdminCourseTable({ nodeTree = [] }: { nodeTree?: NodeTre
       {/* Pagination */}
       {totalPages > 1 && (
         <div className="flex items-center justify-between mt-4 text-sm">
-          <span className="text-xs text-gray-500 dark:text-gray-400">
+          <span className="text-xs text-foreground-muted">
             Page {safePage} of {totalPages}
           </span>
           <div className="flex gap-2">
             <button
               onClick={() => setPage((p) => Math.max(1, p - 1))}
               disabled={safePage === 1}
-              className="px-3 py-1.5 rounded-lg border border-gray-200 dark:border-[#3a3a48] text-xs font-medium text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-[#1e1e28] disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
+              className="px-3 py-1.5 rounded-lg border border-border text-xs font-medium text-foreground hover:bg-surface-muted disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
             >
               Previous
             </button>
             <button
               onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
               disabled={safePage === totalPages}
-              className="px-3 py-1.5 rounded-lg border border-gray-200 dark:border-[#3a3a48] text-xs font-medium text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-[#1e1e28] disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
+              className="px-3 py-1.5 rounded-lg border border-border text-xs font-medium text-foreground hover:bg-surface-muted disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
             >
               Next
             </button>

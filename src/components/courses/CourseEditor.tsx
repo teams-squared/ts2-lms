@@ -385,41 +385,41 @@ export function CourseEditor({
   return (
     <div className="space-y-8">
       {/* Course Details */}
-      <section className="rounded-xl border border-gray-200 dark:border-[#2e2e3a] bg-white dark:bg-[#1c1c24] p-6">
-        <h2 className="text-sm font-semibold text-gray-900 dark:text-gray-100 mb-4">
+      <section className="rounded-xl border border-border bg-card p-6">
+        <h2 className="text-sm font-semibold text-foreground mb-4">
           Course Details
         </h2>
         <div className="space-y-4">
           <div>
-            <label className="block text-xs font-medium text-gray-600 dark:text-gray-400 mb-1">
+            <label className="block text-xs font-medium text-foreground-muted mb-1">
               Title *
             </label>
             <input
               type="text"
               value={title}
               onChange={(e) => setTitle(e.target.value)}
-              className="w-full rounded-lg border border-gray-300 dark:border-[#3a3a48] bg-white dark:bg-[#18181f] text-sm text-gray-900 dark:text-gray-100 px-3 py-2 focus:outline-none focus:ring-2 focus:ring-brand-500"
+              className="w-full rounded-lg border border-border bg-surface text-sm text-foreground px-3 py-2 focus:outline-none focus:ring-2 focus:ring-ring"
             />
           </div>
           <div>
-            <label className="block text-xs font-medium text-gray-600 dark:text-gray-400 mb-1">
+            <label className="block text-xs font-medium text-foreground-muted mb-1">
               Description
             </label>
             <textarea
               value={description}
               onChange={(e) => setDescription(e.target.value)}
               rows={3}
-              className="w-full rounded-lg border border-gray-300 dark:border-[#3a3a48] bg-white dark:bg-[#18181f] text-sm text-gray-900 dark:text-gray-100 px-3 py-2 focus:outline-none focus:ring-2 focus:ring-brand-500 resize-none"
+              className="w-full rounded-lg border border-border bg-surface text-sm text-foreground px-3 py-2 focus:outline-none focus:ring-2 focus:ring-ring resize-none"
             />
           </div>
           <div>
-            <label className="block text-xs font-medium text-gray-600 dark:text-gray-400 mb-1">
+            <label className="block text-xs font-medium text-foreground-muted mb-1">
               Status
             </label>
             <select
               value={status}
               onChange={(e) => setStatus(e.target.value as CourseStatus)}
-              className="rounded-lg border border-gray-300 dark:border-[#3a3a48] bg-white dark:bg-[#18181f] text-sm text-gray-700 dark:text-gray-300 px-3 py-2 focus:outline-none focus:ring-2 focus:ring-brand-500"
+              className="rounded-lg border border-border bg-surface text-sm text-foreground px-3 py-2 focus:outline-none focus:ring-2 focus:ring-ring"
             >
               <option value="draft">Draft</option>
               <option value="published">Published</option>
@@ -427,7 +427,7 @@ export function CourseEditor({
             </select>
           </div>
           <div>
-            <label className="block text-xs font-medium text-gray-600 dark:text-gray-400 mb-1">
+            <label className="block text-xs font-medium text-foreground-muted mb-1">
               Node
             </label>
             <NodeTreeSelect
@@ -437,12 +437,12 @@ export function CourseEditor({
             />
           </div>
           {courseError && (
-            <p className="text-sm text-red-600 dark:text-red-400">{courseError}</p>
+            <p className="text-sm text-danger">{courseError}</p>
           )}
           <button
             onClick={handleSaveCourse}
             disabled={courseSaving}
-            className="rounded-lg bg-brand-600 hover:bg-brand-700 disabled:opacity-50 text-white text-sm font-medium px-4 py-2 transition-colors"
+            className="rounded-lg bg-primary hover:bg-primary/90 disabled:opacity-50 text-white text-sm font-medium px-4 py-2 transition-colors"
           >
             {courseSaving ? "Saving…" : "Save course"}
           </button>
@@ -450,11 +450,11 @@ export function CourseEditor({
       </section>
 
       {/* Completion Alerts */}
-      <section className="rounded-xl border border-gray-200 dark:border-[#2e2e3a] bg-white dark:bg-[#1c1c24] p-6">
-        <h2 className="text-sm font-semibold text-gray-900 dark:text-gray-100 mb-1">
+      <section className="rounded-xl border border-border bg-card p-6">
+        <h2 className="text-sm font-semibold text-foreground mb-1">
           Completion Alerts
         </h2>
-        <p className="text-xs text-gray-500 dark:text-gray-400 mb-4">
+        <p className="text-xs text-foreground-muted mb-4">
           Email addresses that will be notified when an employee completes this course.
         </p>
 
@@ -465,23 +465,23 @@ export function CourseEditor({
             onChange={(e) => { setNewEmail(e.target.value); setSubError(null); }}
             onKeyDown={(e) => { if (e.key === "Enter") void handleAddSubscription(); }}
             placeholder="email@example.com"
-            className="flex-1 rounded-lg border border-gray-300 dark:border-[#3a3a48] bg-white dark:bg-[#18181f] text-sm text-gray-900 dark:text-gray-100 px-3 py-2 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-brand-500"
+            className="flex-1 rounded-lg border border-border bg-surface text-sm text-foreground px-3 py-2 placeholder-foreground-subtle focus:outline-none focus:ring-2 focus:ring-ring"
           />
           <button
             onClick={() => void handleAddSubscription()}
             disabled={addingSub}
-            className="rounded-lg bg-brand-600 hover:bg-brand-700 disabled:opacity-50 text-white text-sm font-medium px-4 py-2 transition-colors"
+            className="rounded-lg bg-primary hover:bg-primary/90 disabled:opacity-50 text-white text-sm font-medium px-4 py-2 transition-colors"
           >
             {addingSub ? "Adding…" : "Add"}
           </button>
         </div>
 
         {subError && (
-          <p className="text-xs text-red-600 dark:text-red-400 mb-3">{subError}</p>
+          <p className="text-xs text-danger mb-3">{subError}</p>
         )}
 
         {subscriptions.length === 0 ? (
-          <p className="text-xs text-gray-400 dark:text-gray-500 italic">
+          <p className="text-xs text-foreground-subtle italic">
             No subscribers yet.
           </p>
         ) : (
@@ -489,9 +489,9 @@ export function CourseEditor({
             {subscriptions.map((email) => (
               <li
                 key={email}
-                className="flex items-center justify-between rounded-lg px-3 py-2 bg-gray-50 dark:bg-[#18181f]"
+                className="flex items-center justify-between rounded-lg px-3 py-2 bg-surface-muted"
               >
-                <span className="text-sm text-gray-700 dark:text-gray-300">{email}</span>
+                <span className="text-sm text-foreground">{email}</span>
                 <button
                   onClick={() => void handleRemoveSubscription(email)}
                   disabled={removingSub === email}
@@ -508,19 +508,19 @@ export function CourseEditor({
       {/* Modules & Lessons */}
       <section>
         <div className="flex items-center justify-between mb-3">
-          <h2 className="text-sm font-semibold text-gray-900 dark:text-gray-100">
+          <h2 className="text-sm font-semibold text-foreground">
             Modules &amp; Lessons
           </h2>
           <button
             onClick={() => setShowAddModule(true)}
-            className="text-xs text-brand-600 dark:text-brand-400 hover:underline font-medium"
+            className="text-xs text-primary hover:underline font-medium"
           >
             + Add module
           </button>
         </div>
 
         {modules.length === 0 && !showAddModule && (
-          <p className="text-sm text-gray-400 dark:text-gray-500 italic">
+          <p className="text-sm text-foreground-subtle italic">
             No modules yet. Add one above.
           </p>
         )}
@@ -529,20 +529,20 @@ export function CourseEditor({
           {modules.map((module) => (
             <div
               key={module.id}
-              className="rounded-xl border border-gray-200 dark:border-[#2e2e3a] bg-white dark:bg-[#1c1c24] overflow-hidden"
+              className="rounded-xl border border-border bg-card overflow-hidden"
             >
               {/* Module header */}
               <div
-                className="flex items-center gap-2 px-4 py-3 cursor-pointer hover:bg-gray-50 dark:hover:bg-[#1e1e28] transition-colors"
+                className="flex items-center gap-2 px-4 py-3 cursor-pointer hover:bg-surface-muted transition-colors"
                 onClick={() => toggleModule(module.id)}
               >
-                <span className="text-gray-400 text-xs">
+                <span className="text-foreground-subtle text-xs">
                   {expandedModules.has(module.id) ? "▼" : "▶"}
                 </span>
-                <p className="text-sm font-medium text-gray-900 dark:text-gray-100 flex-1">
+                <p className="text-sm font-medium text-foreground flex-1">
                   {module.order}. {module.title}
                 </p>
-                <span className="text-xs text-gray-400">
+                <span className="text-xs text-foreground-subtle">
                   {module.lessons.length} lesson{module.lessons.length !== 1 ? "s" : ""}
                 </span>
                 <button
@@ -563,17 +563,17 @@ export function CourseEditor({
                 <div className="border-t border-gray-100 dark:border-[#2a2a38] px-4 py-3 space-y-2">
                   {module.lessons.map((lesson) => (
                     <div key={lesson.id}>
-                      <div className="flex items-center gap-2 rounded-lg px-3 py-2 bg-gray-50 dark:bg-[#18181f]">
-                        <span className="text-xs text-gray-400 capitalize w-16 shrink-0">
+                      <div className="flex items-center gap-2 rounded-lg px-3 py-2 bg-surface-muted">
+                        <span className="text-xs text-foreground-subtle capitalize w-16 shrink-0">
                           {lesson.type}
                         </span>
-                        <p className="text-sm text-gray-800 dark:text-gray-200 flex-1 truncate">
+                        <p className="text-sm text-foreground flex-1 truncate">
                           {lesson.title}
                         </p>
                         {lesson.type === "quiz" ? (
                           <button
                             onClick={() => toggleQuizBuilder(lesson.id)}
-                            className="text-xs text-brand-600 dark:text-brand-400 hover:underline"
+                            className="text-xs text-primary hover:underline"
                             data-testid={`toggle-quiz-builder-${lesson.id}`}
                           >
                             {expandedQuizLessons.has(lesson.id) ? "Quiz Builder ▲" : "Quiz Builder ▼"}
@@ -581,7 +581,7 @@ export function CourseEditor({
                         ) : (
                           <button
                             onClick={() => startEditLesson(lesson)}
-                            className="text-xs text-brand-600 dark:text-brand-400 hover:underline"
+                            className="text-xs text-primary hover:underline"
                           >
                             Edit
                           </button>
@@ -624,12 +624,12 @@ export function CourseEditor({
                         value={newLessonTitle}
                         onChange={(e) => setNewLessonTitle(e.target.value)}
                         placeholder="Lesson title"
-                        className="flex-1 rounded-lg border border-gray-300 dark:border-[#3a3a48] bg-white dark:bg-[#1e1e28] text-sm px-2 py-1.5 focus:outline-none focus:ring-2 focus:ring-brand-500"
+                        className="flex-1 rounded-lg border border-border bg-surface text-sm px-2 py-1.5 focus:outline-none focus:ring-2 focus:ring-ring"
                       />
                       <select
                         value={newLessonType}
                         onChange={(e) => setNewLessonType(e.target.value as LessonType)}
-                        className="rounded-lg border border-gray-300 dark:border-[#3a3a48] bg-white dark:bg-[#1e1e28] text-sm px-2 py-1.5 focus:outline-none focus:ring-2 focus:ring-brand-500"
+                        className="rounded-lg border border-border bg-surface text-sm px-2 py-1.5 focus:outline-none focus:ring-2 focus:ring-ring"
                         aria-label="Lesson type"
                       >
                         <option value="text">Text</option>
@@ -646,7 +646,7 @@ export function CourseEditor({
                       </button>
                       <button
                         onClick={() => setAddLessonModuleId(null)}
-                        className="text-xs text-gray-500 hover:text-gray-700"
+                        className="text-xs text-foreground-muted hover:text-foreground"
                       >
                         Cancel
                       </button>
@@ -658,7 +658,7 @@ export function CourseEditor({
                         setNewLessonTitle("");
                         setNewLessonType("text");
                       }}
-                      className="text-xs text-brand-600 dark:text-brand-400 hover:underline mt-1"
+                      className="text-xs text-primary hover:underline mt-1"
                     >
                       + Add lesson
                     </button>
@@ -677,7 +677,7 @@ export function CourseEditor({
               value={newModuleTitle}
               onChange={(e) => setNewModuleTitle(e.target.value)}
               placeholder="Module title"
-              className="flex-1 rounded-lg border border-gray-300 dark:border-[#3a3a48] bg-white dark:bg-[#1c1c24] text-sm px-3 py-2 focus:outline-none focus:ring-2 focus:ring-brand-500"
+              className="flex-1 rounded-lg border border-border bg-card text-sm px-3 py-2 focus:outline-none focus:ring-2 focus:ring-ring"
             />
             <button
               onClick={() => void handleAddModule()}
@@ -688,7 +688,7 @@ export function CourseEditor({
             </button>
             <button
               onClick={() => setShowAddModule(false)}
-              className="text-sm text-gray-500 hover:text-gray-700"
+              className="text-sm text-foreground-muted hover:text-foreground"
             >
               Cancel
             </button>
@@ -699,24 +699,24 @@ export function CourseEditor({
       {/* Lesson edit modal */}
       {editingLesson && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50">
-          <div className="w-full max-w-lg bg-white dark:bg-[#1a1a24] rounded-2xl shadow-2xl border border-gray-200 dark:border-[#3a3a48] p-6">
-            <h3 className="text-base font-semibold text-gray-900 dark:text-gray-100 mb-4">
+          <div className="w-full max-w-lg bg-white dark:bg-[#1a1a24] rounded-2xl shadow-2xl border border-border p-6">
+            <h3 className="text-base font-semibold text-foreground mb-4">
               Edit Lesson
             </h3>
             <div className="space-y-4">
               <div>
-                <label className="block text-xs font-medium text-gray-600 dark:text-gray-400 mb-1">
+                <label className="block text-xs font-medium text-foreground-muted mb-1">
                   Title *
                 </label>
                 <input
                   type="text"
                   value={editTitle}
                   onChange={(e) => setEditTitle(e.target.value)}
-                  className="w-full rounded-lg border border-gray-300 dark:border-[#3a3a48] bg-white dark:bg-[#1e1e28] text-sm px-3 py-2 focus:outline-none focus:ring-2 focus:ring-brand-500"
+                  className="w-full rounded-lg border border-border bg-surface text-sm px-3 py-2 focus:outline-none focus:ring-2 focus:ring-ring"
                 />
               </div>
               <div>
-                <label className="block text-xs font-medium text-gray-600 dark:text-gray-400 mb-1">
+                <label className="block text-xs font-medium text-foreground-muted mb-1">
                   Type
                 </label>
                 <select
@@ -725,7 +725,7 @@ export function CourseEditor({
                     setEditType(e.target.value as LessonType);
                     setEditContent("");
                   }}
-                  className="rounded-lg border border-gray-300 dark:border-[#3a3a48] bg-white dark:bg-[#1e1e28] text-sm px-3 py-2 focus:outline-none focus:ring-2 focus:ring-brand-500"
+                  className="rounded-lg border border-border bg-surface text-sm px-3 py-2 focus:outline-none focus:ring-2 focus:ring-ring"
                   aria-label="Edit lesson type"
                 >
                   <option value="text">Text</option>
@@ -737,15 +737,15 @@ export function CourseEditor({
 
               {editType === "document" || (editType === "video" && videoSource === "sharepoint") ? (
                 <div>
-                  <label className="block text-xs font-medium text-gray-600 dark:text-gray-400 mb-1">
+                  <label className="block text-xs font-medium text-foreground-muted mb-1">
                     {editType === "video" ? "SharePoint video" : "Document"}
                   </label>
                   {editType === "video" && (
-                    <div className="mb-2 inline-flex rounded-lg border border-gray-300 dark:border-[#3a3a48] p-0.5 text-xs">
+                    <div className="mb-2 inline-flex rounded-lg border border-border p-0.5 text-xs">
                       <button
                         type="button"
                         onClick={() => setVideoSource("sharepoint")}
-                        className={`px-3 py-1 rounded-md transition-colors ${videoSource === "sharepoint" ? "bg-brand-600 text-white" : "text-gray-600 dark:text-gray-400"}`}
+                        className={`px-3 py-1 rounded-md transition-colors ${videoSource === "sharepoint" ? "bg-brand-600 text-white" : "text-foreground-muted"}`}
                       >
                         SharePoint
                       </button>
@@ -755,7 +755,7 @@ export function CourseEditor({
                           setVideoSource("url");
                           setEditContent("");
                         }}
-                        className={`px-3 py-1 rounded-md transition-colors ${(videoSource as string) === "url" ? "bg-brand-600 text-white" : "text-gray-600 dark:text-gray-400"}`}
+                        className={`px-3 py-1 rounded-md transition-colors ${(videoSource as string) === "url" ? "bg-brand-600 text-white" : "text-foreground-muted"}`}
                       >
                         External URL
                       </button>
@@ -763,7 +763,7 @@ export function CourseEditor({
                   )}
                   {editContent ? (
                     <div className="flex items-center gap-2">
-                      <span className="text-sm text-gray-700 dark:text-gray-300 flex-1 truncate">
+                      <span className="text-sm text-foreground flex-1 truncate">
                         {(() => {
                           try {
                             return (JSON.parse(editContent) as { fileName?: string }).fileName ?? "Selected file";
@@ -778,7 +778,7 @@ export function CourseEditor({
                           setPickerTarget("edit");
                           setPickerOpen(true);
                         }}
-                        className="text-xs text-brand-600 dark:text-brand-400 hover:underline"
+                        className="text-xs text-primary hover:underline"
                       >
                         Change
                       </button>
@@ -790,7 +790,7 @@ export function CourseEditor({
                         setPickerTarget("edit");
                         setPickerOpen(true);
                       }}
-                      className="rounded-lg border border-dashed border-gray-300 dark:border-[#3a3a48] px-4 py-3 text-sm text-brand-600 dark:text-brand-400 w-full text-center hover:bg-brand-50 dark:hover:bg-brand-950/20 transition-colors"
+                      className="rounded-lg border border-dashed border-border px-4 py-3 text-sm text-primary w-full text-center hover:bg-brand-50 dark:hover:bg-brand-950/20 transition-colors"
                     >
                       Browse SharePoint…
                     </button>
@@ -798,25 +798,25 @@ export function CourseEditor({
                 </div>
               ) : editType !== "quiz" ? (
                 <div>
-                  <label className="block text-xs font-medium text-gray-600 dark:text-gray-400 mb-1">
+                  <label className="block text-xs font-medium text-foreground-muted mb-1">
                     {editType === "video" ? "Video URL" : "Content (Markdown)"}
                   </label>
                   {editType === "video" && (
-                    <div className="mb-2 inline-flex rounded-lg border border-gray-300 dark:border-[#3a3a48] p-0.5 text-xs">
+                    <div className="mb-2 inline-flex rounded-lg border border-border p-0.5 text-xs">
                       <button
                         type="button"
                         onClick={() => {
                           setVideoSource("sharepoint");
                           setEditContent("");
                         }}
-                        className={`px-3 py-1 rounded-md transition-colors ${(videoSource as string) === "sharepoint" ? "bg-brand-600 text-white" : "text-gray-600 dark:text-gray-400"}`}
+                        className={`px-3 py-1 rounded-md transition-colors ${(videoSource as string) === "sharepoint" ? "bg-brand-600 text-white" : "text-foreground-muted"}`}
                       >
                         SharePoint
                       </button>
                       <button
                         type="button"
                         onClick={() => setVideoSource("url")}
-                        className={`px-3 py-1 rounded-md transition-colors ${videoSource === "url" ? "bg-brand-600 text-white" : "text-gray-600 dark:text-gray-400"}`}
+                        className={`px-3 py-1 rounded-md transition-colors ${videoSource === "url" ? "bg-brand-600 text-white" : "text-foreground-muted"}`}
                       >
                         External URL
                       </button>
@@ -826,7 +826,7 @@ export function CourseEditor({
                     value={editContent}
                     onChange={(e) => setEditContent(e.target.value)}
                     rows={editType === "text" ? 6 : 2}
-                    className="w-full rounded-lg border border-gray-300 dark:border-[#3a3a48] bg-white dark:bg-[#1e1e28] text-sm px-3 py-2 focus:outline-none focus:ring-2 focus:ring-brand-500 resize-none"
+                    className="w-full rounded-lg border border-border bg-surface text-sm px-3 py-2 focus:outline-none focus:ring-2 focus:ring-ring resize-none"
                     placeholder={editType === "video" ? "https://www.youtube.com/embed/..." : "Markdown content…"}
                   />
                 </div>
@@ -834,7 +834,7 @@ export function CourseEditor({
 
               {/* Deadline */}
               <div>
-                <label className="block text-xs font-medium text-gray-600 dark:text-gray-400 mb-1">
+                <label className="block text-xs font-medium text-foreground-muted mb-1">
                   Deadline (days after enrollment)
                 </label>
                 <input
@@ -845,28 +845,28 @@ export function CourseEditor({
                     setEditDeadlineDays(e.target.value ? parseInt(e.target.value, 10) : null)
                   }
                   placeholder="No deadline"
-                  className="w-full rounded-lg border border-gray-300 dark:border-[#3a3a48] bg-white dark:bg-[#1e1e28] text-sm text-gray-900 dark:text-gray-100 px-3 py-2 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-brand-500"
+                  className="w-full rounded-lg border border-border bg-surface text-sm text-foreground px-3 py-2 placeholder-foreground-subtle focus:outline-none focus:ring-2 focus:ring-ring"
                 />
-                <p className="text-xs text-gray-400 dark:text-gray-500 mt-1">
+                <p className="text-xs text-foreground-subtle mt-1">
                   Leave empty for no deadline
                 </p>
               </div>
 
               {editError && (
-                <p className="text-sm text-red-600 dark:text-red-400">{editError}</p>
+                <p className="text-sm text-danger">{editError}</p>
               )}
 
               <div className="flex gap-2 pt-2">
                 <button
                   onClick={() => void handleSaveLesson()}
                   disabled={editSaving}
-                  className="rounded-lg bg-brand-600 hover:bg-brand-700 disabled:opacity-50 text-white text-sm font-medium px-4 py-2"
+                  className="rounded-lg bg-primary hover:bg-primary/90 disabled:opacity-50 text-white text-sm font-medium px-4 py-2"
                 >
                   {editSaving ? "Saving…" : "Save"}
                 </button>
                 <button
                   onClick={() => setEditingLesson(null)}
-                  className="rounded-lg border border-gray-300 dark:border-[#3a3a48] text-sm text-gray-700 dark:text-gray-300 px-4 py-2 hover:bg-gray-50 dark:hover:bg-[#1e1e28]"
+                  className="rounded-lg border border-border text-sm text-foreground px-4 py-2 hover:bg-surface-muted"
                 >
                   Cancel
                 </button>

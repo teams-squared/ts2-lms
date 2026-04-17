@@ -117,13 +117,13 @@ export function NodeManager({ initialTree }: NodeManagerProps) {
     return (
       <div key={node.id}>
         <div
-          className="group flex items-center gap-1.5 py-2 px-2 rounded-lg hover:bg-gray-50 dark:hover:bg-[#1e1e28] transition-colors"
+          className="group flex items-center gap-1.5 py-2 px-2 rounded-lg hover:bg-surface-muted transition-colors"
           style={{ paddingLeft: `${depth * 24 + 8}px` }}
         >
           {/* Expand/collapse */}
           <button
             onClick={() => toggle(node.id)}
-            className="w-5 h-5 flex items-center justify-center text-gray-400 hover:text-gray-600 dark:hover:text-gray-300"
+            className="w-5 h-5 flex items-center justify-center text-foreground-subtle hover:text-foreground"
             aria-label={isExpanded ? "Collapse" : "Expand"}
           >
             {hasChildren ? (
@@ -138,7 +138,7 @@ export function NodeManager({ initialTree }: NodeManagerProps) {
           </button>
 
           {/* Folder icon */}
-          <svg className="w-4 h-4 text-brand-500 flex-shrink-0" viewBox="0 0 20 20" fill="currentColor">
+          <svg className="w-4 h-4 text-primary flex-shrink-0" viewBox="0 0 20 20" fill="currentColor">
             <path d="M2 6a2 2 0 012-2h5l2 2h5a2 2 0 012 2v6a2 2 0 01-2 2H4a2 2 0 01-2-2V6z" />
           </svg>
 
@@ -153,13 +153,13 @@ export function NodeManager({ initialTree }: NodeManagerProps) {
                 value={editName}
                 onChange={(e) => setEditName(e.target.value)}
                 onBlur={() => setEditingId(null)}
-                className="text-sm px-1.5 py-0.5 rounded border border-brand-300 dark:border-brand-600 bg-white dark:bg-[#18181f] text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-1 focus:ring-brand-500"
+                className="text-sm px-1.5 py-0.5 rounded border border-primary/30 bg-surface text-foreground focus:outline-none focus:ring-1 focus:ring-ring"
               />
             </form>
           ) : (
             <button
               onClick={() => { setEditingId(node.id); setEditName(node.name); }}
-              className="text-sm font-medium text-gray-800 dark:text-gray-200 hover:text-brand-600 dark:hover:text-brand-400 truncate text-left"
+              className="text-sm font-medium text-foreground hover:text-primary truncate text-left"
               title="Click to rename"
             >
               {node.name}
@@ -168,7 +168,7 @@ export function NodeManager({ initialTree }: NodeManagerProps) {
 
           {/* Course count badge */}
           {totalCourses > 0 && (
-            <span className="text-xs text-gray-400 dark:text-gray-500 tabular-nums ml-1">
+            <span className="text-xs text-foreground-subtle tabular-nums ml-1">
               {totalCourses} course{totalCourses !== 1 ? "s" : ""}
             </span>
           )}
@@ -177,14 +177,14 @@ export function NodeManager({ initialTree }: NodeManagerProps) {
           <div className="ml-auto flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
             <button
               onClick={() => { setAddingParentId(node.id); setNewNodeName(""); setExpanded((p) => new Set(p).add(node.id)); }}
-              className="text-xs text-brand-600 dark:text-brand-400 hover:underline px-1.5 py-0.5"
+              className="text-xs text-primary hover:underline px-1.5 py-0.5"
               title="Add child node"
             >
               + Child
             </button>
             <button
               onClick={() => void handleDelete(node.id, node.name)}
-              className="text-xs text-red-500 hover:text-red-700 px-1.5 py-0.5"
+              className="text-xs text-danger hover:text-danger px-1.5 py-0.5"
               title="Delete node"
             >
               Delete
@@ -204,18 +204,18 @@ export function NodeManager({ initialTree }: NodeManagerProps) {
               onChange={(e) => setNewNodeName(e.target.value)}
               onKeyDown={(e) => { if (e.key === "Escape") setAddingParentId(null); if (e.key === "Enter") void handleCreate(node.id); }}
               placeholder="New node name…"
-              className="text-sm px-2 py-1 rounded-lg border border-gray-300 dark:border-[#3a3a48] bg-white dark:bg-[#18181f] text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-1 focus:ring-brand-500 w-48"
+              className="text-sm px-2 py-1 rounded-lg border border-border bg-surface text-foreground focus:outline-none focus:ring-1 focus:ring-ring w-48"
             />
             <button
               onClick={() => void handleCreate(node.id)}
               disabled={loading || !newNodeName.trim()}
-              className="text-xs text-white bg-brand-600 hover:bg-brand-700 disabled:opacity-50 px-2.5 py-1 rounded-lg"
+              className="text-xs text-white bg-primary hover:bg-primary/90 disabled:opacity-50 px-2.5 py-1 rounded-lg"
             >
               Add
             </button>
             <button
               onClick={() => setAddingParentId(null)}
-              className="text-xs text-gray-500 hover:text-gray-700 dark:hover:text-gray-300"
+              className="text-xs text-foreground-muted hover:text-foreground"
             >
               Cancel
             </button>
@@ -230,17 +230,17 @@ export function NodeManager({ initialTree }: NodeManagerProps) {
             {node.courses.map((course) => (
               <div
                 key={course.id}
-                className="flex items-center gap-1.5 py-1.5 px-2 text-sm text-gray-500 dark:text-gray-400"
+                className="flex items-center gap-1.5 py-1.5 px-2 text-sm text-foreground-muted"
                 style={{ paddingLeft: `${(depth + 1) * 24 + 8}px` }}
               >
-                <GraduationCapIcon className="w-3.5 h-3.5 text-gray-400 flex-shrink-0" />
+                <GraduationCapIcon className="w-3.5 h-3.5 text-foreground-subtle flex-shrink-0" />
                 <span className="truncate">{course.title}</span>
                 <span className={`text-xs px-1.5 py-0.5 rounded-full ml-1 ${
                   course.status === "PUBLISHED"
-                    ? "text-emerald-600 bg-emerald-50 dark:text-emerald-400 dark:bg-emerald-950/20"
+                    ? "text-success bg-success-subtle"
                     : course.status === "DRAFT"
-                      ? "text-amber-600 bg-amber-50 dark:text-amber-400 dark:bg-amber-950/20"
-                      : "text-gray-500 bg-gray-100 dark:text-gray-400 dark:bg-gray-800"
+                      ? "text-warning bg-warning-subtle"
+                      : "text-foreground-muted bg-surface-muted dark:text-foreground-subtle dark:bg-surface-muted"
                 }`}>
                   {course.status.toLowerCase()}
                 </span>
@@ -264,18 +264,18 @@ export function NodeManager({ initialTree }: NodeManagerProps) {
               onChange={(e) => setNewNodeName(e.target.value)}
               onKeyDown={(e) => { if (e.key === "Escape") setAddingParentId(null); if (e.key === "Enter") void handleCreate(null); }}
               placeholder="Root node name…"
-              className="text-sm px-2 py-1.5 rounded-lg border border-gray-300 dark:border-[#3a3a48] bg-white dark:bg-[#18181f] text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-1 focus:ring-brand-500 w-48"
+              className="text-sm px-2 py-1.5 rounded-lg border border-border bg-surface text-foreground focus:outline-none focus:ring-1 focus:ring-ring w-48"
             />
             <button
               onClick={() => void handleCreate(null)}
               disabled={loading || !newNodeName.trim()}
-              className="text-xs text-white bg-brand-600 hover:bg-brand-700 disabled:opacity-50 px-3 py-1.5 rounded-lg"
+              className="text-xs text-white bg-primary hover:bg-primary/90 disabled:opacity-50 px-3 py-1.5 rounded-lg"
             >
               Add
             </button>
             <button
               onClick={() => setAddingParentId(null)}
-              className="text-xs text-gray-500 hover:text-gray-700 dark:hover:text-gray-300"
+              className="text-xs text-foreground-muted hover:text-foreground"
             >
               Cancel
             </button>
@@ -283,7 +283,7 @@ export function NodeManager({ initialTree }: NodeManagerProps) {
         ) : (
           <button
             onClick={() => { setAddingParentId("root"); setNewNodeName(""); }}
-            className="inline-flex items-center gap-1.5 text-sm font-medium text-brand-600 dark:text-brand-400 hover:text-brand-700 dark:hover:text-brand-300 px-3 py-1.5 rounded-lg border border-brand-200 dark:border-brand-800 hover:bg-brand-50 dark:hover:bg-brand-950/20 transition-colors"
+            className="inline-flex items-center gap-1.5 text-sm font-medium text-primary hover:text-primary px-3 py-1.5 rounded-lg border border-primary/20 hover:bg-primary-subtle transition-colors"
           >
             <PlusIcon className="w-3.5 h-3.5" />
             Add root node
@@ -292,9 +292,9 @@ export function NodeManager({ initialTree }: NodeManagerProps) {
       </div>
 
       {/* Tree */}
-      <div className="rounded-xl border border-gray-200/80 dark:border-[#2e2e3a] bg-white dark:bg-[#1c1c24] shadow-card p-2">
+      <div className="rounded-lg border border-border bg-card shadow-sm p-2">
         {tree.length === 0 ? (
-          <p className="text-sm text-gray-400 dark:text-gray-500 text-center py-8">
+          <p className="text-sm text-foreground-subtle text-center py-8">
             No nodes yet. Create one to start organizing courses.
           </p>
         ) : (
