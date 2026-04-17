@@ -84,9 +84,9 @@ describe("LessonViewer", () => {
       await waitFor(() => expect(document.querySelector("iframe")).toBeTruthy());
       expect(screen.queryByText("Loading document…")).not.toBeInTheDocument();
       // iframe loads from browser cache via the proxy URL (no blob: URL), with
-      // pdf.js toolbar/nav chrome suppressed per design-system §8.12.
+      // pdf.js toolbar/nav/scrollbar chrome suppressed per design-system §8.12.
       expect(document.querySelector("iframe")?.getAttribute("src")).toBe(
-        `${proxyUrl}#toolbar=0&navpanes=0&view=FitH`,
+        `${proxyUrl}#toolbar=0&navpanes=0&scrollbar=0&view=FitH`,
       );
     });
 

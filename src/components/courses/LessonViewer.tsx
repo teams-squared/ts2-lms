@@ -131,13 +131,13 @@ function PdfViewer({ proxyUrl, fileName }: { proxyUrl: string; fileName: string 
           </div>
         </div>
       ) : ready ? (
-        // PDF viewer quick-fix per §8.12: hide pdf.js toolbar/sidebar and
-        // fit-to-width by default so the viewer chrome doesn't compete with
+        // PDF viewer quick-fix per §8.12: hide pdf.js toolbar/sidebar/scrollbar
+        // and fit-to-width by default so the viewer chrome doesn't compete with
         // the app shell. A custom react-pdf toolbar is the long-term target.
         <iframe
-          src={`${proxyUrl}#toolbar=0&navpanes=0&view=FitH`}
+          src={`${proxyUrl}#toolbar=0&navpanes=0&scrollbar=0&view=FitH`}
           title={fileName}
-          className="h-full w-full"
+          className="h-full w-full border-0"
         />
       ) : null}
     </div>
