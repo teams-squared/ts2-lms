@@ -27,7 +27,7 @@ export default function Error({
       <div className="flex items-center gap-3">
         <button
           onClick={() => unstable_retry()}
-          className="rounded-lg bg-primary px-4 py-2 text-sm font-medium text-primary-foreground transition-colors hover:bg-primary/90"
+          className="rounded-lg bg-primary px-4 py-2 text-sm font-medium text-primary-foreground transition-colors hover:bg-primary-hover active:bg-primary-active"
         >
           Try again
         </button>
