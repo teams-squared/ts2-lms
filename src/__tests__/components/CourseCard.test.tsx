@@ -45,9 +45,9 @@ describe("CourseCard", () => {
     expect(link).toHaveAttribute("href", "/courses/c1");
   });
 
-  it("shows title text in thumbnail area when no thumbnail", () => {
+  it("renders icon-only thumbnail fallback when no thumbnail", () => {
     render(<CourseCard {...defaultProps} thumbnail={null} />);
-    // Thumbnail fallback now shows a gradient with the title text instead of a single letter
-    expect(screen.getAllByText("Test Course").length).toBeGreaterThanOrEqual(2);
+    // Thumbnail fallback is icon-only — title appears exactly once (as the heading).
+    expect(screen.getAllByText("Test Course")).toHaveLength(1);
   });
 });
