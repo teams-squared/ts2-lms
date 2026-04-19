@@ -146,6 +146,37 @@ export async function POST(request: Request, { params }: Params) {
   const percentage = Math.round((correctCount / totalQuestions) * 100);
   const passed = percentage >= passingScore;
 
+  // ── Locked-enrollment short-circuit ───────────────────────────────────────
+  // If the course is locked at completed, the learner can still take the quiz
+  // for review/practice but nothing they do should mutate progress: no
+  // QuizAttempt row, no QuizAnswer rows, no lessonProgress upsert, no XP.
+  // The response still contains the per-answer breakdown so they see how
+  // they did. UI shows a "Review mode — answers not recorded" banner.
+  if (enrollment && enrollment.completedAt != null) {
+    trackEvent(userId, "quiz_completed", {
+      courseId,
+      lessonId,
+      score: correctCount,
+      totalQuestions,
+      percentage,
+      passed,
+      locked: true,
+    });
+    return NextResponse.json({
+      score: correctCount,
+      totalQuestions,
+      percentage,
+      passed,
+      passingScore,
+      answers: answerResults,
+      xpAwarded: 0,
+      newAchievements: [],
+      courseComplete: false,
+      courseStats: null,
+      locked: true,
+    });
+  }
+
   // Save the attempt
   const attempt = await prisma.quizAttempt.create({
     data: {

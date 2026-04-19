@@ -54,9 +54,17 @@ export async function GET(_request: Request, { params }: Params) {
 
   const progressMap = new Map(progressRecords.map((p) => [p.lessonId, p]));
   const totalLessons = allLessonIds.length;
-  const completedLessons = progressRecords.filter((p) => p.completedAt !== null).length;
-  const percentComplete =
-    totalLessons === 0 ? 0 : Math.round((completedLessons / totalLessons) * 100);
+  const actualCompletedLessons = progressRecords.filter((p) => p.completedAt !== null).length;
+  // Locked enrollments always read as 100% — even if an instructor adds new
+  // lessons after the learner finished, the visible progress should not drop
+  // below the locked-at-completed state.
+  const isLocked = enrollment.completedAt != null;
+  const completedLessons = isLocked ? totalLessons : actualCompletedLessons;
+  const percentComplete = isLocked
+    ? 100
+    : totalLessons === 0
+      ? 0
+      : Math.round((actualCompletedLessons / totalLessons) * 100);
 
   const progress: CourseProgress = {
     enrolled: true,

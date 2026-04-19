@@ -208,6 +208,40 @@ describe("POST .../lessons/[lessonId]/complete", () => {
     expect(mockPrisma.enrollment.update).not.toHaveBeenCalled();
   });
 
+  it("POST is a no-op when course is locked at completed", async () => {
+    // Locked enrollments are read-only — POST returns the existing progress
+    // state without writing anything, awarding XP, or firing events.
+    mockAuth.mockResolvedValue(mockSession({ id: "user-1" }));
+    mockPrisma.lesson.findUnique.mockResolvedValue(validLesson);
+    mockPrisma.enrollment.findUnique.mockResolvedValue({
+      ...baseEnrollment,
+      completedAt: new Date("2026-02-01"),
+    });
+    const existingCompletedAt = new Date("2026-02-01T10:00:00Z");
+    mockPrisma.lessonProgress.findUnique.mockResolvedValue({
+      id: "lp1",
+      userId: "user-1",
+      lessonId: "l1",
+      startedAt: existingCompletedAt,
+      completedAt: existingCompletedAt,
+    });
+
+    const res = await POST(
+      new Request("http://localhost/api/courses/c1/modules/m1/lessons/l1/complete", { method: "POST" }),
+      makeParams("c1", "m1", "l1"),
+    );
+    expect(res.status).toBe(200);
+    const body = await res.json();
+    expect(body.locked).toBe(true);
+    expect(body.completed).toBe(true);
+    expect(body.xpAwarded).toBe(0);
+    expect(body.courseComplete).toBe(false);
+    expect(body.courseStats).toBeNull();
+    // No writes
+    expect(mockPrisma.lessonProgress.upsert).not.toHaveBeenCalled();
+    expect(mockPrisma.enrollment.update).not.toHaveBeenCalled();
+  });
+
   it("is idempotent — calling POST twice both return 200", async () => {
     mockAuth.mockResolvedValue(mockSession({ id: "user-1" }));
     mockPrisma.lesson.findUnique.mockResolvedValue(validLesson);
@@ -280,6 +314,24 @@ describe("DELETE .../lessons/[lessonId]/complete", () => {
     expect(res.status).toBe(200);
     const body = await res.json();
     expect(body.completed).toBe(false);
+  });
+
+  it("returns 409 when course is locked at completed", async () => {
+    mockAuth.mockResolvedValue(mockSession({ id: "user-1" }));
+    mockPrisma.lesson.findUnique.mockResolvedValue(validLesson);
+    mockPrisma.enrollment.findUnique.mockResolvedValue({
+      ...baseEnrollment,
+      completedAt: new Date("2026-02-01"),
+    });
+    const res = await DELETE(
+      new Request("http://localhost/api/courses/c1/modules/m1/lessons/l1/complete", { method: "DELETE" }),
+      makeParams("c1", "m1", "l1"),
+    );
+    expect(res.status).toBe(409);
+    const body = await res.json();
+    expect(body.error).toMatch(/locked/i);
+    // Must not have nulled any progress
+    expect(mockPrisma.lessonProgress.updateMany).not.toHaveBeenCalled();
   });
 
   it("does not touch enrollment.completedAt on uncomplete", async () => {
