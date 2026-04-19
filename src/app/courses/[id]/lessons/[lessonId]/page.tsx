@@ -1,0 +1,342 @@
+import { auth } from "@/lib/auth";
+import { redirect, notFound } from "next/navigation";
+import { prisma } from "@/lib/prisma";
+import { prismaLessonTypeToApp } from "@/lib/types";
+import type { Role } from "@/lib/types";
+import { canViewCourse } from "@/lib/courseAccess";
+
+import { LessonViewer } from "@/components/courses/LessonViewer";
+import { QuizViewer } from "@/components/courses/QuizViewer";
+import { QuizBuilder } from "@/components/courses/QuizBuilder";
+import { CourseSidebar } from "@/components/courses/CourseSidebar";
+import { LessonFooter } from "@/components/courses/LessonFooter";
+import { LessonTitleHeader } from "@/components/courses/LessonTitleHeader";
+import { CheckCircleIcon, ClockIcon, AlertTriangleIcon } from "@/components/icons";
+import { Breadcrumbs } from "@/components/ui/Breadcrumbs";
+import { computeDeadline, getDeadlineStatus, formatDeadlineRelative } from "@/lib/deadlines";
+import type { DeadlineInfo } from "@/lib/deadlines";
+
+export const dynamic = "force-dynamic";
+
+export default async function LessonPage({
+  params,
+}: {
+  params: Promise<{ id: string; lessonId: string }>;
+}) {
+  const session = await auth();
+  if (!session) redirect("/login");
+
+  const { id: courseId, lessonId } = await params;
+  const userId = session.user!.id!;
+
+  // Fetch lesson with its module + course info
+  const lesson = await prisma.lesson.findUnique({
+    where: { id: lessonId },
+    include: {
+      module: {
+        include: {
+          course: {
+            select: { id: true, title: true, status: true, createdById: true },
+          },
+        },
+      },
+    },
+  });
+
+  if (!lesson) notFound();
+
+  const course = lesson.module.course;
+
+  // Check if user has privileged access (admin, manager-creator, assigned instructor)
+  const role = session.user?.role as Role;
+  const isPrivilegedUser = await canViewCourse(userId, role, courseId);
+
+  // Non-privileged users can only view published course lessons
+  if (course.status !== "PUBLISHED" && !isPrivilegedUser) {
+    notFound();
+  }
+
+  const enrollment = await prisma.enrollment.findUnique({
+    where: { userId_courseId: { userId, courseId } },
+  });
+  if (!enrollment && !isPrivilegedUser) {
+    redirect("/courses");
+  }
+
+  // Fetch all modules + lessons for the sidebar (and progress computation)
+  const modules = await prisma.module.findMany({
+    where: { courseId },
+    include: {
+      lessons: {
+        orderBy: { order: "asc" },
+        select: { id: true, title: true, type: true, order: true, deadlineDays: true },
+      },
+    },
+    orderBy: { order: "asc" },
+  });
+
+  const allLessonIds = modules.flatMap((m) => m.lessons.map((l) => l.id));
+
+  // Fetch progress records for this user across all course lessons
+  const progressRecords = await prisma.lessonProgress.findMany({
+    where: { userId, lessonId: { in: allLessonIds } },
+  });
+
+  const completedIds = new Set(
+    progressRecords
+      .filter((p) => p.completedAt !== null)
+      .map((p) => p.lessonId),
+  );
+
+  const totalLessons = allLessonIds.length;
+  const completedCount = completedIds.size;
+  const percentComplete =
+    totalLessons === 0 ? 0 : Math.round((completedCount / totalLessons) * 100);
+
+  const isCurrentLessonCompleted = completedIds.has(lessonId);
+  const isCourseComplete = totalLessons > 0 && completedCount === totalLessons;
+
+  // Compute deadline info for all lessons (for sidebar indicators)
+  const allLessonsFlat2 = modules.flatMap((m) => m.lessons);
+  const deadlineInfoMap: Record<string, DeadlineInfo> = {};
+  if (enrollment) {
+    for (const l of allLessonsFlat2) {
+      if (l.deadlineDays != null) {
+        const completedAt = completedIds.has(l.id) ? new Date() : null;
+        deadlineInfoMap[l.id] = {
+          deadlineDays: l.deadlineDays,
+          absoluteDeadline: computeDeadline(enrollment.enrolledAt, l.deadlineDays).toISOString(),
+          status: getDeadlineStatus(enrollment.enrolledAt, l.deadlineDays, completedAt),
+        };
+      }
+    }
+  }
+
+  // Current lesson deadline info for the banner
+  const currentDeadlineInfo = deadlineInfoMap[lessonId] ?? null;
+  const showDeadlineBanner =
+    currentDeadlineInfo &&
+    !isCurrentLessonCompleted &&
+    (currentDeadlineInfo.status === "due-soon" || currentDeadlineInfo.status === "overdue");
+
+  const sidebarModules = modules.map((m) => ({
+    id: m.id,
+    title: m.title,
+    order: m.order,
+    lessons: m.lessons.map((l) => ({
+      ...l,
+      type: prismaLessonTypeToApp(l.type),
+    })),
+  }));
+
+  const lessonType = prismaLessonTypeToApp(lesson.type);
+  const isQuiz = lessonType === "quiz";
+  const isPrivileged = isPrivilegedUser;
+
+  // Compute prev/next lesson URLs for quiz "Continue" CTA and lesson footer nav
+  const allLessonsFlat = sidebarModules.flatMap((m) => m.lessons);
+  const currentLessonIdx = allLessonsFlat.findIndex((l) => l.id === lessonId);
+  const nextLesson =
+    currentLessonIdx >= 0 && currentLessonIdx < allLessonsFlat.length - 1
+      ? allLessonsFlat[currentLessonIdx + 1]
+      : null;
+  const nextLessonUrl = nextLesson ? `/courses/${courseId}/lessons/${nextLesson.id}` : null;
+  const prevLesson =
+    currentLessonIdx > 0 ? allLessonsFlat[currentLessonIdx - 1] : null;
+  const prevLessonUrl = prevLesson ? `/courses/${courseId}/lessons/${prevLesson.id}` : null;
+
+  // Fetch quiz data for quiz-type lessons
+  let quizQuestions: {
+    id: string;
+    text: string;
+    order: number;
+    options: { id: string; text: string; isCorrect: boolean; order: number }[];
+  }[] = [];
+  let quizPassingScore = 70;
+  let quizBestAttempt: {
+    id: string;
+    score: number;
+    totalQuestions: number;
+    passed: boolean;
+    createdAt: string;
+  } | null = null;
+
+  if (isQuiz) {
+    if (lesson.content) {
+      try {
+        const parsed = JSON.parse(lesson.content) as { passingScore?: number };
+        if (typeof parsed.passingScore === "number") {
+          quizPassingScore = parsed.passingScore;
+        }
+      } catch {
+        // use default
+      }
+    }
+
+    quizQuestions = await prisma.quizQuestion.findMany({
+      where: { lessonId },
+      include: { options: { orderBy: { order: "asc" } } },
+      orderBy: { order: "asc" },
+    });
+
+    const attempts = await prisma.quizAttempt.findMany({
+      where: { userId, lessonId },
+      orderBy: { createdAt: "desc" },
+    });
+
+    if (attempts.length > 0) {
+      const best = attempts.reduce((b, a) => (a.score > b.score ? a : b), attempts[0]);
+      quizBestAttempt = {
+        id: best.id,
+        score: best.score,
+        totalQuestions: best.totalQuestions,
+        passed: best.passed,
+        createdAt: best.createdAt.toISOString(),
+      };
+    }
+
+    // For employees: omit isCorrect
+    if (!isPrivileged) {
+      quizQuestions = quizQuestions.map((q) => ({
+        ...q,
+        options: q.options.map((o) => ({ ...o, isCorrect: false })),
+      }));
+    }
+  }
+
+  return (
+    <div className="flex h-[calc(100vh-4rem)] overflow-hidden">
+      <CourseSidebar
+        modules={sidebarModules}
+        courseId={courseId}
+        currentLessonId={lessonId}
+        courseTitle={course.title}
+        completedLessonIds={completedIds}
+        percentComplete={percentComplete}
+        deadlineInfoMap={deadlineInfoMap}
+      />
+
+      <main className="flex flex-1 flex-col overflow-hidden">
+        <div className="flex-1 overflow-y-auto">
+        {/* Width scale per design-system §8.7: media (pdf/video) gets wider
+            reading column; text/markdown/quiz stays at max-w-3xl for comfortable
+            line length. */}
+        <div
+          className={`${
+            lessonType === "document" || lessonType === "video" || lessonType === "html"
+              ? "max-w-5xl"
+              : "max-w-3xl"
+          } mx-auto px-4 sm:px-6 py-8`}
+        >
+          <Breadcrumbs
+            items={[
+              { label: "Home", href: "/" },
+              { label: "Courses", href: "/courses" },
+              { label: course.title, href: `/courses/${courseId}` },
+              { label: lesson.title },
+            ]}
+          />
+
+          {/* Deadline warning banner */}
+          {showDeadlineBanner && currentDeadlineInfo && (
+            <div className={`mb-6 flex items-center gap-3 rounded-lg border px-5 py-4 ${
+              currentDeadlineInfo.status === "overdue"
+                ? "border-danger/30 bg-danger-subtle"
+                : "border-warning/30 bg-warning-subtle"
+            }`}>
+              {currentDeadlineInfo.status === "overdue" ? (
+                <AlertTriangleIcon className="h-5 w-5 flex-shrink-0 text-danger" />
+              ) : (
+                <ClockIcon className="h-5 w-5 flex-shrink-0 text-warning" />
+              )}
+              <p className={`text-sm font-medium ${
+                currentDeadlineInfo.status === "overdue"
+                  ? "text-danger"
+                  : "text-warning"
+              }`}>
+                {formatDeadlineRelative(new Date(currentDeadlineInfo.absoluteDeadline!))}
+              </p>
+            </div>
+          )}
+
+          {/* Course complete banner */}
+          {isCourseComplete && (
+            <div className="mb-6 flex items-center gap-3 rounded-lg border border-success/30 bg-success-subtle px-5 py-4">
+              <CheckCircleIcon className="h-5 w-5 flex-shrink-0 text-success" />
+              <div>
+                <p className="text-sm font-semibold text-success">
+                  Course complete!
+                </p>
+                <p className="mt-0.5 text-xs text-success/80">
+                  You&apos;ve finished all {totalLessons} lesson{totalLessons !== 1 ? "s" : ""} in this course.
+                </p>
+              </div>
+            </div>
+          )}
+
+          {isQuiz ? (
+            <>
+              <LessonTitleHeader
+                title={lesson.title}
+                type="quiz"
+                estimate={
+                  quizQuestions.length > 0
+                    ? `${quizQuestions.length} question${quizQuestions.length === 1 ? "" : "s"}`
+                    : null
+                }
+              />
+              <QuizViewer
+                questions={quizQuestions}
+                passingScore={quizPassingScore}
+                initialBestAttempt={quizBestAttempt}
+                courseId={courseId}
+                moduleId={lesson.moduleId}
+                lessonId={lessonId}
+                courseTitle={course.title}
+                nextLessonUrl={nextLessonUrl}
+              />
+              {isCurrentLessonCompleted && (
+                <div className="mt-6 flex items-center gap-3 rounded-lg border border-success/30 bg-success-subtle px-5 py-4">
+                  <CheckCircleIcon className="h-5 w-5 flex-shrink-0 text-success" />
+                  <p className="text-sm font-semibold text-success">
+                    Lesson complete — you passed this quiz.
+                  </p>
+                </div>
+              )}
+              {isPrivileged && (
+                <QuizBuilder
+                  initialQuestions={quizQuestions}
+                  passingScore={quizPassingScore}
+                  courseId={courseId}
+                  moduleId={lesson.moduleId}
+                  lessonId={lessonId}
+                />
+              )}
+            </>
+          ) : (
+            <LessonViewer
+              title={lesson.title}
+              type={lessonType}
+              content={lesson.content}
+              lessonId={lesson.id}
+            />
+          )}
+        </div>
+        </div>
+        <LessonFooter
+          courseId={courseId}
+          moduleId={lesson.moduleId}
+          lessonId={lessonId}
+          currentIndex={currentLessonIdx >= 0 ? currentLessonIdx + 1 : 1}
+          totalLessons={totalLessons}
+          percentComplete={percentComplete}
+          prevLessonUrl={prevLessonUrl}
+          nextLessonUrl={nextLessonUrl}
+          initialCompleted={isCurrentLessonCompleted}
+          courseTitle={course.title}
+          hideMarkComplete={isQuiz}
+        />
+      </main>
+    </div>
+  );
+}

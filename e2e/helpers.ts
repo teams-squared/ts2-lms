@@ -10,7 +10,7 @@ export async function login(page: Page, email: string, password: string) {
 }
 
 export const USERS = {
-  admin:    { email: "admin@teamssquared.com",    password: "admin123" },
-  manager:  { email: "manager@teamssquared.com",  password: "manager123" },
-  employee: { email: "employee@teamssquared.com", password: "employee123" },
+  admin:         { email: "admin@teamssquared.com",    password: "admin123" },
+  courseManager: { email: "manager@teamssquared.com",  password: "manager123" },
+  employee:      { email: "employee@teamssquared.com", password: "employee123" },
 };

@@ -1,0 +1,66 @@
+name: CI
+
+on:
+  push:
+    branches:
+      - dev
+  pull_request:
+    branches:
+      - main
+      - dev
+
+permissions:
+  contents: read
+  pull-requests: write
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  ci:
+    name: Lint · Type-check · Test · Build
+    runs-on: ubuntu-latest
+
+    steps:
+      # ── 1. Source ──────────────────────────────────────────────────────────
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      # ── 2. Runtime + dependency cache ─────────────────────────────────────
+      - name: Set up Node 22
+        uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+          cache: "npm"
+
+      # ── 3. Install ─────────────────────────────────────────────────────────
+      - name: Install dependencies
+        run: npm install
+
+      # ── 4. Generate Prisma client ──────────────────────────────────────────
+      - name: Generate Prisma client
+        run: npx prisma generate
+
+      # ── 5. Lint ────────────────────────────────────────────────────────────
+      - name: Lint
+        run: npm run lint
+
+      # ── 6. Type-check ──────────────────────────────────────────────────────
+      - name: Type-check
+        run: npx tsc --noEmit
+
+      # ── 7. Test ──────────────────────────────────────────────────────────
+      - name: Unit & Integration Tests
+        run: npm run test
+
+      # ── 8. Build ───────────────────────────────────────────────────────────
+      - name: Build
+        run: npm run build
+        env:
+          NEXTAUTH_URL: http://localhost:3000
+          AUTH_SECRET: ci-build-only-not-real
+          AZURE_AD_CLIENT_ID: ci-placeholder
+          AZURE_AD_CLIENT_SECRET: ci-placeholder
+          AZURE_AD_TENANT_ID: ci-placeholder
+          DATABASE_URL: postgresql://ci:ci@localhost:5432/ci

@@ -2,6 +2,10 @@ import { Suspense } from "react";
 import Logo from "@/components/Logo";
 import LoginForm from "@/components/auth/LoginForm";
 
+/**
+ * Login — the one place the brand gradient is used intentionally per
+ * design-system §8. The hairline gradient accent at the card top echoes it.
+ */
 export default function LoginPage() {
   const hasMicrosoftProvider = !!(
     process.env.AZURE_AD_CLIENT_ID &&
@@ -11,33 +15,47 @@ export default function LoginPage() {
   const isProduction = process.env.NODE_ENV === "production";
 
   return (
-    <div className="min-h-[calc(100vh-8rem)] flex items-center justify-center bg-brand-gradient px-4">
-      <div className="w-full max-w-md bg-white rounded-lg shadow-lg border border-gray-100 border-t-2 border-t-brand-500 p-6">
-        <div className="flex flex-col items-center mb-6">
-          <Logo size={36} showText />
-          <h1 className="mt-3 text-lg font-semibold text-gray-900">
-            Welcome back
-          </h1>
-          <p className="mt-0.5 text-sm text-gray-500">
-            Sign in to access documentation
-          </p>
-        </div>
+    <div className="bg-brand-gradient flex min-h-screen items-center justify-center px-4 py-12">
+      <div className="w-full max-w-sm">
+        <div className="overflow-hidden rounded-lg border border-border bg-card shadow-lg">
+          <div className="h-1 w-full bg-gradient-to-r from-primary via-primary-hover to-primary" />
 
-        <Suspense fallback={<div className="text-center text-sm text-gray-400">Loading...</div>}>
-          <LoginForm hasMicrosoftProvider={hasMicrosoftProvider} isProduction={isProduction} />
-        </Suspense>
+          <div className="p-7">
+            <div className="mb-7 flex flex-col items-center">
+              <Logo size={36} showText />
+              <h1 className="mt-4 text-lg font-semibold tracking-tight text-foreground">
+                Welcome back
+              </h1>
+              <p className="mt-1 text-sm text-foreground-muted">
+                Sign in to access your learning platform
+              </p>
+            </div>
 
-        {!hasMicrosoftProvider && !isProduction && (
-          <div className="mt-5 p-3 rounded-lg bg-blue-50 text-blue-700 text-xs">
-            <strong>Demo accounts:</strong>
-            <br />
-            admin@teamssquared.com / admin123
-            <br />
-            manager@teamssquared.com / manager123
-            <br />
-            employee@teamssquared.com / employee123
+            <Suspense
+              fallback={
+                <div className="py-4 text-center text-sm text-foreground-subtle">
+                  Loading…
+                </div>
+              }
+            >
+              <LoginForm
+                hasMicrosoftProvider={hasMicrosoftProvider}
+                isProduction={isProduction}
+              />
+            </Suspense>
+
+            {!hasMicrosoftProvider && !isProduction && (
+              <div className="mt-5 rounded-md border border-info/20 bg-info/10 p-3.5 text-xs leading-relaxed text-info">
+                <strong className="font-semibold">Demo accounts</strong>
+                <div className="mt-1.5 space-y-0.5 font-mono">
+                  <div>admin@teamssquared.com / admin123</div>
+                  <div>manager@teamssquared.com / manager123</div>
+                  <div>employee@teamssquared.com / employee123</div>
+                </div>
+              </div>
+            )}
           </div>
-        )}
+        </div>
       </div>
     </div>
   );

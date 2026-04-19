@@ -2,27 +2,38 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import { useSession } from "next-auth/react";
 
 const TABS = [
-  { label: "Overview", href: "/admin" },
-  { label: "Analytics", href: "/admin/analytics" },
+  { href: "/admin", label: "Overview", exact: true, adminOnly: false },
+  { href: "/admin/users", label: "Users", exact: false, adminOnly: true },
+  { href: "/admin/courses", label: "Courses", exact: false, adminOnly: false },
+  { href: "/admin/nodes", label: "Nodes", exact: false, adminOnly: false },
+  { href: "/admin/assignments", label: "Enrollments", exact: false, adminOnly: false },
+  { href: "/admin/analytics", label: "Analytics", exact: false, adminOnly: false },
 ];
 
-export default function AdminTabs() {
+export function AdminTabs() {
   const pathname = usePathname();
+  const { data: session } = useSession();
+  const isAdmin = session?.user?.role === "admin";
+  const visibleTabs = TABS.filter((t) => isAdmin || !t.adminOnly);
 
   return (
-    <nav className="flex gap-1 border-b border-gray-200 mb-6">
-      {TABS.map((tab) => {
-        const active = pathname === tab.href;
+    <nav className="flex gap-1 mb-6 border-b border-border">
+      {visibleTabs.map((tab) => {
+        const isActive = tab.exact
+          ? pathname === tab.href
+          : pathname.startsWith(tab.href);
+
         return (
           <Link
             key={tab.href}
             href={tab.href}
-            className={`px-4 py-2 text-sm font-medium rounded-t-md transition-colors ${
-              active
-                ? "text-brand-700 border-b-2 border-brand-600 bg-brand-50/50"
-                : "text-gray-500 hover:text-gray-700 hover:bg-gray-50"
+            className={`px-4 py-2.5 text-sm font-medium border-b-2 -mb-px transition-colors ${
+              isActive
+                ? "border-primary text-primary"
+                : "border-transparent text-foreground-muted hover:text-foreground"
             }`}
           >
             {tab.label}

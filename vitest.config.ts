@@ -8,18 +8,20 @@ export default defineConfig({
     environment: "happy-dom",
     globals: true,
     setupFiles: ["./src/__tests__/setup.ts"],
-    exclude: ["node_modules", "e2e/**", ".claude/**"],
-    env: {
-      SHAREPOINT_SITE_ID: "test-site-id-for-vitest",
-      SHAREPOINT_TENANT_ID: "test-tenant-id-for-vitest",
-      SHAREPOINT_CLIENT_ID: "test-client-id-for-vitest",
-      SHAREPOINT_CLIENT_SECRET: "test-client-secret-for-vitest",
-    },
+    exclude: ["node_modules", "e2e/**", ".claude/**", ".claire/**"],
     coverage: {
       provider: "v8",
-      reporter: ["text", "html"],
+      reporter: ["text", "html", "json-summary"],
       include: ["src/lib/**", "src/components/**"],
-      exclude: ["src/lib/graph-client.ts"],
+      exclude: ["src/lib/prisma.ts"],
+      thresholds: {
+        "src/lib/**": {
+          statements: 80,
+        },
+        "src/components/**": {
+          statements: 70,
+        },
+      },
     },
   },
   resolve: {

@@ -3,7 +3,12 @@
 import { signIn } from "next-auth/react";
 import { useState } from "react";
 import { useSearchParams } from "next/navigation";
-import { posthog } from "@/lib/posthog-client";
+import { Loader2 } from "lucide-react";
+
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Alert, AlertDescription } from "@/components/ui/alert";
 
 export default function LoginForm({
   hasMicrosoftProvider,
@@ -17,7 +22,7 @@ export default function LoginForm({
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
   const searchParams = useSearchParams();
-  const callbackUrl = searchParams.get("callbackUrl") || "/docs";
+  const callbackUrl = searchParams.get("callbackUrl") || "/";
 
   const handleCredentialLogin = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -35,38 +40,41 @@ export default function LoginForm({
       setError("Invalid email or password");
       setLoading(false);
     } else if (result?.url) {
-      posthog.capture("user_logged_in", { method: "credentials" });
       window.location.href = result.url;
     }
   };
 
   return (
-    <div className="space-y-6">
-      {/* Microsoft sign-in */}
+    <div className="space-y-5">
+      {/* Microsoft SSO */}
       {hasMicrosoftProvider && (
         <>
-          <button
-            onClick={() =>
-              signIn("microsoft-entra-id", { callbackUrl })
-            }
-            className="w-full flex items-center justify-center gap-3 px-4 py-3 rounded-lg bg-brand-600 text-white font-medium hover:bg-brand-700 transition-colors"
+          <Button
+            type="button"
+            onClick={() => signIn("microsoft-entra-id", { callbackUrl })}
+            className="w-full"
           >
-            <svg className="w-5 h-5" viewBox="0 0 23 23" fill="none">
+            <svg
+              className="h-4 w-4 shrink-0"
+              viewBox="0 0 23 23"
+              fill="none"
+              aria-hidden="true"
+            >
               <path d="M0 0h11v11H0z" fill="#f25022" />
               <path d="M12 0h11v11H12z" fill="#7fba00" />
               <path d="M0 12h11v11H0z" fill="#00a4ef" />
               <path d="M12 12h11v11H12z" fill="#ffb900" />
             </svg>
             Sign in with Microsoft
-          </button>
+          </Button>
 
           {!isProduction && (
             <div className="relative">
               <div className="absolute inset-0 flex items-center">
-                <div className="w-full border-t border-gray-200" />
+                <div className="w-full border-t border-border" />
               </div>
-              <div className="relative flex justify-center text-sm">
-                <span className="px-2 bg-white text-gray-400">
+              <div className="relative flex justify-center text-xs">
+                <span className="bg-card px-3 text-foreground-subtle">
                   or sign in with email
                 </span>
               </div>
@@ -77,57 +85,55 @@ export default function LoginForm({
 
       {/* Credentials form — dev only */}
       {!isProduction && (
-      <form onSubmit={handleCredentialLogin} className="space-y-4">
-        {error && (
-          <div className="p-3 rounded-lg bg-red-50 text-red-600 text-sm">
-            {error}
+        <form onSubmit={handleCredentialLogin} className="space-y-4">
+          {error && (
+            <Alert variant="destructive">
+              <AlertDescription>{error}</AlertDescription>
+            </Alert>
+          )}
+
+          <div className="space-y-1.5">
+            <Label htmlFor="email">Email</Label>
+            <Input
+              id="email"
+              type="email"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              required
+              placeholder="you@teamssquared.com"
+              autoComplete="email"
+            />
           </div>
-        )}
 
-        <div>
-          <label
-            htmlFor="email"
-            className="block text-sm font-medium text-gray-700 mb-1"
+          <div className="space-y-1.5">
+            <Label htmlFor="password">Password</Label>
+            <Input
+              id="password"
+              type="password"
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              required
+              placeholder="Enter your password"
+              autoComplete="current-password"
+            />
+          </div>
+
+          <Button
+            type="submit"
+            variant="secondary"
+            disabled={loading}
+            className="w-full"
           >
-            Email
-          </label>
-          <input
-            id="email"
-            type="email"
-            value={email}
-            onChange={(e) => setEmail(e.target.value)}
-            required
-            className="w-full px-4 py-2.5 rounded-lg border border-gray-200 text-sm focus:outline-none focus:ring-2 focus:ring-brand-500 focus:border-transparent transition-shadow"
-            placeholder="you@teamssquared.com"
-          />
-        </div>
-
-        <div>
-          <label
-            htmlFor="password"
-            className="block text-sm font-medium text-gray-700 mb-1"
-          >
-            Password
-          </label>
-          <input
-            id="password"
-            type="password"
-            value={password}
-            onChange={(e) => setPassword(e.target.value)}
-            required
-            className="w-full px-4 py-2.5 rounded-lg border border-gray-200 text-sm focus:outline-none focus:ring-2 focus:ring-brand-500 focus:border-transparent transition-shadow"
-            placeholder="Enter your password"
-          />
-        </div>
-
-        <button
-          type="submit"
-          disabled={loading}
-          className="w-full px-4 py-2.5 rounded-lg bg-gray-900 text-white text-sm font-medium hover:bg-gray-800 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
-        >
-          {loading ? "Signing in..." : "Sign In"}
-        </button>
-      </form>
+            {loading ? (
+              <>
+                <Loader2 className="h-4 w-4 animate-spin" aria-hidden="true" />
+                Signing in…
+              </>
+            ) : (
+              "Sign In"
+            )}
+          </Button>
+        </form>
       )}
     </div>
   );

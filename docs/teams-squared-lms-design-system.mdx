@@ -1,0 +1,1086 @@
+---
+title: Teams Squared LMS — Design System & Implementation Guide
+audience: Claude Code
+purpose: Reference document for the full visual revamp of the Teams Squared LMS. Migrate from current component set to shadcn/ui with Teams Squared brand tokens. Serves as the single source of truth for all visual and component decisions.
+stack: Next.js 14+ (App Router) · Tailwind CSS v4 · shadcn/ui · Radix UI · TypeScript
+modes: Light and dark, both supported from day one
+---
+
+# Teams Squared LMS — Design System
+
+This document is the authoritative reference for the Teams Squared LMS visual revamp. When making any UI change, check this document first. When in doubt, follow the principle in [Section 1](#1-design-thesis) and the rules in [Section 8](#8-component-rules).
+
+> **How to use this document:** Read Section 1 to understand intent. Use Sections 2–7 as token and style references. Use Section 8 as prescriptive component rules. Use Section 10 as a migration checklist.
+
+---
+
+## 1. Design thesis
+
+**Teams Squared LMS treats the brand purple as a signal color, not a wallpaper. Surfaces stay neutral so lessons can breathe. Purple marks what the learner should act on next.**
+
+Three rules derive from this:
+
+1. **Bold where it counts, quiet everywhere else.** Saturated brand purple (`#5006E3`) is used for: primary CTAs, active navigation states, progress fills, focus rings, key status badges. It is NOT used for: card backgrounds, hero washes, body text at scale, decorative elements.
+
+2. **Solids over gradients in product UI.** Gradients are reserved for specific "moments" (login splash, completion celebration, certificate). Everywhere else uses solid color.
+
+3. **One primary action per view.** If the page has a primary purple button, no other purple filled button appears in the same logical group. Secondary actions use outline or ghost styles.
+
+When a visual decision conflicts with one of these rules, the decision is wrong. Re-approach it.
+
+---
+
+## 2. Brand foundation
+
+### Logo & wordmark
+- Primary brand color as sampled from official assets: `#5006E3`
+- Logo asset location: `/public/brand/teams-squared-logo.svg` (expected location)
+- Minimum logo width: 120px
+- Logo clearspace: equal to the height of the "t" in "teams"
+- Never recolor the logo. Never apply effects (shadow, glow, outline) to the logo.
+
+### Brand gradient (use sparingly — see Section 8.10)
+The brand "spotlight" gradient, sampled from the official wallpaper assets:
+
+```css
+/* Horizontal spotlight gradient */
+background: linear-gradient(
+  90deg,
+  #6019E1 0%,
+  #8650E6 15%,
+  #B391F0 30%,
+  #E2CEF3 45%,
+  #FDFDFD 50%,
+  #E2CEF3 55%,
+  #B391F0 70%,
+  #8650E6 85%,
+  #6019E1 100%
+);
+```
+
+A softer radial variant for subtle brand atmospherics:
+
+```css
+background: radial-gradient(
+  ellipse at center,
+  rgba(80, 6, 227, 0) 0%,
+  rgba(80, 6, 227, 0.06) 40%,
+  rgba(80, 6, 227, 0.12) 100%
+);
+```
+
+---
+
+## 3. Color system
+
+All colors defined in OKLCH for perceptual consistency across light and dark modes (Tailwind v4 convention). Hex equivalents provided for reference.
+
+### 3.1 Light mode tokens
+
+Add these to `app/globals.css` under `:root`:
+
+```css
+:root {
+  /* Surfaces */
+  --background: oklch(1 0 0);                    /* #FFFFFF */
+  --surface: oklch(0.98 0 0);                    /* #FAFAFA — raised cards */
+  --surface-muted: oklch(0.97 0.013 296);        /* #F5F3FF — brand-tinted surface, selected states */
+  --surface-inverse: oklch(0.13 0.017 281);      /* #14141F — for inverse panels */
+
+  /* Borders */
+  --border: oklch(0.92 0 0);                     /* #E5E7EB */
+  --border-strong: oklch(0.85 0 0);              /* #D1D5DB — inputs, strong dividers */
+
+  /* Text */
+  --foreground: oklch(0.13 0.013 286);           /* #0F0F14 */
+  --foreground-muted: oklch(0.41 0.017 262);     /* #4B5563 */
+  --foreground-subtle: oklch(0.52 0.017 262);    /* #6B7280 */
+
+  /* Primary (brand) */
+  --primary: oklch(0.42 0.28 285);               /* #5006E3 */
+  --primary-hover: oklch(0.36 0.27 285);         /* #4008C8 */
+  --primary-active: oklch(0.30 0.25 285);        /* #3607AA */
+  --primary-foreground: oklch(1 0 0);            /* #FFFFFF */
+  --primary-subtle: oklch(0.97 0.013 296);       /* #F5F3FF — brand-tinted bg */
+  --primary-subtle-foreground: oklch(0.36 0.27 285); /* #4008C8 — text on subtle brand */
+
+  /* Semantic */
+  --success: oklch(0.58 0.17 150);               /* #16A34A */
+  --success-foreground: oklch(1 0 0);
+  --success-subtle: oklch(0.95 0.06 150);        /* #DCFCE7 */
+  --warning: oklch(0.63 0.17 50);                /* #D97706 */
+  --warning-foreground: oklch(1 0 0);
+  --warning-subtle: oklch(0.96 0.05 80);         /* #FEF3C7 */
+  --danger: oklch(0.55 0.22 25);                 /* #DC2626 */
+  --danger-foreground: oklch(1 0 0);
+  --danger-subtle: oklch(0.95 0.04 20);          /* #FEE2E2 */
+  --info: oklch(0.67 0.15 230);                  /* #0EA5E9 */
+  --info-foreground: oklch(1 0 0);
+
+  /* Focus ring */
+  --ring: oklch(0.42 0.28 285 / 0.4);            /* #5006E3 @ 40% alpha */
+
+  /* Radii */
+  --radius-sm: 6px;
+  --radius-md: 10px;
+  --radius-lg: 14px;
+  --radius-xl: 20px;
+  --radius-full: 9999px;
+}
+```
+
+### 3.2 Dark mode tokens
+
+**Critical:** `#5006E3` at 2.31:1 contrast on a dark background FAILS WCAG. Dark mode MUST use a lightened brand variant. This is non-negotiable.
+
+```css
+.dark {
+  /* Surfaces */
+  --background: oklch(0.13 0.017 281);           /* #0B0B14 — near-black, slight violet cast */
+  --surface: oklch(0.17 0.017 281);              /* #14141F — raised */
+  --surface-muted: oklch(0.22 0.06 285);         /* #1F1B3A — brand-tinted dark */
+  --surface-inverse: oklch(0.98 0 0);
+
+  /* Borders */
+  --border: oklch(0.26 0.013 281);               /* #2A2A38 */
+  --border-strong: oklch(0.34 0.013 281);        /* #3A3A48 */
+
+  /* Text */
+  --foreground: oklch(0.96 0 0);                 /* #F5F5F7 */
+  --foreground-muted: oklch(0.71 0 0);           /* #A1A1AA */
+  --foreground-subtle: oklch(0.55 0 0);          /* #71717A */
+
+  /* Primary (lightened for dark mode contrast) */
+  --primary: oklch(0.65 0.22 290);               /* #8B5CF6 */
+  --primary-hover: oklch(0.72 0.20 290);         /* #A78BFA */
+  --primary-active: oklch(0.78 0.17 290);        /* #C4B5FD */
+  --primary-foreground: oklch(0.13 0.017 281);   /* #0B0B14 — dark text on lighter brand */
+  --primary-subtle: oklch(0.22 0.06 285);        /* #1F1B3A */
+  --primary-subtle-foreground: oklch(0.78 0.17 290); /* #C4B5FD */
+
+  /* Semantic (adjusted for dark) */
+  --success: oklch(0.70 0.17 150);               /* #4ADE80 */
+  --success-subtle: oklch(0.25 0.08 150);
+  --warning: oklch(0.75 0.15 80);                /* #FBBF24 */
+  --warning-subtle: oklch(0.25 0.08 80);
+  --danger: oklch(0.65 0.20 25);                 /* #F87171 */
+  --danger-subtle: oklch(0.25 0.10 25);
+  --info: oklch(0.72 0.14 230);                  /* #38BDF8 */
+
+  /* Focus ring */
+  --ring: oklch(0.65 0.22 290 / 0.5);
+}
+```
+
+### 3.3 Tailwind binding
+
+In `app/globals.css`, bind the tokens to Tailwind utilities:
+
+```css
+@theme inline {
+  --color-background: var(--background);
+  --color-surface: var(--surface);
+  --color-surface-muted: var(--surface-muted);
+  --color-border: var(--border);
+  --color-border-strong: var(--border-strong);
+  --color-foreground: var(--foreground);
+  --color-foreground-muted: var(--foreground-muted);
+  --color-foreground-subtle: var(--foreground-subtle);
+  --color-primary: var(--primary);
+  --color-primary-hover: var(--primary-hover);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-primary-subtle: var(--primary-subtle);
+  --color-primary-subtle-foreground: var(--primary-subtle-foreground);
+  --color-success: var(--success);
+  --color-success-foreground: var(--success-foreground);
+  --color-success-subtle: var(--success-subtle);
+  --color-warning: var(--warning);
+  --color-warning-subtle: var(--warning-subtle);
+  --color-danger: var(--danger);
+  --color-danger-foreground: var(--danger-foreground);
+  --color-danger-subtle: var(--danger-subtle);
+  --color-info: var(--info);
+  --color-ring: var(--ring);
+
+  --radius-sm: var(--radius-sm);
+  --radius-md: var(--radius-md);
+  --radius-lg: var(--radius-lg);
+  --radius-xl: var(--radius-xl);
+}
+```
+
+### 3.4 Color usage rules
+
+| Use case | Token | Example class |
+|---|---|---|
+| Page background | `--background` | `bg-background` |
+| Card surface | `--surface` | `bg-surface` |
+| Selected nav item, subtle brand tint | `--surface-muted` / `--primary-subtle` | `bg-primary-subtle` |
+| Primary button fill | `--primary` | `bg-primary text-primary-foreground` |
+| Primary text on white (links, active labels) | `--primary` | `text-primary` |
+| Body text | `--foreground` | `text-foreground` |
+| Secondary text, meta | `--foreground-muted` | `text-foreground-muted` |
+| Captions, timestamps | `--foreground-subtle` | `text-foreground-subtle` |
+| Default border | `--border` | `border-border` |
+| Input border, strong divider | `--border-strong` | `border-border-strong` |
+| Focus ring | `--ring` | `ring-ring` |
+
+**Forbidden:**
+- `bg-[#5006E3]` or any hardcoded hex. Always use tokens.
+- `bg-purple-600`, `text-indigo-500`, or any Tailwind default color. Always use semantic tokens.
+- `bg-gradient-to-r from-purple-500 to-pink-500` or any gradient in product UI unless explicitly allowed in Section 8.10.
+- Opacity-based dimming of brand color as a "hover" state. Use `--primary-hover` token.
+
+**Dark-mode subtle parity:** Light-mode `-subtle` fills use low-chroma pastels with plenty of headroom. Mirror that headroom in dark mode by keeping chroma low (`≤ 0.08`) and lightness around `0.22`. An over-saturated dark-mode subtle (e.g., `oklch(0.25 0.10 25)`) reads as a colored wall rather than a quiet tint — the light/dark flavors must feel like the same family, only lit differently. When tuning a `*-subtle` token, check it against its partner by eye, not just by name.
+
+---
+
+## 4. Typography
+
+### 4.1 Font families
+
+```css
+/* app/layout.tsx or globals.css */
+--font-sans: 'Inter', ui-sans-serif, system-ui, -apple-system, sans-serif;
+--font-display: 'Plus Jakarta Sans', 'Inter', ui-sans-serif, system-ui, sans-serif;
+```
+
+- **Body / UI:** Inter (variable font). Load via `next/font/google`.
+- **Display / Headings:** Plus Jakarta Sans — closer to the Teams Squared wordmark's geometric feel. Use for `h1`, `h2`, marketing hero text, course card titles.
+- **Wordmark:** Used only in the actual logo file. Do not attempt to match in UI text.
+
+```tsx
+// app/layout.tsx
+import { Inter, Plus_Jakarta_Sans } from 'next/font/google';
+
+const inter = Inter({ subsets: ['latin'], variable: '--font-sans' });
+const jakarta = Plus_Jakarta_Sans({
+  subsets: ['latin'],
+  variable: '--font-display',
+  weight: ['500', '600', '700'],
+});
+```
+
+### 4.2 Type scale
+
+Based on a 1.25 ratio, rounded for pixel-hinting:
+
+| Token | Size | Line height | Use |
+|---|---|---|---|
+| `text-xs` | 12px | 1.5 | Captions, badges, timestamps |
+| `text-sm` | 14px | 1.5 | Meta, secondary UI text |
+| `text-base` | 16px | 1.6 | Default body |
+| `text-lg` | 18px | 1.6 | Lesson reading body, emphasized body |
+| `text-xl` | 20px | 1.5 | Card titles, small headings |
+| `text-2xl` | 24px | 1.4 | h3, section headings |
+| `text-3xl` | 30px | 1.3 | h2 |
+| `text-4xl` | 36px | 1.2 | h1 |
+| `text-5xl` | 48px | 1.1 | Display, hero |
+
+### 4.3 Typography rules
+
+- **Lesson reading content:** 17–18px, line-height 1.7. Learners spend long sessions reading; density hurts retention.
+- **Headings use `font-display` (Jakarta), body uses `font-sans` (Inter).**
+- **Weights used:** 400 (body), 500 (UI labels, emphasis), 600 (headings, button text), 700 (hero display only). No 300 or 900.
+- **Never use `italic` for emphasis in UI text.** Italic is reserved for quotations and book/course titles in prose.
+- **Line length:** Reading content caps at ~70 characters (`max-w-[65ch]`). UI text caps at whatever fits the container.
+- **No all-caps except in badges, small labels (≤12px), and the 'squared' wordmark style.**
+
+---
+
+## 5. Spacing
+
+Tailwind's default spacing scale, with a curated subset used throughout:
+
+**Allowed values:** `0, 1, 2, 3, 4, 5, 6, 8, 10, 12, 16, 20, 24` (i.e., 0, 4px, 8px, 12px, 16px, 20px, 24px, 32px, 40px, 48px, 64px, 80px, 96px).
+
+**Forbidden:** Arbitrary values like `p-[13px]`, `gap-[22px]`. If a spec calls for something off-scale, use the nearest valid token.
+
+### 5.1 Spacing conventions
+
+| Context | Value |
+|---|---|
+| Card internal padding | 16px (`p-4`) or 24px (`p-6`) for feature cards |
+| Modal padding | 24px (`p-6`) |
+| Button padding (md) | 10px 16px (`px-4 py-2.5`) |
+| Input padding | 10px 12px (`px-3 py-2.5`) |
+| Section gap (dashboard) | 32px (`gap-8`) |
+| Page gutter (desktop) | 32px (`px-8`) |
+| Page gutter (mobile) | 16px (`px-4`) |
+| Sidebar width (expanded) | 264px |
+| Sidebar width (collapsed) | 64px |
+| Top bar height | 64px |
+
+---
+
+## 6. Radii
+
+| Token | Value | Use |
+|---|---|---|
+| `rounded-sm` | 6px | Inputs, chips, small controls |
+| `rounded-md` | 10px | Buttons, small cards |
+| `rounded-lg` | 14px | Cards, modals, dropdowns |
+| `rounded-xl` | 20px | Feature cards, hero panels |
+| `rounded-full` | 9999px | Avatars, pill badges, progress bars |
+
+**Rule:** Never mix three or more radii on the same visual tier. A card at `rounded-lg` contains buttons at `rounded-md` and inputs at `rounded-sm`. That's consistent. A card at `rounded-xl` with buttons at `rounded-sm` is not.
+
+---
+
+## 7. Elevation (shadows)
+
+### 7.1 Light mode
+
+```css
+--shadow-sm: 0 1px 2px rgb(15 15 20 / 0.04);
+--shadow-md: 0 4px 12px rgb(15 15 20 / 0.06), 0 2px 4px rgb(15 15 20 / 0.04);
+--shadow-lg: 0 20px 40px rgb(15 15 20 / 0.10), 0 8px 16px rgb(15 15 20 / 0.06);
+--shadow-xl: 0 32px 64px rgb(15 15 20 / 0.14), 0 16px 24px rgb(15 15 20 / 0.08);
+```
+
+### 7.2 Dark mode
+
+Shadows are nearly invisible on dark backgrounds. Rely on borders and subtle surface elevation (lighter backgrounds for raised elements) instead of heavy shadows.
+
+```css
+.dark {
+  --shadow-sm: 0 1px 2px rgb(0 0 0 / 0.4);
+  --shadow-md: 0 4px 12px rgb(0 0 0 / 0.5), 0 2px 4px rgb(0 0 0 / 0.3);
+  --shadow-lg: 0 20px 40px rgb(0 0 0 / 0.6), 0 8px 16px rgb(0 0 0 / 0.4);
+}
+```
+
+### 7.3 Usage
+
+| Level | Use |
+|---|---|
+| `shadow-sm` | Inputs at rest, subtle card lift |
+| `shadow-md` | Course cards on hover, dropdowns, popovers |
+| `shadow-lg` | Modals, dialogs |
+| `shadow-xl` | Command palette, full-screen overlays |
+
+---
+
+## 8. Component rules
+
+### 8.1 Buttons
+
+**Three variants only.** If a fourth is needed, revisit the design instead of adding a variant.
+
+| Variant | Appearance | Use |
+|---|---|---|
+| `primary` | `bg-primary text-primary-foreground` | Main CTA, one per logical group |
+| `secondary` | `bg-background border border-border-strong text-foreground` | Secondary actions, alternatives to primary |
+| `ghost` | `bg-transparent text-foreground hover:bg-surface-muted` | Tertiary actions, toolbar buttons |
+| `destructive` | `bg-danger text-danger-foreground` | Delete, unenroll, irreversible actions |
+
+**Sizes:**
+
+| Size | Height | Padding | Use |
+|---|---|---|---|
+| `sm` | 32px | `px-3 py-1.5` | Table row actions, inline actions |
+| `md` (default) | 40px | `px-4 py-2.5` | Standard |
+| `lg` | 48px | `px-6 py-3` | Hero CTAs, landing, sign-up |
+
+**States (required for every button):**
+
+- `default` — as specified above
+- `hover` — `bg-primary-hover` (primary), `bg-surface-muted` (ghost), border shifts to `--border-strong` (secondary)
+- `active`/`pressed` — `bg-primary-active`, or translate-y-[1px] for tactile feel
+- `focus-visible` — `ring-2 ring-ring ring-offset-2 ring-offset-background`
+- `disabled` — `opacity-50 cursor-not-allowed`, no hover effects
+- `loading` — spinner replaces text via `<Spinner />`, button maintains original width (use `min-w-*` or opacity trick on text)
+
+**Minimum hit area:** 40×40px for all interactive buttons, per WCAG 2.5.5.
+
+**Icon-only buttons** MUST have `aria-label`:
+```tsx
+<Button size="icon" aria-label="Open course menu">
+  <Menu className="h-4 w-4" />
+</Button>
+```
+
+### 8.2 Cards (course cards, lesson cards)
+
+**Anatomy:**
+```
+┌──────────────────────────┐
+│  [16:9 thumbnail]        │
+├──────────────────────────┤
+│  Category badge          │
+│                          │
+│  Course Title (2 lines)  │
+│  Short description...    │
+│                          │
+│  6 modules · 2h 30m      │
+│  ━━━━━━━━━━━░░░░  65%    │
+└──────────────────────────┘
+```
+
+**Specs:**
+- `bg-surface border border-border rounded-lg shadow-sm overflow-hidden`
+- Thumbnail: `aspect-video` (16:9), object-cover
+- Content padding: `p-4` (16px)
+- Title: `text-lg font-semibold font-display line-clamp-2`
+- Meta row: `text-sm text-foreground-muted flex items-center gap-3`
+- Progress bar (if enrolled): Full width, 6px tall, `rounded-full`, track `bg-border`, fill `bg-primary`
+
+**Hover:**
+```css
+transition: all 150ms ease-out;
+&:hover {
+  border-color: var(--border-strong);
+  box-shadow: var(--shadow-md);
+  transform: translateY(-2px);
+}
+```
+
+**Accessibility:** The entire card must be a single clickable region — wrap in `<Link>` or `<button>`. Do NOT nest multiple tap targets (e.g., a "Bookmark" button inside a clickable card). If a secondary action is needed, place it OUTSIDE the card or use a separate detail page.
+
+#### 8.2.1 Course thumbnails
+
+All course thumbnails — catalog grid, dashboard rail, "you might also like" rows — go through the shared `<CourseThumbnail />` component. One component, one visual.
+
+**With image:**
+- 16:9 aspect ratio (`aspect-video`), `object-cover`
+- Locked courses render the image at `grayscale` to cue state without extra chrome
+
+**Without image (empty / fallback):**
+- `bg-primary-subtle` fill
+- Centered icon (`GraduationCap`, `h-9 w-9`) tinted `text-primary-subtle-foreground`
+- Course title underneath, `text-sm font-medium text-primary`, `line-clamp-2`
+- No gradients, no patterns — brand tint only. This is the one place the brand family shows up on cards.
+
+**Do NOT** render a bespoke thumbnail inline. Always import `CourseThumbnail` from `@/components/courses/CourseThumbnail`. Changing the empty state in one place must change it everywhere.
+
+The `bg-primary-subtle` container is applied in **both** cases — when a real image exists and when the fallback icon is shown. A course with a real thumbnail renders the image using `object-contain` with padding (`p-6`), centred within the tinted frame. This ensures visual consistency across cards regardless of whether individual courses have thumbnails assigned.
+
+**Never** render a raw image on a white background within a card. The tinted frame is the constant. Using `object-cover` without padding can allow images with white or transparent backgrounds to fill the tile and obscure the tinted frame — defeating the consistency goal.
+
+### 8.3 Modals / Dialogs
+
+Use shadcn/ui `Dialog` (Radix primitive) as the base.
+
+**Specs:**
+- Backdrop: `bg-foreground/50 backdrop-blur-sm` (light), `bg-black/70 backdrop-blur-sm` (dark)
+- Content: `max-w-lg` default, `bg-background border border-border rounded-lg shadow-lg p-6`
+- Enter animation: fade + scale from `0.96` to `1`, 180ms ease-out
+- Exit animation: 120ms ease-in
+
+**Anatomy:**
+```
+┌──────────────────────────────┐
+│  Title                    ✕  │  ← DialogHeader
+│  Optional description        │
+├──────────────────────────────┤
+│                              │
+│  [Body content]              │  ← DialogBody
+│                              │
+├──────────────────────────────┤
+│         [Cancel] [Confirm]   │  ← DialogFooter, right-aligned
+└──────────────────────────────┘
+```
+
+**Behavior:**
+- Focus trap enabled (Radix handles this)
+- Escape closes (except during multi-step flows or destructive actions mid-input)
+- Click outside closes (same exception)
+- Return focus to trigger element on close
+- Do NOT nest modals. For multi-step flows, use a stepper pattern inside a single modal.
+
+**Destructive actions (e.g., "Delete course", "Unenroll"):**
+- Use `AlertDialog` (not `Dialog`) — confirm required before close
+- Primary action button uses `variant="destructive"`
+- Cancel is always the default focus target
+
+### 8.4 Forms & inputs
+
+**Input specs:**
+- Height: 40px
+- Padding: `px-3 py-2.5`
+- Border: `border border-border-strong rounded-sm`
+- Focus: `focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:border-primary`
+- Placeholder: `placeholder:text-foreground-subtle`
+- Background: `bg-background`
+
+**Label placement:**
+```tsx
+<div className="space-y-1.5">
+  <Label htmlFor="email">Email address</Label>
+  <Input id="email" type="email" />
+  <p className="text-sm text-foreground-muted">We'll never share your email.</p>
+</div>
+```
+
+**Rules:**
+- Labels are ALWAYS visible above the input. Never use placeholder text as a label.
+- Every input has an associated `<Label htmlFor>`.
+- Required fields marked with a visible indicator (asterisk + `aria-required`), not color alone.
+
+**Error state:**
+- Border shifts to `border-danger`
+- Helper text below shows error message in `text-danger`
+- Include an error icon (e.g., `<AlertCircle>`) — never rely on color alone
+- Associate error with input via `aria-describedby={errorId}` and `aria-invalid="true"`
+
+```tsx
+<Input
+  id="email"
+  aria-invalid={!!error}
+  aria-describedby={error ? 'email-error' : undefined}
+  className={cn(error && 'border-danger focus-visible:border-danger')}
+/>
+{error && (
+  <p id="email-error" className="flex items-center gap-1.5 text-sm text-danger">
+    <AlertCircle className="h-4 w-4" /> {error}
+  </p>
+)}
+```
+
+### 8.5 Progress indicators
+
+**Course/module progress bar:**
+- Height scale (pick by context):
+  - `h-1` (4px) — meta rows inside sidebars and sticky footers
+  - `h-1.5` (6px) — compact cards (course rail, course grid)
+  - `h-2` (8px) — prominent placements (dashboard hero, XP bar)
+- `rounded-full`, track `bg-border`, fill `bg-primary`
+- **Fill is ALWAYS a solid `bg-primary` — gradients are banned on progress bars.** No `bg-gradient-to-r`, no amber/emerald shifts, no shimmer overlays. Brand as signal, not fireworks.
+- Smooth transition on value change: `transition-[width] duration-[400ms] ease-out` — animate only `width`, not `all`, so color/opacity changes stay instant
+- Include `role="progressbar"`, `aria-valuenow`, `aria-valuemin`, `aria-valuemax`, `aria-label`
+- Render values as rounded integers at display sites (`Math.round(value)`). Stored percentages may be fractional; displayed percentages never are — `66.7%` feels computational, `67%` feels human.
+
+**Completion checkmark:**
+- Circular, `bg-success` fill, white checkmark icon
+- Size: 20px (inline), 32px (prominent), 48px (celebratory)
+
+**Quiz/assessment segmented meter:**
+- Segmented pills: earned = `bg-primary`, unearned = `bg-border`
+- 4–10 segments typical; use linear bar if more
+
+### 8.6 Navigation
+
+**Left sidebar (primary nav):**
+- Width: 264px expanded, 64px collapsed
+- Background: `bg-surface`, border-right `border-border`
+- Items: 40px tall, `px-3 py-2 rounded-md`
+- Default state: `text-foreground-muted`
+- Hover: `bg-surface-muted text-foreground`
+- **Active state:**
+  - `bg-primary-subtle text-primary font-medium`
+  - 3px `bg-primary` accent bar on the left edge (use `before:` pseudo-element or a dedicated span)
+- Icons: 20px, inherit text color
+
+```tsx
+<Link
+  href="/courses"
+  className={cn(
+    'relative flex items-center gap-3 px-3 py-2 rounded-md text-foreground-muted hover:bg-surface-muted hover:text-foreground transition-colors',
+    isActive && 'bg-primary-subtle text-primary font-medium before:absolute before:left-0 before:top-1/2 before:-translate-y-1/2 before:h-6 before:w-[3px] before:bg-primary before:rounded-r'
+  )}
+>
+  <BookOpen className="h-5 w-5" />
+  <span>My Courses</span>
+</Link>
+```
+
+**Top bar:**
+- 64px tall, `bg-background border-b border-border`
+- Contents: logo (far left, only when sidebar collapsed), search (center, `max-w-[480px]`), notifications bell + profile menu (right)
+- Sticky on scroll
+- Search input uses `border-border-strong` (not `border-border`) — in dark mode the softer border disappears against `bg-background`, so progress-rail weight wins over default card borders for input chrome.
+- **Slim mode** (`<TopBar slim />`): used on lesson-player routes. Hides the search input so the lesson body dominates; notifications + theme toggle + profile menu remain. The shell detects `/courses/[id]/lessons/[lessonId]` and sets the flag automatically.
+
+**Sidebar collapse button:**
+- Lives pinned to the bottom of the sidebar, separated by `border-t border-border`.
+- Container uses `px-2 pt-2 pb-3` — the extra bottom padding keeps the toggle off the viewport edge so a focus ring never gets clipped by the window chrome.
+
+**Breadcrumbs:**
+- Used on pages 2+ levels deep (course → module → lesson)
+- `text-sm text-foreground-muted`, active item `text-foreground`
+- Separator: chevron-right icon, NOT slash
+
+### 8.7 Lesson player page (the most important screen)
+
+This is the learner's primary surface. Follow these rules strictly.
+
+**Layout:**
+```
+┌─────────────────────────────────────────────────┐
+│  Top bar (64px)                                 │
+├────────────┬─────────────────────────┬──────────┤
+│            │                         │          │
+│  Module    │   Lesson content        │  Notes/  │
+│  outline   │   (max 760px wide,      │  transcript│
+│  (280px)   │    centered)            │  (320px) │
+│            │                         │  optional│
+│            │                         │          │
+├────────────┴─────────────────────────┴──────────┤
+│  Sticky bottom bar: [← Prev]  progress  [Next →]│
+└─────────────────────────────────────────────────┘
+```
+
+**Rules:**
+- Content column max-width varies by lesson type (reading comfort ≠ media framing):
+  - **Text / markdown**: `max-w-3xl` (~768px). Long prose needs a short measure.
+  - **Quiz**: `max-w-3xl`. Match the text width so users aren't reaching across the screen to click an option.
+  - **Document (PDF) / Video**: `max-w-5xl` (~1024px). Media is its own figure; give it room.
+- Left rail: collapsible module outline. Current lesson highlighted with `bg-primary-subtle` and left accent bar.
+- Right rail: optional (notes, transcript, resources). Hidden by default on tablet, always hidden on mobile.
+- NO sidebar gradients, NO brand wallpaper, NO decorative motion in this view. Content is the figure.
+
+#### 8.7.1 Sticky lesson footer
+
+> **This bar MUST be implemented as a `position: sticky` element anchored at `bottom-0` within the lesson page's scroll container, NOT as inline content at the end of the lesson body. The learner must always see the footer regardless of scroll position.**
+
+The persistent bottom strip is the player's command surface — it travels with the user through every lesson, so its shape must be predictable.
+
+- 64px tall, `sticky bottom-0 z-30`, `bg-background border-t border-border`, `px-4 sm:px-6`
+- **Left:** "Previous" ghost link — `ChevronLeft` + label. Renders as a hidden-sm text + visible icon on mobile. Disabled (empty spacer) on the first lesson.
+- **Center:** position + course progress.
+  - Line 1: `Lesson N of M`, `text-xs tabular-nums text-foreground-muted`
+  - Line 2: 4px solid-primary progress bar, `max-w-[320px]`, with `role="progressbar"` and full aria-value wiring. Fill animates `width 400ms ease-out`.
+- **Right:** Mark-complete button + Next link.
+  - "Mark complete" is a primary button (`bg-primary`). Clicking it flips optimistically to the completed state (`CheckCircleIcon` + "Completed" in `text-success`), fires `POST /api/courses/:id/modules/:m/lessons/:l/complete`, and calls `router.refresh()` so the sidebar, course progress, and dashboard reflect the change without a full reload. A failure reverts the optimistic flip and surfaces a toast.
+  - Quiz lessons hide the Mark-complete button (the quiz flow owns completion); the footer still shows position + Prev/Next.
+  - "Next" is a secondary button (`border-border-strong bg-card`) with `ChevronRight`. Empty spacer on the final lesson.
+- One source of truth: the shared `<LessonFooter />` component handles both display and mutation. Do not re-implement Prev/Next cards elsewhere on the lesson page.
+
+#### 8.7.2 Lesson title + meta row
+
+Every lesson opens with a consistent header so learners can scan the shape of the lesson before reading.
+
+- Title: `font-display text-3xl font-semibold tracking-tight text-foreground`
+- Meta row below the title: icon + format label · optional time estimate, all in `text-sm text-foreground-muted`
+  - **Text / markdown**: `Reading · N min read` (200 wpm estimate, min 1 min)
+  - **Document (PDF)**: `PDF document`
+  - **Video**: `Video`
+  - **Quiz**: `Quiz · N questions`
+- Use the shared `<LessonTitleHeader />` — do not hand-roll h1s per lesson type; the meta convention must be identical across all four.
+
+#### 8.7.3 Module outline (sidebar) hierarchy
+
+- Course name is the primary identity in the sidebar header: `font-display text-base font-semibold text-foreground`.
+- The "Back to course" link sits above it as a smaller utility link: `text-xs text-foreground-subtle`, no heavy weight.
+- Section stack: `space-y-1` — the back link should feel attached to the title, not floating.
+
+### 8.8 Dashboard
+
+**Structure:**
+1. Greeting + personalization ("Welcome back, Akil")
+2. **Continue learning** row — horizontal scroll or grid of in-progress courses, prominent placement
+3. **Assigned to you** — required courses with due dates
+4. **Recommended / browse catalog** — discovery
+5. Stats summary (optional) — courses completed, hours learned, certificates earned
+
+**Design:**
+- Use card grid: `grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6`
+- Section headings: `text-2xl font-display font-semibold`
+- "See all" link in section header (top-right), `text-primary`
+
+### 8.9 Badges, chips, status pills
+
+**Status badges (course status, lesson state):**
+- Height: 22px, padding `px-2.5 py-0.5`, `rounded-full`
+- `text-xs font-medium`
+- Paired color + icon + text (never color alone)
+
+| Status | Tokens | Icon |
+|---|---|---|
+| Completed | `bg-success-subtle text-success` | Check |
+| In progress | `bg-primary-subtle text-primary` | Clock |
+| Not started | `bg-surface-muted text-foreground-muted` | Circle |
+| Overdue | `bg-danger-subtle text-danger` | AlertCircle |
+| Required | `bg-warning-subtle text-warning` | Flag |
+
+### 8.10 Gradients — when allowed
+
+Gradients appear in exactly these contexts and NOWHERE else:
+
+| Allowed | Forbidden |
+|---|---|
+| Login / sign-up splash page background | Buttons |
+| Course completion celebration modal | Cards |
+| Certificate background | Sidebars, nav bars |
+| Empty-state illustrations | Lesson content areas |
+| Marketing homepage hero (subtle wash) | Forms, inputs |
+|  | Data tables |
+|  | Progress bars |
+|  | Dashboard backgrounds |
+
+**Allowed gradients:**
+- Brand spotlight gradient (defined in Section 2)
+- Subtle radial atmospheric wash (defined in Section 2) — ≤12% opacity
+
+**Never:**
+- Gradients on text (readability disaster)
+- Gradients crossing from brand to unrelated hue (e.g., purple to pink). Stay within brand family.
+- Animated gradients. Static only.
+
+### 8.11 Hero banners
+
+"Brand as signal, not wallpaper." Hero banners introduce a page; they are not the page.
+
+- Background: `bg-surface-muted` — neutral, subdued, lets the content and CTA do the talking. No `bg-primary` fills, no brand gradients, no stained-glass washes.
+- Use brand color on one element inside the hero (avatar, progress fill, CTA) — never as the wall.
+- Dashboard greeting: solid `bg-surface-muted` hero with a primary-filled `<LevelAvatar />` circle, neutral text, and a single progress bar. Streak indicator is a `bg-warning` dot, not a fiery pill.
+- Reserve the brand spotlight gradient (§8.10) for login, celebration modals, and certificates. A dashboard is not a celebration.
+
+#### Forbidden hero pattern
+
+```tsx
+// ❌ Creates a large saturated brand block that dominates the page
+//    and violates the design thesis.
+<div className="bg-primary text-primary-foreground rounded-lg p-6">
+  {/* ... */}
+</div>
+```
+
+#### Required hero pattern
+
+```tsx
+// ✅ Neutral container — brand accents live INSIDE it as signals
+<div className="bg-surface-muted border border-border rounded-lg p-6">
+  <div className="text-xs uppercase tracking-wide text-foreground-muted">
+    Good afternoon
+  </div>
+  <h1 className="text-2xl font-display font-semibold text-foreground">
+    Ready to learn, Akil?
+  </h1>
+  {/* LevelAvatar (bg-primary circle) and XP bar (bg-primary fill) are the
+      only brand-coloured elements — they are signals inside a neutral frame. */}
+</div>
+```
+
+### 8.12 Media viewers (PDF, video)
+
+PDF and video are embedded documents. They are *inside* our UI but not *of* our UI — mute their native chrome so the app shell stays dominant.
+
+**PDF viewer:**
+
+**Preferred:** Custom `react-pdf` implementation with shadcn-styled toolbar (see §16 Known gaps).
+
+**Acceptable fallback (current implementation):** If an iframe-based PDF viewer must be retained temporarily, the iframe URL MUST include the fragment `#toolbar=0&navpanes=0&scrollbar=0&view=FitH` to suppress the native browser PDF chrome:
+- `toolbar=0` — hides pdf.js's top toolbar (zoom, rotate, draw, print, download, save-to-Drive)
+- `navpanes=0` — hides the thumbnails / sidebar panes
+- `scrollbar=0` — hides the browser scrollbar inside the iframe (Chromium)
+- `view=FitH` — fits to width by default so the document meets the reader halfway
+
+Wrap the iframe in `rounded-lg border border-border overflow-hidden` with `border-0` on the iframe itself, and a fixed height (`calc(100vh - 16rem)` today). The frame belongs to us; the document belongs to itself. Provide a download fallback for load failures — never leave the user stranded.
+
+**Never acceptable:** An unmodified iframe exposing Chrome / Firefox / Edge native PDF toolbars (zoom, rotate, draw, print, download, save to Drive, etc.) in production. Every learner should see the lesson content, not a browser file manager.
+
+**Video player:**
+- 16:9 (`aspect-video`), `rounded-lg overflow-hidden bg-black`
+- Native `<video controls>` is acceptable. When we move to a custom player, playhead + progress fill use `bg-primary`.
+- Keyboard controls: space = play/pause, arrows = seek, M = mute.
+
+---
+
+## 9. Motion & interaction
+
+### 9.1 Durations
+
+| Duration | Use |
+|---|---|
+| 100ms | Tiny state changes (checkbox toggle, button press) |
+| 150ms | Hover states (card lift, color shift) |
+| 180ms | Modal enter |
+| 120ms | Modal exit (faster than enter) |
+| 250ms | Drawer/sheet enter |
+| 400ms | Progress bar fill animation |
+
+### 9.2 Easing
+
+- `ease-out` for entering (default — elements arrive and settle)
+- `ease-in` for exiting
+- Avoid `ease-in-out` except for loops
+
+### 9.3 Reduced motion
+
+**Required:** Wrap all transitions in `motion-safe:` or respect `prefers-reduced-motion` via CSS:
+
+```css
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}
+```
+
+For shadcn/ui components using `tw-animate-css`, use the `motion-safe:` variant on animation classes.
+
+### 9.4 Forbidden motion
+
+- Parallax scroll effects
+- Scroll-triggered animations on primary content
+- Auto-playing decorative animations
+- Bouncy/elastic easing (springy effects)
+- Motion longer than 400ms for UI feedback
+
+---
+
+## 10. Accessibility (non-negotiable)
+
+- **WCAG 2.1 AA minimum** across all components. AAA on body text is achievable and preferred.
+- **Focus rings use `focus-visible:`, not bare `focus:`.** We only want the keyboard-focus ring on keyboard-focus — showing a full ring on every mouse click pollutes the UI and trains users to ignore it. The canonical string is `focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background` (swap `ring-offset-surface` when the button sits on the sidebar). Never remove outlines without replacing.
+- **Keyboard navigation:** tab order matches visual order; modals trap focus; escape closes overlays.
+- **Color never the only signal:** status badges pair color + icon + text. Error states pair color + icon + message.
+- **Semantic HTML:** use `<button>` for actions, `<a>` for navigation, `<h1>-<h6>` for heading hierarchy (one `<h1>` per page).
+- **ARIA:** only where semantic HTML isn't enough. Prefer native.
+- **Form errors** announce via `aria-describedby` + `aria-invalid`.
+- **Icons:** meaningful icons have `aria-label`; decorative icons have `aria-hidden="true"`.
+- **Images:** all `<Image>` components have `alt` (empty `alt=""` for decorative).
+- **Reduced motion:** respected globally.
+- **Skip-to-content link** at the top of every page for keyboard users.
+
+### 10.1 Focus rings: the canonical pattern
+
+All interactive elements use `focus-visible:` utility variants. Never apply `ring-*` utilities outside a `focus-visible:` (or `focus:`) variant. Doing so causes rings to appear at rest on mouse click.
+
+**Canonical pattern:**
+```tsx
+<button
+  className="focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background ..."
+>
+```
+
+Use `ring-offset-surface` instead of `ring-offset-background` when the button sits on the sidebar (`bg-surface`).
+
+**Detection:** A repo-wide search for `ring-` should return only matches prefixed with `focus-visible:` or `focus:`. Any other match is a bug.
+
+---
+
+## 11. Framework & tooling
+
+### 11.1 Stack
+
+- Next.js 14+ (App Router)
+- Tailwind CSS v4 (via `@theme` directive)
+- shadcn/ui components (Radix UI primitives)
+- `next-themes` for dark mode toggle
+- `lucide-react` for icons (consistent stroke, tree-shakeable)
+- `class-variance-authority` (cva) for component variants
+- `tailwind-merge` + `clsx` via the `cn()` utility
+
+### 11.2 File structure
+
+```
+app/
+  globals.css              # Token definitions, Tailwind theme binding
+  layout.tsx               # Root layout with font + ThemeProvider
+components/
+  ui/                      # shadcn/ui components (generated via CLI)
+    button.tsx
+    card.tsx
+    dialog.tsx
+    ...
+  app/                     # App-specific composed components
+    course-card.tsx
+    lesson-outline.tsx
+    progress-bar.tsx
+    ...
+  layout/
+    sidebar.tsx
+    top-bar.tsx
+    theme-toggle.tsx
+lib/
+  utils.ts                 # cn() helper
+```
+
+### 11.3 Theme provider setup
+
+```tsx
+// app/layout.tsx
+import { ThemeProvider } from 'next-themes';
+
+export default function RootLayout({ children }) {
+  return (
+    <html lang="en" suppressHydrationWarning className={`${inter.variable} ${jakarta.variable}`}>
+      <body className="bg-background text-foreground font-sans antialiased">
+        <ThemeProvider attribute="class" defaultTheme="system" enableSystem>
+          {children}
+        </ThemeProvider>
+      </body>
+    </html>
+  );
+}
+```
+
+### 11.4 Installing shadcn/ui
+
+```bash
+npx shadcn@latest init
+# When prompted:
+# - Style: New York
+# - Base color: Neutral (we override with custom tokens anyway)
+# - CSS variables: Yes
+# - Tailwind prefix: none
+```
+
+Then generate components as needed:
+
+```bash
+npx shadcn@latest add button card dialog input label select dropdown-menu \
+  avatar badge progress tabs accordion alert alert-dialog sheet skeleton \
+  separator tooltip toast
+```
+
+**After generation:** replace the auto-generated `globals.css` token block with the tokens defined in Section 3.
+
+### 11.5 The `cn()` utility
+
+```ts
+// lib/utils.ts
+import { type ClassValue, clsx } from 'clsx';
+import { twMerge } from 'tailwind-merge';
+
+export function cn(...inputs: ClassValue[]) {
+  return twMerge(clsx(inputs));
+}
+```
+
+---
+
+## 12. Migration plan
+
+Execute in this order. Do not skip steps.
+
+### Phase 1 — Foundation (do these first)
+
+1. **Install dependencies:** shadcn/ui, `next-themes`, `lucide-react`, `class-variance-authority`, `clsx`, `tailwind-merge`, `tw-animate-css`.
+2. **Set up fonts** via `next/font/google` (Inter + Plus Jakarta Sans).
+3. **Create `app/globals.css`** with the full token block from Section 3.1 (`:root`), Section 3.2 (`.dark`), and the Tailwind `@theme inline` binding from Section 3.3.
+4. **Add `ThemeProvider`** to `app/layout.tsx` per Section 11.3.
+5. **Initialize shadcn/ui** via CLI (Section 11.4).
+6. **Overwrite the generated token block** in `globals.css` with the Teams Squared tokens from Section 3 — this step is essential; the default shadcn tokens do not match our brand.
+7. **Create `components/layout/theme-toggle.tsx`** — a simple button that toggles `light`/`dark`/`system` via `next-themes`.
+
+### Phase 2 — Core components
+
+8. **Generate shadcn/ui base components:** button, card, dialog, alert-dialog, input, label, select, dropdown-menu, avatar, badge, progress, tabs, accordion, alert, sheet, skeleton, separator, tooltip, toast (via `sonner`).
+9. **Audit and customize each component** against Section 8's rules — especially button variants, dialog padding/radius, card hover behavior.
+10. **Build app-level composed components:**
+    - `components/app/course-card.tsx` (Section 8.2)
+    - `components/app/progress-bar.tsx` (Section 8.5)
+    - `components/app/status-badge.tsx` (Section 8.9)
+    - `components/app/lesson-outline.tsx`
+
+### Phase 3 — Layout shells
+
+11. **Sidebar** (`components/layout/sidebar.tsx`) per Section 8.6. Responsive, collapsible, with active-state accent bar.
+12. **Top bar** (`components/layout/top-bar.tsx`) per Section 8.6.
+13. **Dashboard shell** per Section 8.8.
+14. **Lesson player shell** per Section 8.7 — this is the most important page, treat it carefully.
+
+### Phase 4 — Page-by-page refactor
+
+Migrate existing pages one at a time, in this order:
+1. Login / sign-up (use the brand gradient here — this is the place for it)
+2. Dashboard
+3. Course catalog / browse
+4. Course detail page
+5. Lesson player (most important)
+6. Quiz / assessment
+7. Profile / settings
+8. Admin views (if applicable)
+
+For each page:
+- Replace hardcoded colors with tokens
+- Replace legacy buttons with shadcn `<Button>` + appropriate variant
+- Replace inline styles with Tailwind utilities
+- Verify dark mode appearance
+- Run accessibility check (keyboard nav, focus rings, screen reader pass)
+
+### Phase 5 — Polish
+
+15. **Empty states:** every list view has a designed empty state (illustration + message + primary CTA).
+16. **Loading states:** skeletons for all data-dependent views. Never show blank screens.
+17. **Error boundaries:** user-friendly error pages with retry action.
+18. **Motion audit:** ensure all transitions respect `prefers-reduced-motion`.
+19. **Accessibility audit:** run axe-core or Lighthouse; fix all serious and critical issues.
+20. **Dark mode visual QA:** every screen, every state.
+
+---
+
+## 13. Code conventions
+
+- **No hardcoded colors anywhere.** All colors via tokens. Grep for `#` and `rgb(` in the codebase before committing — any hits are bugs.
+- **No hardcoded spacing outside the scale.** No `w-[247px]` unless justified with a comment.
+- **Component files use PascalCase** (`CourseCard.tsx`). Utility files use kebab-case (`use-debounce.ts`).
+- **One component per file.** Smaller helper components can co-locate if tightly coupled.
+- **Props interfaces named `{ComponentName}Props`,** defined above the component.
+- **Use `cn()` for conditional classes,** never template literals.
+- **Never use `any`.** Use `unknown` or proper types.
+
+---
+
+## 14. Checklist for every new component
+
+Before marking a component "done":
+
+- [ ] Uses tokens for all colors (no hex, no Tailwind default colors)
+- [ ] Uses spacing from the approved scale
+- [ ] Has hover, focus-visible, active, disabled states where interactive
+- [ ] Works in both light and dark mode
+- [ ] Meets WCAG 2.1 AA contrast
+- [ ] Keyboard accessible (tab order, escape, enter/space for buttons)
+- [ ] Screen reader friendly (proper labels, semantic HTML, ARIA where needed)
+- [ ] Respects `prefers-reduced-motion`
+- [ ] Responsive (mobile, tablet, desktop)
+- [ ] Loading state designed (if data-dependent)
+- [ ] Empty state designed (if list/collection)
+- [ ] Error state designed (if can fail)
+
+---
+
+## 15. When in doubt
+
+- **Check Section 1's thesis first.** Any decision that violates "brand as signal, not wallpaper" is wrong.
+- **Prefer shadcn/ui patterns over custom builds.** The Radix primitives underneath have years of accessibility work.
+- **Prefer fewer variants over more.** Three button variants, not seven.
+- **Prefer tokens over one-off values.** If a new color is needed, add a token — don't inline.
+- **Mature over flashy.** This is a learning platform for working professionals, not a marketing site.
+
+If a design decision isn't covered here, default to what Coursera, Sana, or Linear would do. They are the benchmarks.
+
+---
+
+## 16. Known gaps
+
+This document describes the target. A few pieces are intentionally behind it, tracked here so contributors know what's real versus aspirational.
+
+- **Custom PDF toolbar.** The lesson player uses an iframe with pdf.js toolbar/nav/scrollbar suppressed (§8.12). The long-term plan is a `react-pdf` implementation with our own controls so the viewer feels native to the app rather than muted-foreign.
+- **Video duration in lesson meta.** The lesson title meta row (§8.7.2) labels videos as "Video" without a time estimate. Once we surface duration metadata from the SharePoint proxy, append `· N min` the same way text lessons show reading time.
+- **Right rail on lesson player.** The three-column layout in §8.7 documents a notes/transcript rail; the current shell ships two columns. The rail is a deferred feature, not a deleted one — the grid has been kept stable so it can slot in.
+- **Quiz lesson completion.** Quiz lessons suppress the Mark-complete button in the footer (§8.7.1). The quiz flow handles completion itself. When we unify flows, the footer becomes the single mutation point for every lesson type.
+
+---
+
+## 17. Implementation gotchas
+
+Lessons learned from previous iterations. Future contributors should check this list before starting similar work.
+
+### Sticky footers must sit outside the scrolling content
+
+The lesson footer is a `sticky bottom-0` element. It must be rendered either as a direct child of a flex-column parent that also contains the scrolling content area, OR as a child of the scrolling container itself. It must **not** be placed inside the scrolling content as a normal flow element — that makes it appear only at the end of scroll, not pinned to the viewport.
+
+### Brand-subtle backgrounds wrap thumbnails regardless of content
+
+Do not conditionally apply `bg-primary-subtle` only when a thumbnail image is absent. The tinted frame is always present; the image (when available) sits on top of it via `object-contain p-6`. Never use `object-cover` for course thumbnails — it can fill the frame with a white image background and negate the tinted container.
+
+### Ring utilities are focus-visible only
+
+Applying `ring-2 ring-ring` in a default class list causes persistent rings on mouse click. Always prefix with `focus-visible:`. The only exception is the active/pressed state of certain toggle buttons, which should be signaled via background rather than ring.
+
+### PDF iframes need URL fragments to suppress browser chrome
+
+`#toolbar=0&navpanes=0&scrollbar=0&view=FitH` on the `src` URL. Without this, every learner sees Chrome's save-to-Drive button, zoom controls, and rotation buttons in their "lessons." All four parameters are required — omitting `scrollbar=0` leaves a scrollbar inside the iframe on Chromium.
+
+### Hero banners are not brand billboards
+
+A hero banner's background is always a neutral surface (`bg-surface-muted`). The brand accent lives in specific elements within the hero (avatar circles, progress fills, primary CTAs). The moment a hero uses `bg-primary` as its root background, the design thesis has been violated. This is the single most-commonly regressed rule — check it first when reviewing dashboard screenshots.

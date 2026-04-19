@@ -1,4 +1,5 @@
 import type { NextConfig } from "next";
+import path from "path";
 
 const securityHeaders = [
   { key: "X-Content-Type-Options", value: "nosniff" },
@@ -9,22 +10,25 @@ const securityHeaders = [
     key: "Content-Security-Policy",
     value: [
       "default-src 'self'",
-      // Next.js inline scripts and RSC payloads require unsafe-inline/unsafe-eval in dev;
-      // in production Turbopack inlines a nonce — keeping unsafe-inline for now is the
-      // pragmatic choice until nonce-based CSP is wired through the app.
       "script-src 'self' 'unsafe-inline' 'unsafe-eval' https://us-assets.i.posthog.com",
       "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com",
       "font-src 'self' https://fonts.gstatic.com",
-      "img-src 'self' data: blob:",
-      // us.i.posthog.com = event ingestion; us.posthog.com = feature flags & decide endpoint
-      "connect-src 'self' https://us.i.posthog.com https://us-assets.i.posthog.com https://us.posthog.com",
-      // Allow PostHog dashboard embeds
-      "frame-src 'self' https://us.posthog.com https://eu.posthog.com",
+      // Allow external HTTPS images (user-provided thumbnails)
+      "img-src 'self' data: blob: https:",
+      // Allow YouTube/Vimeo video embeds, SharePoint PDF proxy, and PostHog dashboard embeds
+      "frame-src 'self' blob: https://www.youtube.com https://www.youtube-nocookie.com https://player.vimeo.com https://us.posthog.com https://eu.posthog.com",
+      // Allow self + MS Graph/login + PostHog ingestion
+      "connect-src 'self' https://graph.microsoft.com https://login.microsoftonline.com https://us.i.posthog.com https://us-assets.i.posthog.com https://us.posthog.com",
     ].join("; "),
   },
 ];
 
 const nextConfig: NextConfig = {
+  // Explicitly set the project root so Turbopack doesn't mistake the parent
+  // directory's stale package-lock.json as the workspace root.
+  turbopack: {
+    root: path.resolve(__dirname),
+  },
   async headers() {
     return [
       {
@@ -32,6 +36,10 @@ const nextConfig: NextConfig = {
         headers: securityHeaders,
       },
     ];
+  },
+  images: {
+    // Thumbnails are user-provided external URLs — allow any HTTPS host
+    remotePatterns: [{ protocol: "https", hostname: "**" }],
   },
 };
 

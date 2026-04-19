@@ -100,6 +100,14 @@ export function ChevronRightIcon(props: IconProps) {
   );
 }
 
+export function ChevronLeftIcon(props: IconProps) {
+  return (
+    <Icon {...props}>
+      <polyline points="15 18 9 12 15 6" />
+    </Icon>
+  );
+}
+
 export function LockIcon(props: IconProps) {
   return (
     <Icon {...props}>
@@ -132,7 +140,7 @@ export function UsersIcon(props: IconProps) {
   );
 }
 
-function BarChartIcon(props: IconProps) {
+export function BarChartIcon(props: IconProps) {
   return (
     <Icon {...props}>
       <line x1="12" y1="20" x2="12" y2="10" />
@@ -172,12 +180,12 @@ export const CATEGORY_ICONS: Record<string, React.FC<IconProps>> = {
 };
 
 export const CATEGORY_COLORS: Record<string, string> = {
-  shield: "#ede9fe",
-  rocket: "#ecfdf5",
-  code: "#fffbeb",
-  briefcase: "#fff1f2",
-  book: "#eff6ff",
-  gear: "#f0fdf4",
+  shield:    "var(--cat-shield)",
+  rocket:    "var(--cat-rocket)",
+  code:      "var(--cat-code)",
+  briefcase: "var(--cat-briefcase)",
+  book:      "var(--cat-book)",
+  gear:      "var(--cat-gear)",
 };
 
 // More saturated accent colours for decorative strips/borders (400-level equivalents).
@@ -243,23 +251,103 @@ export function ChevronDownIcon(props: IconProps) {
 /** Generic close / dismiss icon (same path as CloseIcon, aliased for semantic clarity). */
 export const XIcon = CloseIcon;
 
-// ─── Form icons (used by PasswordInput show/hide toggle) ─────────────────────
-
-export function EyeIcon(props: IconProps) {
+export function GraduationCapIcon(props: IconProps) {
   return (
     <Icon {...props}>
-      <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z" />
-      <circle cx="12" cy="12" r="3" />
+      <path d="M22 10v6M2 10l10-5 10 5-10 5z" />
+      <path d="M6 12v5c0 2 4 3 6 3s6-1 6-3v-5" />
     </Icon>
   );
 }
 
-export function EyeOffIcon(props: IconProps) {
+export function PlusIcon(props: IconProps) {
   return (
     <Icon {...props}>
-      <path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94" />
-      <path d="M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19" />
-      <line x1="1" y1="1" x2="23" y2="23" />
+      <line x1="12" y1="5" x2="12" y2="19" />
+      <line x1="5" y1="12" x2="19" y2="12" />
+    </Icon>
+  );
+}
+
+export function DocumentTextIcon(props: IconProps) {
+  return (
+    <Icon {...props}>
+      <path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z" />
+      <polyline points="14 2 14 8 20 8" />
+      <line x1="16" y1="13" x2="8" y2="13" />
+      <line x1="16" y1="17" x2="8" y2="17" />
+    </Icon>
+  );
+}
+
+export function VideoIcon(props: IconProps) {
+  return (
+    <Icon {...props}>
+      <polygon points="23 7 16 12 23 17 23 7" />
+      <rect x="1" y="5" width="15" height="14" rx="2" ry="2" />
+    </Icon>
+  );
+}
+
+export function QuizIcon(props: IconProps) {
+  return (
+    <Icon {...props}>
+      <circle cx="12" cy="12" r="10" />
+      <path d="M9.09 9a3 3 0 015.83 1c0 2-3 3-3 3" />
+      <line x1="12" y1="17" x2="12.01" y2="17" />
+    </Icon>
+  );
+}
+
+export function PaperclipIcon(props: IconProps) {
+  return (
+    <Icon {...props}>
+      <path d="M21.44 11.05l-9.19 9.19a6 6 0 01-8.49-8.49l9.19-9.19a4 4 0 015.66 5.66l-9.2 9.19a2 2 0 01-2.83-2.83l8.49-8.48" />
+    </Icon>
+  );
+}
+
+export function CheckCircleIcon(props: IconProps) {
+  return (
+    <Icon {...props}>
+      <circle cx="12" cy="12" r="10" />
+      <polyline points="9 12 11 14 15 10" />
+    </Icon>
+  );
+}
+
+export function SunIcon(props: IconProps) {
+  return (
+    <Icon {...props}>
+      <circle cx="12" cy="12" r="4" />
+      <path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M6.34 17.66l-1.41 1.41M19.07 4.93l-1.41 1.41" />
+    </Icon>
+  );
+}
+
+export function MoonIcon(props: IconProps) {
+  return (
+    <Icon {...props}>
+      <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z" />
+    </Icon>
+  );
+}
+
+export function ClockIcon(props: IconProps) {
+  return (
+    <Icon {...props}>
+      <circle cx="12" cy="12" r="10" />
+      <path d="M12 6v6l4 2" />
+    </Icon>
+  );
+}
+
+export function AlertTriangleIcon(props: IconProps) {
+  return (
+    <Icon {...props}>
+      <path d="M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z" />
+      <line x1="12" y1="9" x2="12" y2="13" />
+      <line x1="12" y1="17" x2="12.01" y2="17" />
     </Icon>
   );
 }

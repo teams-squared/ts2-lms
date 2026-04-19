@@ -2,22 +2,22 @@ import { test, expect } from "@playwright/test";
 import { login, USERS } from "./helpers";
 
 test.describe("Authentication", () => {
-  test("unauthenticated visit to /docs redirects to /login", async ({ page }) => {
-    await page.goto("/docs");
-    await expect(page).toHaveURL(/\/login/);
-  });
-
-  test("unauthenticated visit to /admin redirects to /login", async ({ page }) => {
+  test("unauthenticated /admin redirects to /login", async ({ page }) => {
     await page.goto("/admin");
     await expect(page).toHaveURL(/\/login/);
   });
 
-  test("login with valid credentials navigates away from /login", async ({ page }) => {
-    await login(page, USERS.admin.email, USERS.admin.password);
-    await expect(page).not.toHaveURL(/\/login/);
+  test("unauthenticated /profile redirects to /login", async ({ page }) => {
+    await page.goto("/profile");
+    await expect(page).toHaveURL(/\/login/);
   });
 
-  test("login with invalid password shows error message", async ({ page }) => {
+  test("valid login redirects to home", async ({ page }) => {
+    await login(page, USERS.admin.email, USERS.admin.password);
+    await expect(page).toHaveURL("/");
+  });
+
+  test("invalid password shows error", async ({ page }) => {
     await page.goto("/login");
     await page.getByLabel("Email").fill("admin@teamssquared.com");
     await page.getByLabel("Password").fill("wrongpassword");
@@ -25,9 +25,14 @@ test.describe("Authentication", () => {
     await expect(page.getByText("Invalid email or password")).toBeVisible();
   });
 
-  test("sign-out returns to home or login", async ({ page }) => {
+  test("sign out returns to login", async ({ page }) => {
     await login(page, USERS.employee.email, USERS.employee.password);
-    await page.getByRole("button", { name: /sign out/i }).click();
-    await expect(page).toHaveURL(/\/(login)?$/);
+
+    // Open user menu and click Sign out
+    const avatar = page.locator("nav button").filter({ hasText: /^[A-Z?]$/ }).first();
+    await avatar.click();
+    await page.getByText("Sign out").click();
+
+    await expect(page).toHaveURL(/\/login/);
   });
 });

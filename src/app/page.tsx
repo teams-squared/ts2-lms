@@ -1,123 +1,234 @@
 import Link from "next/link";
 import { auth } from "@/lib/auth";
-import {
-  getTopLevelCategories,
-  getDocsByCategory,
-  getSubcategoriesOf,
-} from "@/lib/docs";
-import SearchBar from "@/components/search/SearchBar";
-import CategoryCard from "@/components/docs/CategoryCard";
-import { BookOpenIcon, SearchIcon, LockIcon } from "@/components/icons";
+import { prisma } from "@/lib/prisma";
+import Logo from "@/components/Logo";
+import { computeDeadline, getDeadlineStatus, formatDeadlineRelative } from "@/lib/deadlines";
+import type { DeadlineStatus } from "@/lib/deadlines";
 import type { Role } from "@/lib/types";
+import { WelcomeBar } from "@/components/dashboard/WelcomeBar";
+import { NextStepBanner } from "@/components/dashboard/NextStepBanner";
+import { DeadlineAlerts } from "@/components/dashboard/DeadlineAlerts";
+import { CourseProgressList } from "@/components/dashboard/CourseProgressList";
+
+export const dynamic = "force-dynamic";
 
 export default async function HomePage() {
   const session = await auth();
-  const userRole = (session?.user?.role as Role) || "employee";
-  const topLevel = session ? await getTopLevelCategories(userRole) : [];
 
-  const categoryDocs = session
-    ? await Promise.all(
-        topLevel.map(async (cat) => {
-          const directDocs = await getDocsByCategory(cat.slug, userRole);
-          if (directDocs.length > 0) {
-            return { cat, docs: directDocs };
-          }
-          // Parent category — aggregate docs across subcategories
-          const subcategories = await getSubcategoriesOf(cat.slug, userRole);
-          const subDocs = await Promise.all(
-            subcategories.map((sub) => getDocsByCategory(sub.slug, userRole))
-          );
-          return { cat, docs: subDocs.flat() };
+  // ── Logged-out landing page ────────────────────────────────────────────────
+  if (!session) {
+    return (
+      <div className="min-h-screen flex flex-col items-center justify-center px-4 bg-background">
+        <div className="w-full max-w-sm text-center space-y-6">
+          <div className="flex justify-center mb-2">
+            <Logo size={48} showText={false} />
+          </div>
+          <div className="space-y-2">
+            <h1 className="text-3xl font-bold text-foreground tracking-tight">
+              Teams Squared{" "}
+              <span className="text-primary">LMS</span>
+            </h1>
+            <p className="text-base text-foreground-muted">
+              Sign in to access your learning platform.
+            </p>
+          </div>
+          <Link
+            href="/login"
+            className="inline-flex items-center justify-center w-full px-6 py-3 rounded-lg bg-primary text-white font-semibold hover:bg-primary/90 active:bg-primary/80 transition-colors shadow-lg shadow-primary/25 text-sm"
+          >
+            Sign in
+          </Link>
+        </div>
+        <p className="absolute bottom-6 text-xs text-foreground-subtle">
+          &copy; {new Date().getFullYear()} Teams Squared
+        </p>
+      </div>
+    );
+  }
+
+  // ── Logged-in dashboard ────────────────────────────────────────────────────
+  const userId = session.user!.id!;
+  const userRole = (session.user?.role as Role) || "employee";
+  const firstName = session.user?.name?.split(" ")[0] || "there";
+
+  // Fetch enrollments (with full course/module/lesson structure) and user stats in parallel.
+  // The `include` clause returns all scalar fields by default, including `completedAt`
+  // which is the source of truth for whether the learner has ever finished the course
+  // (set once, never reset on lesson uncomplete).
+  const [enrollments, userStats] = await Promise.all([
+    prisma.enrollment.findMany({
+      where: { userId },
+      include: {
+        course: {
+          select: {
+            id: true,
+            title: true,
+            thumbnail: true,
+            category: true,
+            modules: {
+              orderBy: { order: "asc" },
+              include: {
+                lessons: {
+                  orderBy: { order: "asc" },
+                  select: { id: true, title: true, deadlineDays: true },
+                },
+              },
+            },
+          },
+        },
+      },
+      orderBy: { enrolledAt: "desc" },
+    }),
+    prisma.userStats.findUnique({ where: { userId } }),
+  ]);
+
+  // Compute per-enrollment progress in a single batch query
+  const allEnrolledLessonIds = enrollments.flatMap((e) =>
+    e.course.modules.flatMap((m) => m.lessons.map((l) => l.id)),
+  );
+
+  const completedProgressRecords =
+    allEnrolledLessonIds.length > 0
+      ? await prisma.lessonProgress.findMany({
+          where: {
+            userId,
+            lessonId: { in: allEnrolledLessonIds },
+            completedAt: { not: null },
+          },
+          select: { lessonId: true },
         })
-      )
-    : [];
+      : [];
+
+  const completedIdSet = new Set(completedProgressRecords.map((p) => p.lessonId));
+
+  // Compute upcoming deadlines across all enrollments
+  const deadlineItems: {
+    lessonId: string;
+    lessonTitle: string;
+    courseId: string;
+    courseTitle: string;
+    absoluteDeadline: Date;
+    status: DeadlineStatus;
+    relativeText: string;
+  }[] = [];
+  for (const e of enrollments) {
+    for (const m of e.course.modules) {
+      for (const l of m.lessons) {
+        if (l.deadlineDays == null) continue;
+        if (completedIdSet.has(l.id)) continue; // already done
+        const deadline = computeDeadline(e.enrolledAt, l.deadlineDays);
+        const status = getDeadlineStatus(e.enrolledAt, l.deadlineDays, null);
+        if (status === "none" || status === "completed") continue;
+        deadlineItems.push({
+          lessonId: l.id,
+          lessonTitle: l.title,
+          courseId: e.course.id,
+          courseTitle: e.course.title,
+          absoluteDeadline: deadline,
+          status,
+          relativeText: formatDeadlineRelative(deadline),
+        });
+      }
+    }
+  }
+  // Sort: overdue first, then due-soon, then upcoming — by deadline date
+  const statusPriority: Record<string, number> = { overdue: 0, "due-soon": 1, upcoming: 2 };
+  deadlineItems.sort(
+    (a, b) =>
+      (statusPriority[a.status] ?? 3) - (statusPriority[b.status] ?? 3) ||
+      a.absoluteDeadline.getTime() - b.absoluteDeadline.getTime(),
+  );
+
+  const enrichedEnrollments = enrollments.map((e) => {
+    const allLessons = e.course.modules.flatMap((m) => m.lessons);
+    const totalLessons = allLessons.length;
+    const completedLessons = allLessons.filter((l) => completedIdSet.has(l.id)).length;
+    const percentComplete =
+      totalLessons === 0 ? 0 : Math.round((completedLessons / totalLessons) * 100);
+    // Use enrollment.completedAt as the source of truth for the "completed" badge.
+    // This is sticky — set once on first completion and never reset when a learner
+    // un-completes a lesson. Falls back to lesson-count parity for enrollments
+    // that pre-date the completedAt column (null on old rows, completedLessons check).
+    const isComplete = e.completedAt !== null || (totalLessons > 0 && completedLessons === totalLessons);
+    const firstIncompleteLesson =
+      allLessons.find((l) => !completedIdSet.has(l.id)) ?? allLessons[0];
+    const firstIncompleteLessonId = firstIncompleteLesson?.id;
+    const firstIncompleteLessonTitle = firstIncompleteLesson?.title ?? "";
+    const continueUrl = firstIncompleteLessonId
+      ? `/courses/${e.course.id}/lessons/${firstIncompleteLessonId}`
+      : `/courses/${e.course.id}`;
+    return {
+      ...e,
+      totalLessons,
+      completedLessons,
+      percentComplete,
+      isComplete,
+      continueUrl,
+      firstIncompleteLessonId,
+      firstIncompleteLessonTitle,
+    };
+  });
+
+  const inProgressCourses = enrichedEnrollments.filter((c) => !c.isComplete && c.totalLessons > 0);
+  const completedCourses = enrichedEnrollments.filter((c) => c.isComplete);
+
+  // Sort in-progress courses by percentComplete DESC so nearly-finished courses appear first,
+  // encouraging completion.
+  const sortedInProgressCourses = [...inProgressCourses].sort(
+    (a, b) => b.percentComplete - a.percentComplete,
+  );
+
+  // The next step is the most-progressed in-progress course.
+  const nextStepCourse = sortedInProgressCourses[0] ?? null;
+  const nextStepIsOverdue =
+    nextStepCourse != null &&
+    deadlineItems.some(
+      (d) => d.lessonId === nextStepCourse.firstIncompleteLessonId && d.status === "overdue",
+    );
 
   return (
     <div>
-      {/* Hero section */}
-      <section className="bg-brand-gradient py-10 px-4">
-        <div className="max-w-4xl mx-auto text-center">
-          <h1 className="text-3xl sm:text-4xl font-bold text-gray-900 mb-3">
-            Teams Squared{" "}
-            <span style={{ color: "#4400FF" }}>Documentation</span>
-          </h1>
-          <p className="text-base text-gray-600 mb-6 max-w-2xl mx-auto">
-            Your central hub for company guides, processes, and resources.
-          </p>
+      <WelcomeBar
+        firstName={firstName}
+        xp={userStats?.xp ?? 0}
+        streak={userStats?.streak ?? 0}
+      />
 
-          {session ? (
-            <SearchBar className="max-w-xl mx-auto" />
-          ) : (
-            <Link
-              href="/login"
-              className="inline-flex items-center px-5 py-2.5 rounded-lg bg-brand-600 text-white font-medium hover:bg-brand-700 transition-colors shadow-lg shadow-brand-600/25"
-            >
-              Sign In to Access Docs
-            </Link>
-          )}
-        </div>
-      </section>
+      <div className="max-w-4xl mx-auto px-4 sm:px-6 py-4 space-y-6">
+        {nextStepCourse && (
+          <NextStepBanner
+            courseTitle={nextStepCourse.course.title}
+            lessonTitle={nextStepCourse.firstIncompleteLessonTitle}
+            completedLessons={nextStepCourse.completedLessons}
+            totalLessons={nextStepCourse.totalLessons}
+            percentComplete={nextStepCourse.percentComplete}
+            continueUrl={nextStepCourse.continueUrl}
+            isOverdue={nextStepIsOverdue}
+          />
+        )}
 
-      {/* Categories grid */}
-      {session && categoryDocs.length > 0 && (
-        <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10">
-          <h2 className="text-xl font-bold text-gray-900 mb-5">
-            Browse by Category
-          </h2>
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-            {categoryDocs.map(({ cat, docs }) => (
-              <CategoryCard
-                key={cat.slug}
-                category={cat}
-                docCount={docs.length}
-                docTitles={docs.map((d) => d.title)}
-              />
-            ))}
-          </div>
-        </section>
-      )}
+        <DeadlineAlerts deadlines={deadlineItems} />
 
-      {/* Not signed in features */}
-      {!session && (
-        <section className="max-w-4xl mx-auto px-4 py-10">
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-6">
-            <div className="p-4 text-center">
-              <div className="w-10 h-10 rounded-lg bg-brand-50 flex items-center justify-center mx-auto mb-3 text-brand-500">
-                <BookOpenIcon className="w-5 h-5" />
-              </div>
-              <h3 className="font-semibold text-gray-900 text-sm mb-1">
-                Organized Docs
-              </h3>
-              <p className="text-xs text-gray-500">
-                Find what you need quickly with categorized documentation
-              </p>
-            </div>
-            <div className="p-4 text-center">
-              <div className="w-10 h-10 rounded-lg bg-brand-50 flex items-center justify-center mx-auto mb-3 text-brand-500">
-                <SearchIcon className="w-5 h-5" />
-              </div>
-              <h3 className="font-semibold text-gray-900 text-sm mb-1">
-                Fast Search
-              </h3>
-              <p className="text-xs text-gray-500">
-                Search across all documents instantly with fuzzy matching
-              </p>
-            </div>
-            <div className="p-4 text-center">
-              <div className="w-10 h-10 rounded-lg bg-brand-50 flex items-center justify-center mx-auto mb-3 text-brand-500">
-                <LockIcon className="w-5 h-5" />
-              </div>
-              <h3 className="font-semibold text-gray-900 text-sm mb-1">
-                Role-Based Access
-              </h3>
-              <p className="text-xs text-gray-500">
-                Secure access control ensures the right people see the right
-                docs
-              </p>
-            </div>
-          </div>
-        </section>
-      )}
+        <CourseProgressList
+          courses={[
+            // In-progress first (sorted by percentComplete DESC), then completed
+            ...sortedInProgressCourses,
+            ...completedCourses,
+          ].map((c) => ({
+            courseId: c.course.id,
+            courseTitle: c.course.title,
+            category: c.course.category,
+            completedLessons: c.completedLessons,
+            totalLessons: c.totalLessons,
+            percentComplete: c.percentComplete,
+            continueUrl: c.continueUrl,
+            isComplete: c.isComplete,
+          }))}
+          completedCount={completedCourses.length}
+          hasEnrollments={enrichedEnrollments.length > 0}
+          userRole={userRole}
+        />
+      </div>
     </div>
   );
 }

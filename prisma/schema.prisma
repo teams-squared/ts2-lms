@@ -1,0 +1,313 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+enum Role {
+  ADMIN
+  COURSE_MANAGER
+  EMPLOYEE
+}
+
+model User {
+  id             String           @id @default(cuid())
+  email          String           @unique
+  name           String?
+  passwordHash   String?
+  role           Role             @default(EMPLOYEE)
+  avatar         String?
+  createdAt      DateTime         @default(now())
+  updatedAt      DateTime         @updatedAt
+  invitedAt      DateTime?
+  invitedById    String?
+  invitedBy      User?            @relation("UserInvites", fields: [invitedById], references: [id], onDelete: SetNull)
+  invitedUsers   User[]           @relation("UserInvites")
+  createdCourses      Course[]         @relation("CreatedCourses")
+  enrollments         Enrollment[]
+  enrollmentsMade     Enrollment[]     @relation("EnrolledBy")
+  lessonProgress      LessonProgress[]
+  quizAttempts        QuizAttempt[]
+  notifications       Notification[]
+  achievements        UserAchievement[]
+  stats               UserStats?
+  clearances          UserClearance[]
+  deadlineReminderLogs DeadlineReminderLog[]
+}
+
+enum CourseStatus {
+  DRAFT
+  PUBLISHED
+  ARCHIVED
+}
+
+model CourseNode {
+  id          String       @id @default(cuid())
+  name        String
+  description String?
+  order       Int          @default(0)
+  parentId    String?
+  parent      CourseNode?  @relation("NodeHierarchy", fields: [parentId], references: [id])
+  children    CourseNode[] @relation("NodeHierarchy")
+  courses     Course[]
+  createdAt   DateTime     @default(now())
+  updatedAt   DateTime     @updatedAt
+}
+
+model Course {
+  id                String       @id @default(cuid())
+  title             String
+  description       String?
+  thumbnail         String?
+  status            CourseStatus @default(DRAFT)
+  category          String?
+  requiredClearance String?
+  nodeId            String?
+  createdById       String
+  node              CourseNode?  @relation(fields: [nodeId], references: [id], onDelete: SetNull)
+  createdBy         User         @relation("CreatedCourses", fields: [createdById], references: [id])
+  modules           Module[]
+  enrollments       Enrollment[]
+  prerequisites     CoursePrerequisite[] @relation("CoursePrereqs")
+  prerequisiteOf    CoursePrerequisite[] @relation("PrereqOf")
+  emailSubscriptions CourseEmailSubscription[]
+  createdAt         DateTime     @default(now())
+  updatedAt         DateTime     @updatedAt
+}
+
+model CourseEmailSubscription {
+  id        String   @id @default(cuid())
+  courseId   String
+  email     String
+  createdAt DateTime @default(now())
+  course    Course   @relation(fields: [courseId], references: [id], onDelete: Cascade)
+
+  @@unique([courseId, email])
+}
+
+enum LessonType {
+  TEXT
+  VIDEO
+  QUIZ
+  DOCUMENT
+  HTML
+}
+
+model Module {
+  id        String   @id @default(cuid())
+  title     String
+  order     Int
+  courseId   String
+  course    Course   @relation(fields: [courseId], references: [id], onDelete: Cascade)
+  lessons   Lesson[]
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([courseId, order])
+}
+
+model Lesson {
+  id            String           @id @default(cuid())
+  title         String
+  type          LessonType       @default(TEXT)
+  content       String?
+  order         Int
+  deadlineDays  Int?
+  moduleId      String
+  module        Module           @relation(fields: [moduleId], references: [id], onDelete: Cascade)
+  progress      LessonProgress[]
+  quizQuestions QuizQuestion[]
+  quizAttempts  QuizAttempt[]
+  deadlineReminderLogs DeadlineReminderLog[]
+  createdAt     DateTime         @default(now())
+  updatedAt     DateTime         @updatedAt
+
+  @@unique([moduleId, order])
+  @@index([deadlineDays])
+}
+
+model Enrollment {
+  id           String    @id @default(cuid())
+  userId       String
+  courseId      String
+  enrolledById String?
+  enrolledAt   DateTime  @default(now())
+  completedAt  DateTime?
+
+  user       User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+  course     Course @relation(fields: [courseId], references: [id], onDelete: Cascade)
+  enrolledBy User?  @relation("EnrolledBy", fields: [enrolledById], references: [id], onDelete: SetNull)
+
+  @@unique([userId, courseId])
+  @@index([courseId])
+}
+
+model LessonProgress {
+  id          String    @id @default(cuid())
+  userId      String
+  lessonId    String
+  startedAt   DateTime?
+  completedAt DateTime?
+
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+  lesson Lesson @relation(fields: [lessonId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, lessonId])
+  @@index([lessonId])
+  @@index([userId, completedAt])
+}
+
+model SharePointCache {
+  id        String   @id @default(cuid())
+  cacheKey  String   @unique
+  data      String
+  etag      String?
+  expiresAt DateTime
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model QuizQuestion {
+  id        String       @id @default(cuid())
+  lessonId  String
+  text      String
+  order     Int
+  lesson    Lesson       @relation(fields: [lessonId], references: [id], onDelete: Cascade)
+  options   QuizOption[]
+  answers   QuizAnswer[]
+  createdAt DateTime     @default(now())
+  updatedAt DateTime     @updatedAt
+
+  @@unique([lessonId, order])
+}
+
+model QuizOption {
+  id         String       @id @default(cuid())
+  questionId String
+  text       String
+  isCorrect  Boolean      @default(false)
+  order      Int
+  question   QuizQuestion @relation(fields: [questionId], references: [id], onDelete: Cascade)
+  answers    QuizAnswer[]
+  createdAt  DateTime     @default(now())
+  updatedAt  DateTime     @updatedAt
+
+  @@unique([questionId, order])
+}
+
+model QuizAttempt {
+  id             String       @id @default(cuid())
+  userId         String
+  lessonId       String
+  score          Int
+  totalQuestions Int
+  passed         Boolean
+  createdAt      DateTime     @default(now())
+
+  user    User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+  lesson  Lesson       @relation(fields: [lessonId], references: [id], onDelete: Cascade)
+  answers QuizAnswer[]
+
+  @@index([lessonId])
+  @@index([userId])
+}
+
+model QuizAnswer {
+  id               String       @id @default(cuid())
+  attemptId        String
+  questionId       String
+  selectedOptionId String
+
+  attempt        QuizAttempt  @relation(fields: [attemptId], references: [id], onDelete: Cascade)
+  question       QuizQuestion @relation(fields: [questionId], references: [id], onDelete: Cascade)
+  selectedOption QuizOption   @relation(fields: [selectedOptionId], references: [id], onDelete: Cascade)
+}
+
+
+model Notification {
+  id        String    @id @default(cuid())
+  userId    String
+  type      String
+  message   String
+  read      Boolean   @default(false)
+  courseId  String?
+  createdAt DateTime  @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId, createdAt])
+}
+
+model Achievement {
+  id          String            @id @default(cuid())
+  key         String            @unique
+  title       String
+  description String
+  icon        String            @default("🏆")
+  xpReward    Int               @default(0)
+  category    String            @default("general")
+  threshold   Int               @default(1)
+  createdAt   DateTime          @default(now())
+  users       UserAchievement[]
+}
+
+model UserAchievement {
+  id            String      @id @default(cuid())
+  userId        String
+  achievementId String
+  unlockedAt    DateTime    @default(now())
+
+  user        User        @relation(fields: [userId], references: [id], onDelete: Cascade)
+  achievement Achievement @relation(fields: [achievementId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, achievementId])
+}
+
+model UserStats {
+  id               String   @id @default(cuid())
+  userId           String   @unique
+  xp               Int      @default(0)
+  streak           Int      @default(0)
+  lastActivityDate DateTime?
+  updatedAt        DateTime @updatedAt
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([lastActivityDate])
+  @@index([xp(sort: Desc)])
+}
+
+model UserClearance {
+  id        String   @id @default(cuid())
+  userId    String
+  clearance String
+  grantedAt DateTime @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, clearance])
+}
+
+model CoursePrerequisite {
+  courseId        String
+  prerequisiteId  String
+
+  course       Course @relation("CoursePrereqs", fields: [courseId], references: [id], onDelete: Cascade)
+  prerequisite Course @relation("PrereqOf", fields: [prerequisiteId], references: [id], onDelete: Cascade)
+
+  @@id([courseId, prerequisiteId])
+}
+
+model DeadlineReminderLog {
+  id       String   @id @default(cuid())
+  userId   String
+  lessonId String
+  kind     String   // "due_soon_1" | "due_today" | "overdue_1"
+  sentAt   DateTime @default(now())
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+  lesson Lesson @relation(fields: [lessonId], references: [id], onDelete: Cascade)
+  @@unique([userId, lessonId, kind])
+  @@index([lessonId])
+}

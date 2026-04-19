@@ -37,6 +37,10 @@ yarn-error.log*
 # local claude context
 .claude/
 
+# SharePoint file cache
+.cache/
+
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+.env.local

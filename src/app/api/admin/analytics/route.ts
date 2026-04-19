@@ -1,123 +1,155 @@
-import { NextRequest, NextResponse } from "next/server";
-import { auth } from "@/lib/auth";
-import type { Role } from "@/lib/types";
+import { NextResponse } from "next/server";
+import { prisma } from "@/lib/prisma";
+import { requireRole } from "@/lib/roles";
 
-const VALID_PERIODS = ["1d", "7d", "30d", "90d"] as const;
-type Period = (typeof VALID_PERIODS)[number];
+/**
+ * GET /api/admin/analytics — aggregate LMS analytics for admins.
+ * Returns overview stats, per-course metrics, and per-user metrics.
+ */
+export async function GET() {
+  const authResult = await requireRole("course_manager");
+  if (authResult instanceof NextResponse) return authResult;
 
-function periodToDays(p: Period): number {
-  return parseInt(p, 10);
-}
+  const sevenDaysAgo = new Date();
+  sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
 
-async function queryPostHog(
-  apiKey: string,
-  projectId: string,
-  query: string
-): Promise<unknown[][]> {
-  const host =
-    process.env.NEXT_PUBLIC_POSTHOG_HOST ?? "https://us.posthog.com";
-  const res = await fetch(`${host}/api/projects/${projectId}/query`, {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-      Authorization: `Bearer ${apiKey}`,
+  // Parallel queries for overview stats
+  const [
+    totalUsers,
+    totalEnrollments,
+    totalQuizAttempts,
+    activeUsers7d,
+    courses,
+    users,
+  ] = await Promise.all([
+    prisma.user.count(),
+    prisma.enrollment.count(),
+    prisma.quizAttempt.count(),
+    prisma.userStats.count({
+      where: { lastActivityDate: { gte: sevenDaysAgo } },
+    }),
+    getCourseMetrics(),
+    getUserMetrics(),
+  ]);
+
+  // Calculate avg completion rate from course metrics
+  const coursesWithEnrollments = courses.filter((c) => c.enrolledCount > 0);
+  const avgCompletionRate =
+    coursesWithEnrollments.length > 0
+      ? Math.round(
+          coursesWithEnrollments.reduce((sum, c) => sum + c.completionPercent, 0) /
+            coursesWithEnrollments.length,
+        )
+      : 0;
+
+  return NextResponse.json({
+    overview: {
+      totalUsers,
+      totalEnrollments,
+      totalQuizAttempts,
+      activeUsers7d,
+      avgCompletionRate,
     },
-    body: JSON.stringify({ query: { kind: "HogQLQuery", query } }),
-    // Don't cache — analytics data should always be fresh
-    cache: "no-store",
+    courses,
+    users,
   });
-  if (!res.ok) {
-    throw new Error(`PostHog query failed: ${res.status} ${res.statusText}`);
-  }
-  const data = await res.json();
-  return (data.results ?? []) as unknown[][];
 }
 
-export async function GET(req: NextRequest) {
-  const session = await auth();
-  if (!session?.user) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+async function getCourseMetrics() {
+  const courses = await prisma.course.findMany({
+    where: { status: "PUBLISHED" },
+    select: {
+      id: true,
+      title: true,
+      modules: {
+        select: {
+          lessons: { select: { id: true } },
+        },
+      },
+      enrollments: { select: { userId: true } },
+    },
+    orderBy: { title: "asc" },
+  });
+
+  const results = [];
+
+  for (const course of courses) {
+    const allLessonIds = course.modules.flatMap((m) => m.lessons.map((l) => l.id));
+    const enrolledCount = course.enrollments.length;
+    const enrolledUserIds = course.enrollments.map((e) => e.userId);
+
+    let completedCount = 0;
+    let totalQuizScore = 0;
+    let quizAttemptCount = 0;
+
+    if (enrolledCount > 0 && allLessonIds.length > 0) {
+      // Count users who completed all lessons
+      for (const userId of enrolledUserIds) {
+        const userCompleted = await prisma.lessonProgress.count({
+          where: {
+            userId,
+            lessonId: { in: allLessonIds },
+            completedAt: { not: null },
+          },
+        });
+        if (userCompleted >= allLessonIds.length) completedCount++;
+      }
+
+      // Get quiz stats for this course
+      const quizAttempts = await prisma.quizAttempt.findMany({
+        where: { lessonId: { in: allLessonIds } },
+        select: { score: true, totalQuestions: true },
+      });
+      quizAttemptCount = quizAttempts.length;
+      totalQuizScore = quizAttempts.reduce(
+        (sum, a) => sum + (a.totalQuestions > 0 ? (a.score / a.totalQuestions) * 100 : 0),
+        0,
+      );
+    }
+
+    results.push({
+      id: course.id,
+      title: course.title,
+      enrolledCount,
+      completedCount,
+      completionPercent:
+        enrolledCount > 0 ? Math.round((completedCount / enrolledCount) * 100) : 0,
+      avgQuizScore:
+        quizAttemptCount > 0 ? Math.round(totalQuizScore / quizAttemptCount) : null,
+      totalLessons: allLessonIds.length,
+    });
   }
-  const userRole = ((session.user as { role?: Role }).role) ?? "employee";
-  if (userRole !== "admin") {
-    return NextResponse.json({ error: "Forbidden" }, { status: 403 });
-  }
 
-  const apiKey = process.env.POSTHOG_API_KEY;
-  const projectId = process.env.POSTHOG_PROJECT_ID;
-  if (!apiKey || !projectId) {
-    return NextResponse.json({ configured: false });
-  }
+  return results;
+}
 
-  const raw = req.nextUrl.searchParams.get("period") ?? "30d";
-  const period: Period = (VALID_PERIODS as readonly string[]).includes(raw)
-    ? (raw as Period)
-    : "30d";
-  const days = periodToDays(period);
+async function getUserMetrics() {
+  const users = await prisma.user.findMany({
+    select: {
+      id: true,
+      name: true,
+      email: true,
+      role: true,
+      stats: { select: { xp: true, streak: true, lastActivityDate: true } },
+      enrollments: { select: { courseId: true } },
+      lessonProgress: {
+        where: { completedAt: { not: null } },
+        select: { lessonId: true },
+      },
+    },
+    orderBy: { name: "asc" },
+    take: 100,
+  });
 
-  const byPageQuery = `
-    SELECT
-      properties.doc_title AS title,
-      properties.category AS category,
-      properties.category_title AS category_title,
-      count() AS views,
-      count(distinct distinct_id) AS unique_users,
-      max(timestamp) AS last_viewed
-    FROM events
-    WHERE event = 'document_viewed'
-      AND timestamp > now() - INTERVAL ${days} DAY
-    GROUP BY title, category, category_title
-    ORDER BY views DESC
-  `;
-
-  const byUserQuery = `
-    SELECT
-      distinct_id AS email,
-      person.properties.name AS name,
-      count(distinct properties.doc_slug) AS unique_docs,
-      count() AS total_views,
-      max(timestamp) AS last_active
-    FROM events
-    WHERE event = 'document_viewed'
-      AND timestamp > now() - INTERVAL ${days} DAY
-      AND person.properties.name IS NOT NULL
-    GROUP BY email, name
-    ORDER BY last_active DESC
-  `;
-
-  try {
-    const [byPageResults, byUserResults] = await Promise.all([
-      queryPostHog(apiKey, projectId, byPageQuery),
-      queryPostHog(apiKey, projectId, byUserQuery),
-    ]);
-
-    const byPage = byPageResults.map(
-      ([title, category, category_title, views, unique_users, last_viewed]) => ({
-        title,
-        category,
-        category_title,
-        views,
-        unique_users,
-        last_viewed,
-      })
-    );
-
-    const byUser = byUserResults.map(
-      ([email, name, unique_docs, total_views, last_active]) => ({
-        email,
-        name,
-        unique_docs,
-        total_views,
-        last_active,
-      })
-    );
-
-    return NextResponse.json({ configured: true, byPage, byUser });
-  } catch (err) {
-    console.error("[analytics] PostHog query failed:", err);
-    return NextResponse.json(
-      { error: "Failed to fetch analytics data" },
-      { status: 502 }
-    );
-  }
+  return users.map((u) => ({
+    id: u.id,
+    name: u.name,
+    email: u.email,
+    role: u.role.toLowerCase(),
+    enrolledCourses: u.enrollments.length,
+    lessonsCompleted: u.lessonProgress.length,
+    xp: u.stats?.xp ?? 0,
+    streak: u.stats?.streak ?? 0,
+    lastActive: u.stats?.lastActivityDate?.toISOString() ?? null,
+  }));
 }
