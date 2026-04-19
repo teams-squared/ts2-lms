@@ -366,6 +366,11 @@ async function main() {
     CREATE INDEX IF NOT EXISTS "DeadlineReminderLog_lessonId_idx" ON "DeadlineReminderLog"("lessonId");
   `);
 
+  // Add completedAt to Enrollment for first-ever course completion tracking (idempotent)
+  await client.query(`
+    ALTER TABLE "Enrollment" ADD COLUMN IF NOT EXISTS "completedAt" TIMESTAMP(3);
+  `);
+
   console.log("Migration complete");
   await client.end();
 }

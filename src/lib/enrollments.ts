@@ -98,3 +98,59 @@ export async function createEnrollmentsInTransaction(
 ): Promise<CreateEnrollmentsResult> {
   return prisma.$transaction((tx) => createEnrollments(tx, input));
 }
+
+export interface CourseCompletionStats {
+  courseTitle: string;
+  totalLessons: number;
+  completedLessons: number;
+  xpEarned: number;
+  daysTaken: number;
+}
+
+/**
+ * Compute stats for the course-completion modal. Reads directly from the DB
+ * so the caller (the lesson-complete route) doesn't need to pass pre-fetched
+ * data through.
+ *
+ * xpEarned is deterministic: lessonCount * 10 (lesson XP) + 100 (course bonus).
+ * NOTE: a per-course XP ledger would be more accurate (accounts for re-attempts,
+ * quiz bonuses, etc.) but is out of scope for this phase.
+ */
+export async function computeCourseCompletionStats(
+  userId: string,
+  courseId: string,
+  enrolledAt: Date,
+): Promise<CourseCompletionStats> {
+  const [course, modules, completedCount] = await Promise.all([
+    prisma.course.findUnique({ where: { id: courseId }, select: { title: true } }),
+    prisma.module.findMany({
+      where: { courseId },
+      include: { lessons: { select: { id: true } } },
+    }),
+    prisma.lessonProgress.count({
+      where: {
+        userId,
+        lesson: { module: { courseId } },
+        completedAt: { not: null },
+      },
+    }),
+  ]);
+
+  const allLessonIds = modules.flatMap((m) => m.lessons.map((l) => l.id));
+  const totalLessons = allLessonIds.length;
+  const now = new Date();
+  const daysTaken = Math.max(
+    1,
+    Math.ceil((now.getTime() - enrolledAt.getTime()) / (1000 * 60 * 60 * 24)),
+  );
+  // Deterministic XP: 10 per lesson + 100 course bonus
+  const xpEarned = totalLessons * 10 + 100;
+
+  return {
+    courseTitle: course?.title ?? "this course",
+    totalLessons,
+    completedLessons: completedCount,
+    xpEarned,
+    daysTaken,
+  };
+}

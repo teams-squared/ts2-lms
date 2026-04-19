@@ -4,6 +4,7 @@ import { prisma } from "@/lib/prisma";
 import { awardXp } from "@/lib/xp";
 import { trackEvent } from "@/lib/posthog-server";
 import { sendCourseCompletionEmail } from "@/lib/email";
+import { computeCourseCompletionStats } from "@/lib/enrollments";
 
 type Params = { params: Promise<{ id: string; moduleId: string; lessonId: string }> };
 
@@ -197,8 +198,19 @@ export async function POST(request: Request, { params }: Params) {
     passed,
   });
 
-  // Check if entire course is now complete (quiz may have been the last lesson)
-  if (passed) {
+  // ── Course completion check ───────────────────────────────────────────────
+  // Uses same firstCompletion invariant as the lesson-complete route: fires
+  // exactly once per enrollment by checking enrollment.completedAt === null.
+  let courseComplete = false;
+  let courseStats: {
+    courseTitle: string;
+    totalLessons: number;
+    completedLessons: number;
+    xpEarned: number;
+    daysTaken: number;
+  } | null = null;
+
+  if (passed && enrollment) {
     try {
       const allModules = await prisma.module.findMany({
         where: { courseId },
@@ -209,23 +221,40 @@ export async function POST(request: Request, { params }: Params) {
         const completedCount = await prisma.lessonProgress.count({
           where: { userId, lessonId: { in: allLessonIds }, completedAt: { not: null } },
         });
-        if (completedCount >= allLessonIds.length) {
-          await awardXp(userId, 100);
-          trackEvent(userId, "course_completed", { courseId });
 
-          // Send completion alert emails
-          const [subs, courseData, userData] = await Promise.all([
+        const firstCompletion = completedCount >= allLessonIds.length && enrollment.completedAt === null;
+
+        if (firstCompletion) {
+          const now = new Date();
+          await prisma.enrollment.update({
+            where: { id: enrollment.id },
+            data: { completedAt: now },
+          });
+
+          await awardXp(userId, 100);
+
+          const stats = await computeCourseCompletionStats(userId, courseId, enrollment.enrolledAt);
+          trackEvent(userId, "course_completed", {
+            courseId,
+            xpEarned: stats.xpEarned,
+            daysTaken: stats.daysTaken,
+            lessonCount: stats.totalLessons,
+          });
+
+          const [subs, userData] = await Promise.all([
             prisma.courseEmailSubscription.findMany({ where: { courseId }, select: { email: true } }),
-            prisma.course.findUnique({ where: { id: courseId }, select: { title: true } }),
             prisma.user.findUnique({ where: { id: userId }, select: { name: true, email: true } }),
           ]);
           if (subs.length > 0) {
             sendCourseCompletionEmail(
               subs.map((s) => s.email),
               userData?.name ?? userData?.email ?? "A user",
-              courseData?.title ?? "a course",
+              stats.courseTitle,
             ).catch((err) => console.error("[email] completion alert failed:", err));
           }
+
+          courseComplete = true;
+          courseStats = stats;
         }
       }
     } catch {
@@ -242,5 +271,7 @@ export async function POST(request: Request, { params }: Params) {
     answers: answerResults,
     xpAwarded,
     newAchievements,
+    courseComplete,
+    courseStats,
   });
 }

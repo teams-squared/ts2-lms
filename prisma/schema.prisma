@@ -129,11 +129,12 @@ model Lesson {
 }
 
 model Enrollment {
-  id           String   @id @default(cuid())
+  id           String    @id @default(cuid())
   userId       String
   courseId      String
   enrolledById String?
-  enrolledAt   DateTime @default(now())
+  enrolledAt   DateTime  @default(now())
+  completedAt  DateTime?
 
   user       User   @relation(fields: [userId], references: [id], onDelete: Cascade)
   course     Course @relation(fields: [courseId], references: [id], onDelete: Cascade)

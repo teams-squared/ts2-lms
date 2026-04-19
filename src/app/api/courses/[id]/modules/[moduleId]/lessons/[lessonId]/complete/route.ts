@@ -4,6 +4,7 @@ import { prisma } from "@/lib/prisma";
 import { awardXp } from "@/lib/xp";
 import { trackEvent } from "@/lib/posthog-server";
 import { sendCourseCompletionEmail } from "@/lib/email";
+import { computeCourseCompletionStats } from "@/lib/enrollments";
 
 type Params = { params: Promise<{ id: string; moduleId: string; lessonId: string }> };
 
@@ -49,35 +50,70 @@ export async function POST(_request: Request, { params }: Params) {
   const { newAchievements } = await awardXp(userId, 10);
   trackEvent(userId, "lesson_completed", { courseId, moduleId, lessonId });
 
-  // Check if entire course is now complete
+  // ── Course completion check ───────────────────────────────────────────────
+  // firstCompletion fires exactly once per enrollment: when all lessons are done
+  // AND enrollment.completedAt is still null. Re-completing after un/re-doing a
+  // lesson does NOT fire again because completedAt is sticky (never reset on DELETE).
+  let courseComplete = false;
+  let courseStats: {
+    courseTitle: string;
+    totalLessons: number;
+    completedLessons: number;
+    xpEarned: number;
+    daysTaken: number;
+  } | null = null;
+
   try {
     const allModules = await prisma.module.findMany({
       where: { courseId },
       include: { lessons: { select: { id: true } } },
     });
     const allLessonIds = (allModules ?? []).flatMap((m) => m.lessons.map((l) => l.id));
+
     if (allLessonIds.length > 0) {
       const completedCount = await prisma.lessonProgress.count({
         where: { userId, lessonId: { in: allLessonIds }, completedAt: { not: null } },
       });
-      if (completedCount >= allLessonIds.length) {
+
+      const firstCompletion = completedCount >= allLessonIds.length && enrollment.completedAt === null;
+
+      if (firstCompletion) {
+        // Stamp the enrollment — subsequent re-completions won't trigger this block
+        await prisma.enrollment.update({
+          where: { id: enrollment.id },
+          data: { completedAt: now },
+        });
+
+        // Award course-completion XP bonus
         await awardXp(userId, 100);
-        trackEvent(userId, "course_completed", { courseId });
+
+        // Fire analytics event
+        const stats = await computeCourseCompletionStats(userId, courseId, enrollment.enrolledAt);
+        trackEvent(userId, "course_completed", {
+          courseId,
+          xpEarned: stats.xpEarned,
+          daysTaken: stats.daysTaken,
+          lessonCount: stats.totalLessons,
+        });
 
         // Send completion alert emails
-        const [subs, courseData, userData] = await Promise.all([
+        const [subs, userData] = await Promise.all([
           prisma.courseEmailSubscription.findMany({ where: { courseId }, select: { email: true } }),
-          prisma.course.findUnique({ where: { id: courseId }, select: { title: true } }),
           prisma.user.findUnique({ where: { id: userId }, select: { name: true, email: true } }),
         ]);
         if (subs.length > 0) {
           sendCourseCompletionEmail(
             subs.map((s) => s.email),
             userData?.name ?? userData?.email ?? "A user",
-            courseData?.title ?? "a course",
+            stats.courseTitle,
           ).catch((err) => console.error("[email] completion alert failed:", err));
         }
+
+        courseComplete = true;
+        courseStats = stats;
       }
+      // If completedCount >= total but enrollment.completedAt is already set:
+      // re-completion after un/re-complete — no XP, no event, no email, courseComplete stays false.
     }
   } catch {
     // Course completion check is non-critical; don't fail the request
@@ -92,10 +128,17 @@ export async function POST(_request: Request, { params }: Params) {
       title: a.title,
       icon: a.icon,
     })),
+    courseComplete,
+    courseStats,
   });
 }
 
-/** DELETE .../lessons/[lessonId]/complete — unmark a lesson as complete (clears completedAt). */
+/** DELETE .../lessons/[lessonId]/complete — unmark a lesson as complete (clears completedAt).
+ *
+ * NOTE: enrollment.completedAt is intentionally NOT reset here. "You earned the
+ * completion" is a sticky state — the modal should never re-fire for a course
+ * the learner already crossed the finish line on.
+ */
 export async function DELETE(_request: Request, { params }: Params) {
   const session = await auth();
   if (!session?.user?.id) {

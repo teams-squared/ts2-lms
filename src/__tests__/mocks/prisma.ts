@@ -48,6 +48,7 @@ export const mockPrisma = {
     findUnique: vi.fn(),
     findMany: vi.fn(),
     create: vi.fn(),
+    update: vi.fn(),
     upsert: vi.fn(),
     delete: vi.fn(),
     count: vi.fn().mockResolvedValue(0),
@@ -130,6 +131,11 @@ export const mockPrisma = {
     delete: vi.fn(),
   },
   coursePrerequisite: {
+    findMany: vi.fn().mockResolvedValue([]),
+    create: vi.fn(),
+    delete: vi.fn(),
+  },
+  courseEmailSubscription: {
     findMany: vi.fn().mockResolvedValue([]),
     create: vi.fn(),
     delete: vi.fn(),
