@@ -4,6 +4,7 @@ import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { prismaRoleToApp } from "@/lib/types";
 import { UserDetailManager } from "@/components/admin/UserDetailManager";
+import { getOverdueForUser } from "@/lib/deadline-reminders";
 
 export const dynamic = "force-dynamic";
 
@@ -32,7 +33,7 @@ export default async function AdminUserDetailPage({
 
   if (!user) notFound();
 
-  const [userClearances, distinctClearances, enrollmentCount, authoredCount] =
+  const [userClearances, distinctClearances, enrollmentCount, authoredCount, overdueList] =
     await Promise.all([
       prisma.userClearance.findMany({
         where: { userId },
@@ -45,6 +46,7 @@ export default async function AdminUserDetailPage({
       }),
       prisma.enrollment.count({ where: { userId } }),
       prisma.course.count({ where: { createdById: userId } }),
+      getOverdueForUser(userId),
     ]);
 
   const availableClearances = distinctClearances
@@ -78,6 +80,37 @@ export default async function AdminUserDetailPage({
         authoredCourseCount={authoredCount}
         sessionUserId={sessionUserId}
       />
+
+      {overdueList.length > 0 && (
+        <div className="mt-6 rounded-lg border border-red-200 bg-red-50 p-4 dark:border-red-900/40 dark:bg-red-950/20">
+          <h3 className="text-sm font-semibold text-red-700 dark:text-red-400 mb-3">
+            Overdue lessons: {overdueList.length}
+          </h3>
+          <ul className="space-y-2">
+            {overdueList.slice(0, 5).map((item) => (
+              <li key={item.lessonId} className="flex items-start justify-between gap-4 text-sm">
+                <div className="min-w-0">
+                  <Link
+                    href={`/courses/${item.courseId}/lessons/${item.lessonId}`}
+                    className="font-medium text-foreground hover:underline truncate block"
+                  >
+                    {item.lessonTitle}
+                  </Link>
+                  <p className="text-xs text-foreground-muted truncate">{item.courseTitle}</p>
+                </div>
+                <span className="shrink-0 text-xs font-medium text-red-600 dark:text-red-400">
+                  {item.daysOverdue === 1 ? "1 day overdue" : `${item.daysOverdue} days overdue`}
+                </span>
+              </li>
+            ))}
+          </ul>
+          {overdueList.length > 5 && (
+            <p className="mt-2 text-xs text-foreground-muted">
+              +{overdueList.length - 5} more overdue
+            </p>
+          )}
+        </div>
+      )}
     </div>
   );
 }
