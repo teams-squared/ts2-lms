@@ -18,8 +18,8 @@ interface User {
 
 const ROLE_COLORS: Record<Role, string> = {
   admin: "bg-danger-subtle text-danger",
-  course_manager: "bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300",
-  employee: "bg-surface-muted text-foreground-muted",
+  course_manager: "bg-info-subtle text-info",
+  employee: "bg-muted text-muted-foreground ring-1 ring-border",
 };
 
 const ROLE_LABELS: Record<Role, string> = {

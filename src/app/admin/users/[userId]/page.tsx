@@ -82,8 +82,8 @@ export default async function AdminUserDetailPage({
       />
 
       {overdueList.length > 0 && (
-        <div className="mt-6 rounded-lg border border-red-200 bg-red-50 p-4 dark:border-red-900/40 dark:bg-red-950/20">
-          <h3 className="text-sm font-semibold text-red-700 dark:text-red-400 mb-3">
+        <div className="mt-6 rounded-lg border border-danger/30 bg-danger-subtle p-4">
+          <h3 className="text-sm font-semibold text-danger mb-3">
             Overdue lessons: {overdueList.length}
           </h3>
           <ul className="space-y-2">
@@ -98,7 +98,7 @@ export default async function AdminUserDetailPage({
                   </Link>
                   <p className="text-xs text-foreground-muted truncate">{item.courseTitle}</p>
                 </div>
-                <span className="shrink-0 text-xs font-medium text-red-600 dark:text-red-400">
+                <span className="shrink-0 text-xs font-medium text-danger">
                   {item.daysOverdue === 1 ? "1 day overdue" : `${item.daysOverdue} days overdue`}
                 </span>
               </li>
