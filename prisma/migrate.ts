@@ -343,6 +343,29 @@ async function main() {
     CREATE INDEX IF NOT EXISTS "User_invitedById_idx" ON "User"("invitedById");
   `);
 
+  // Create DeadlineReminderLog table (idempotent)
+  await client.query(`
+    CREATE TABLE IF NOT EXISTS "DeadlineReminderLog" (
+      "id"       TEXT         NOT NULL,
+      "userId"   TEXT         NOT NULL,
+      "lessonId" TEXT         NOT NULL,
+      "kind"     TEXT         NOT NULL,
+      "sentAt"   TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+      CONSTRAINT "DeadlineReminderLog_pkey" PRIMARY KEY ("id"),
+      CONSTRAINT "DeadlineReminderLog_userId_fkey" FOREIGN KEY ("userId") REFERENCES "User"("id") ON DELETE CASCADE,
+      CONSTRAINT "DeadlineReminderLog_lessonId_fkey" FOREIGN KEY ("lessonId") REFERENCES "Lesson"("id") ON DELETE CASCADE
+    );
+  `);
+
+  await client.query(`
+    CREATE UNIQUE INDEX IF NOT EXISTS "DeadlineReminderLog_user_lesson_kind_key"
+      ON "DeadlineReminderLog"("userId","lessonId","kind");
+  `);
+
+  await client.query(`
+    CREATE INDEX IF NOT EXISTS "DeadlineReminderLog_lessonId_idx" ON "DeadlineReminderLog"("lessonId");
+  `);
+
   console.log("Migration complete");
   await client.end();
 }

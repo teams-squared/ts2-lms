@@ -34,6 +34,7 @@ model User {
   achievements        UserAchievement[]
   stats               UserStats?
   clearances          UserClearance[]
+  deadlineReminderLogs DeadlineReminderLog[]
 }
 
 enum CourseStatus {
@@ -119,6 +120,7 @@ model Lesson {
   progress      LessonProgress[]
   quizQuestions QuizQuestion[]
   quizAttempts  QuizAttempt[]
+  deadlineReminderLogs DeadlineReminderLog[]
   createdAt     DateTime         @default(now())
   updatedAt     DateTime         @updatedAt
 
@@ -295,4 +297,16 @@ model CoursePrerequisite {
   prerequisite Course @relation("PrereqOf", fields: [prerequisiteId], references: [id], onDelete: Cascade)
 
   @@id([courseId, prerequisiteId])
+}
+
+model DeadlineReminderLog {
+  id       String   @id @default(cuid())
+  userId   String
+  lessonId String
+  kind     String   // "due_soon_1" | "due_today" | "overdue_1"
+  sentAt   DateTime @default(now())
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+  lesson Lesson @relation(fields: [lessonId], references: [id], onDelete: Cascade)
+  @@unique([userId, lessonId, kind])
+  @@index([lessonId])
 }
