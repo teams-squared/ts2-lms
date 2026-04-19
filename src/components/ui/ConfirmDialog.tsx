@@ -28,8 +28,11 @@ interface ConfirmDialogProps {
   destructive?: boolean;
   /** Called when the user confirms. Can be async; dialog stays open until resolved. */
   onConfirm: () => void | Promise<void>;
-  /** Disables the confirm button (e.g. while a request is in flight). */
+  /** Disables the confirm button AND shows "Working…" (e.g. while a request is in flight). */
   loading?: boolean;
+  /** Disables the confirm button without changing its label — for unmet preconditions
+   *  like an unchecked "I understand" box or an unfilled confirm-text input. */
+  disabled?: boolean;
 }
 
 /**
@@ -47,6 +50,7 @@ export function ConfirmDialog({
   destructive = true,
   onConfirm,
   loading = false,
+  disabled = false,
 }: ConfirmDialogProps) {
   const handleConfirm = async (e: React.MouseEvent) => {
     e.preventDefault();
@@ -65,7 +69,7 @@ export function ConfirmDialog({
           <AlertDialogAction
             variant={destructive ? "destructive" : "default"}
             onClick={handleConfirm}
-            disabled={loading}
+            disabled={loading || disabled}
           >
             {loading ? "Working…" : confirmLabel}
           </AlertDialogAction>

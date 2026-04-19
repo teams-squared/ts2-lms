@@ -3,13 +3,22 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { ConfirmDialog } from "@/components/ui/ConfirmDialog";
+import { useToast } from "@/components/ui/ToastProvider";
 import type { Role } from "@/lib/types";
 
 interface UserDetailManagerProps {
   userId: string;
+  userEmail: string;
+  userName: string | null;
   initialRole: Role;
   initialClearances: string[];
   availableClearances: string[];
+  /** Count of enrollments this user has — shown in the remove-user confirm dialog. */
+  enrollmentCount: number;
+  /** Count of courses this user has authored — will be reassigned on remove. */
+  authoredCourseCount: number;
+  /** ID of the admin currently viewing — used to disable self-delete. */
+  sessionUserId: string;
 }
 
 const ROLE_LABELS: Record<Role, string> = {
@@ -20,11 +29,17 @@ const ROLE_LABELS: Record<Role, string> = {
 
 export function UserDetailManager({
   userId,
+  userEmail,
+  userName,
   initialRole,
   initialClearances,
   availableClearances: initialAvailableClearances,
+  enrollmentCount,
+  authoredCourseCount,
+  sessionUserId,
 }: UserDetailManagerProps) {
   const router = useRouter();
+  const { toast } = useToast();
 
   // Role
   const [role, setRole] = useState<Role>(initialRole);
@@ -40,6 +55,50 @@ export function UserDetailManager({
   const [revokingClearance, setRevokingClearance] = useState<string | null>(null);
   const [pendingRevoke, setPendingRevoke] = useState<string | null>(null);
   const [clearanceError, setClearanceError] = useState<string | null>(null);
+
+  // Remove user
+  const [removeOpen, setRemoveOpen] = useState(false);
+  const [removeConfirmText, setRemoveConfirmText] = useState("");
+  const [removing, setRemoving] = useState(false);
+  const [removeError, setRemoveError] = useState<string | null>(null);
+  const isSelf = sessionUserId === userId;
+  const canConfirmRemove = removeConfirmText.trim().toLowerCase() === userEmail.toLowerCase();
+
+  const handleRemoveUser = async () => {
+    if (!canConfirmRemove || removing) return;
+    setRemoving(true);
+    setRemoveError(null);
+    try {
+      const res = await fetch(`/api/admin/users/${userId}`, { method: "DELETE" });
+      if (!res.ok) {
+        const data = (await res.json().catch(() => ({}))) as { error?: string };
+        if (res.status === 409) {
+          setRemoveError(data.error ?? "This user can't be removed");
+        } else {
+          setRemoveError(data.error ?? "Failed to remove user");
+        }
+        return;
+      }
+      const displayName = userName?.trim() || userEmail;
+      toast(`Removed ${displayName}`);
+      setRemoveOpen(false);
+      router.push("/admin/users");
+      router.refresh();
+    } catch {
+      setRemoveError("An unexpected error occurred");
+    } finally {
+      setRemoving(false);
+    }
+  };
+
+  const handleCloseRemoveDialog = (open: boolean) => {
+    if (removing) return; // don't close mid-request
+    setRemoveOpen(open);
+    if (!open) {
+      setRemoveConfirmText("");
+      setRemoveError(null);
+    }
+  };
 
   const handleGrantClearance = async () => {
     if (!selectedClearance) return;
@@ -210,6 +269,85 @@ export function UserDetailManager({
           </div>
         )}
       </div>
+
+      {/* Danger zone — permanent user removal */}
+      <div className="rounded-lg border border-danger/30 bg-card p-6">
+        <h3 className="text-sm font-semibold text-danger mb-1">Danger zone</h3>
+        <p className="text-xs text-foreground-muted mb-4">
+          Permanently delete this user and all of their activity data. Courses they
+          authored will be reassigned to you. This cannot be undone.
+        </p>
+        <button
+          type="button"
+          onClick={() => setRemoveOpen(true)}
+          disabled={isSelf}
+          title={isSelf ? "You cannot remove your own account" : undefined}
+          className="rounded-lg border border-danger/40 bg-card text-sm font-medium text-danger hover:bg-danger-subtle disabled:opacity-50 disabled:cursor-not-allowed px-4 py-2 transition-colors"
+        >
+          Remove user
+        </button>
+      </div>
+
+      <ConfirmDialog
+        open={removeOpen}
+        onOpenChange={handleCloseRemoveDialog}
+        title="Remove this user?"
+        description={
+          <div className="space-y-3">
+            <p>
+              This will permanently delete{" "}
+              <span className="font-medium text-foreground">
+                {userName?.trim() || userEmail}
+              </span>
+              , along with:
+            </p>
+            <ul className="list-disc pl-5 text-sm text-foreground-muted space-y-0.5">
+              <li>
+                {enrollmentCount} enrollment{enrollmentCount !== 1 ? "s" : ""}
+              </li>
+              <li>All lesson progress and quiz attempts</li>
+              <li>All notifications, achievements, and XP</li>
+              <li>All clearances</li>
+            </ul>
+            {authoredCourseCount > 0 && (
+              <p className="text-sm text-foreground-muted">
+                <span className="font-medium text-foreground">
+                  {authoredCourseCount}
+                </span>{" "}
+                authored course{authoredCourseCount !== 1 ? "s" : ""} will be
+                reassigned to you.
+              </p>
+            )}
+            <p className="text-xs text-foreground-subtle">
+              This cannot be undone. If they sign in again via SSO, a fresh empty
+              account will be created.
+            </p>
+            <div>
+              <label
+                htmlFor="remove-confirm-email"
+                className="block text-xs font-medium text-foreground-muted mb-1"
+              >
+                Type <span className="font-mono text-foreground">{userEmail}</span>{" "}
+                to confirm
+              </label>
+              <input
+                id="remove-confirm-email"
+                type="text"
+                value={removeConfirmText}
+                onChange={(e) => setRemoveConfirmText(e.target.value)}
+                disabled={removing}
+                autoComplete="off"
+                className="w-full px-3 py-2 rounded-lg border border-border bg-surface text-sm text-foreground placeholder-foreground-subtle focus:outline-none focus:ring-2 focus:ring-ring transition-all"
+              />
+            </div>
+            {removeError && <p className="text-sm text-danger">{removeError}</p>}
+          </div>
+        }
+        confirmLabel="Remove user"
+        onConfirm={handleRemoveUser}
+        loading={removing}
+        disabled={!canConfirmRemove}
+      />
 
       <ConfirmDialog
         open={pendingRevoke !== null}
