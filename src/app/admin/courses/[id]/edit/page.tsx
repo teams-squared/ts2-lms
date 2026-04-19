@@ -2,6 +2,7 @@ import { auth } from "@/lib/auth";
 import { notFound, redirect } from "next/navigation";
 import Link from "next/link";
 import { CourseEditor } from "@/components/courses/CourseEditor";
+import { CourseDeleteZone } from "@/components/courses/CourseDeleteZone";
 import { loadCourseEditData } from "@/lib/courseEditData";
 import { getNodeTree } from "@/lib/courseNodes";
 import { prisma } from "@/lib/prisma";
@@ -57,6 +58,9 @@ export default async function CourseEditPage({
         quizDataByLessonId={data.quizDataByLessonId}
         initialSubscriptions={subs.map((s) => s.email)}
       />
+      <div className="mt-8">
+        <CourseDeleteZone courseId={courseId} courseTitle={data.course.title} />
+      </div>
     </div>
   );
 }
