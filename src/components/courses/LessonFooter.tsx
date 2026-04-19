@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
-import { CheckCircleIcon, ChevronLeftIcon, ChevronRightIcon, CloseIcon } from "@/components/icons";
+import { CheckCircleIcon, ChevronLeftIcon, ChevronRightIcon } from "@/components/icons";
 import { Spinner } from "@/components/ui/Spinner";
 import { useToast } from "@/components/ui/ToastProvider";
 import { cn } from "@/lib/utils";
@@ -162,27 +162,25 @@ export function LessonFooter({
         <div className="flex items-center gap-2">
           {!hideMarkComplete && (
             isCompleted ? (
-              <div className="flex items-center gap-0.5" data-testid="lesson-completed-state">
-                <span className="inline-flex items-center gap-1.5 rounded-md px-3 py-2 text-sm font-medium text-success">
-                  <CheckCircleIcon className="h-4 w-4" aria-hidden="true" />
-                  <span className="hidden sm:inline">Completed</span>
+              <button
+                type="button"
+                onClick={() => void handleMarkIncomplete()}
+                disabled={isLoading}
+                data-testid="mark-incomplete-button"
+                aria-label="Mark this lesson incomplete"
+                title="Click to mark incomplete"
+                className={cn(
+                  "group inline-flex items-center gap-1.5 rounded-md px-3 py-2 text-sm font-medium text-success",
+                  "transition-colors hover:bg-success-subtle disabled:cursor-not-allowed disabled:opacity-60",
+                  "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background",
+                )}
+              >
+                <CheckCircleIcon className="h-4 w-4" aria-hidden="true" />
+                <span className="hidden sm:inline">
+                  <span className="group-hover:hidden">Completed</span>
+                  <span className="hidden group-hover:inline">Mark incomplete</span>
                 </span>
-                <button
-                  type="button"
-                  onClick={() => void handleMarkIncomplete()}
-                  disabled={isLoading}
-                  data-testid="mark-incomplete-button"
-                  aria-label="Mark incomplete"
-                  title="Mark incomplete"
-                  className={cn(
-                    "inline-flex h-8 w-8 items-center justify-center rounded-md text-foreground-muted",
-                    "transition-colors hover:bg-surface-muted hover:text-foreground disabled:cursor-not-allowed disabled:opacity-50",
-                    "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background",
-                  )}
-                >
-                  <CloseIcon className="h-3.5 w-3.5" aria-hidden="true" />
-                </button>
-              </div>
+              </button>
             ) : (
               <button
                 type="button"
