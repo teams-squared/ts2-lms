@@ -21,6 +21,10 @@ model User {
   avatar         String?
   createdAt      DateTime         @default(now())
   updatedAt      DateTime         @updatedAt
+  invitedAt      DateTime?
+  invitedById    String?
+  invitedBy      User?            @relation("UserInvites", fields: [invitedById], references: [id], onDelete: SetNull)
+  invitedUsers   User[]           @relation("UserInvites")
   createdCourses      Course[]         @relation("CreatedCourses")
   enrollments         Enrollment[]
   enrollmentsMade     Enrollment[]     @relation("EnrolledBy")
