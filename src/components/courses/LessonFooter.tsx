@@ -71,6 +71,22 @@ export function LessonFooter({
     }
   }
 
+  async function handleMarkIncomplete() {
+    setIsLoading(true);
+    setIsCompleted(false);
+    try {
+      const res = await fetch(endpoint, { method: "DELETE" });
+      if (!res.ok) throw new Error("Failed");
+      toast("Lesson marked incomplete", "info");
+      router.refresh();
+    } catch {
+      setIsCompleted(true);
+      toast("Could not undo — try again", "error");
+    } finally {
+      setIsLoading(false);
+    }
+  }
+
   return (
     <footer className="sticky bottom-0 z-30 flex h-16 shrink-0 items-center gap-3 border-t border-border bg-background px-4 sm:px-6">
       {/* Previous */}
@@ -114,13 +130,21 @@ export function LessonFooter({
       <div className="flex items-center gap-2">
         {!hideMarkComplete && (
           isCompleted ? (
-            <span
-              className="inline-flex items-center gap-1.5 rounded-md px-3 py-2 text-sm font-medium text-success"
-              data-testid="lesson-completed-state"
-            >
-              <CheckCircleIcon className="h-4 w-4" aria-hidden="true" />
-              <span className="hidden sm:inline">Completed</span>
-            </span>
+            <div className="flex items-center gap-1" data-testid="lesson-completed-state">
+              <span className="inline-flex items-center gap-1.5 rounded-md px-3 py-2 text-sm font-medium text-success">
+                <CheckCircleIcon className="h-4 w-4" aria-hidden="true" />
+                <span className="hidden sm:inline">Completed</span>
+              </span>
+              <button
+                type="button"
+                onClick={() => void handleMarkIncomplete()}
+                disabled={isLoading}
+                data-testid="mark-incomplete-button"
+                className="text-xs text-foreground-subtle transition-colors hover:text-foreground disabled:opacity-50"
+              >
+                Undo
+              </button>
+            </div>
           ) : (
             <button
               type="button"
