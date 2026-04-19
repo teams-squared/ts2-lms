@@ -292,6 +292,7 @@ export default async function LessonPage({
                 courseId={courseId}
                 moduleId={lesson.moduleId}
                 lessonId={lessonId}
+                courseTitle={course.title}
                 nextLessonUrl={nextLessonUrl}
               />
               {isCurrentLessonCompleted && (
@@ -332,6 +333,7 @@ export default async function LessonPage({
           prevLessonUrl={prevLessonUrl}
           nextLessonUrl={nextLessonUrl}
           initialCompleted={isCurrentLessonCompleted}
+          courseTitle={course.title}
           hideMarkComplete={isQuiz}
         />
       </main>

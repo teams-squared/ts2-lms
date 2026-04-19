@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { Spinner } from "@/components/ui/Spinner";
 import { ChevronRightIcon } from "@/components/icons";
+import { CourseCompletionModal } from "@/components/courses/CourseCompletionModal";
 
 interface QuizOption {
   id: string;
@@ -34,6 +35,13 @@ interface AnswerResult {
   correct: boolean;
 }
 
+interface CourseStats {
+  totalLessons: number;
+  completedLessons: number;
+  xpEarned: number;
+  daysTaken: number;
+}
+
 interface QuizResult {
   score: number;
   totalQuestions: number;
@@ -41,6 +49,8 @@ interface QuizResult {
   passed: boolean;
   passingScore: number;
   answers: AnswerResult[];
+  courseComplete?: boolean;
+  courseStats?: CourseStats | null;
 }
 
 interface QuizViewerProps {
@@ -50,6 +60,8 @@ interface QuizViewerProps {
   courseId: string;
   moduleId: string;
   lessonId: string;
+  /** Title of the course — passed to the completion modal. */
+  courseTitle: string;
   /** URL of the next lesson — shows a "Continue" CTA after passing. */
   nextLessonUrl?: string | null;
 }
@@ -63,6 +75,7 @@ export function QuizViewer({
   courseId,
   moduleId,
   lessonId,
+  courseTitle,
   nextLessonUrl,
 }: QuizViewerProps) {
   const router = useRouter();
@@ -71,6 +84,8 @@ export function QuizViewer({
   const [result, setResult] = useState<QuizResult | null>(null);
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [modalOpen, setModalOpen] = useState(false);
+  const [courseStats, setCourseStats] = useState<CourseStats | null>(null);
 
   const bestAttempt = result
     ? {
@@ -133,6 +148,11 @@ export function QuizViewer({
       setResult(data);
       setState("submitted");
       router.refresh();
+
+      if (data.courseComplete && data.courseStats) {
+        setCourseStats(data.courseStats);
+        setModalOpen(true);
+      }
     } catch {
       setError("An unexpected error occurred. Please try again.");
     } finally {
@@ -154,6 +174,15 @@ export function QuizViewer({
   if (state === "idle") {
     return (
       <div className="space-y-6">
+        {courseStats && (
+          <CourseCompletionModal
+            open={modalOpen}
+            onOpenChange={setModalOpen}
+            courseId={courseId}
+            courseTitle={courseTitle}
+            stats={courseStats}
+          />
+        )}
         {bestAttempt?.passed && (
           <div className="flex items-center justify-between gap-3 rounded-lg border border-success/30 bg-success-subtle px-5 py-3">
             <div className="flex items-center gap-2">
@@ -214,6 +243,15 @@ export function QuizViewer({
   if (state === "taking") {
     return (
       <div className="space-y-6">
+        {courseStats && (
+          <CourseCompletionModal
+            open={modalOpen}
+            onOpenChange={setModalOpen}
+            courseId={courseId}
+            courseTitle={courseTitle}
+            stats={courseStats}
+          />
+        )}
         <div className="flex items-center justify-between">
           <p className="text-sm text-foreground-muted">
             {questions.length} question{questions.length !== 1 ? "s" : ""} · Passing: {passingScore}%
@@ -279,6 +317,16 @@ export function QuizViewer({
 
   return (
     <div className="space-y-6">
+      {courseStats && (
+        <CourseCompletionModal
+          open={modalOpen}
+          onOpenChange={setModalOpen}
+          courseId={courseId}
+          courseTitle={courseTitle}
+          stats={courseStats}
+        />
+      )}
+
       {/* Score banner */}
       <div
         className={`rounded-lg border p-6 text-center ${

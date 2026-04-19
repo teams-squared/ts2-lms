@@ -37,6 +37,7 @@ const defaultProps = {
   courseId: "c1",
   moduleId: "m1",
   lessonId: "l1",
+  courseTitle: "Test Course",
 };
 
 describe("QuizViewer", () => {

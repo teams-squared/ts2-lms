@@ -7,6 +7,14 @@ import { CheckCircleIcon, ChevronLeftIcon, ChevronRightIcon } from "@/components
 import { Spinner } from "@/components/ui/Spinner";
 import { useToast } from "@/components/ui/ToastProvider";
 import { cn } from "@/lib/utils";
+import { CourseCompletionModal } from "@/components/courses/CourseCompletionModal";
+
+interface CourseStats {
+  totalLessons: number;
+  completedLessons: number;
+  xpEarned: number;
+  daysTaken: number;
+}
 
 interface LessonFooterProps {
   courseId: string;
@@ -20,6 +28,8 @@ interface LessonFooterProps {
   prevLessonUrl: string | null;
   nextLessonUrl: string | null;
   initialCompleted: boolean;
+  /** Title of the course, used in the completion modal. */
+  courseTitle: string;
   /**
    * When true (e.g. quiz lessons) the Mark-complete button is suppressed — the
    * quiz flow handles completion on its own. A static "Complete" pill is shown
@@ -45,12 +55,15 @@ export function LessonFooter({
   prevLessonUrl,
   nextLessonUrl,
   initialCompleted,
+  courseTitle,
   hideMarkComplete = false,
 }: LessonFooterProps) {
   const router = useRouter();
   const { toast } = useToast();
   const [isCompleted, setIsCompleted] = useState(initialCompleted);
   const [isLoading, setIsLoading] = useState(false);
+  const [modalOpen, setModalOpen] = useState(false);
+  const [courseStats, setCourseStats] = useState<CourseStats | null>(null);
 
   const endpoint = `/api/courses/${courseId}/modules/${moduleId}/lessons/${lessonId}/complete`;
 
@@ -61,8 +74,16 @@ export function LessonFooter({
     try {
       const res = await fetch(endpoint, { method: "POST" });
       if (!res.ok) throw new Error("Failed");
+      const data = (await res.json()) as {
+        courseComplete?: boolean;
+        courseStats?: CourseStats | null;
+      };
       toast("Lesson marked complete");
       router.refresh();
+      if (data.courseComplete && data.courseStats) {
+        setCourseStats(data.courseStats);
+        setModalOpen(true);
+      }
     } catch {
       setIsCompleted(false);
       toast("Could not mark complete — try again", "error");
@@ -88,103 +109,115 @@ export function LessonFooter({
   }
 
   return (
-    <footer className="sticky bottom-0 z-30 flex h-16 shrink-0 items-center gap-3 border-t border-border bg-background px-4 sm:px-6">
-      {/* Previous */}
-      {prevLessonUrl ? (
-        <Link
-          href={prevLessonUrl}
-          className={cn(
-            "inline-flex items-center gap-1.5 rounded-md px-3 py-2 text-sm font-medium text-foreground-muted",
-            "transition-colors hover:bg-surface-muted hover:text-foreground",
-            "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background",
-          )}
-        >
-          <ChevronLeftIcon className="h-4 w-4" aria-hidden="true" />
-          <span className="hidden sm:inline">Previous</span>
-        </Link>
-      ) : (
-        <div className="w-[88px]" aria-hidden="true" />
+    <>
+      {courseStats && (
+        <CourseCompletionModal
+          open={modalOpen}
+          onOpenChange={setModalOpen}
+          courseId={courseId}
+          courseTitle={courseTitle}
+          stats={courseStats}
+        />
       )}
 
-      {/* Center: position + course progress bar */}
-      <div className="flex min-w-0 flex-1 flex-col items-center gap-1">
-        <p className="text-xs font-medium tabular-nums text-foreground-muted">
-          Lesson {currentIndex} of {totalLessons}
-        </p>
-        <div
-          className="relative h-1 w-full max-w-[320px] overflow-hidden rounded-full bg-border"
-          role="progressbar"
-          aria-label="Course progress"
-          aria-valuenow={percentComplete}
-          aria-valuemin={0}
-          aria-valuemax={100}
-        >
-          <div
-            className="h-full rounded-full bg-primary transition-[width] duration-[400ms] ease-out"
-            style={{ width: `${percentComplete}%` }}
-          />
-        </div>
-      </div>
-
-      {/* Right: Mark complete + Next */}
-      <div className="flex items-center gap-2">
-        {!hideMarkComplete && (
-          isCompleted ? (
-            <div className="flex items-center gap-1" data-testid="lesson-completed-state">
-              <span className="inline-flex items-center gap-1.5 rounded-md px-3 py-2 text-sm font-medium text-success">
-                <CheckCircleIcon className="h-4 w-4" aria-hidden="true" />
-                <span className="hidden sm:inline">Completed</span>
-              </span>
-              <button
-                type="button"
-                onClick={() => void handleMarkIncomplete()}
-                disabled={isLoading}
-                data-testid="mark-incomplete-button"
-                className="text-xs text-foreground-subtle transition-colors hover:text-foreground disabled:opacity-50"
-              >
-                Undo
-              </button>
-            </div>
-          ) : (
-            <button
-              type="button"
-              onClick={() => void handleMarkComplete()}
-              disabled={isLoading}
-              data-testid="mark-complete-button"
-              className={cn(
-                "inline-flex items-center gap-1.5 rounded-md bg-primary px-3 py-2 text-sm font-medium text-primary-foreground",
-                "transition-colors hover:bg-primary-hover disabled:cursor-not-allowed disabled:opacity-60",
-                "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background",
-              )}
-            >
-              {isLoading ? (
-                <Spinner size="sm" className="border-primary-foreground border-t-transparent" />
-              ) : (
-                <CheckCircleIcon className="h-4 w-4" aria-hidden="true" />
-              )}
-              <span className="hidden sm:inline">
-                {isLoading ? "Saving…" : "Mark complete"}
-              </span>
-            </button>
-          )
-        )}
-
-        {nextLessonUrl ? (
+      <footer className="sticky bottom-0 z-30 flex h-16 shrink-0 items-center gap-3 border-t border-border bg-background px-4 sm:px-6">
+        {/* Previous */}
+        {prevLessonUrl ? (
           <Link
-            href={nextLessonUrl}
+            href={prevLessonUrl}
             className={cn(
-              "inline-flex items-center gap-1.5 rounded-md border border-border-strong bg-card px-3 py-2 text-sm font-medium text-foreground",
-              "transition-colors hover:bg-surface-muted",
+              "inline-flex items-center gap-1.5 rounded-md px-3 py-2 text-sm font-medium text-foreground-muted",
+              "transition-colors hover:bg-surface-muted hover:text-foreground",
               "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background",
             )}
           >
-            <span className="hidden sm:inline">Next</span>
-            <ChevronRightIcon className="h-4 w-4" aria-hidden="true" />
+            <ChevronLeftIcon className="h-4 w-4" aria-hidden="true" />
+            <span className="hidden sm:inline">Previous</span>
           </Link>
         ) : (
-          <div className="w-[68px]" aria-hidden="true" />
+          <div className="w-[88px]" aria-hidden="true" />
         )}
-      </div>
-    </footer>
+
+        {/* Center: position + course progress bar */}
+        <div className="flex min-w-0 flex-1 flex-col items-center gap-1">
+          <p className="text-xs font-medium tabular-nums text-foreground-muted">
+            Lesson {currentIndex} of {totalLessons}
+          </p>
+          <div
+            className="relative h-1 w-full max-w-[320px] overflow-hidden rounded-full bg-border"
+            role="progressbar"
+            aria-label="Course progress"
+            aria-valuenow={percentComplete}
+            aria-valuemin={0}
+            aria-valuemax={100}
+          >
+            <div
+              className="h-full rounded-full bg-primary transition-[width] duration-[400ms] ease-out"
+              style={{ width: `${percentComplete}%` }}
+            />
+          </div>
+        </div>
+
+        {/* Right: Mark complete + Next */}
+        <div className="flex items-center gap-2">
+          {!hideMarkComplete && (
+            isCompleted ? (
+              <div className="flex items-center gap-1" data-testid="lesson-completed-state">
+                <span className="inline-flex items-center gap-1.5 rounded-md px-3 py-2 text-sm font-medium text-success">
+                  <CheckCircleIcon className="h-4 w-4" aria-hidden="true" />
+                  <span className="hidden sm:inline">Completed</span>
+                </span>
+                <button
+                  type="button"
+                  onClick={() => void handleMarkIncomplete()}
+                  disabled={isLoading}
+                  data-testid="mark-incomplete-button"
+                  className="text-xs text-foreground-subtle transition-colors hover:text-foreground disabled:opacity-50"
+                >
+                  Undo
+                </button>
+              </div>
+            ) : (
+              <button
+                type="button"
+                onClick={() => void handleMarkComplete()}
+                disabled={isLoading}
+                data-testid="mark-complete-button"
+                className={cn(
+                  "inline-flex items-center gap-1.5 rounded-md bg-primary px-3 py-2 text-sm font-medium text-primary-foreground",
+                  "transition-colors hover:bg-primary-hover disabled:cursor-not-allowed disabled:opacity-60",
+                  "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background",
+                )}
+              >
+                {isLoading ? (
+                  <Spinner size="sm" className="border-primary-foreground border-t-transparent" />
+                ) : (
+                  <CheckCircleIcon className="h-4 w-4" aria-hidden="true" />
+                )}
+                <span className="hidden sm:inline">
+                  {isLoading ? "Saving…" : "Mark complete"}
+                </span>
+              </button>
+            )
+          )}
+
+          {nextLessonUrl ? (
+            <Link
+              href={nextLessonUrl}
+              className={cn(
+                "inline-flex items-center gap-1.5 rounded-md border border-border-strong bg-card px-3 py-2 text-sm font-medium text-foreground",
+                "transition-colors hover:bg-surface-muted",
+                "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background",
+              )}
+            >
+              <span className="hidden sm:inline">Next</span>
+              <ChevronRightIcon className="h-4 w-4" aria-hidden="true" />
+            </Link>
+          ) : (
+            <div className="w-[68px]" aria-hidden="true" />
+          )}
+        </div>
+      </footer>
+    </>
   );
 }
