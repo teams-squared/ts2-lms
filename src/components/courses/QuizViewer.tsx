@@ -51,6 +51,12 @@ interface QuizResult {
   answers: AnswerResult[];
   courseComplete?: boolean;
   courseStats?: CourseStats | null;
+  /**
+   * Server sets this to true when the enrollment is locked at completed.
+   * The attempt is scored for review but no QuizAttempt / QuizAnswer /
+   * lessonProgress / XP are persisted. UI shows a "Review mode" banner.
+   */
+  locked?: boolean;
 }
 
 interface QuizViewerProps {
@@ -64,6 +70,12 @@ interface QuizViewerProps {
   courseTitle: string;
   /** URL of the next lesson — shows a "Continue" CTA after passing. */
   nextLessonUrl?: string | null;
+  /**
+   * When true, the course is locked at completed. Quiz can still be taken for
+   * review/practice, but the server won't persist the attempt and the UI
+   * shows a "Review mode — your answers aren't recorded" banner.
+   */
+  courseLocked?: boolean;
 }
 
 type State = "idle" | "taking" | "submitted";
@@ -77,6 +89,7 @@ export function QuizViewer({
   lessonId,
   courseTitle,
   nextLessonUrl,
+  courseLocked = false,
 }: QuizViewerProps) {
   const router = useRouter();
   const [state, setState] = useState<State>("idle");
@@ -232,8 +245,14 @@ export function QuizViewer({
             onClick={handleStart}
             className="w-full rounded-md bg-primary px-4 py-2.5 text-sm font-medium text-primary-foreground transition-colors hover:bg-primary/90"
           >
-            {bestAttempt ? "Retake Quiz" : "Start Quiz"}
+            {courseLocked ? "Review Quiz" : bestAttempt ? "Retake Quiz" : "Start Quiz"}
           </button>
+          {courseLocked && (
+            <p className="mt-2 text-center text-xs text-foreground-muted">
+              Course is completed — quiz attempts here are for review only and
+              won&apos;t be recorded.
+            </p>
+          )}
         </div>
       </div>
     );
@@ -325,6 +344,15 @@ export function QuizViewer({
           courseTitle={courseTitle}
           stats={courseStats}
         />
+      )}
+
+      {/* Review-mode banner — shown when the server returned locked:true.
+          Course is already completed; this attempt was scored but not saved. */}
+      {currentResult.locked && (
+        <div className="rounded-lg border border-info/30 bg-info-subtle px-5 py-3 text-sm text-info">
+          Review mode — your answers aren&apos;t recorded. The course is already
+          marked complete.
+        </div>
       )}
 
       {/* Score banner */}

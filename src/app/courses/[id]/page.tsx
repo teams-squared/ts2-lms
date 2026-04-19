@@ -71,13 +71,18 @@ export default async function CourseDetailPage({
   let completedLessons = 0;
   let percentComplete = 0;
   let completedLessonIdSet = new Set<string>();
+  // A course is "locked" once enrollment.completedAt is stamped — only an
+  // admin reset can clear it. While locked, progress always reads as 100%
+  // even if new lessons were added after completion.
+  const courseLocked = enrollment?.completedAt != null;
 
   if (enrollment && totalLessons > 0) {
     const progressRecords = await prisma.lessonProgress.findMany({
       where: { userId, lessonId: { in: allLessonIds }, completedAt: { not: null } },
     });
-    completedLessons = progressRecords.length;
-    percentComplete = Math.round((completedLessons / totalLessons) * 100);
+    const actualCompleted = progressRecords.length;
+    completedLessons = courseLocked ? totalLessons : actualCompleted;
+    percentComplete = courseLocked ? 100 : Math.round((actualCompleted / totalLessons) * 100);
     completedLessonIdSet = new Set(progressRecords.map((p) => p.lessonId));
   }
 
@@ -89,7 +94,7 @@ export default async function CourseDetailPage({
   const continueUrl = firstIncompleteLessonId
     ? `/courses/${id}/lessons/${firstIncompleteLessonId}`
     : firstLessonUrl;
-  const isCourseComplete = totalLessons > 0 && completedLessons === totalLessons;
+  const isCourseComplete = courseLocked || (totalLessons > 0 && completedLessons === totalLessons);
 
   // Compute deadline info for each lesson (when enrolled)
   const deadlineInfoMap = new Map<string, DeadlineInfo>();

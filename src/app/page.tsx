@@ -142,14 +142,18 @@ export default async function HomePage() {
   const enrichedEnrollments = enrollments.map((e) => {
     const allLessons = e.course.modules.flatMap((m) => m.lessons);
     const totalLessons = allLessons.length;
-    const completedLessons = allLessons.filter((l) => completedIdSet.has(l.id)).length;
-    const percentComplete =
-      totalLessons === 0 ? 0 : Math.round((completedLessons / totalLessons) * 100);
-    // Use enrollment.completedAt as the source of truth for the "completed" badge.
-    // This is sticky — set once on first completion and never reset when a learner
-    // un-completes a lesson. Falls back to lesson-count parity for enrollments
-    // that pre-date the completedAt column (null on old rows, completedLessons check).
-    const isComplete = e.completedAt !== null || (totalLessons > 0 && completedLessons === totalLessons);
+    const actualCompleted = allLessons.filter((l) => completedIdSet.has(l.id)).length;
+    // Locked enrollments always read as 100% — see lib/enrollments.ts and the
+    // /api/courses/[id]/progress route for the same clamp. completedAt is
+    // sticky and only an admin reset clears it.
+    const locked = e.completedAt !== null;
+    const completedLessons = locked ? totalLessons : actualCompleted;
+    const percentComplete = locked
+      ? 100
+      : totalLessons === 0
+        ? 0
+        : Math.round((actualCompleted / totalLessons) * 100);
+    const isComplete = locked || (totalLessons > 0 && actualCompleted === totalLessons);
     const firstIncompleteLesson =
       allLessons.find((l) => !completedIdSet.has(l.id)) ?? allLessons[0];
     const firstIncompleteLessonId = firstIncompleteLesson?.id;

@@ -89,12 +89,19 @@ export default async function LessonPage({
   );
 
   const totalLessons = allLessonIds.length;
-  const completedCount = completedIds.size;
-  const percentComplete =
-    totalLessons === 0 ? 0 : Math.round((completedCount / totalLessons) * 100);
+  const actualCompletedCount = completedIds.size;
+  // courseLocked: enrollment.completedAt has been stamped (sticky). While
+  // locked the learner can review everything but their actions don't change
+  // progress; UI shows 100% regardless of new lessons added later.
+  const courseLocked = enrollment?.completedAt != null;
+  const percentComplete = courseLocked
+    ? 100
+    : totalLessons === 0
+      ? 0
+      : Math.round((actualCompletedCount / totalLessons) * 100);
 
-  const isCurrentLessonCompleted = completedIds.has(lessonId);
-  const isCourseComplete = totalLessons > 0 && completedCount === totalLessons;
+  const isCurrentLessonCompleted = courseLocked || completedIds.has(lessonId);
+  const isCourseComplete = courseLocked || (totalLessons > 0 && actualCompletedCount === totalLessons);
 
   // Compute deadline info for all lessons (for sidebar indicators)
   const allLessonsFlat2 = modules.flatMap((m) => m.lessons);
@@ -294,6 +301,7 @@ export default async function LessonPage({
                 lessonId={lessonId}
                 courseTitle={course.title}
                 nextLessonUrl={nextLessonUrl}
+                courseLocked={courseLocked}
               />
               {isCurrentLessonCompleted && (
                 <div className="mt-6 flex items-center gap-3 rounded-lg border border-success/30 bg-success-subtle px-5 py-4">
@@ -335,6 +343,7 @@ export default async function LessonPage({
           initialCompleted={isCurrentLessonCompleted}
           courseTitle={course.title}
           hideMarkComplete={isQuiz}
+          courseLocked={courseLocked}
         />
       </main>
     </div>

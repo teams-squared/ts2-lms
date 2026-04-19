@@ -33,7 +33,7 @@ export default async function AdminUserDetailPage({
 
   if (!user) notFound();
 
-  const [userClearances, distinctClearances, enrollmentCount, authoredCount, overdueList] =
+  const [userClearances, distinctClearances, enrollmentCount, authoredCount, overdueList, enrollments] =
     await Promise.all([
       prisma.userClearance.findMany({
         where: { userId },
@@ -47,7 +47,54 @@ export default async function AdminUserDetailPage({
       prisma.enrollment.count({ where: { userId } }),
       prisma.course.count({ where: { createdById: userId } }),
       getOverdueForUser(userId),
+      // Per-enrollment progress for the admin's "Enrollments" section. Each
+      // row carries enough state to render status + the destructive Reset
+      // button. Course modules → lessons gives us totals; lessonProgress
+      // count gives the actual completed count (we don't clamp here; the
+      // admin should see real progress, including the post-completion drift
+      // when new lessons get added).
+      prisma.enrollment.findMany({
+        where: { userId },
+        orderBy: { enrolledAt: "desc" },
+        select: {
+          courseId: true,
+          enrolledAt: true,
+          completedAt: true,
+          course: {
+            select: {
+              title: true,
+              modules: { select: { lessons: { select: { id: true } } } },
+            },
+          },
+        },
+      }),
     ]);
+
+  // Compute completed-lesson counts in a single query, then map back.
+  const allEnrollmentLessonIds = enrollments.flatMap((e) =>
+    e.course.modules.flatMap((m) => m.lessons.map((l) => l.id)),
+  );
+  const completedRows = allEnrollmentLessonIds.length
+    ? await prisma.lessonProgress.findMany({
+        where: { userId, lessonId: { in: allEnrollmentLessonIds }, completedAt: { not: null } },
+        select: { lessonId: true },
+      })
+    : [];
+  const completedSet = new Set(completedRows.map((p) => p.lessonId));
+
+  const enrollmentSummaries = enrollments.map((e) => {
+    const lessonIds = e.course.modules.flatMap((m) => m.lessons.map((l) => l.id));
+    const totalLessons = lessonIds.length;
+    const completedLessons = lessonIds.filter((id) => completedSet.has(id)).length;
+    return {
+      courseId: e.courseId,
+      courseTitle: e.course.title,
+      enrolledAt: e.enrolledAt.toISOString(),
+      completedAt: e.completedAt?.toISOString() ?? null,
+      totalLessons,
+      completedLessons,
+    };
+  });
 
   const availableClearances = distinctClearances
     .map((c) => c.requiredClearance!)
@@ -79,6 +126,7 @@ export default async function AdminUserDetailPage({
         enrollmentCount={enrollmentCount}
         authoredCourseCount={authoredCount}
         sessionUserId={sessionUserId}
+        enrollments={enrollmentSummaries}
       />
 
       {overdueList.length > 0 && (
