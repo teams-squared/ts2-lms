@@ -20,6 +20,7 @@ interface CourseItem {
   totalLessons: number;
   percentComplete: number;
   continueUrl: string;
+  isComplete?: boolean;
 }
 
 interface CourseProgressListProps {
@@ -86,7 +87,7 @@ function ScrollableRow({ courses }: { courses: CourseItem[] }) {
           const CategoryIcon = CATEGORY_ICONS[categoryKey] ?? CATEGORY_ICONS.book;
           const iconBgColor = CATEGORY_COLORS[categoryKey];
           const accentColor = CATEGORY_ACCENT_COLORS[categoryKey];
-          const isAlmostDone = course.percentComplete >= 75 && course.percentComplete < 100;
+          const isAlmostDone = !course.isComplete && course.percentComplete >= 75 && course.percentComplete < 100;
 
           return (
             <Link
@@ -112,14 +113,21 @@ function ScrollableRow({ courses }: { courses: CourseItem[] }) {
                     style={{ color: "var(--icon-fg)" }}
                   />
                 </div>
-                {isAlmostDone && (
+                {course.isComplete ? (
+                  <span
+                    className="inline-flex shrink-0 items-center gap-1 whitespace-nowrap rounded-full border border-success/30 bg-success-subtle px-2 py-0.5 text-[10px] font-semibold text-success"
+                    title="Course completed"
+                  >
+                    ✓ Completed
+                  </span>
+                ) : isAlmostDone ? (
                   <span
                     className="inline-flex shrink-0 items-center whitespace-nowrap rounded-full bg-warning-subtle px-2 py-0.5 text-[10px] font-semibold text-warning animate-glow"
                     title="You're almost done!"
                   >
                     Almost
                   </span>
-                )}
+                ) : null}
               </div>
 
               <h3 className="line-clamp-3 flex-1 text-sm font-semibold leading-snug text-foreground transition-colors group-hover:text-primary">

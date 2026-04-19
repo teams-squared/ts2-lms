@@ -52,6 +52,9 @@ export default async function HomePage() {
   const firstName = session.user?.name?.split(" ")[0] || "there";
 
   // Fetch enrollments (with full course/module/lesson structure) and user stats in parallel.
+  // The `include` clause returns all scalar fields by default, including `completedAt`
+  // which is the source of truth for whether the learner has ever finished the course
+  // (set once, never reset on lesson uncomplete).
   const [enrollments, userStats] = await Promise.all([
     prisma.enrollment.findMany({
       where: { userId },
@@ -142,7 +145,11 @@ export default async function HomePage() {
     const completedLessons = allLessons.filter((l) => completedIdSet.has(l.id)).length;
     const percentComplete =
       totalLessons === 0 ? 0 : Math.round((completedLessons / totalLessons) * 100);
-    const isComplete = totalLessons > 0 && completedLessons === totalLessons;
+    // Use enrollment.completedAt as the source of truth for the "completed" badge.
+    // This is sticky — set once on first completion and never reset when a learner
+    // un-completes a lesson. Falls back to lesson-count parity for enrollments
+    // that pre-date the completedAt column (null on old rows, completedLessons check).
+    const isComplete = e.completedAt !== null || (totalLessons > 0 && completedLessons === totalLessons);
     const firstIncompleteLesson =
       allLessons.find((l) => !completedIdSet.has(l.id)) ?? allLessons[0];
     const firstIncompleteLessonId = firstIncompleteLesson?.id;
@@ -203,7 +210,11 @@ export default async function HomePage() {
         <DeadlineAlerts deadlines={deadlineItems} />
 
         <CourseProgressList
-          courses={sortedInProgressCourses.map((c) => ({
+          courses={[
+            // In-progress first (sorted by percentComplete DESC), then completed
+            ...sortedInProgressCourses,
+            ...completedCourses,
+          ].map((c) => ({
             courseId: c.course.id,
             courseTitle: c.course.title,
             category: c.course.category,
@@ -211,6 +222,7 @@ export default async function HomePage() {
             totalLessons: c.totalLessons,
             percentComplete: c.percentComplete,
             continueUrl: c.continueUrl,
+            isComplete: c.isComplete,
           }))}
           completedCount={completedCourses.length}
           hasEnrollments={enrichedEnrollments.length > 0}
