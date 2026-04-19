@@ -1,13 +1,13 @@
 import { NextResponse } from "next/server";
-import { requireRole } from "@/lib/roles";
+import { requireAuth } from "@/lib/roles";
 import { getDriveItemContent, getDriveItemMetadata } from "@/lib/sharepoint/graph-client";
 import { getCachedFile, setCachedFile } from "@/lib/sharepoint/cache";
 
 type Params = { params: Promise<{ driveId: string; itemId: string }> };
 
-/** GET /api/sharepoint/files/[driveId]/[itemId] — proxy a SharePoint file (admin/manager only). */
+/** GET /api/sharepoint/files/[driveId]/[itemId] — proxy a SharePoint file to any authenticated user. */
 export async function GET(_request: Request, { params }: Params) {
-  const authResult = await requireRole("course_manager");
+  const authResult = await requireAuth();
   if (authResult instanceof NextResponse) return authResult;
 
   const { driveId, itemId } = await params;
