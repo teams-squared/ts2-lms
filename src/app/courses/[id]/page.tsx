@@ -71,13 +71,18 @@ export default async function CourseDetailPage({
   let completedLessons = 0;
   let percentComplete = 0;
   let completedLessonIdSet = new Set<string>();
+  // A course is "locked" once enrollment.completedAt is stamped — only an
+  // admin reset can clear it. While locked, progress always reads as 100%
+  // even if new lessons were added after completion.
+  const courseLocked = enrollment?.completedAt != null;
 
   if (enrollment && totalLessons > 0) {
     const progressRecords = await prisma.lessonProgress.findMany({
       where: { userId, lessonId: { in: allLessonIds }, completedAt: { not: null } },
     });
-    completedLessons = progressRecords.length;
-    percentComplete = Math.round((completedLessons / totalLessons) * 100);
+    const actualCompleted = progressRecords.length;
+    completedLessons = courseLocked ? totalLessons : actualCompleted;
+    percentComplete = courseLocked ? 100 : Math.round((actualCompleted / totalLessons) * 100);
     completedLessonIdSet = new Set(progressRecords.map((p) => p.lessonId));
   }
 
@@ -89,7 +94,7 @@ export default async function CourseDetailPage({
   const continueUrl = firstIncompleteLessonId
     ? `/courses/${id}/lessons/${firstIncompleteLessonId}`
     : firstLessonUrl;
-  const isCourseComplete = totalLessons > 0 && completedLessons === totalLessons;
+  const isCourseComplete = courseLocked || (totalLessons > 0 && completedLessons === totalLessons);
 
   // Compute deadline info for each lesson (when enrolled)
   const deadlineInfoMap = new Map<string, DeadlineInfo>();
@@ -120,23 +125,25 @@ export default async function CourseDetailPage({
 
       {/* Header */}
       <div className="mb-8">
-        {/* Thumbnail — design-system §8.2.1: always use CourseThumbnail, object-contain */}
-        <CourseThumbnail
-          title={course.title}
-          src={course.thumbnail}
-          className="mb-6 rounded-lg"
-          sizes="(max-width: 768px) 100vw, 768px"
-        />
-
-        {isPrivileged && (
-          <div className="flex items-center gap-2 mb-3">
-            <CourseStatusBadge status={status} />
+        {/* Hero: icon thumbnail beside title — compact, professional */}
+        <div className="mb-6 flex items-start gap-5">
+          <CourseThumbnail
+            title={course.title}
+            src={course.thumbnail}
+            className="hidden sm:block w-36 shrink-0 rounded-lg"
+            sizes="144px"
+          />
+          <div className="min-w-0 flex-1 pt-1">
+            {isPrivileged && (
+              <div className="flex items-center gap-2 mb-2">
+                <CourseStatusBadge status={status} />
+              </div>
+            )}
+            <h1 className="mb-2 font-display text-2xl font-bold tracking-tight text-foreground sm:text-3xl">
+              {course.title}
+            </h1>
           </div>
-        )}
-
-        <h1 className="mb-3 font-display text-2xl font-bold tracking-tight text-foreground sm:text-3xl">
-          {course.title}
-        </h1>
+        </div>
 
         {course.description && (
           <p className="mb-4 text-base leading-relaxed text-foreground-muted">

@@ -59,6 +59,7 @@ export const mockPrisma = {
     upsert: vi.fn(),
     updateMany: vi.fn(),
     delete: vi.fn(),
+    deleteMany: vi.fn(),
     count: vi.fn().mockResolvedValue(0),
   },
   quizQuestion: {
@@ -81,6 +82,7 @@ export const mockPrisma = {
     findFirst: vi.fn(),
     findMany: vi.fn(),
     create: vi.fn(),
+    deleteMany: vi.fn(),
     count: vi.fn(),
   },
   quizAnswer: {

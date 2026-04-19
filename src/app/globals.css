@@ -49,6 +49,7 @@
   --danger-subtle: oklch(0.95 0.04 20);
   --info: oklch(0.67 0.15 230);
   --info-foreground: oklch(1 0 0);
+  --info-subtle: oklch(0.95 0.04 230);        /* pale blue tint for info boxes */
 
   /* Focus ring (40% alpha primary) */
   --ring: oklch(0.42 0.28 285 / 0.4);
@@ -100,6 +101,8 @@
   --danger: oklch(0.65 0.20 25);
   --danger-subtle: oklch(0.22 0.06 25);         /* parity with light: muted, not loud */
   --info: oklch(0.72 0.14 230);
+  --info-foreground: oklch(0.96 0 0);
+  --info-subtle: oklch(0.22 0.05 230);        /* dark-mode info box bg */
 
   --ring: oklch(0.65 0.22 290 / 0.5);
 
@@ -142,6 +145,7 @@
   --color-danger-subtle: var(--danger-subtle);
   --color-info: var(--info);
   --color-info-foreground: var(--info-foreground);
+  --color-info-subtle: var(--info-subtle);
 
   --color-ring: var(--ring);
 

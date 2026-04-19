@@ -6,6 +6,16 @@ import { ConfirmDialog } from "@/components/ui/ConfirmDialog";
 import { useToast } from "@/components/ui/ToastProvider";
 import type { Role } from "@/lib/types";
 
+interface EnrollmentSummary {
+  courseId: string;
+  courseTitle: string;
+  enrolledAt: string;
+  /** ISO string when the enrollment was first marked complete; null if not. */
+  completedAt: string | null;
+  totalLessons: number;
+  completedLessons: number;
+}
+
 interface UserDetailManagerProps {
   userId: string;
   userEmail: string;
@@ -19,6 +29,8 @@ interface UserDetailManagerProps {
   authoredCourseCount: number;
   /** ID of the admin currently viewing — used to disable self-delete. */
   sessionUserId: string;
+  /** Per-course enrollment rows shown in the Enrollments section. */
+  enrollments: EnrollmentSummary[];
 }
 
 const ROLE_LABELS: Record<Role, string> = {
@@ -37,6 +49,7 @@ export function UserDetailManager({
   enrollmentCount,
   authoredCourseCount,
   sessionUserId,
+  enrollments,
 }: UserDetailManagerProps) {
   const router = useRouter();
   const { toast } = useToast();
@@ -55,6 +68,36 @@ export function UserDetailManager({
   const [revokingClearance, setRevokingClearance] = useState<string | null>(null);
   const [pendingRevoke, setPendingRevoke] = useState<string | null>(null);
   const [clearanceError, setClearanceError] = useState<string | null>(null);
+
+  // Reset enrollment progress
+  const [pendingReset, setPendingReset] = useState<EnrollmentSummary | null>(null);
+  const [resetting, setResetting] = useState(false);
+  const [resetError, setResetError] = useState<string | null>(null);
+
+  const handleResetProgress = async () => {
+    if (!pendingReset || resetting) return;
+    setResetting(true);
+    setResetError(null);
+    try {
+      const res = await fetch(
+        `/api/admin/users/${userId}/enrollments/${pendingReset.courseId}/reset`,
+        { method: "POST" },
+      );
+      if (!res.ok) {
+        const data = (await res.json().catch(() => ({}))) as { error?: string };
+        setResetError(data.error ?? "Failed to reset progress");
+        return;
+      }
+      const courseTitle = pendingReset.courseTitle;
+      setPendingReset(null);
+      toast(`Progress reset for ${courseTitle}`);
+      router.refresh();
+    } catch {
+      setResetError("An unexpected error occurred");
+    } finally {
+      setResetting(false);
+    }
+  };
 
   // Remove user
   const [removeOpen, setRemoveOpen] = useState(false);
@@ -270,6 +313,72 @@ export function UserDetailManager({
         )}
       </div>
 
+      {/* Enrollments — list with per-course "Reset progress" action */}
+      <div className="rounded-lg border border-border bg-card p-6">
+        <h3 className="text-sm font-semibold text-foreground mb-1">Enrollments</h3>
+        <p className="text-xs text-foreground-muted mb-4">
+          Resetting clears all lesson progress and quiz attempts for the course
+          and unlocks it so the user can take it again. The enrollment itself
+          is preserved.
+        </p>
+
+        {enrollments.length === 0 ? (
+          <p className="text-sm text-foreground-subtle italic">
+            Not enrolled in any courses.
+          </p>
+        ) : (
+          <ul className="divide-y divide-border">
+            {enrollments.map((e) => {
+              const isCompleted = e.completedAt !== null;
+              const hasAnyProgress = e.completedLessons > 0 || isCompleted;
+              return (
+                <li
+                  key={e.courseId}
+                  className="flex items-center justify-between gap-4 py-3 first:pt-0 last:pb-0"
+                >
+                  <div className="min-w-0">
+                    <p className="truncate text-sm font-medium text-foreground">
+                      {e.courseTitle}
+                    </p>
+                    <p className="mt-0.5 text-xs text-foreground-muted">
+                      {isCompleted ? (
+                        <span className="font-medium text-success">Completed</span>
+                      ) : e.completedLessons > 0 ? (
+                        <span>
+                          {e.completedLessons} of {e.totalLessons} lesson
+                          {e.totalLessons !== 1 ? "s" : ""}
+                        </span>
+                      ) : (
+                        <span>Not started</span>
+                      )}
+                      {" · enrolled "}
+                      {new Date(e.enrolledAt).toLocaleDateString("en-US", {
+                        month: "short",
+                        day: "numeric",
+                        year: "numeric",
+                      })}
+                    </p>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => setPendingReset(e)}
+                    disabled={!hasAnyProgress}
+                    title={
+                      hasAnyProgress
+                        ? "Reset this course's progress for the user"
+                        : "Nothing to reset"
+                    }
+                    className="shrink-0 rounded-lg border border-danger/40 bg-card px-3 py-1.5 text-xs font-medium text-danger hover:bg-danger-subtle disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                  >
+                    Reset progress
+                  </button>
+                </li>
+              );
+            })}
+          </ul>
+        )}
+      </div>
+
       {/* Danger zone — permanent user removal */}
       <div className="rounded-lg border border-danger/30 bg-card p-6">
         <h3 className="text-sm font-semibold text-danger mb-1">Danger zone</h3>
@@ -347,6 +456,43 @@ export function UserDetailManager({
         onConfirm={handleRemoveUser}
         loading={removing}
         disabled={!canConfirmRemove}
+      />
+
+      <ConfirmDialog
+        open={pendingReset !== null}
+        onOpenChange={(open) => {
+          if (resetting) return;
+          if (!open) {
+            setPendingReset(null);
+            setResetError(null);
+          }
+        }}
+        title="Reset course progress?"
+        description={
+          pendingReset ? (
+            <div className="space-y-3">
+              <p>
+                This will permanently delete all lesson progress and quiz
+                attempts for{" "}
+                <span className="font-medium text-foreground">
+                  {pendingReset.courseTitle}
+                </span>
+                {pendingReset.completedAt
+                  ? " and clear the completion stamp"
+                  : ""}
+                . The user will be able to take the course again from scratch.
+              </p>
+              <p className="text-xs text-foreground-subtle">
+                XP and achievements they&apos;ve already earned are preserved.
+                This cannot be undone.
+              </p>
+              {resetError && <p className="text-sm text-danger">{resetError}</p>}
+            </div>
+          ) : null
+        }
+        confirmLabel="Reset progress"
+        onConfirm={handleResetProgress}
+        loading={resetting}
       />
 
       <ConfirmDialog

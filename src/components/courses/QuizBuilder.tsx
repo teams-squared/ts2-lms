@@ -66,7 +66,9 @@ export function QuizBuilder({
   // Inline edit state
   const [editingQuestionId, setEditingQuestionId] = useState<string | null>(null);
   const [editQuestionText, setEditQuestionText] = useState("");
-  const [editOptions, setEditOptions] = useState<{ id: string; text: string; isCorrect: boolean }[]>([]);
+  // `id` is optional: existing options carry their DB id; newly added ones
+  // omit it and the server treats them as creates on PATCH.
+  const [editOptions, setEditOptions] = useState<{ id?: string; text: string; isCorrect: boolean }[]>([]);
   const [savingEditId, setSavingEditId] = useState<string | null>(null);
   const [editError, setEditError] = useState<string | null>(null);
 
@@ -100,7 +102,7 @@ export function QuizBuilder({
   // ── Add question form ─────────────────────────────────────────────────────
 
   const handleAddOption = () => {
-    if (options.length < 4) {
+    if (options.length < 6) {
       setOptions([...options, { text: "", isCorrect: false }]);
     }
   };
@@ -201,6 +203,23 @@ export function QuizBuilder({
 
   const handleEditCorrect = (idx: number) => {
     setEditOptions(editOptions.map((o, i) => ({ ...o, isCorrect: i === idx })));
+  };
+
+  const handleEditAddOption = () => {
+    if (editOptions.length < 6) {
+      setEditOptions([...editOptions, { text: "", isCorrect: false }]);
+    }
+  };
+
+  const handleEditRemoveOption = (idx: number) => {
+    if (editOptions.length <= 2) return;
+    const wasCorrect = editOptions[idx].isCorrect;
+    const next = editOptions.filter((_, i) => i !== idx);
+    // If we removed the correct option, default the first remaining to correct.
+    if (wasCorrect && next.length > 0) {
+      next[0] = { ...next[0], isCorrect: true };
+    }
+    setEditOptions(next);
   };
 
   const handleSaveEdit = async (questionId: string) => {
@@ -360,7 +379,7 @@ export function QuizBuilder({
                 />
                 <div className="space-y-2">
                   {editOptions.map((opt, oidx) => (
-                    <div key={opt.id} className="flex items-center gap-2">
+                    <div key={opt.id ?? `new-${oidx}`} className="flex items-center gap-2">
                       <input
                         type="radio"
                         name={`edit-correct-${question.id}`}
@@ -373,12 +392,32 @@ export function QuizBuilder({
                         type="text"
                         value={opt.text}
                         onChange={(e) => handleEditOptionText(oidx, e.target.value)}
+                        placeholder={`Option ${oidx + 1}`}
                         aria-label={`Option ${oidx + 1} text`}
                         className="flex-1 rounded-md border border-border bg-surface px-3 py-1.5 text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-ring"
                       />
+                      {editOptions.length > 2 && (
+                        <button
+                          type="button"
+                          onClick={() => handleEditRemoveOption(oidx)}
+                          aria-label={`Remove option ${oidx + 1}`}
+                          className="shrink-0 text-xs text-danger hover:text-danger/80"
+                        >
+                          Remove
+                        </button>
+                      )}
                     </div>
                   ))}
                 </div>
+                {editOptions.length < 6 && (
+                  <button
+                    type="button"
+                    onClick={handleEditAddOption}
+                    className="text-xs text-primary hover:underline"
+                  >
+                    + Add option
+                  </button>
+                )}
                 {editError && (
                   <p className="text-xs text-danger">{editError}</p>
                 )}
@@ -515,7 +554,7 @@ export function QuizBuilder({
                 </div>
               ))}
             </div>
-            {options.length < 4 && (
+            {options.length < 6 && (
               <button
                 type="button"
                 onClick={handleAddOption}

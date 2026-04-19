@@ -37,7 +37,7 @@ const mdComponents: Components = {
   strong: ({ children }) => <strong className="font-semibold text-foreground">{children}</strong>,
   em: ({ children }) => <em className="italic text-foreground">{children}</em>,
   a: ({ href, children }) => (
-    <a href={href} className="text-primary underline transition-colors hover:text-primary/80">
+    <a href={href} className="text-primary underline transition-colors hover:text-primary-hover">
       {children}
     </a>
   ),
@@ -124,7 +124,7 @@ function PdfViewer({ proxyUrl, fileName }: { proxyUrl: string; fileName: string 
             <a
               href={proxyUrl}
               download={fileName}
-              className="inline-block rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground transition-colors hover:bg-primary/90"
+              className="inline-block rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground transition-colors hover:bg-primary-hover active:bg-primary-active"
             >
               Download {fileName}
             </a>
@@ -249,7 +249,7 @@ export function LessonViewer({ title, type, content, lessonId }: LessonViewerPro
             <a
               href={proxyUrl!}
               download={docRef.fileName}
-              className="shrink-0 rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground transition-colors hover:bg-primary/90"
+              className="shrink-0 rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground transition-colors hover:bg-primary-hover active:bg-primary-active"
             >
               Download
             </a>

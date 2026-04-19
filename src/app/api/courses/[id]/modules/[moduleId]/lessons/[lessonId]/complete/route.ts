@@ -39,6 +39,25 @@ export async function POST(_request: Request, { params }: Params) {
     );
   }
 
+  // Locked enrollments are read-only. The learner can still browse lessons
+  // for review, but nothing they do can add/remove progress rows or re-fire
+  // the course-completion modal. Only an admin reset (clearing
+  // enrollment.completedAt) unlocks the course again.
+  if (enrollment.completedAt != null) {
+    const existing = await prisma.lessonProgress.findUnique({
+      where: { userId_lessonId: { userId, lessonId } },
+    });
+    return NextResponse.json({
+      completed: existing?.completedAt != null,
+      completedAt: existing?.completedAt ?? null,
+      xpAwarded: 0,
+      newAchievements: [],
+      courseComplete: false,
+      courseStats: null,
+      locked: true,
+    });
+  }
+
   const now = new Date();
   const progress = await prisma.lessonProgress.upsert({
     where: { userId_lessonId: { userId, lessonId } },
@@ -164,6 +183,16 @@ export async function DELETE(_request: Request, { params }: Params) {
     return NextResponse.json(
       { error: "Must be enrolled to track progress" },
       { status: 403 },
+    );
+  }
+
+  // Locked at completed — only an admin reset can clear progress on a
+  // completed enrollment. UI mirrors this by hiding the unmark button, but
+  // we enforce it here too.
+  if (enrollment.completedAt != null) {
+    return NextResponse.json(
+      { error: "Course is locked at completed. Ask an admin to reset progress." },
+      { status: 409 },
     );
   }
 

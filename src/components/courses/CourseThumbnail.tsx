@@ -56,14 +56,11 @@ export function CourseThumbnail({
           className={cn("object-contain p-6", locked && "grayscale")}
         />
       ) : (
-        <div className="absolute inset-0 flex flex-col items-center justify-center gap-2 px-4">
+        <div className="absolute inset-0 flex items-center justify-center">
           <GraduationCap
-            className="h-9 w-9 text-primary-subtle-foreground"
+            className="h-10 w-10 text-primary-subtle-foreground"
             aria-hidden="true"
           />
-          <span className="line-clamp-2 text-center text-sm font-medium text-primary">
-            {title}
-          </span>
         </div>
       )}
     </div>

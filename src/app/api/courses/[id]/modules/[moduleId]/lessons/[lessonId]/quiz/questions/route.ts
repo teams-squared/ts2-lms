@@ -48,9 +48,9 @@ export async function POST(request: Request, { params }: Params) {
     return NextResponse.json({ error: "Question text is required" }, { status: 400 });
   }
 
-  if (!Array.isArray(options) || options.length < 2 || options.length > 4) {
+  if (!Array.isArray(options) || options.length < 2 || options.length > 6) {
     return NextResponse.json(
-      { error: "Must provide 2-4 options" },
+      { error: "Must provide 2-6 options" },
       { status: 400 },
     );
   }

@@ -265,4 +265,44 @@ describe("POST .../lessons/[lessonId]/quiz/attempt", () => {
     expect(q2Result.correctOptionId).toBe("o4");
     expect(q2Result.correct).toBe(false);
   });
+
+  it("scores attempt but skips persistence when course is locked at completed", async () => {
+    // Locked enrollments: learner can take the quiz for review but no
+    // QuizAttempt / QuizAnswer / lessonProgress / XP rows are written.
+    mockAuth.mockResolvedValue(mockSession({ id: "test-user-id", role: "employee" }));
+    mockPrisma.enrollment.findUnique.mockResolvedValue({
+      id: "e1",
+      userId: "test-user-id",
+      courseId: "c1",
+      completedAt: new Date("2026-02-01"),
+    });
+    mockPrisma.lesson.findUnique.mockResolvedValue(mockLesson);
+    mockPrisma.quizQuestion.findMany.mockResolvedValue(mockQuestions);
+
+    const res = await POST(
+      makeRequest({
+        answers: [
+          { questionId: "q1", selectedOptionId: "o2" }, // correct
+          { questionId: "q2", selectedOptionId: "o4" }, // correct
+        ],
+      }),
+      makeParams("c1", "m1", "l1"),
+    );
+
+    expect(res.status).toBe(200);
+    const body = await res.json();
+    expect(body.locked).toBe(true);
+    expect(body.score).toBe(2);
+    expect(body.totalQuestions).toBe(2);
+    expect(body.percentage).toBe(100);
+    expect(body.passed).toBe(true);
+    expect(body.xpAwarded).toBe(0);
+    expect(body.courseComplete).toBe(false);
+    expect(body.courseStats).toBeNull();
+    // The key invariant: zero writes
+    expect(mockPrisma.quizAttempt.create).not.toHaveBeenCalled();
+    expect(mockPrisma.quizAnswer.createMany).not.toHaveBeenCalled();
+    expect(mockPrisma.lessonProgress.upsert).not.toHaveBeenCalled();
+    expect(mockPrisma.enrollment.update).not.toHaveBeenCalled();
+  });
 });

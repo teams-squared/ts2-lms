@@ -36,6 +36,13 @@ interface LessonFooterProps {
    * if completed.
    */
   hideMarkComplete?: boolean;
+  /**
+   * When true, the course's enrollment is locked at completed. The button
+   * cluster is replaced with a static "Course completed" badge — the learner
+   * can still navigate Prev/Next for review but can't mark / unmark anything.
+   * Only an admin reset reopens the course.
+   */
+  courseLocked?: boolean;
 }
 
 /**
@@ -57,6 +64,7 @@ export function LessonFooter({
   initialCompleted,
   courseTitle,
   hideMarkComplete = false,
+  courseLocked = false,
 }: LessonFooterProps) {
   const router = useRouter();
   const { toast } = useToast();
@@ -160,23 +168,38 @@ export function LessonFooter({
 
         {/* Right: Mark complete + Next */}
         <div className="flex items-center gap-2">
-          {!hideMarkComplete && (
+          {courseLocked ? (
+            <span
+              data-testid="course-locked-badge"
+              title="Course completed — ask an admin to reset progress to retake."
+              className={cn(
+                "inline-flex items-center gap-1.5 rounded-md bg-success-subtle px-3 py-2 text-sm font-medium text-success",
+              )}
+            >
+              <CheckCircleIcon className="h-4 w-4" aria-hidden="true" />
+              <span className="hidden sm:inline">Course completed</span>
+            </span>
+          ) : !hideMarkComplete && (
             isCompleted ? (
-              <div className="flex items-center gap-1" data-testid="lesson-completed-state">
-                <span className="inline-flex items-center gap-1.5 rounded-md px-3 py-2 text-sm font-medium text-success">
-                  <CheckCircleIcon className="h-4 w-4" aria-hidden="true" />
-                  <span className="hidden sm:inline">Completed</span>
+              <button
+                type="button"
+                onClick={() => void handleMarkIncomplete()}
+                disabled={isLoading}
+                data-testid="mark-incomplete-button"
+                aria-label="Mark this lesson incomplete"
+                title="Click to mark incomplete"
+                className={cn(
+                  "group inline-flex items-center gap-1.5 rounded-md px-3 py-2 text-sm font-medium text-success",
+                  "transition-colors hover:bg-success-subtle disabled:cursor-not-allowed disabled:opacity-60",
+                  "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background",
+                )}
+              >
+                <CheckCircleIcon className="h-4 w-4" aria-hidden="true" />
+                <span className="hidden sm:inline">
+                  <span className="group-hover:hidden">Completed</span>
+                  <span className="hidden group-hover:inline">Mark incomplete</span>
                 </span>
-                <button
-                  type="button"
-                  onClick={() => void handleMarkIncomplete()}
-                  disabled={isLoading}
-                  data-testid="mark-incomplete-button"
-                  className="text-xs text-foreground-subtle transition-colors hover:text-foreground disabled:opacity-50"
-                >
-                  Undo
-                </button>
-              </div>
+              </button>
             ) : (
               <button
                 type="button"

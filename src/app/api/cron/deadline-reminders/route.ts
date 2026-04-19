@@ -36,6 +36,7 @@ export async function GET(req: Request): Promise<NextResponse> {
   const url = new URL(req.url);
   const dryRun = url.searchParams.get("dryRun") === "1";
 
+  try {
   // ---------------------------------------------------------------------------
   // Paginate enrollments and compute candidates
   // ---------------------------------------------------------------------------
@@ -208,4 +209,13 @@ export async function GET(req: Request): Promise<NextResponse> {
     truncated,
     ...(dryRun ? { sample: drySample } : {}),
   });
+  } catch (err) {
+    const message = err instanceof Error ? err.message : String(err);
+    const stack = err instanceof Error ? err.stack : undefined;
+    console.error("[cron/deadline-reminders] fatal error", err);
+    return NextResponse.json(
+      { error: "Internal error", message, stack },
+      { status: 500 },
+    );
+  }
 }

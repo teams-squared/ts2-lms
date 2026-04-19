@@ -33,7 +33,7 @@ export function EnrollButton({
   return (
     <Link
       href={href}
-      className="inline-flex items-center gap-2 rounded-lg bg-primary hover:bg-primary/90 active:bg-primary/80 text-white text-sm font-semibold px-5 py-3 transition-colors shadow-sm shadow-primary/20 mb-4"
+      className="inline-flex items-center gap-2 rounded-lg bg-primary hover:bg-primary-hover active:bg-primary-active text-white text-sm font-semibold px-5 py-3 transition-colors shadow-sm shadow-primary/20 mb-4"
     >
       {isComplete ? "Review Course" : "Continue Learning"}
       <ChevronRightIcon className="w-4 h-4" />

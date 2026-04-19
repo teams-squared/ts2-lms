@@ -45,7 +45,7 @@ export default function LoginPage() {
             </Suspense>
 
             {!hasMicrosoftProvider && !isProduction && (
-              <div className="mt-5 rounded-md border border-info/20 bg-info/10 p-3.5 text-xs leading-relaxed text-info">
+              <div className="mt-5 rounded-md border border-border bg-info-subtle p-3.5 text-xs leading-relaxed text-info">
                 <strong className="font-semibold">Demo accounts</strong>
                 <div className="mt-1.5 space-y-0.5 font-mono">
                   <div>admin@teamssquared.com / admin123</div>

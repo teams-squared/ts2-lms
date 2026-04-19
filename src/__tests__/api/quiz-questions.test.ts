@@ -104,7 +104,7 @@ describe("POST .../quiz/questions", () => {
     expect(res.status).toBe(400);
   });
 
-  it("returns 400 when more than 4 options provided", async () => {
+  it("returns 400 when more than 6 options provided", async () => {
     mockAuth.mockResolvedValue(mockSession({ role: "admin" }));
     mockPrisma.lesson.findUnique.mockResolvedValue(mockLesson);
     const res = await POST(
@@ -116,6 +116,8 @@ describe("POST .../quiz/questions", () => {
           { text: "C", isCorrect: false },
           { text: "D", isCorrect: false },
           { text: "E", isCorrect: false },
+          { text: "F", isCorrect: false },
+          { text: "G", isCorrect: false },
         ],
       }),
       makeParams("c1", "m1", "l1"),

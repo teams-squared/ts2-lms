@@ -371,6 +371,14 @@ async function main() {
     ALTER TABLE "Enrollment" ADD COLUMN IF NOT EXISTS "completedAt" TIMESTAMP(3);
   `);
 
+  // Commit the transaction opened on line 142 (BEGIN after the Role enum
+  // restructure). Without this, client.end() closes the connection with an
+  // open transaction and Postgres rolls back EVERY statement after the BEGIN
+  // — including all subsequent CREATE TABLE / ALTER TABLE migrations. This
+  // bug silently swallowed the DeadlineReminderLog table and the
+  // Enrollment.completedAt column on prod until it broke the dashboard.
+  await client.query(`COMMIT`);
+
   console.log("Migration complete");
   await client.end();
 }
