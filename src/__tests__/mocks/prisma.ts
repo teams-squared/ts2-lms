@@ -134,4 +134,8 @@ export const mockPrisma = {
     create: vi.fn(),
     delete: vi.fn(),
   },
+  deadlineReminderLog: {
+    findMany: vi.fn().mockResolvedValue([]),
+    create: vi.fn().mockResolvedValue({}),
+  },
 };
