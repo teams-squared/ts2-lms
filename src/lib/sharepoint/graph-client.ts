@@ -95,7 +95,9 @@ export async function listDriveItems(
   folderId?: string
 ): Promise<{ value: DriveItem[] }> {
   const path = folderId
-    ? `/drives/${driveId}/items/${folderId}/children`
+    ? driveId
+      ? `/drives/${driveId}/items/${folderId}/children`
+      : `/sites/${siteId}/drive/items/${folderId}/children`
     : `/sites/${siteId}/drive/root/children`;
 
   const res = await graphFetch(path);
