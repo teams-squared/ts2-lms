@@ -120,23 +120,25 @@ export default async function CourseDetailPage({
 
       {/* Header */}
       <div className="mb-8">
-        {/* Thumbnail — design-system §8.2.1: always use CourseThumbnail, object-contain */}
-        <CourseThumbnail
-          title={course.title}
-          src={course.thumbnail}
-          className="mb-6 rounded-lg"
-          sizes="(max-width: 768px) 100vw, 768px"
-        />
-
-        {isPrivileged && (
-          <div className="flex items-center gap-2 mb-3">
-            <CourseStatusBadge status={status} />
+        {/* Hero: icon thumbnail beside title — compact, professional */}
+        <div className="mb-6 flex items-start gap-5">
+          <CourseThumbnail
+            title={course.title}
+            src={course.thumbnail}
+            className="hidden sm:block w-36 shrink-0 rounded-lg"
+            sizes="144px"
+          />
+          <div className="min-w-0 flex-1 pt-1">
+            {isPrivileged && (
+              <div className="flex items-center gap-2 mb-2">
+                <CourseStatusBadge status={status} />
+              </div>
+            )}
+            <h1 className="mb-2 font-display text-2xl font-bold tracking-tight text-foreground sm:text-3xl">
+              {course.title}
+            </h1>
           </div>
-        )}
-
-        <h1 className="mb-3 font-display text-2xl font-bold tracking-tight text-foreground sm:text-3xl">
-          {course.title}
-        </h1>
+        </div>
 
         {course.description && (
           <p className="mb-4 text-base leading-relaxed text-foreground-muted">
