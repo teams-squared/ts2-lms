@@ -4,6 +4,8 @@ import { useState, useMemo } from "react";
 import Link from "next/link";
 import { UserAvatar } from "@/components/ui/UserAvatar";
 import type { Role } from "@/lib/types";
+import type { NodeWithChildren } from "@/lib/courseNodes";
+import { InviteUserForm } from "@/components/admin/InviteUserForm";
 
 interface User {
   id: string;
@@ -28,10 +30,17 @@ const ROLE_LABELS: Record<Role, string> = {
 
 const PAGE_SIZE = 25;
 
-export function UserList({ users }: { users: User[] }) {
+interface UserListProps {
+  users: User[];
+  nodeTree: NodeWithChildren[];
+  inviterRole: Role;
+}
+
+export function UserList({ users, nodeTree, inviterRole }: UserListProps) {
   const [search, setSearch] = useState("");
   const [roleFilter, setRoleFilter] = useState<Role | "all">("all");
   const [page, setPage] = useState(1);
+  const [showInvite, setShowInvite] = useState(false);
 
   const filtered = useMemo(() => {
     const q = search.toLowerCase().trim();
@@ -80,7 +89,24 @@ export function UserList({ users }: { users: User[] }) {
           <option value="course_manager">Course Manager</option>
           <option value="employee">Employee</option>
         </select>
+        <button
+          type="button"
+          onClick={() => setShowInvite((v) => !v)}
+          className="rounded-lg bg-primary hover:bg-primary/90 text-white text-sm font-medium px-4 py-2.5 transition-colors whitespace-nowrap"
+          aria-expanded={showInvite}
+        >
+          {showInvite ? "Close" : "Invite user"}
+        </button>
       </div>
+
+      {showInvite && (
+        <InviteUserForm
+          nodeTree={nodeTree}
+          inviterRole={inviterRole}
+          onCancel={() => setShowInvite(false)}
+          onSuccess={() => setShowInvite(false)}
+        />
+      )}
 
       {/* Count */}
       <p className="text-xs text-foreground-muted mb-3">
