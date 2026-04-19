@@ -12,7 +12,9 @@ async function main() {
   await client.connect();
   console.log("Connected to database");
 
-  // Create Role enum (idempotent)
+  // Create Role enum (idempotent).
+  // NOTE: Initial value set uses the legacy values so fresh-DB bootstrapping
+  // works; the role-restructure block below migrates them to the current set.
   await client.query(`
     DO $$ BEGIN
       CREATE TYPE "Role" AS ENUM ('ADMIN', 'MANAGER', 'EMPLOYEE');
@@ -124,11 +126,13 @@ async function main() {
   // Must commit before using a newly added enum value in DML
   await client.query(`COMMIT`);
   await client.query(`BEGIN`);
+  // Cast through text so the comparison works even after 'MANAGER'/'INSTRUCTOR'
+  // have been removed from the enum (idempotent no-op when rows are gone).
   await client.query(`
-    UPDATE "User" SET "role" = 'COURSE_MANAGER' WHERE "role" = 'MANAGER';
+    UPDATE "User" SET "role" = 'COURSE_MANAGER' WHERE "role"::text = 'MANAGER';
   `);
   await client.query(`
-    UPDATE "User" SET "role" = 'EMPLOYEE' WHERE "role" = 'INSTRUCTOR';
+    UPDATE "User" SET "role" = 'EMPLOYEE' WHERE "role"::text = 'INSTRUCTOR';
   `);
 
   // Create SharePointCache table (idempotent)
@@ -303,6 +307,26 @@ async function main() {
       CONSTRAINT "Notification_userId_fkey"
         FOREIGN KEY ("userId") REFERENCES "User"("id") ON DELETE CASCADE ON UPDATE CASCADE
     );
+  `);
+
+  // Add invite-tracking audit fields to User (idempotent)
+  await client.query(`
+    ALTER TABLE "User"
+      ADD COLUMN IF NOT EXISTS "invitedAt"   TIMESTAMP(3),
+      ADD COLUMN IF NOT EXISTS "invitedById" TEXT;
+  `);
+  await client.query(`
+    DO $$ BEGIN
+      ALTER TABLE "User"
+        ADD CONSTRAINT "User_invitedById_fkey"
+        FOREIGN KEY ("invitedById") REFERENCES "User"("id")
+        ON DELETE SET NULL ON UPDATE CASCADE;
+    EXCEPTION
+      WHEN duplicate_object THEN NULL;
+    END $$;
+  `);
+  await client.query(`
+    CREATE INDEX IF NOT EXISTS "User_invitedById_idx" ON "User"("invitedById");
   `);
 
   console.log("Migration complete");
