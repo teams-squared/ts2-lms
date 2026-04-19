@@ -1,0 +1,46 @@
+name: Deadline reminders
+
+on:
+  schedule:
+    # 03:30 UTC daily = 09:00 IST
+    - cron: "30 3 * * *"
+  workflow_dispatch:
+    inputs:
+      dryRun:
+        description: "Dry run (compute candidates, don't send)"
+        type: boolean
+        default: false
+
+jobs:
+  send-reminders:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Hit deadline-reminders endpoint
+        env:
+          CRON_SECRET: ${{ secrets.CRON_SECRET }}
+          APP_URL: https://learn.teamsquared.io
+          DRY_RUN: ${{ inputs.dryRun }}
+        run: |
+          set -euo pipefail
+          if [ -z "${CRON_SECRET:-}" ]; then
+            echo "::error::CRON_SECRET repo secret is not set"
+            exit 1
+          fi
+          URL="$APP_URL/api/cron/deadline-reminders"
+          if [ "${DRY_RUN:-false}" = "true" ]; then
+            URL="$URL?dryRun=1"
+          fi
+          echo "Calling $URL"
+          HTTP_CODE=$(curl -sS -o response.json -w "%{http_code}" \
+            -H "Authorization: Bearer $CRON_SECRET" \
+            --max-time 120 \
+            "$URL")
+          echo "HTTP $HTTP_CODE"
+          echo "--- Response ---"
+          cat response.json
+          echo
+          if [ "$HTTP_CODE" != "200" ]; then
+            echo "::error::Non-200 response from deadline-reminders endpoint"
+            exit 1
+          fi

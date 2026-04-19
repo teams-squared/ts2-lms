@@ -40,19 +40,3 @@ services:
         sync: false
       - key: CRON_SECRET
         sync: false
-
-  - type: cron
-    name: ts2-lms-deadline-reminders
-    runtime: image
-    image:
-      url: curlimages/curl:8.10.1
-    schedule: "30 3 * * *"
-    envVars:
-      - key: CRON_SECRET
-        sync: false
-      - key: APP_URL
-        value: https://learn.teamsquared.io
-    buildCommand: ""
-    startCommand: >
-      curl -fsS -H "Authorization: Bearer $CRON_SECRET"
-      "$APP_URL/api/cron/deadline-reminders"
