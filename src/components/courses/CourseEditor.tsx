@@ -1,49 +1,12 @@
 "use client";
 
 import { useState } from "react";
+import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { SharePointFilePicker } from "./SharePointFilePicker";
-import { QuizBuilder } from "./QuizBuilder";
 import { NodeTreeSelect } from "./NodeTreeSelect";
 import { ConfirmDialog } from "@/components/ui/ConfirmDialog";
 import type { NodeTreeItem } from "./NodeTreeSelect";
-import type { CourseStatus, LessonType } from "@/lib/types";
-import type { SharePointDocumentRef } from "@/lib/sharepoint/types";
-
-interface Lesson {
-  id: string;
-  title: string;
-  type: LessonType;
-  content: string | null;
-  order: number;
-  deadlineDays: number | null;
-}
-
-interface Module {
-  id: string;
-  title: string;
-  order: number;
-  lessons: Lesson[];
-}
-
-interface QuizOption {
-  id: string;
-  text: string;
-  isCorrect: boolean;
-  order: number;
-}
-
-interface QuizQuestion {
-  id: string;
-  text: string;
-  order: number;
-  options: QuizOption[];
-}
-
-interface QuizLessonData {
-  questions: QuizQuestion[];
-  passingScore: number;
-}
+import type { CourseStatus } from "@/lib/types";
 
 interface CourseEditorProps {
   courseId: string;
@@ -52,8 +15,6 @@ interface CourseEditorProps {
   initialStatus: CourseStatus;
   initialNodeId: string | null;
   nodeTree: NodeTreeItem[];
-  initialModules: Module[];
-  quizDataByLessonId?: Record<string, QuizLessonData>;
   initialSubscriptions?: string[];
 }
 
@@ -75,8 +36,6 @@ export function CourseEditor({
   initialStatus,
   initialNodeId,
   nodeTree,
-  initialModules,
-  quizDataByLessonId = {},
   initialSubscriptions = [],
 }: CourseEditorProps) {
   const router = useRouter();
@@ -89,65 +48,13 @@ export function CourseEditor({
   const [courseError, setCourseError] = useState<string | null>(null);
   const [courseSaving, setCourseSaving] = useState(false);
 
-  // Module/lesson state
-  const [modules, setModules] = useState<Module[]>(initialModules);
-  const [expandedModules, setExpandedModules] = useState<Set<string>>(new Set());
-
-  // Add module form
-  const [showAddModule, setShowAddModule] = useState(false);
-  const [newModuleTitle, setNewModuleTitle] = useState("");
-  const [addingModule, setAddingModule] = useState(false);
-
-  // Add lesson form state (per module)
-  const [addLessonModuleId, setAddLessonModuleId] = useState<string | null>(null);
-  const [newLessonTitle, setNewLessonTitle] = useState("");
-  const [newLessonType, setNewLessonType] = useState<LessonType>("text");
-  const [addingLesson, setAddingLesson] = useState(false);
-
-  // Lesson edit state
-  const [editingLesson, setEditingLesson] = useState<Lesson | null>(null);
-  const [editTitle, setEditTitle] = useState("");
-  const [editContent, setEditContent] = useState("");
-  const [editType, setEditType] = useState<LessonType>("text");
-  const [editDeadlineDays, setEditDeadlineDays] = useState<number | null>(null);
-  const [editError, setEditError] = useState<string | null>(null);
-  const [editSaving, setEditSaving] = useState(false);
-
-  // SharePoint picker state
-  const [pickerOpen, setPickerOpen] = useState(false);
-  const [pickerTarget, setPickerTarget] = useState<"edit" | null>(null);
-  const [videoSource, setVideoSource] = useState<"sharepoint" | "url">("sharepoint");
-
-  // Delete state
-  const [deletingModuleId, setDeletingModuleId] = useState<string | null>(null);
-  const [deletingLessonId, setDeletingLessonId] = useState<string | null>(null);
-  const [pendingDeleteModule, setPendingDeleteModule] = useState<Module | null>(null);
-  const [pendingDeleteLesson, setPendingDeleteLesson] = useState<{
-    moduleId: string;
-    lesson: Lesson;
-  } | null>(null);
-  const [pendingRemoveSub, setPendingRemoveSub] = useState<string | null>(null);
-
   // Email subscription state
   const [subscriptions, setSubscriptions] = useState<string[]>(initialSubscriptions);
   const [newEmail, setNewEmail] = useState("");
   const [subError, setSubError] = useState<string | null>(null);
   const [addingSub, setAddingSub] = useState(false);
   const [removingSub, setRemovingSub] = useState<string | null>(null);
-
-  // Inline quiz builder state
-  const [expandedQuizLessons, setExpandedQuizLessons] = useState<Set<string>>(new Set());
-
-  const toggleQuizBuilder = (lessonId: string) => {
-    setExpandedQuizLessons((prev) => {
-      const next = new Set(prev);
-      if (next.has(lessonId)) next.delete(lessonId);
-      else next.add(lessonId);
-      return next;
-    });
-  };
-
-  // ─── Course save ───────────────────────────────────────────────────────────
+  const [pendingRemoveSub, setPendingRemoveSub] = useState<string | null>(null);
 
   const handleSaveCourse = async () => {
     if (!title.trim()) {
@@ -169,8 +76,6 @@ export function CourseEditor({
       setCourseSaving(false);
     }
   };
-
-  // ─── Email subscription actions ─────────────────────────────────────────────
 
   const handleAddSubscription = async () => {
     const email = newEmail.trim().toLowerCase();
@@ -216,185 +121,6 @@ export function CourseEditor({
       setRemovingSub(null);
       setPendingRemoveSub(null);
     }
-  };
-
-  // ─── Module actions ────────────────────────────────────────────────────────
-
-  const toggleModule = (moduleId: string) => {
-    setExpandedModules((prev) => {
-      const next = new Set(prev);
-      if (next.has(moduleId)) next.delete(moduleId);
-      else next.add(moduleId);
-      return next;
-    });
-  };
-
-  const handleAddModule = async () => {
-    if (!newModuleTitle.trim()) return;
-    setAddingModule(true);
-    try {
-      const created = await apiFetch<Module>(`/api/courses/${courseId}/modules`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ title: newModuleTitle }),
-      });
-      setModules([...modules, { ...created, lessons: [] }]);
-      setNewModuleTitle("");
-      setShowAddModule(false);
-      router.refresh();
-    } catch {
-      // silently ignore — user can retry
-    } finally {
-      setAddingModule(false);
-    }
-  };
-
-  const handleDeleteModule = async () => {
-    if (!pendingDeleteModule) return;
-    const moduleId = pendingDeleteModule.id;
-    setDeletingModuleId(moduleId);
-    try {
-      await apiFetch(`/api/courses/${courseId}/modules/${moduleId}`, {
-        method: "DELETE",
-      });
-      setModules(modules.filter((m) => m.id !== moduleId));
-      router.refresh();
-    } finally {
-      setDeletingModuleId(null);
-      setPendingDeleteModule(null);
-    }
-  };
-
-  // ─── Lesson actions ────────────────────────────────────────────────────────
-
-  const handleAddLesson = async (moduleId: string) => {
-    if (!newLessonTitle.trim()) return;
-    setAddingLesson(true);
-    try {
-      const created = await apiFetch<Lesson>(
-        `/api/courses/${courseId}/modules/${moduleId}/lessons`,
-        {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ title: newLessonTitle, type: newLessonType }),
-        }
-      );
-      setModules(
-        modules.map((m) =>
-          m.id === moduleId ? { ...m, lessons: [...m.lessons, created] } : m
-        )
-      );
-      setNewLessonTitle("");
-      setNewLessonType("text");
-      setAddLessonModuleId(null);
-      router.refresh();
-    } catch {
-      // silently ignore
-    } finally {
-      setAddingLesson(false);
-    }
-  };
-
-  const handleDeleteLesson = async () => {
-    if (!pendingDeleteLesson) return;
-    const { moduleId, lesson } = pendingDeleteLesson;
-    const lessonId = lesson.id;
-    setDeletingLessonId(lessonId);
-    try {
-      await apiFetch(
-        `/api/courses/${courseId}/modules/${moduleId}/lessons/${lessonId}`,
-        { method: "DELETE" }
-      );
-      setModules(
-        modules.map((m) =>
-          m.id === moduleId
-            ? { ...m, lessons: m.lessons.filter((l) => l.id !== lessonId) }
-            : m
-        )
-      );
-      router.refresh();
-    } finally {
-      setDeletingLessonId(null);
-      setPendingDeleteLesson(null);
-    }
-  };
-
-  const startEditLesson = (lesson: Lesson) => {
-    setEditingLesson(lesson);
-    setEditTitle(lesson.title);
-    setEditType(lesson.type);
-    setEditContent(lesson.content ?? "");
-    setEditDeadlineDays(lesson.deadlineDays);
-    setEditError(null);
-
-    // For video lessons, detect whether content is a SharePoint ref (JSON) or an external URL.
-    if (lesson.type === "video" && lesson.content) {
-      try {
-        const parsed = JSON.parse(lesson.content);
-        setVideoSource(parsed?.driveId && parsed?.itemId ? "sharepoint" : "url");
-      } catch {
-        setVideoSource("url");
-      }
-    } else {
-      setVideoSource("sharepoint");
-    }
-  };
-
-  const handleSaveLesson = async () => {
-    if (!editingLesson) return;
-    if (!editTitle.trim()) {
-      setEditError("Title is required");
-      return;
-    }
-    setEditSaving(true);
-    setEditError(null);
-    try {
-      const moduleId = modules.find((m) =>
-        m.lessons.some((l) => l.id === editingLesson.id)
-      )?.id;
-      if (!moduleId) return;
-
-      const updated = await apiFetch<Lesson>(
-        `/api/courses/${courseId}/modules/${moduleId}/lessons/${editingLesson.id}`,
-        {
-          method: "PATCH",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            title: editTitle,
-            type: editType,
-            content: editContent || null,
-            deadlineDays: editDeadlineDays,
-          }),
-        }
-      );
-
-      setModules(
-        modules.map((m) =>
-          m.id === moduleId
-            ? {
-                ...m,
-                lessons: m.lessons.map((l) =>
-                  l.id === editingLesson.id ? updated : l
-                ),
-              }
-            : m
-        )
-      );
-      setEditingLesson(null);
-      router.refresh();
-    } catch (err) {
-      setEditError(err instanceof Error ? err.message : "Failed to save");
-    } finally {
-      setEditSaving(false);
-    }
-  };
-
-  const handlePickerSelect = (ref: SharePointDocumentRef) => {
-    if (pickerTarget === "edit") {
-      setEditContent(JSON.stringify(ref));
-    }
-    setPickerOpen(false);
-    setPickerTarget(null);
   };
 
   return (
@@ -464,6 +190,27 @@ export function CourseEditor({
         </div>
       </section>
 
+      {/* Modules & Lessons — now managed on a dedicated page */}
+      <section className="rounded-lg border border-border bg-card p-6">
+        <div className="flex items-center justify-between gap-4">
+          <div>
+            <h2 className="text-sm font-semibold text-foreground mb-1">
+              Modules &amp; Lessons
+            </h2>
+            <p className="text-xs text-foreground-muted">
+              Add, edit, delete, and reorder modules and lessons on the dedicated
+              management page.
+            </p>
+          </div>
+          <Link
+            href={`/admin/courses/${courseId}/modules`}
+            className="shrink-0 rounded-lg bg-primary hover:bg-primary/90 text-white text-sm font-medium px-4 py-2 transition-colors"
+          >
+            Manage modules &amp; lessons →
+          </Link>
+        </div>
+      </section>
+
       {/* Completion Alerts */}
       <section className="rounded-lg border border-border bg-card p-6">
         <h2 className="text-sm font-semibold text-foreground mb-1">
@@ -519,433 +266,6 @@ export function CourseEditor({
           </ul>
         )}
       </section>
-
-      {/* Modules & Lessons */}
-      <section>
-        <div className="flex items-center justify-between mb-3">
-          <h2 className="text-sm font-semibold text-foreground">
-            Modules &amp; Lessons
-          </h2>
-          <button
-            onClick={() => setShowAddModule(true)}
-            className="text-xs text-primary hover:underline font-medium"
-          >
-            + Add module
-          </button>
-        </div>
-
-        {modules.length === 0 && !showAddModule && (
-          <p className="text-sm text-foreground-subtle italic">
-            No modules yet. Add one above.
-          </p>
-        )}
-
-        <div className="space-y-3">
-          {modules.map((module) => (
-            <div
-              key={module.id}
-              className="rounded-lg border border-border bg-card overflow-hidden"
-            >
-              {/* Module header */}
-              <div
-                className="flex items-center gap-2 px-4 py-3 cursor-pointer hover:bg-surface-muted transition-colors"
-                onClick={() => toggleModule(module.id)}
-              >
-                <span className="text-foreground-subtle text-xs">
-                  {expandedModules.has(module.id) ? "▼" : "▶"}
-                </span>
-                <p className="text-sm font-medium text-foreground flex-1">
-                  {module.order}. {module.title}
-                </p>
-                <span className="text-xs text-foreground-subtle">
-                  {module.lessons.length} lesson{module.lessons.length !== 1 ? "s" : ""}
-                </span>
-                <button
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    setPendingDeleteModule(module);
-                  }}
-                  disabled={deletingModuleId === module.id}
-                  className="text-xs text-red-500 hover:text-red-700 disabled:opacity-50 ml-2"
-                  aria-label={`Delete module ${module.title}`}
-                >
-                  Delete
-                </button>
-              </div>
-
-              {/* Module lessons */}
-              {expandedModules.has(module.id) && (
-                <div className="border-t border-border px-4 py-3 space-y-2">
-                  {module.lessons.map((lesson) => (
-                    <div key={lesson.id}>
-                      <div className="flex items-center gap-2 rounded-lg px-3 py-2 bg-surface-muted">
-                        <span className="text-xs text-foreground-subtle capitalize w-16 shrink-0">
-                          {lesson.type}
-                        </span>
-                        <p className="text-sm text-foreground flex-1 truncate">
-                          {lesson.title}
-                        </p>
-                        {lesson.type === "quiz" ? (
-                          <button
-                            onClick={() => toggleQuizBuilder(lesson.id)}
-                            className="text-xs text-primary hover:underline"
-                            data-testid={`toggle-quiz-builder-${lesson.id}`}
-                          >
-                            {expandedQuizLessons.has(lesson.id) ? "Quiz Builder ▲" : "Quiz Builder ▼"}
-                          </button>
-                        ) : (
-                          <button
-                            onClick={() => startEditLesson(lesson)}
-                            className="text-xs text-primary hover:underline"
-                          >
-                            Edit
-                          </button>
-                        )}
-                        <button
-                          onClick={() => setPendingDeleteLesson({ moduleId: module.id, lesson })}
-                          disabled={deletingLessonId === lesson.id}
-                          className="text-xs text-red-500 hover:text-red-700 disabled:opacity-50"
-                          aria-label={`Delete lesson ${lesson.title}`}
-                        >
-                          Delete
-                        </button>
-                      </div>
-                      {lesson.type === "quiz" && expandedQuizLessons.has(lesson.id) && (() => {
-                        const qData = quizDataByLessonId[lesson.id];
-                        if (!qData) return null;
-                        return (
-                          <div
-                            className="mt-1 mb-1 rounded-lg border border-primary/30 bg-primary-subtle/30 px-4 pb-4"
-                            data-testid={`quiz-builder-panel-${lesson.id}`}
-                          >
-                            <QuizBuilder
-                              initialQuestions={qData.questions}
-                              passingScore={qData.passingScore}
-                              courseId={courseId}
-                              moduleId={module.id}
-                              lessonId={lesson.id}
-                            />
-                          </div>
-                        );
-                      })()}
-                    </div>
-                  ))}
-
-                  {/* Add lesson */}
-                  {addLessonModuleId === module.id ? (
-                    <div className="flex items-center gap-2 mt-2">
-                      <input
-                        type="text"
-                        value={newLessonTitle}
-                        onChange={(e) => setNewLessonTitle(e.target.value)}
-                        placeholder="Lesson title"
-                        className="flex-1 rounded-lg border border-border bg-surface text-sm px-2 py-1.5 focus:outline-none focus:ring-2 focus:ring-ring"
-                      />
-                      <select
-                        value={newLessonType}
-                        onChange={(e) => setNewLessonType(e.target.value as LessonType)}
-                        className="rounded-lg border border-border bg-surface text-sm px-2 py-1.5 focus:outline-none focus:ring-2 focus:ring-ring"
-                        aria-label="Lesson type"
-                      >
-                        <option value="text">Text</option>
-                        <option value="video">Video</option>
-                        <option value="quiz">Quiz</option>
-                        <option value="document">Document</option>
-                      </select>
-                      <button
-                        onClick={() => void handleAddLesson(module.id)}
-                        disabled={addingLesson}
-                        className="rounded-lg bg-primary text-white text-xs px-3 py-1.5 disabled:opacity-50"
-                      >
-                        Add
-                      </button>
-                      <button
-                        onClick={() => setAddLessonModuleId(null)}
-                        className="text-xs text-foreground-muted hover:text-foreground"
-                      >
-                        Cancel
-                      </button>
-                    </div>
-                  ) : (
-                    <button
-                      onClick={() => {
-                        setAddLessonModuleId(module.id);
-                        setNewLessonTitle("");
-                        setNewLessonType("text");
-                      }}
-                      className="text-xs text-primary hover:underline mt-1"
-                    >
-                      + Add lesson
-                    </button>
-                  )}
-                </div>
-              )}
-            </div>
-          ))}
-        </div>
-
-        {/* Add module form */}
-        {showAddModule && (
-          <div className="mt-3 flex items-center gap-2">
-            <input
-              type="text"
-              value={newModuleTitle}
-              onChange={(e) => setNewModuleTitle(e.target.value)}
-              placeholder="Module title"
-              className="flex-1 rounded-lg border border-border bg-card text-sm px-3 py-2 focus:outline-none focus:ring-2 focus:ring-ring"
-            />
-            <button
-              onClick={() => void handleAddModule()}
-              disabled={addingModule}
-              className="rounded-lg bg-primary text-white text-sm px-4 py-2 disabled:opacity-50"
-            >
-              {addingModule ? "Adding…" : "Add"}
-            </button>
-            <button
-              onClick={() => setShowAddModule(false)}
-              className="text-sm text-foreground-muted hover:text-foreground"
-            >
-              Cancel
-            </button>
-          </div>
-        )}
-      </section>
-
-      {/* Lesson edit modal */}
-      {editingLesson && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50">
-          <div className="w-full max-w-lg bg-card rounded-2xl shadow-2xl border border-border p-6">
-            <h3 className="text-base font-semibold text-foreground mb-4">
-              Edit Lesson
-            </h3>
-            <div className="space-y-4">
-              <div>
-                <label className="block text-xs font-medium text-foreground-muted mb-1">
-                  Title *
-                </label>
-                <input
-                  type="text"
-                  value={editTitle}
-                  onChange={(e) => setEditTitle(e.target.value)}
-                  className="w-full rounded-lg border border-border bg-surface text-sm px-3 py-2 focus:outline-none focus:ring-2 focus:ring-ring"
-                />
-              </div>
-              <div>
-                <label className="block text-xs font-medium text-foreground-muted mb-1">
-                  Type
-                </label>
-                <select
-                  value={editType}
-                  onChange={(e) => {
-                    setEditType(e.target.value as LessonType);
-                    setEditContent("");
-                  }}
-                  className="rounded-lg border border-border bg-surface text-sm px-3 py-2 focus:outline-none focus:ring-2 focus:ring-ring"
-                  aria-label="Edit lesson type"
-                >
-                  <option value="text">Text</option>
-                  <option value="video">Video</option>
-                  <option value="quiz">Quiz</option>
-                  <option value="document">Document</option>
-                </select>
-              </div>
-
-              {editType === "document" || (editType === "video" && videoSource === "sharepoint") ? (
-                <div>
-                  <label className="block text-xs font-medium text-foreground-muted mb-1">
-                    {editType === "video" ? "SharePoint video" : "Document"}
-                  </label>
-                  {editType === "video" && (
-                    <div className="mb-2 inline-flex rounded-lg border border-border p-0.5 text-xs">
-                      <button
-                        type="button"
-                        onClick={() => setVideoSource("sharepoint")}
-                        className={`px-3 py-1 rounded-md transition-colors ${videoSource === "sharepoint" ? "bg-primary text-white" : "text-foreground-muted"}`}
-                      >
-                        SharePoint
-                      </button>
-                      <button
-                        type="button"
-                        onClick={() => {
-                          setVideoSource("url");
-                          setEditContent("");
-                        }}
-                        className={`px-3 py-1 rounded-md transition-colors ${(videoSource as string) === "url" ? "bg-primary text-white" : "text-foreground-muted"}`}
-                      >
-                        External URL
-                      </button>
-                    </div>
-                  )}
-                  {editContent ? (
-                    <div className="flex items-center gap-2">
-                      <span className="text-sm text-foreground flex-1 truncate">
-                        {(() => {
-                          try {
-                            return (JSON.parse(editContent) as { fileName?: string }).fileName ?? "Selected file";
-                          } catch {
-                            return "Selected file";
-                          }
-                        })()}
-                      </span>
-                      <button
-                        type="button"
-                        onClick={() => {
-                          setPickerTarget("edit");
-                          setPickerOpen(true);
-                        }}
-                        className="text-xs text-primary hover:underline"
-                      >
-                        Change
-                      </button>
-                    </div>
-                  ) : (
-                    <button
-                      type="button"
-                      onClick={() => {
-                        setPickerTarget("edit");
-                        setPickerOpen(true);
-                      }}
-                      className="rounded-lg border border-dashed border-border px-4 py-3 text-sm text-primary w-full text-center hover:bg-primary-subtle transition-colors"
-                    >
-                      Browse SharePoint…
-                    </button>
-                  )}
-                </div>
-              ) : editType !== "quiz" ? (
-                <div>
-                  <label className="block text-xs font-medium text-foreground-muted mb-1">
-                    {editType === "video" ? "Video URL" : "Content (Markdown)"}
-                  </label>
-                  {editType === "video" && (
-                    <div className="mb-2 inline-flex rounded-lg border border-border p-0.5 text-xs">
-                      <button
-                        type="button"
-                        onClick={() => {
-                          setVideoSource("sharepoint");
-                          setEditContent("");
-                        }}
-                        className={`px-3 py-1 rounded-md transition-colors ${(videoSource as string) === "sharepoint" ? "bg-primary text-white" : "text-foreground-muted"}`}
-                      >
-                        SharePoint
-                      </button>
-                      <button
-                        type="button"
-                        onClick={() => setVideoSource("url")}
-                        className={`px-3 py-1 rounded-md transition-colors ${videoSource === "url" ? "bg-primary text-white" : "text-foreground-muted"}`}
-                      >
-                        External URL
-                      </button>
-                    </div>
-                  )}
-                  <textarea
-                    value={editContent}
-                    onChange={(e) => setEditContent(e.target.value)}
-                    rows={editType === "text" ? 6 : 2}
-                    className="w-full rounded-lg border border-border bg-surface text-sm px-3 py-2 focus:outline-none focus:ring-2 focus:ring-ring resize-none"
-                    placeholder={editType === "video" ? "https://www.youtube.com/embed/..." : "Markdown content…"}
-                  />
-                </div>
-              ) : null}
-
-              {/* Deadline */}
-              <div>
-                <label className="block text-xs font-medium text-foreground-muted mb-1">
-                  Deadline (days after enrollment)
-                </label>
-                <input
-                  type="number"
-                  min="1"
-                  value={editDeadlineDays ?? ""}
-                  onChange={(e) =>
-                    setEditDeadlineDays(e.target.value ? parseInt(e.target.value, 10) : null)
-                  }
-                  placeholder="No deadline"
-                  className="w-full rounded-lg border border-border bg-surface text-sm text-foreground px-3 py-2 placeholder-foreground-subtle focus:outline-none focus:ring-2 focus:ring-ring"
-                />
-                <p className="text-xs text-foreground-subtle mt-1">
-                  Leave empty for no deadline
-                </p>
-              </div>
-
-              {editError && (
-                <p className="text-sm text-danger">{editError}</p>
-              )}
-
-              <div className="flex gap-2 pt-2">
-                <button
-                  onClick={() => void handleSaveLesson()}
-                  disabled={editSaving}
-                  className="rounded-lg bg-primary hover:bg-primary/90 disabled:opacity-50 text-white text-sm font-medium px-4 py-2"
-                >
-                  {editSaving ? "Saving…" : "Save"}
-                </button>
-                <button
-                  onClick={() => setEditingLesson(null)}
-                  className="rounded-lg border border-border text-sm text-foreground px-4 py-2 hover:bg-surface-muted"
-                >
-                  Cancel
-                </button>
-              </div>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* SharePoint File Picker */}
-      <SharePointFilePicker
-        isOpen={pickerOpen}
-        onClose={() => setPickerOpen(false)}
-        onSelect={handlePickerSelect}
-        mimeTypeFilter={
-          editType === "video"
-            ? (m) => m.startsWith("video/")
-            : undefined
-        }
-      />
-
-      <ConfirmDialog
-        open={pendingDeleteModule !== null}
-        onOpenChange={(open) => !open && setPendingDeleteModule(null)}
-        title="Delete module?"
-        description={
-          pendingDeleteModule ? (
-            <>
-              Delete{" "}
-              <span className="font-medium text-foreground">
-                {pendingDeleteModule.title}
-              </span>{" "}
-              and all{" "}
-              {pendingDeleteModule.lessons.length} lesson
-              {pendingDeleteModule.lessons.length !== 1 ? "s" : ""} inside it? This
-              cannot be undone.
-            </>
-          ) : null
-        }
-        confirmLabel="Delete module"
-        onConfirm={handleDeleteModule}
-        loading={deletingModuleId !== null}
-      />
-
-      <ConfirmDialog
-        open={pendingDeleteLesson !== null}
-        onOpenChange={(open) => !open && setPendingDeleteLesson(null)}
-        title="Delete lesson?"
-        description={
-          pendingDeleteLesson ? (
-            <>
-              Delete{" "}
-              <span className="font-medium text-foreground">
-                {pendingDeleteLesson.lesson.title}
-              </span>
-              ? Learner progress on this lesson will be removed. This cannot be
-              undone.
-            </>
-          ) : null
-        }
-        confirmLabel="Delete lesson"
-        onConfirm={handleDeleteLesson}
-        loading={deletingLessonId !== null}
-      />
 
       <ConfirmDialog
         open={pendingRemoveSub !== null}

@@ -54,8 +54,6 @@ export default async function CourseEditPage({
         initialStatus={data.status}
         initialNodeId={data.nodeId}
         nodeTree={nodeTree}
-        initialModules={data.modules}
-        quizDataByLessonId={data.quizDataByLessonId}
         initialSubscriptions={subs.map((s) => s.email)}
       />
       <div className="mt-8">

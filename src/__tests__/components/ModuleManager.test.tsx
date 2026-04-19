@@ -1,6 +1,6 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
 import { render, screen, fireEvent } from "@testing-library/react";
-import { CourseEditor } from "@/components/courses/CourseEditor";
+import { ModuleManager } from "@/components/courses/ModuleManager";
 
 // Mock next/navigation
 vi.mock("next/navigation", () => ({
@@ -21,25 +21,17 @@ vi.mock("@/components/courses/QuizBuilder", () => ({
   ),
 }));
 
-const baseProps = {
-  courseId: "course1",
-  initialTitle: "Test Course",
-  initialDescription: null,
-  initialStatus: "draft" as const,
-  initialModules: [],
-};
-
 const moduleWithLessons = {
   id: "mod1",
   title: "Module One",
   order: 1,
   lessons: [
-    { id: "lesson-text", title: "Text Lesson", type: "text" as const, content: null, order: 1 },
-    { id: "lesson-quiz", title: "Quiz Lesson", type: "quiz" as const, content: null, order: 2 },
+    { id: "lesson-text", title: "Text Lesson", type: "text" as const, content: null, order: 1, deadlineDays: null },
+    { id: "lesson-quiz", title: "Quiz Lesson", type: "quiz" as const, content: null, order: 2, deadlineDays: null },
   ],
 };
 
-describe("CourseEditor — quiz builder", () => {
+describe("ModuleManager — quiz builder", () => {
   beforeEach(() => {
     vi.stubGlobal("fetch", vi.fn());
     vi.stubGlobal("confirm", () => false);
@@ -47,23 +39,22 @@ describe("CourseEditor — quiz builder", () => {
 
   it("renders 'Quiz Builder ▼' toggle for quiz lessons", () => {
     render(
-      <CourseEditor
-        {...baseProps}
+      <ModuleManager
+        courseId="course1"
         initialModules={[moduleWithLessons]}
         quizDataByLessonId={{
           "lesson-quiz": { questions: [], passingScore: 70 },
         }}
       />
     );
-    // expand the module first
     fireEvent.click(screen.getByText(/Module One/));
     expect(screen.getByTestId("toggle-quiz-builder-lesson-quiz")).toHaveTextContent("Quiz Builder ▼");
   });
 
   it("renders 'Edit' button for non-quiz lessons", () => {
     render(
-      <CourseEditor
-        {...baseProps}
+      <ModuleManager
+        courseId="course1"
         initialModules={[moduleWithLessons]}
       />
     );
@@ -73,8 +64,8 @@ describe("CourseEditor — quiz builder", () => {
 
   it("shows inline QuizBuilder when toggle is clicked", () => {
     render(
-      <CourseEditor
-        {...baseProps}
+      <ModuleManager
+        courseId="course1"
         initialModules={[moduleWithLessons]}
         quizDataByLessonId={{
           "lesson-quiz": { questions: [], passingScore: 70 },
@@ -91,8 +82,8 @@ describe("CourseEditor — quiz builder", () => {
 
   it("hides QuizBuilder when toggle is clicked again", () => {
     render(
-      <CourseEditor
-        {...baseProps}
+      <ModuleManager
+        courseId="course1"
         initialModules={[moduleWithLessons]}
         quizDataByLessonId={{
           "lesson-quiz": { questions: [], passingScore: 70 },
@@ -101,16 +92,16 @@ describe("CourseEditor — quiz builder", () => {
     );
     fireEvent.click(screen.getByText(/Module One/));
     const toggle = screen.getByTestId("toggle-quiz-builder-lesson-quiz");
-    fireEvent.click(toggle); // open
-    fireEvent.click(toggle); // close
+    fireEvent.click(toggle);
+    fireEvent.click(toggle);
     expect(screen.queryByTestId("quiz-builder-panel-lesson-quiz")).not.toBeInTheDocument();
     expect(toggle).toHaveTextContent("Quiz Builder ▼");
   });
 
   it("does not show QuizBuilder panel when quizDataByLessonId is empty", () => {
     render(
-      <CourseEditor
-        {...baseProps}
+      <ModuleManager
+        courseId="course1"
         initialModules={[moduleWithLessons]}
         quizDataByLessonId={{}}
       />
@@ -118,7 +109,6 @@ describe("CourseEditor — quiz builder", () => {
     fireEvent.click(screen.getByText(/Module One/));
     const toggle = screen.getByTestId("toggle-quiz-builder-lesson-quiz");
     fireEvent.click(toggle);
-    // Panel won't render if no data for this lessonId
     expect(screen.queryByTestId("quiz-builder-panel-lesson-quiz")).not.toBeInTheDocument();
   });
 });
