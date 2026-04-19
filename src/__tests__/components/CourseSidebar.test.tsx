@@ -39,6 +39,12 @@ vi.mock("@/components/icons", () => ({
   PaperclipIcon: (props: Record<string, unknown>) => (
     <svg data-testid="icon-document" {...props} />
   ),
+  LayoutGridIcon: (props: Record<string, unknown>) => (
+    <svg data-testid="icon-html" {...props} />
+  ),
+  ClockIcon: (props: Record<string, unknown>) => (
+    <svg data-testid="icon-clock" {...props} />
+  ),
 }));
 
 const sampleModules = [

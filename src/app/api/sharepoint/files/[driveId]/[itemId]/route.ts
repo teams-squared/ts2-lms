@@ -15,14 +15,17 @@ export async function GET(_request: Request, { params }: Params) {
   // Check file cache first
   const cached = await getCachedFile(driveId, itemId);
   if (cached) {
-    const isPdf = cached.meta.mimeType === "application/pdf";
+    const isInline =
+      cached.meta.mimeType === "application/pdf" ||
+      cached.meta.mimeType === "text/html" ||
+      cached.meta.mimeType.startsWith("text/html");
     const ab = new ArrayBuffer(cached.data.byteLength);
     new Uint8Array(ab).set(cached.data);
     return new Response(ab, {
       status: 200,
       headers: {
         "Content-Type": cached.meta.mimeType,
-        "Content-Disposition": isPdf
+        "Content-Disposition": isInline
           ? `inline; filename="${cached.meta.fileName}"`
           : `attachment; filename="${cached.meta.fileName}"`,
         "Cache-Control": "private, max-age=900",
@@ -55,7 +58,10 @@ export async function GET(_request: Request, { params }: Params) {
   const buffer = Buffer.from(arrayBuffer);
   const mimeType = metadata.file?.mimeType ?? "application/octet-stream";
   const fileName = metadata.name;
-  const isPdf = mimeType === "application/pdf";
+  const isInline =
+    mimeType === "application/pdf" ||
+    mimeType === "text/html" ||
+    mimeType.startsWith("text/html");
 
   // Cache the file (best-effort, don't fail the request)
   setCachedFile(driveId, itemId, buffer, {
@@ -68,7 +74,7 @@ export async function GET(_request: Request, { params }: Params) {
     status: 200,
     headers: {
       "Content-Type": mimeType,
-      "Content-Disposition": isPdf
+      "Content-Disposition": isInline
         ? `inline; filename="${fileName}"`
         : `attachment; filename="${fileName}"`,
       "Cache-Control": "private, max-age=900",

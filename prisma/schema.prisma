@@ -91,6 +91,7 @@ enum LessonType {
   VIDEO
   QUIZ
   DOCUMENT
+  HTML
 }
 
 model Module {

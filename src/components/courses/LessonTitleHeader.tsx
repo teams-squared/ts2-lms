@@ -1,4 +1,4 @@
-import { FileText, Film, HelpCircle, Type } from "lucide-react";
+import { FileText, Film, HelpCircle, Monitor, Type } from "lucide-react";
 import type { LessonType } from "@/lib/types";
 
 interface LessonTitleHeaderProps {
@@ -15,6 +15,7 @@ const TYPE_LABEL: Record<LessonType, string> = {
   video: "Video",
   document: "Document",
   quiz: "Quiz",
+  html: "Interactive",
 };
 
 const TYPE_ICON: Record<LessonType, React.ComponentType<{ className?: string }>> = {
@@ -22,6 +23,7 @@ const TYPE_ICON: Record<LessonType, React.ComponentType<{ className?: string }>>
   video: Film,
   document: FileText,
   quiz: HelpCircle,
+  html: Monitor,
 };
 
 /**

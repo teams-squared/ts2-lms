@@ -36,11 +36,11 @@ export async function POST(request: Request, { params }: Params) {
   }
 
   const type: LessonType = body.type || "text";
-  if (!["text", "video", "quiz", "document"].includes(type)) {
+  if (!["text", "video", "quiz", "document", "html"].includes(type)) {
     return NextResponse.json({ error: "Invalid lesson type" }, { status: 400 });
   }
 
-  if (type === "document" && body.content) {
+  if ((type === "document" || type === "html") && body.content) {
     try {
       const ref = JSON.parse(body.content);
       if (!ref.driveId || !ref.itemId || !ref.fileName || !ref.mimeType) {

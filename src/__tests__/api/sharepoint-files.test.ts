@@ -42,14 +42,18 @@ describe("GET /api/sharepoint/files/[driveId]/[itemId]", () => {
     expect(res.status).toBe(401);
   });
 
-  it("returns 403 for employee role", async () => {
+  it("allows employee role (file proxy is open to any authed user)", async () => {
     mockAuth.mockResolvedValueOnce(mockSession({ role: "employee" }));
+    mockGetCachedFile.mockResolvedValueOnce({
+      data: Buffer.from("pdf-content"),
+      meta: { mimeType: "application/pdf", fileName: "test.pdf", etag: "e1", expiresAt: Date.now() + 60000 },
+    });
     const GET = await importGET();
     const res = await GET(
       new Request("http://localhost/api/sharepoint/files/d1/i1"),
       params("d1", "i1")
     );
-    expect(res.status).toBe(403);
+    expect(res.status).toBe(200);
   });
 
   it("streams file with correct headers from cache", async () => {

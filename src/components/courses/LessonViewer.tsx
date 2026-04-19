@@ -157,7 +157,51 @@ function stripLeadingTitle(content: string, title: string): string {
   return content;
 }
 
+function HtmlLessonViewer({ proxyUrl, fileName }: { proxyUrl: string; fileName: string }) {
+  return (
+    <div
+      className="overflow-hidden rounded-lg border border-border bg-black"
+      style={{ aspectRatio: "16 / 9", minHeight: "480px" }}
+    >
+      <iframe
+        src={proxyUrl}
+        title={fileName}
+        className="h-full w-full border-0"
+        // Scripts allowed (slide decks need JS for nav/transitions) but NOT
+        // allow-same-origin — this forces the iframe into an opaque origin so
+        // its JS cannot read LMS cookies or reach window.parent's DOM.
+        sandbox="allow-scripts"
+      />
+    </div>
+  );
+}
+
 export function LessonViewer({ title, type, content, lessonId }: LessonViewerProps) {
+  if (type === "html") {
+    let docRef: SharePointDocumentRef | null = null;
+    if (content) {
+      try {
+        docRef = JSON.parse(content) as SharePointDocumentRef;
+      } catch {
+        docRef = null;
+      }
+    }
+    const proxyUrl = docRef
+      ? `/api/sharepoint/files/${docRef.driveId}/${docRef.itemId}`
+      : null;
+
+    return (
+      <div>
+        <LessonTitleHeader title={title} type="html" formatLabel="Interactive slides" />
+        {docRef && proxyUrl ? (
+          <HtmlLessonViewer proxyUrl={proxyUrl} fileName={docRef.fileName} />
+        ) : (
+          <p className="text-sm text-foreground-muted">No HTML file attached.</p>
+        )}
+      </div>
+    );
+  }
+
   if (type === "document") {
     let docRef: SharePointDocumentRef | null = null;
     if (content) {

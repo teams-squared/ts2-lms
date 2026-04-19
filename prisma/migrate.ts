@@ -1,5 +1,11 @@
-import "dotenv/config";
+import { config as loadEnv } from "dotenv";
 import { Client } from "pg";
+
+// Load Next.js-style env chain: .env.local overrides .env. Next.js loads these
+// automatically at runtime; standalone scripts need explicit config. Render's
+// build env provides DATABASE_URL directly, so both files being absent is fine.
+loadEnv({ path: ".env.local" });
+loadEnv({ path: ".env" });
 
 const client = new Client({
   connectionString: process.env.DATABASE_URL,
@@ -118,6 +124,14 @@ async function main() {
   await client.query(`
     ALTER TYPE "LessonType" ADD VALUE IF NOT EXISTS 'DOCUMENT';
   `);
+
+  // Add HTML value to LessonType enum (idempotent)
+  await client.query(`
+    ALTER TYPE "LessonType" ADD VALUE IF NOT EXISTS 'HTML';
+  `);
+  // Must commit before using a newly added enum value in DML
+  await client.query(`COMMIT`);
+  await client.query(`BEGIN`);
 
   // Role restructure: add COURSE_MANAGER, migrate legacy rows, then drop old values
   await client.query(`

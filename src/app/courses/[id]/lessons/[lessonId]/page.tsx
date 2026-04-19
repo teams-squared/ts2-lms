@@ -223,7 +223,7 @@ export default async function LessonPage({
             line length. */}
         <div
           className={`${
-            lessonType === "document" || lessonType === "video"
+            lessonType === "document" || lessonType === "video" || lessonType === "html"
               ? "max-w-5xl"
               : "max-w-3xl"
           } mx-auto px-4 sm:px-6 py-8`}
