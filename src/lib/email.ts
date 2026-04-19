@@ -103,6 +103,86 @@ export async function sendUserInviteEmail({
   return true;
 }
 
+/**
+ * Send a deadline reminder email to a learner.
+ * No-ops gracefully if RESEND_API_KEY is not configured.
+ */
+export async function sendDeadlineReminderEmail({
+  to,
+  learnerName,
+  courseTitle,
+  lessonTitle,
+  kind,
+  lessonUrl,
+}: {
+  to: string;
+  learnerName: string | null;
+  courseTitle: string;
+  lessonTitle: string;
+  kind: "due_soon_1" | "due_today" | "overdue_1";
+  lessonUrl: string;
+  daysOffset: number;
+}): Promise<void> {
+  if (!resend || !to) {
+    if (!resend) {
+      console.info("[email] Resend not configured — skipping deadline reminder");
+    }
+    return;
+  }
+
+  const greeting = learnerName ? `Hi ${escapeHtml(learnerName)},` : "Hi there,";
+  const safeCourse = escapeHtml(courseTitle);
+  const safeLesson = escapeHtml(lessonTitle);
+
+  let subject: string;
+  let headingText: string;
+  let urgencyColor: string;
+  let relativeText: string;
+
+  if (kind === "due_soon_1") {
+    subject = `Reminder: "${lessonTitle}" is due tomorrow`;
+    headingText = "Lesson Due Tomorrow";
+    urgencyColor = "#f59e0b";
+    relativeText = "Due tomorrow";
+  } else if (kind === "due_today") {
+    subject = `Due today: "${lessonTitle}"`;
+    headingText = "Lesson Due Today";
+    urgencyColor = "#ef4444";
+    relativeText = "Due today";
+  } else {
+    subject = `Overdue: "${lessonTitle}"`;
+    headingText = "Lesson Overdue";
+    urgencyColor = "#dc2626";
+    relativeText = "Overdue";
+  }
+
+  const html = `
+    <div style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; max-width: 560px; margin: 0 auto; padding: 32px 0;">
+      <h2 style="color: ${urgencyColor}; margin-bottom: 16px;">${headingText}</h2>
+      <p style="color: #4a4a5a; font-size: 15px; line-height: 1.6;">${greeting}</p>
+      <p style="color: #4a4a5a; font-size: 15px; line-height: 1.6;">
+        Your lesson <strong>&ldquo;${safeLesson}&rdquo;</strong> from the course
+        <strong>&ldquo;${safeCourse}&rdquo;</strong> is
+        <strong style="color: ${urgencyColor};">${relativeText.toLowerCase()}</strong>.
+      </p>
+      <p style="margin: 28px 0;">
+        <a
+          href="${lessonUrl}"
+          style="display: inline-block; background: #4f46e5; color: #ffffff; text-decoration: none; padding: 12px 22px; border-radius: 8px; font-weight: 600; font-size: 15px;"
+        >
+          Open Lesson
+        </a>
+      </p>
+      <hr style="border: none; border-top: 1px solid #e5e5ea; margin: 24px 0;" />
+      <p style="color: #8e8e93; font-size: 12px;">
+        You are receiving this because you are enrolled in a course with a deadline on Teams Squared LMS.
+      </p>
+    </div>
+  `;
+
+  await resend.emails.send({ from: FROM, to, subject, html });
+}
+
 function escapeHtml(input: string): string {
   return input
     .replace(/&/g, "&amp;")
