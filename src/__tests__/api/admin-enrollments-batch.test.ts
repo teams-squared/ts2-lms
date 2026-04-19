@@ -26,10 +26,16 @@ const makeReq = (body: Record<string, unknown>) =>
     headers: { "Content-Type": "application/json" },
   });
 
-/** Helper: build a mock tx that mirrors mockPrisma shape */
+/** Helper: build a mock tx that mirrors mockPrisma shape.
+ * The enrollment helper now performs course/enrollment lookups *inside* the
+ * transaction, so the mock tx must expose those `findMany` methods. */
 function makeMockTx() {
   return {
+    course: {
+      findMany: vi.fn().mockResolvedValue([]),
+    },
     enrollment: {
+      findMany: vi.fn().mockResolvedValue([]),
       create: vi.fn(),
     },
     notification: {
@@ -81,14 +87,14 @@ describe("POST /api/admin/enrollments/batch", () => {
   it("creates enrollments for valid request", async () => {
     mockRequireRole.mockResolvedValue({ userId: "admin-1", role: "admin" });
     mockPrisma.user.findUnique.mockResolvedValue({ id: "u1", name: "User One" });
-    mockPrisma.course.findMany.mockResolvedValue([
-      { id: "c1", title: "Course One" },
-      { id: "c2", title: "Course Two" },
-    ]);
-    mockPrisma.enrollment.findMany.mockResolvedValue([]);
 
     const now = new Date();
     const mockTx = makeMockTx();
+    mockTx.course.findMany.mockResolvedValue([
+      { id: "c1", title: "Course One" },
+      { id: "c2", title: "Course Two" },
+    ]);
+    mockTx.enrollment.findMany.mockResolvedValue([]);
     mockTx.enrollment.create
       .mockResolvedValueOnce({
         id: "e1",
@@ -123,15 +129,15 @@ describe("POST /api/admin/enrollments/batch", () => {
   it("skips already-enrolled courses", async () => {
     mockRequireRole.mockResolvedValue({ userId: "admin-1", role: "admin" });
     mockPrisma.user.findUnique.mockResolvedValue({ id: "u1", name: "User One" });
-    mockPrisma.course.findMany.mockResolvedValue([
+
+    const now = new Date();
+    const mockTx = makeMockTx();
+    mockTx.course.findMany.mockResolvedValue([
       { id: "c1", title: "Course One" },
       { id: "c2", title: "Course Two" },
     ]);
     // c1 is already enrolled
-    mockPrisma.enrollment.findMany.mockResolvedValue([{ courseId: "c1" }]);
-
-    const now = new Date();
-    const mockTx = makeMockTx();
+    mockTx.enrollment.findMany.mockResolvedValue([{ courseId: "c1" }]);
     mockTx.enrollment.create.mockResolvedValueOnce({
       id: "e2",
       userId: "u1",
@@ -156,14 +162,17 @@ describe("POST /api/admin/enrollments/batch", () => {
   it("returns correct counts when all courses already enrolled", async () => {
     mockRequireRole.mockResolvedValue({ userId: "admin-1", role: "admin" });
     mockPrisma.user.findUnique.mockResolvedValue({ id: "u1", name: "User One" });
-    mockPrisma.course.findMany.mockResolvedValue([
+
+    const mockTx = makeMockTx();
+    mockTx.course.findMany.mockResolvedValue([
       { id: "c1", title: "Course One" },
       { id: "c2", title: "Course Two" },
     ]);
-    mockPrisma.enrollment.findMany.mockResolvedValue([
+    mockTx.enrollment.findMany.mockResolvedValue([
       { courseId: "c1" },
       { courseId: "c2" },
     ]);
+    mockPrisma.$transaction.mockImplementation(async (cb: (tx: typeof mockTx) => Promise<unknown>) => cb(mockTx));
 
     const res = await POST(makeReq({ userId: "u1", courseIds: ["c1", "c2"] }));
     expect(res.status).toBe(200);
