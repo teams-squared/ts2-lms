@@ -48,6 +48,7 @@ export function DashboardShell({ children }: DashboardShellProps) {
       <div className="flex min-w-0 flex-1 flex-col">
         <TopBar slim={isLessonPlayer} />
         <main
+          id="main-content"
           className={cn(
             "flex-1",
             // Page content supplies its own padding; the shell only provides
