@@ -70,7 +70,7 @@ export function CourseCompletionModal({
         <div className="flex flex-col items-center text-center gap-6 py-2">
           {/* Gradient disc with CheckCircle icon */}
           <div
-            className="animate-pulse-glow flex h-20 w-20 items-center justify-center rounded-full"
+            className="motion-safe:animate-pulse-glow flex h-20 w-20 items-center justify-center rounded-full"
             style={{
               background: "linear-gradient(135deg, oklch(0.95 0.06 150), oklch(0.97 0.013 296))",
             }}
@@ -79,7 +79,7 @@ export function CourseCompletionModal({
           </div>
 
           <DialogHeader className="items-center gap-1.5">
-            <DialogTitle className="text-2xl font-bold text-foreground">
+            <DialogTitle className="font-display text-2xl font-bold text-foreground">
               Course complete!
             </DialogTitle>
             <DialogDescription asChild>

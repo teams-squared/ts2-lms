@@ -174,7 +174,14 @@ export default async function CourseDetailPage({
                 {percentComplete}%
               </span>
             </div>
-            <div className="mb-3 h-2 overflow-hidden rounded-full bg-border">
+            <div
+              className="mb-3 h-2 overflow-hidden rounded-full bg-border"
+              role="progressbar"
+              aria-label="Course progress"
+              aria-valuenow={percentComplete}
+              aria-valuemin={0}
+              aria-valuemax={100}
+            >
               <div
                 className="h-full rounded-full bg-primary transition-[width] duration-[400ms] ease-out"
                 style={{ width: `${percentComplete}%` }}
@@ -188,7 +195,7 @@ export default async function CourseDetailPage({
             ) : continueUrl ? (
               <Link
                 href={continueUrl}
-                className="text-xs font-medium text-primary hover:underline"
+                className="text-xs font-medium text-primary hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background rounded-sm"
               >
                 Continue where you left off →
               </Link>

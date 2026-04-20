@@ -136,7 +136,7 @@ export function InviteUserForm({
             value={email}
             onChange={(e) => setEmail(e.target.value)}
             placeholder="newhire@teamsquared.io"
-            className="w-full px-3 py-2 rounded-lg border border-border bg-surface text-sm text-foreground placeholder-foreground-subtle focus:outline-none focus:ring-2 focus:ring-ring transition-all"
+            className="w-full px-3 py-2 rounded-lg border border-border bg-surface text-sm text-foreground placeholder-foreground-subtle focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring transition-all"
             disabled={submitting}
           />
         </div>
@@ -154,7 +154,7 @@ export function InviteUserForm({
             value={name}
             onChange={(e) => setName(e.target.value)}
             placeholder="Optional — will be overwritten by SSO on first login"
-            className="w-full px-3 py-2 rounded-lg border border-border bg-surface text-sm text-foreground placeholder-foreground-subtle focus:outline-none focus:ring-2 focus:ring-ring transition-all"
+            className="w-full px-3 py-2 rounded-lg border border-border bg-surface text-sm text-foreground placeholder-foreground-subtle focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring transition-all"
             disabled={submitting}
           />
         </div>
@@ -171,7 +171,7 @@ export function InviteUserForm({
           id="invite-role"
           value={role}
           onChange={(e) => setRole(e.target.value as Role)}
-          className="px-3 py-2 rounded-lg border border-border bg-surface text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-ring cursor-pointer"
+          className="px-3 py-2 rounded-lg border border-border bg-surface text-sm text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring cursor-pointer"
           disabled={submitting}
         >
           <option value="employee">Employee</option>
@@ -204,7 +204,7 @@ export function InviteUserForm({
         <button
           type="submit"
           disabled={submitting || !email.trim()}
-          className="rounded-lg bg-primary hover:bg-primary/90 disabled:opacity-50 disabled:cursor-not-allowed text-white text-sm font-medium px-4 py-2 transition-colors"
+          className="rounded-lg bg-primary hover:bg-primary-hover disabled:opacity-50 disabled:cursor-not-allowed text-primary-foreground text-sm font-medium px-4 py-2 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background"
         >
           {submitting
             ? "Sending…"

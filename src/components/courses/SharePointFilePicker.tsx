@@ -91,8 +91,8 @@ export function SharePointFilePicker({ isOpen, onClose, onSelect, mimeTypeFilter
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50">
-      <div className="w-full max-w-2xl bg-card rounded-2xl shadow-2xl border border-border flex flex-col max-h-[80vh]">
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-foreground/50 backdrop-blur-sm">
+      <div className="w-full max-w-2xl bg-background rounded-lg shadow-lg border border-border flex flex-col max-h-[80vh]">
         {/* Header */}
         <div className="flex items-center justify-between px-6 py-4 border-b border-border">
           <h2 className="text-lg font-semibold text-foreground">
@@ -100,7 +100,7 @@ export function SharePointFilePicker({ isOpen, onClose, onSelect, mimeTypeFilter
           </h2>
           <button
             onClick={onClose}
-            className="text-foreground-subtle hover:text-foreground transition-colors"
+            className="text-foreground-subtle hover:text-foreground transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring rounded"
             aria-label="Close"
           >
             ✕
@@ -160,13 +160,13 @@ export function SharePointFilePicker({ isOpen, onClose, onSelect, mimeTypeFilter
               );
             }
             return (
-            <ul className="divide-y divide-gray-100 dark:divide-[#2a2a38]">
+            <ul className="divide-y divide-border">
               {visible.map((item) => (
                 <li key={item.id}>
                   {item.type === "folder" ? (
                     <button
                       onClick={() => handleFolderClick(item.id)}
-                      className="w-full flex items-center gap-3 py-3 text-left hover:bg-surface-muted dark:hover:bg-[#22222e] rounded-lg px-2 transition-colors"
+                      className="w-full flex items-center gap-3 py-3 text-left hover:bg-surface-muted rounded-lg px-2 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
                     >
                       <span className="text-xl">📁</span>
                       <div className="flex-1 min-w-0">
@@ -182,7 +182,7 @@ export function SharePointFilePicker({ isOpen, onClose, onSelect, mimeTypeFilter
                   ) : (
                     <button
                       onClick={() => handleFileClick(item)}
-                      className="w-full flex items-center gap-3 py-3 text-left hover:bg-primary-subtle rounded-lg px-2 transition-colors"
+                      className="w-full flex items-center gap-3 py-3 text-left hover:bg-primary-subtle rounded-lg px-2 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
                     >
                       <span className="text-xl">{fileIcon(item.mimeType)}</span>
                       <div className="flex-1 min-w-0">

@@ -75,7 +75,7 @@ export function LessonCompleteButton({
         <button
           onClick={handleMarkIncomplete}
           disabled={isLoading}
-          className="text-xs text-foreground-subtle transition-colors hover:text-foreground disabled:opacity-50"
+          className="text-xs text-foreground-subtle transition-colors hover:text-foreground disabled:opacity-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background rounded-sm"
           data-testid="mark-incomplete-button"
         >
           {isLoading ? "Saving…" : "Mark as incomplete"}
@@ -94,7 +94,7 @@ export function LessonCompleteButton({
       <button
         onClick={handleMarkComplete}
         disabled={isLoading}
-        className="inline-flex items-center gap-2 rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground transition-colors hover:bg-primary/90 disabled:cursor-not-allowed disabled:opacity-50"
+        className="inline-flex items-center gap-2 rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground transition-colors hover:bg-primary-hover disabled:cursor-not-allowed disabled:opacity-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background"
         data-testid="mark-complete-button"
       >
         {isLoading ? <><Spinner size="sm" className="border-primary-foreground border-t-transparent" /> Saving…</> : "Mark complete"}

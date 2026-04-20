@@ -441,7 +441,7 @@ export function ModuleManager({
                       setPendingDeleteModule(module);
                     }}
                     disabled={deletingModuleId === module.id}
-                    className="text-xs text-red-500 hover:text-red-700 disabled:opacity-50 ml-2"
+                    className="text-xs text-danger hover:text-danger/80 disabled:opacity-50 ml-2"
                     aria-label={`Delete module ${module.title}`}
                   >
                     Delete
@@ -505,7 +505,7 @@ export function ModuleManager({
                             <button
                               onClick={() => setPendingDeleteLesson({ moduleId: module.id, lesson })}
                               disabled={deletingLessonId === lesson.id}
-                              className="text-xs text-red-500 hover:text-red-700 disabled:opacity-50"
+                              className="text-xs text-danger hover:text-danger/80 disabled:opacity-50"
                               aria-label={`Delete lesson ${lesson.title}`}
                             >
                               Delete
@@ -541,12 +541,12 @@ export function ModuleManager({
                           value={newLessonTitle}
                           onChange={(e) => setNewLessonTitle(e.target.value)}
                           placeholder="Lesson title"
-                          className="flex-1 rounded-lg border border-border bg-surface text-sm px-2 py-1.5 focus:outline-none focus:ring-2 focus:ring-ring"
+                          className="flex-1 rounded-lg border border-border bg-surface text-sm px-2 py-1.5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
                         />
                         <select
                           value={newLessonType}
                           onChange={(e) => setNewLessonType(e.target.value as LessonType)}
-                          className="rounded-lg border border-border bg-surface text-sm px-2 py-1.5 focus:outline-none focus:ring-2 focus:ring-ring"
+                          className="rounded-lg border border-border bg-surface text-sm px-2 py-1.5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
                           aria-label="Lesson type"
                         >
                           <option value="text">Text</option>
@@ -558,7 +558,7 @@ export function ModuleManager({
                         <button
                           onClick={() => void handleAddLesson(module.id)}
                           disabled={addingLesson}
-                          className="rounded-lg bg-primary text-white text-xs px-3 py-1.5 disabled:opacity-50"
+                          className="rounded-lg bg-primary hover:bg-primary-hover text-primary-foreground text-xs px-3 py-1.5 disabled:opacity-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background"
                         >
                           Add
                         </button>
@@ -596,12 +596,12 @@ export function ModuleManager({
               value={newModuleTitle}
               onChange={(e) => setNewModuleTitle(e.target.value)}
               placeholder="Module title"
-              className="flex-1 rounded-lg border border-border bg-card text-sm px-3 py-2 focus:outline-none focus:ring-2 focus:ring-ring"
+              className="flex-1 rounded-lg border border-border bg-card text-sm px-3 py-2 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
             />
             <button
               onClick={() => void handleAddModule()}
               disabled={addingModule}
-              className="rounded-lg bg-primary text-white text-sm px-4 py-2 disabled:opacity-50"
+              className="rounded-lg bg-primary hover:bg-primary-hover text-primary-foreground text-sm px-4 py-2 disabled:opacity-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background"
             >
               {addingModule ? "Adding…" : "Add"}
             </button>
@@ -617,8 +617,8 @@ export function ModuleManager({
 
       {/* Lesson edit modal */}
       {editingLesson && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50">
-          <div className="w-full max-w-lg bg-card rounded-2xl shadow-2xl border border-border p-6">
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-foreground/50 backdrop-blur-sm">
+          <div className="w-full max-w-lg bg-background rounded-lg shadow-lg border border-border p-6">
             <h3 className="text-base font-semibold text-foreground mb-4">
               Edit Lesson
             </h3>
@@ -631,7 +631,7 @@ export function ModuleManager({
                   type="text"
                   value={editTitle}
                   onChange={(e) => setEditTitle(e.target.value)}
-                  className="w-full rounded-lg border border-border bg-surface text-sm px-3 py-2 focus:outline-none focus:ring-2 focus:ring-ring"
+                  className="w-full rounded-lg border border-border bg-surface text-sm px-3 py-2 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
                 />
               </div>
               <div>
@@ -644,7 +644,7 @@ export function ModuleManager({
                     setEditType(e.target.value as LessonType);
                     setEditContent("");
                   }}
-                  className="rounded-lg border border-border bg-surface text-sm px-3 py-2 focus:outline-none focus:ring-2 focus:ring-ring"
+                  className="rounded-lg border border-border bg-surface text-sm px-3 py-2 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
                   aria-label="Edit lesson type"
                 >
                   <option value="text">Text</option>
@@ -750,7 +750,7 @@ export function ModuleManager({
                     value={editContent}
                     onChange={(e) => setEditContent(e.target.value)}
                     rows={editType === "text" ? 6 : 2}
-                    className="w-full rounded-lg border border-border bg-surface text-sm px-3 py-2 focus:outline-none focus:ring-2 focus:ring-ring resize-none"
+                    className="w-full rounded-lg border border-border bg-surface text-sm px-3 py-2 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring resize-none"
                     placeholder={editType === "video" ? "https://www.youtube.com/embed/..." : "Markdown content…"}
                   />
                 </div>
@@ -769,7 +769,7 @@ export function ModuleManager({
                     setEditDeadlineDays(e.target.value ? parseInt(e.target.value, 10) : null)
                   }
                   placeholder="No deadline"
-                  className="w-full rounded-lg border border-border bg-surface text-sm text-foreground px-3 py-2 placeholder-foreground-subtle focus:outline-none focus:ring-2 focus:ring-ring"
+                  className="w-full rounded-lg border border-border bg-surface text-sm text-foreground px-3 py-2 placeholder-foreground-subtle focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
                 />
                 <p className="text-xs text-foreground-subtle mt-1">
                   Leave empty for no deadline
@@ -784,7 +784,7 @@ export function ModuleManager({
                 <button
                   onClick={() => void handleSaveLesson()}
                   disabled={editSaving}
-                  className="rounded-lg bg-primary hover:bg-primary/90 disabled:opacity-50 text-white text-sm font-medium px-4 py-2"
+                  className="rounded-lg bg-primary hover:bg-primary-hover disabled:opacity-50 text-primary-foreground text-sm font-medium px-4 py-2 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background"
                 >
                   {editSaving ? "Saving…" : "Save"}
                 </button>

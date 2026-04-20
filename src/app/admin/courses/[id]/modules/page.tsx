@@ -30,7 +30,7 @@ export default async function CourseModulesPage({
           ← Back to course
         </Link>
       </div>
-      <h1 className="text-xl font-bold text-foreground mb-1">
+      <h1 className="font-display text-xl font-bold text-foreground mb-1">
         Modules &amp; Lessons
       </h1>
       <p className="text-sm text-foreground-muted mb-6">{data.course.title}</p>

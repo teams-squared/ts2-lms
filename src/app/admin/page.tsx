@@ -93,7 +93,7 @@ async function OverdueSection() {
 
   return (
     <div className="mb-8 rounded-lg border border-danger/30 bg-danger-subtle shadow-sm overflow-hidden">
-      <div className="h-1 bg-gradient-to-r from-danger to-danger/80" />
+      <div className="h-1 bg-danger" />
       <div className="p-5 flex items-center gap-3">
         <AlertTriangleIcon className="w-6 h-6 text-danger flex-shrink-0" />
         <div>
@@ -189,9 +189,9 @@ export default async function AdminPage() {
         {stats.map(({ value, label }) => (
           <div
             key={label}
-            className="rounded-lg border border-border bg-card shadow-sm hover-lift overflow-hidden"
+            className="rounded-lg border border-border bg-surface shadow-sm hover-lift overflow-hidden"
           >
-            <div className="h-1 bg-gradient-to-r from-primary to-primary/80" />
+            <div className="h-1 bg-primary" />
             <div className="p-5">
               <div className="text-2xl font-bold text-primary tabular-nums mb-1">
                 {value}
@@ -217,7 +217,7 @@ export default async function AdminPage() {
               View all →
             </Link>
           </div>
-          <div className="rounded-lg border border-border bg-card shadow-sm divide-y divide-border">
+          <div className="rounded-lg border border-border bg-surface shadow-sm divide-y divide-border">
             {recentUsers.map((user) => (
               <div key={user.id} className="flex items-center justify-between px-4 py-3">
                 <div className="flex items-center gap-3 min-w-0">
@@ -253,7 +253,7 @@ export default async function AdminPage() {
               View all →
             </Link>
           </div>
-          <div className="rounded-lg border border-border bg-card shadow-sm divide-y divide-border">
+          <div className="rounded-lg border border-border bg-surface shadow-sm divide-y divide-border">
             {recentCourses.map((course) => (
               <div key={course.id} className="flex items-center justify-between px-4 py-3">
                 <div className="min-w-0">

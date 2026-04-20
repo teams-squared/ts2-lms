@@ -1,8 +1,8 @@
 import { auth } from "@/lib/auth";
 import { redirect } from "next/navigation";
-import Link from "next/link";
 import { prisma } from "@/lib/prisma";
 import { AchievementCard } from "@/components/gamification/AchievementCard";
+import { Breadcrumbs } from "@/components/ui/Breadcrumbs";
 
 export const dynamic = "force-dynamic";
 
@@ -41,13 +41,7 @@ export default async function AchievementsPage() {
 
   return (
     <div className="mx-auto max-w-3xl px-4 py-10 sm:px-6 lg:px-8">
-      <p className="mb-1 text-xs text-foreground-muted">
-        <Link href="/profile" className="hover:underline">
-          Profile
-        </Link>
-        {" / "}
-        <span className="text-foreground">Achievements</span>
-      </p>
+      <Breadcrumbs items={[{ label: "Home", href: "/" }, { label: "Profile", href: "/profile" }, { label: "Achievements" }]} />
       <h1 className="mb-2 font-display text-2xl font-bold tracking-tight text-foreground">
         Achievements
       </h1>

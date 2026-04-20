@@ -19,7 +19,7 @@ interface User {
 const ROLE_COLORS: Record<Role, string> = {
   admin: "bg-danger-subtle text-danger",
   course_manager: "bg-info-subtle text-info",
-  employee: "bg-muted text-muted-foreground ring-1 ring-border",
+  employee: "bg-surface-muted text-foreground-muted ring-1 ring-border",
 };
 
 const ROLE_LABELS: Record<Role, string> = {
@@ -77,12 +77,12 @@ export function UserList({ users, nodeTree, inviterRole }: UserListProps) {
           value={search}
           onChange={(e) => handleSearch(e.target.value)}
           placeholder="Search by name or email…"
-          className="flex-1 px-3.5 py-2.5 rounded-lg border border-border bg-surface text-sm text-foreground placeholder-foreground-subtle focus:outline-none focus:ring-2 focus:ring-ring transition-all"
+          className="flex-1 px-3.5 py-2.5 rounded-lg border border-border bg-surface text-sm text-foreground placeholder-foreground-subtle focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring transition-all"
         />
         <select
           value={roleFilter}
           onChange={(e) => handleRoleFilter(e.target.value as Role | "all")}
-          className="px-3.5 py-2.5 rounded-lg border border-border bg-surface text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-ring cursor-pointer"
+          className="px-3.5 py-2.5 rounded-lg border border-border bg-surface text-sm text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring cursor-pointer"
         >
           <option value="all">All roles</option>
           <option value="admin">Admin</option>
@@ -92,7 +92,7 @@ export function UserList({ users, nodeTree, inviterRole }: UserListProps) {
         <button
           type="button"
           onClick={() => setShowInvite((v) => !v)}
-          className="rounded-lg bg-primary hover:bg-primary/90 text-white text-sm font-medium px-4 py-2.5 transition-colors whitespace-nowrap"
+          className="rounded-lg bg-primary hover:bg-primary-hover text-primary-foreground text-sm font-medium px-4 py-2.5 transition-colors whitespace-nowrap focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background"
           aria-expanded={showInvite}
         >
           {showInvite ? "Close" : "Invite user"}
@@ -180,14 +180,14 @@ export function UserList({ users, nodeTree, inviterRole }: UserListProps) {
             <button
               onClick={() => setPage((p) => Math.max(1, p - 1))}
               disabled={safePage === 1}
-              className="px-3 py-1.5 rounded-lg border border-border text-xs font-medium text-foreground hover:bg-surface-muted disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
+              className="px-3 py-1.5 rounded-lg border border-border text-xs font-medium text-foreground hover:bg-surface-muted disabled:opacity-40 disabled:cursor-not-allowed transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background"
             >
               Previous
             </button>
             <button
               onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
               disabled={safePage === totalPages}
-              className="px-3 py-1.5 rounded-lg border border-border text-xs font-medium text-foreground hover:bg-surface-muted disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
+              className="px-3 py-1.5 rounded-lg border border-border text-xs font-medium text-foreground hover:bg-surface-muted disabled:opacity-40 disabled:cursor-not-allowed transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background"
             >
               Next
             </button>

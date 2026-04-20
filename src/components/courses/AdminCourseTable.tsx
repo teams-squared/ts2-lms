@@ -247,7 +247,7 @@ export default function AdminCourseTable({ nodeTree = [] }: { nodeTree?: NodeTre
   }
 
   const selectClass =
-    "px-3 py-2.5 rounded-lg border border-border bg-surface text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-ring cursor-pointer";
+    "px-3 py-2.5 rounded-lg border border-border bg-surface text-sm text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring cursor-pointer";
 
   return (
     <div>
@@ -267,12 +267,12 @@ export default function AdminCourseTable({ nodeTree = [] }: { nodeTree?: NodeTre
               value={search}
               onChange={(e) => { setSearch(e.target.value); resetPage(); }}
               placeholder="Search courses…"
-              className="w-full pl-9 pr-3 py-2.5 rounded-lg border border-border bg-surface text-sm text-foreground placeholder-foreground-subtle focus:outline-none focus:ring-2 focus:ring-ring transition-all"
+              className="w-full pl-9 pr-3 py-2.5 rounded-lg border border-border bg-surface text-sm text-foreground placeholder-foreground-subtle focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring transition-all"
             />
           </div>
           <button
             onClick={() => setShowForm(true)}
-            className="flex items-center gap-1.5 px-3 py-2.5 rounded-lg bg-primary text-white text-sm font-medium hover:bg-primary/90 transition-colors shadow-sm whitespace-nowrap"
+            className="flex items-center gap-1.5 px-3 py-2.5 rounded-lg bg-primary text-primary-foreground text-sm font-medium hover:bg-primary-hover transition-colors shadow-sm whitespace-nowrap focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background"
           >
             <PlusIcon className="w-4 h-4" />
             New Course
@@ -339,7 +339,7 @@ export default function AdminCourseTable({ nodeTree = [] }: { nodeTree?: NodeTre
                 <button
                   type="button"
                   onClick={() => toggleGroup(group.key)}
-                  className="w-full flex items-center gap-2 px-5 py-3 bg-surface-muted text-left hover:bg-surface-muted dark:hover:bg-[#1e1e28] transition-colors"
+                  className="w-full flex items-center gap-2 px-5 py-3 bg-surface-muted text-left hover:bg-border/30 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-inset"
                 >
                   {isCollapsed ? (
                     <ChevronRightIcon className="w-4 h-4 text-foreground-subtle" />
@@ -390,7 +390,7 @@ export default function AdminCourseTable({ nodeTree = [] }: { nodeTree?: NodeTre
                                 }
                                 disabled={updatingStatus === course.id}
                                 aria-label={`Status for ${course.title}`}
-                                className="px-2 py-1 rounded-lg border border-border bg-surface text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-ring disabled:opacity-50 cursor-pointer"
+                                className="px-2 py-1 rounded-lg border border-border bg-surface text-sm text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:opacity-50 cursor-pointer"
                               >
                                 <option value="draft">Draft</option>
                                 <option value="published">Published</option>
@@ -431,14 +431,14 @@ export default function AdminCourseTable({ nodeTree = [] }: { nodeTree?: NodeTre
             <button
               onClick={() => setPage((p) => Math.max(1, p - 1))}
               disabled={safePage === 1}
-              className="px-3 py-1.5 rounded-lg border border-border text-xs font-medium text-foreground hover:bg-surface-muted disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
+              className="px-3 py-1.5 rounded-lg border border-border text-xs font-medium text-foreground hover:bg-surface-muted disabled:opacity-40 disabled:cursor-not-allowed transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background"
             >
               Previous
             </button>
             <button
               onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
               disabled={safePage === totalPages}
-              className="px-3 py-1.5 rounded-lg border border-border text-xs font-medium text-foreground hover:bg-surface-muted disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
+              className="px-3 py-1.5 rounded-lg border border-border text-xs font-medium text-foreground hover:bg-surface-muted disabled:opacity-40 disabled:cursor-not-allowed transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background"
             >
               Next
             </button>

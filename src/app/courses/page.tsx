@@ -215,7 +215,7 @@ export default async function CourseCatalogPage({
         <div className="mb-6 flex items-center gap-1 border-b border-border">
           <Link
             href="/courses?tab=my"
-            className={`border-b-2 px-4 py-2 text-sm font-medium transition-colors ${
+            className={`border-b-2 px-4 py-2 text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring ${
               activeTab === "my"
                 ? "border-primary text-primary"
                 : "border-transparent text-foreground-muted hover:text-foreground"
@@ -225,7 +225,7 @@ export default async function CourseCatalogPage({
           </Link>
           <Link
             href="/courses"
-            className={`border-b-2 px-4 py-2 text-sm font-medium transition-colors ${
+            className={`border-b-2 px-4 py-2 text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring ${
               activeTab === "all"
                 ? "border-primary text-primary"
                 : "border-transparent text-foreground-muted hover:text-foreground"
@@ -336,7 +336,7 @@ export default async function CourseCatalogPage({
                 </p>
               </div>
             ) : (
-              <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-5">
+              <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-6">
                 {allCourses.map((course) => {
                   const elig = eligibilityMap.get(course.id);
                   return (
@@ -385,7 +385,7 @@ export default async function CourseCatalogPage({
               )}
             </div>
           ) : (
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
               {myCourses.map((course) => (
                 <CourseCard
                   key={course.id}

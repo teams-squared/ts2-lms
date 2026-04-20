@@ -24,7 +24,7 @@ export default async function HomePage() {
             <Logo size={48} showText={false} />
           </div>
           <div className="space-y-2">
-            <h1 className="text-3xl font-bold text-foreground tracking-tight">
+            <h1 className="font-display text-3xl font-bold text-foreground tracking-tight">
               Teams Squared{" "}
               <span className="text-primary">LMS</span>
             </h1>
@@ -34,7 +34,7 @@ export default async function HomePage() {
           </div>
           <Link
             href="/login"
-            className="inline-flex items-center justify-center w-full px-6 py-3 rounded-lg bg-primary text-white font-semibold hover:bg-primary/90 active:bg-primary/80 transition-colors shadow-lg shadow-primary/25 text-sm"
+            className="inline-flex items-center justify-center w-full px-6 py-3 rounded-lg bg-primary text-primary-foreground font-semibold hover:bg-primary-hover active:bg-primary-active transition-colors shadow-md text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background"
           >
             Sign in
           </Link>

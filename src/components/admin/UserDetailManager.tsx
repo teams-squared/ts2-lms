@@ -231,7 +231,7 @@ export function UserDetailManager({
               setRoleSuccess(false);
             }}
             aria-label="User role"
-            className="px-3 py-2 rounded-lg border border-border bg-surface text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-ring"
+            className="px-3 py-2 rounded-lg border border-border bg-surface text-sm text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
           >
             {(["admin", "course_manager", "employee"] as Role[]).map((r) => (
               <option key={r} value={r}>{ROLE_LABELS[r]}</option>
@@ -240,7 +240,7 @@ export function UserDetailManager({
           <button
             onClick={handleSaveRole}
             disabled={savingRole || role === initialRole}
-            className="rounded-lg bg-primary hover:bg-primary/90 disabled:opacity-50 text-white text-sm font-medium px-4 py-2 transition-colors"
+            className="rounded-lg bg-primary hover:bg-primary-hover disabled:opacity-50 text-primary-foreground text-sm font-medium px-4 py-2 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background"
           >
             {savingRole ? "Saving…" : "Save role"}
           </button>
@@ -264,7 +264,7 @@ export function UserDetailManager({
             value={selectedClearance}
             onChange={(e) => setSelectedClearance(e.target.value)}
             aria-label="Select clearance to grant"
-            className="flex-1 px-3 py-2 rounded-lg border border-border bg-surface text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-ring"
+            className="flex-1 px-3 py-2 rounded-lg border border-border bg-surface text-sm text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
           >
             <option value="">Select a clearance…</option>
             {availClearances.map((c) => (
@@ -277,7 +277,7 @@ export function UserDetailManager({
             onClick={handleGrantClearance}
             disabled={!selectedClearance || grantingClearance}
             aria-label="Grant clearance"
-            className="rounded-lg bg-primary hover:bg-primary/90 disabled:opacity-50 text-white text-sm font-medium px-4 py-2 transition-colors"
+            className="rounded-lg bg-primary hover:bg-primary-hover disabled:opacity-50 text-primary-foreground text-sm font-medium px-4 py-2 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background"
           >
             {grantingClearance ? "Granting…" : "Grant"}
           </button>
@@ -446,7 +446,7 @@ export function UserDetailManager({
                 onChange={(e) => setRemoveConfirmText(e.target.value)}
                 disabled={removing}
                 autoComplete="off"
-                className="w-full px-3 py-2 rounded-lg border border-border bg-surface text-sm text-foreground placeholder-foreground-subtle focus:outline-none focus:ring-2 focus:ring-ring transition-all"
+                className="w-full px-3 py-2 rounded-lg border border-border bg-surface text-sm text-foreground placeholder-foreground-subtle focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring transition-all"
               />
             </div>
             {removeError && <p className="text-sm text-danger">{removeError}</p>}
