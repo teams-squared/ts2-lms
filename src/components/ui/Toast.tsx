@@ -12,13 +12,13 @@ interface ToastProps {
 
 const VARIANT_STYLES: Record<ToastVariant, { bg: string; icon: string; border: string }> = {
   success: {
-    bg: "bg-emerald-50 dark:bg-emerald-950/40",
-    icon: "text-emerald-600 dark:text-emerald-400",
-    border: "border-emerald-200 dark:border-emerald-800/40",
+    bg: "bg-success-subtle",
+    icon: "text-success",
+    border: "border-success/30",
   },
   error: {
-    bg: "bg-red-50 dark:bg-red-950/40",
-    icon: "text-red-600 dark:text-red-400",
+    bg: "bg-danger-subtle",
+    icon: "text-danger",
     border: "border-danger/30",
   },
   info: {
@@ -88,7 +88,7 @@ export function Toast({ message, variant, onDismiss }: ToastProps) {
       </p>
       <button
         onClick={onDismiss}
-        className="flex-shrink-0 p-1 rounded-lg text-foreground-subtle hover:text-foreground transition-colors"
+        className="flex-shrink-0 p-1 rounded-lg text-foreground-subtle hover:text-foreground transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background"
         aria-label="Dismiss"
       >
         <XIcon className="w-4 h-4" />

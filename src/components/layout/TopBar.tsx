@@ -81,7 +81,7 @@ export function TopBar({ className, compact = false, slim = false }: TopBarProps
             className={cn(
               "h-10 w-full rounded-md border border-border-strong bg-surface pl-9 pr-3 text-sm",
               "text-foreground placeholder:text-foreground-subtle",
-              "transition-colors focus:border-primary focus:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-0",
+              "transition-colors focus-visible:outline-none focus-visible:border-primary focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-0",
             )}
           />
         </label>
@@ -131,7 +131,7 @@ export function TopBar({ className, compact = false, slim = false }: TopBarProps
               <DropdownMenuSeparator />
               <DropdownMenuItem
                 onSelect={() => signOut({ callbackUrl: "/login" })}
-                className="text-danger focus:text-danger"
+                className="text-danger focus-visible:text-danger"
               >
                 <LogOut className="mr-2 h-4 w-4" aria-hidden="true" />
                 Sign out

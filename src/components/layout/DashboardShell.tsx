@@ -44,6 +44,13 @@ export function DashboardShell({ children }: DashboardShellProps) {
 
   return (
     <div className="flex min-h-screen w-full bg-background text-foreground">
+      {/* Skip-to-content link — required by §10 (keyboard accessibility) */}
+      <a
+        href="#main-content"
+        className="sr-only focus-visible:not-sr-only focus-visible:absolute focus-visible:left-4 focus-visible:top-4 focus-visible:z-50 focus-visible:rounded-md focus-visible:bg-primary focus-visible:px-4 focus-visible:py-2 focus-visible:text-sm focus-visible:font-medium focus-visible:text-primary-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
+      >
+        Skip to main content
+      </a>
       <Sidebar />
       <div className="flex min-w-0 flex-1 flex-col">
         <TopBar slim={isLessonPlayer} />

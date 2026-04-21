@@ -27,7 +27,7 @@ export function Breadcrumbs({ items }: { items: BreadcrumbItem[] }) {
             </Link>
           ) : (
             <span
-              className="text-foreground-muted font-medium truncate max-w-[200px]"
+              className="text-foreground font-medium truncate max-w-[200px]"
               aria-current="page"
             >
               {item.label}

@@ -26,9 +26,9 @@ const buttonVariants = cva(
         // ghost — transparent, muted hover
         ghost:
           "bg-transparent text-foreground hover:bg-surface-muted",
-        // destructive — red filled
+        // destructive — danger filled per design-system §8.1
         destructive:
-          "bg-destructive text-destructive-foreground hover:bg-destructive/90",
+          "bg-danger text-danger-foreground hover:bg-danger/90",
         // link — for inline text links presented as buttons
         link: "text-primary underline-offset-4 hover:underline",
         // outline — alias for secondary, preserved for shadcn recipes that request it
