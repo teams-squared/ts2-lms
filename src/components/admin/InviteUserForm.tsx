@@ -33,13 +33,12 @@ export function InviteUserForm({
   const [selectedCourseIds, setSelectedCourseIds] = useState<Set<string>>(new Set());
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  /** When set, the most recent submit hit 409 already_invited — show a confirm-resend button. */
+  const [pendingResend, setPendingResend] = useState(false);
 
   const canPickElevatedRole = inviterRole === "admin";
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setError(null);
-
+  const submitInvite = async (resend: boolean) => {
     const trimmedEmail = email.trim().toLowerCase();
     if (!trimmedEmail || !EMAIL_RE.test(trimmedEmail)) {
       setError("Please enter a valid email address");
@@ -47,6 +46,7 @@ export function InviteUserForm({
     }
 
     setSubmitting(true);
+    setError(null);
     try {
       const res = await fetch("/api/admin/users/invite", {
         method: "POST",
@@ -56,13 +56,23 @@ export function InviteUserForm({
           name: name.trim() || null,
           role,
           courseIds: Array.from(selectedCourseIds),
+          ...(resend ? { resend: true } : {}),
         }),
       });
 
       if (res.status === 409) {
-        setError(
-          "A user with this email already exists. Use the Assignments page to enroll them.",
-        );
+        const data = (await res.json().catch(() => ({}))) as {
+          error?: string;
+          code?: string;
+        };
+        if (data.code === "already_invited") {
+          setPendingResend(true);
+          setError(
+            "This email has already been invited. Re-send the invite email to the same address?",
+          );
+          return;
+        }
+        setError(data.error ?? "A user with this email already exists.");
         return;
       }
       if (!res.ok) {
@@ -75,20 +85,33 @@ export function InviteUserForm({
         user: { id: string; email: string; name: string | null; role: Role };
         enrollmentCount: number;
         emailSent: boolean;
+        emailError: string | null;
+        resent?: boolean;
       };
 
       const parts: string[] = [];
-      parts.push(`Invited ${result.user.email}`);
+      parts.push(
+        result.resent
+          ? `Re-sent invite to ${result.user.email}`
+          : `Invited ${result.user.email}`,
+      );
       if (result.enrollmentCount > 0) {
         parts.push(
           `enrolled in ${result.enrollmentCount} course${result.enrollmentCount !== 1 ? "s" : ""}`,
         );
       }
       if (!result.emailSent) {
-        parts.push("(email not sent — Resend not configured)");
+        const reason =
+          result.emailError === "email_not_configured"
+            ? "email not sent — Resend not configured"
+            : result.emailError === "send_failed"
+              ? "email failed to send — check server logs and resend manually"
+              : "email not sent";
+        parts.push(`(${reason})`);
       }
       toast(parts.join(" · "));
 
+      setPendingResend(false);
       onSuccess(result.user);
       router.refresh();
     } catch {
@@ -96,6 +119,15 @@ export function InviteUserForm({
     } finally {
       setSubmitting(false);
     }
+  };
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    await submitInvite(false);
+  };
+
+  const handleConfirmResend = async () => {
+    await submitInvite(true);
   };
 
   return (
@@ -134,7 +166,10 @@ export function InviteUserForm({
             type="email"
             required
             value={email}
-            onChange={(e) => setEmail(e.target.value)}
+            onChange={(e) => {
+              setEmail(e.target.value);
+              if (pendingResend) setPendingResend(false);
+            }}
             placeholder="newhire@teamsquared.io"
             className="w-full px-3 py-2 rounded-lg border border-border bg-surface text-sm text-foreground placeholder-foreground-subtle focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring transition-all"
             disabled={submitting}
@@ -201,17 +236,28 @@ export function InviteUserForm({
       {error && <p className="text-sm text-danger">{error}</p>}
 
       <div className="flex items-center gap-2">
-        <button
-          type="submit"
-          disabled={submitting || !email.trim()}
-          className="rounded-lg bg-primary hover:bg-primary-hover disabled:opacity-50 disabled:cursor-not-allowed text-primary-foreground text-sm font-medium px-4 py-2 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background"
-        >
-          {submitting
-            ? "Sending…"
-            : selectedCourseIds.size > 0
-              ? `Send invite · ${selectedCourseIds.size} course${selectedCourseIds.size !== 1 ? "s" : ""}`
-              : "Send invite"}
-        </button>
+        {pendingResend ? (
+          <button
+            type="button"
+            onClick={handleConfirmResend}
+            disabled={submitting}
+            className="rounded-lg bg-primary hover:bg-primary-hover disabled:opacity-50 disabled:cursor-not-allowed text-primary-foreground text-sm font-medium px-4 py-2 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background"
+          >
+            {submitting ? "Re-sending…" : "Re-send invite email"}
+          </button>
+        ) : (
+          <button
+            type="submit"
+            disabled={submitting || !email.trim()}
+            className="rounded-lg bg-primary hover:bg-primary-hover disabled:opacity-50 disabled:cursor-not-allowed text-primary-foreground text-sm font-medium px-4 py-2 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background"
+          >
+            {submitting
+              ? "Sending…"
+              : selectedCourseIds.size > 0
+                ? `Send invite · ${selectedCourseIds.size} course${selectedCourseIds.size !== 1 ? "s" : ""}`
+                : "Send invite"}
+          </button>
+        )}
         <button
           type="button"
           onClick={onCancel}

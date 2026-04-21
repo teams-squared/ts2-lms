@@ -27,7 +27,7 @@ const makeReq = (body: Record<string, unknown>) =>
 
 function makeMockTx() {
   return {
-    user: { create: vi.fn() },
+    user: { create: vi.fn(), update: vi.fn() },
     course: { findMany: vi.fn().mockResolvedValue([]) },
     enrollment: {
       findMany: vi.fn().mockResolvedValue([]),
@@ -79,14 +79,107 @@ describe("POST /api/admin/users/invite", () => {
     expect(res.status).toBe(403);
   });
 
-  it("returns 409 for duplicate email", async () => {
+  it("returns 409 already_invited for a prior invite without resend flag", async () => {
     mockRequireRole.mockResolvedValue({ userId: "admin-1", role: "admin" });
     mockPrisma.user.findUnique.mockResolvedValue({
       id: "existing",
-      email: "dup@test.com",
+      invitedAt: new Date(),
     });
     const res = await POST(makeReq({ email: "dup@test.com" }));
     expect(res.status).toBe(409);
+    const body = await res.json();
+    expect(body.code).toBe("already_invited");
+    // No email attempt on 409
+    expect(mockSendInvite).not.toHaveBeenCalled();
+  });
+
+  it("adopts an SSO ghost row (no invitedAt), updates it, and sends the invite email", async () => {
+    mockRequireRole.mockResolvedValue({ userId: "admin-1", role: "admin" });
+    // First findUnique = duplicate check returning a ghost (invitedAt: null).
+    // Second findUnique = inviter lookup inside POST.
+    mockPrisma.user.findUnique
+      .mockResolvedValueOnce({ id: "ghost-1", invitedAt: null })
+      .mockResolvedValueOnce({ name: "Admin One", email: "admin@t.com" });
+
+    const mockTx = makeMockTx();
+    mockTx.user.update.mockResolvedValue({
+      id: "ghost-1",
+      email: "ghost@test.com",
+      name: null,
+      role: "EMPLOYEE",
+      createdAt: new Date(),
+    });
+    mockPrisma.$transaction.mockImplementation(
+      async (cb: (tx: typeof mockTx) => Promise<unknown>) => cb(mockTx),
+    );
+
+    const res = await POST(makeReq({ email: "ghost@test.com" }));
+    expect(res.status).toBe(200);
+    const body = await res.json();
+    expect(body.user.id).toBe("ghost-1");
+    expect(body.resent).toBe(true);
+    expect(body.emailSent).toBe(true);
+    expect(mockTx.user.update).toHaveBeenCalledWith(
+      expect.objectContaining({
+        where: { id: "ghost-1" },
+        data: expect.objectContaining({ invitedAt: expect.any(Date) }),
+      }),
+    );
+    expect(mockTx.user.create).not.toHaveBeenCalled();
+    expect(mockSendInvite).toHaveBeenCalledOnce();
+  });
+
+  it("re-sends when resend:true is passed for a prior invite", async () => {
+    mockRequireRole.mockResolvedValue({ userId: "admin-1", role: "admin" });
+    mockPrisma.user.findUnique
+      .mockResolvedValueOnce({ id: "existing", invitedAt: new Date() })
+      .mockResolvedValueOnce({ name: "Admin", email: "a@t.com" });
+
+    const mockTx = makeMockTx();
+    mockTx.user.update.mockResolvedValue({
+      id: "existing",
+      email: "dup@test.com",
+      name: null,
+      role: "EMPLOYEE",
+      createdAt: new Date(),
+    });
+    mockPrisma.$transaction.mockImplementation(
+      async (cb: (tx: typeof mockTx) => Promise<unknown>) => cb(mockTx),
+    );
+
+    const res = await POST(makeReq({ email: "dup@test.com", resend: true }));
+    expect(res.status).toBe(200);
+    const body = await res.json();
+    expect(body.resent).toBe(true);
+    expect(body.emailSent).toBe(true);
+    expect(mockTx.user.update).toHaveBeenCalled();
+  });
+
+  it("surfaces emailError when Resend is not configured", async () => {
+    mockRequireRole.mockResolvedValue({ userId: "admin-1", role: "admin" });
+    mockPrisma.user.findUnique
+      .mockResolvedValueOnce(null)
+      .mockResolvedValueOnce({ name: "Admin", email: "a@t.com" });
+
+    const mockTx = makeMockTx();
+    mockTx.user.create.mockResolvedValue({
+      id: "new-1",
+      email: "hire@test.com",
+      name: null,
+      role: "EMPLOYEE",
+      createdAt: new Date(),
+    });
+    mockPrisma.$transaction.mockImplementation(
+      async (cb: (tx: typeof mockTx) => Promise<unknown>) => cb(mockTx),
+    );
+    // sendUserInviteEmail returns false when RESEND_API_KEY is unset.
+    mockSendInvite.mockResolvedValueOnce(false);
+
+    const res = await POST(makeReq({ email: "hire@test.com" }));
+    expect(res.status).toBe(201);
+    const body = await res.json();
+    expect(body.emailSent).toBe(false);
+    expect(body.emailError).toBe("email_not_configured");
   });
 
   it("creates user without courses (happy path, no enrollments)", async () => {
@@ -221,9 +314,9 @@ describe("POST /api/admin/users/invite", () => {
     );
 
     await POST(makeReq({ email: "  HIRE@Test.COM  " }));
-    expect(mockPrisma.user.findUnique).toHaveBeenCalledWith({
-      where: { email: "hire@test.com" },
-    });
+    expect(mockPrisma.user.findUnique).toHaveBeenCalledWith(
+      expect.objectContaining({ where: { email: "hire@test.com" } }),
+    );
     expect(mockTx.user.create).toHaveBeenCalledWith(
       expect.objectContaining({
         data: expect.objectContaining({ email: "hire@test.com" }),
