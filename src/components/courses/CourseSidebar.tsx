@@ -155,7 +155,7 @@ export function CourseSidebar({
       {/* Mobile toggle button */}
       <button
         onClick={() => setMobileOpen(true)}
-        className="fixed bottom-5 left-5 z-30 flex items-center gap-2 rounded-md bg-primary px-4 py-3 text-sm font-medium text-primary-foreground shadow-lg transition-colors hover:bg-primary-hover active:bg-primary-active lg:hidden focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background"
+        className="fixed bottom-20 left-4 z-40 flex items-center gap-2 rounded-md bg-primary px-4 py-3 text-sm font-medium text-primary-foreground shadow-lg transition-colors hover:bg-primary-hover active:bg-primary-active lg:hidden focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background"
         aria-label="Open course navigation"
       >
         <HamburgerIcon className="h-5 w-5" />

@@ -105,35 +105,37 @@ async function OverdueSection() {
           </div>
         </div>
       </div>
-      <table className="w-full text-sm">
-        <thead>
-          <tr className="border-t border-danger/20 text-left">
-            <th className="px-4 py-3 text-xs font-medium text-danger/80">User</th>
-            <th className="px-4 py-3 text-xs font-medium text-danger/80">Course</th>
-            <th className="px-4 py-3 text-xs font-medium text-danger/80">Lesson</th>
-            <th className="px-4 py-3 text-xs font-medium text-danger/80 text-right">Due Date</th>
-            <th className="px-4 py-3 text-xs font-medium text-danger/80 text-right">Days Overdue</th>
-          </tr>
-        </thead>
-        <tbody className="divide-y divide-danger/20">
-          {overdueItems.slice(0, 10).map((item, i) => (
-            <tr key={i}>
-              <td className="px-4 py-3">
-                <p className="text-foreground font-medium">{item.userName}</p>
-                <p className="text-xs text-foreground-muted">{item.userEmail}</p>
-              </td>
-              <td className="px-4 py-3 text-foreground">{item.courseTitle}</td>
-              <td className="px-4 py-3 text-foreground">{item.lessonTitle}</td>
-              <td className="px-4 py-3 text-right text-foreground-muted">
-                {item.dueDate.toLocaleDateString()}
-              </td>
-              <td className="px-4 py-3 text-right">
-                <span className="text-danger font-medium">{item.daysOverdue}d</span>
-              </td>
+      <div className="overflow-x-auto">
+        <table className="w-full min-w-[40rem] text-sm">
+          <thead>
+            <tr className="border-t border-danger/20 text-left">
+              <th className="px-4 py-3 text-xs font-medium text-danger/80">User</th>
+              <th className="px-4 py-3 text-xs font-medium text-danger/80">Course</th>
+              <th className="px-4 py-3 text-xs font-medium text-danger/80">Lesson</th>
+              <th className="px-4 py-3 text-xs font-medium text-danger/80 text-right">Due Date</th>
+              <th className="px-4 py-3 text-xs font-medium text-danger/80 text-right">Days Overdue</th>
             </tr>
-          ))}
-        </tbody>
-      </table>
+          </thead>
+          <tbody className="divide-y divide-danger/20">
+            {overdueItems.slice(0, 10).map((item, i) => (
+              <tr key={i}>
+                <td className="px-4 py-3">
+                  <p className="text-foreground font-medium">{item.userName}</p>
+                  <p className="text-xs text-foreground-muted">{item.userEmail}</p>
+                </td>
+                <td className="px-4 py-3 text-foreground">{item.courseTitle}</td>
+                <td className="px-4 py-3 text-foreground">{item.lessonTitle}</td>
+                <td className="px-4 py-3 text-right text-foreground-muted">
+                  {item.dueDate.toLocaleDateString()}
+                </td>
+                <td className="px-4 py-3 text-right">
+                  <span className="text-danger font-medium">{item.daysOverdue}d</span>
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
     </div>
   );
 }

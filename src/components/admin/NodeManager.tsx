@@ -131,7 +131,7 @@ export function NodeManager({ initialTree }: NodeManagerProps) {
           {/* Expand/collapse */}
           <button
             onClick={() => toggle(node.id)}
-            className="w-5 h-5 flex items-center justify-center text-foreground-subtle hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring rounded"
+            className="w-8 h-8 flex items-center justify-center text-foreground-subtle hover:text-foreground hover:bg-surface-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring rounded transition-colors"
             aria-label={isExpanded ? "Collapse" : "Expand"}
           >
             {hasChildren ? (
