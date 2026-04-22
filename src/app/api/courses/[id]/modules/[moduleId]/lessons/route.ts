@@ -36,7 +36,7 @@ export async function POST(request: Request, { params }: Params) {
   }
 
   const type: LessonType = body.type || "text";
-  if (!["text", "video", "quiz", "document", "html"].includes(type)) {
+  if (!["text", "video", "quiz", "document", "html", "policy_doc"].includes(type)) {
     return NextResponse.json({ error: "Invalid lesson type" }, { status: 400 });
   }
 
