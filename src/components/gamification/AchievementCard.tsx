@@ -1,5 +1,7 @@
 "use client";
 
+import { LockIcon } from "lucide-react";
+
 interface AchievementCardProps {
   icon: string;
   title: string;
@@ -15,7 +17,7 @@ export function AchievementCard({ icon, title, description, unlockedAt }: Achiev
       className={`relative p-4 rounded-lg border transition-shadow ${
         isLocked
           ? "border-border bg-surface-muted opacity-50"
-          : "border-primary/30 bg-card shadow-sm hover:shadow-elevated hover-lift"
+          : "border-border bg-card shadow-sm hover:shadow-md hover:-translate-y-0.5 transition-[transform,box-shadow] duration-150 ease-out"
       }`}
     >
       <div className="text-3xl mb-2" role="img" aria-label={title}>
@@ -31,8 +33,8 @@ export function AchievementCard({ icon, title, description, unlockedAt }: Achiev
         </p>
       )}
       {isLocked && (
-        <div className="absolute inset-0 flex items-center justify-center">
-          <span className="text-lg text-foreground-subtle">🔒</span>
+        <div className="absolute inset-0 flex items-center justify-center" aria-hidden="true">
+          <LockIcon className="h-6 w-6 text-foreground-subtle" />
         </div>
       )}
     </div>

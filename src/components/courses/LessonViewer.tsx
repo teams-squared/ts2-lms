@@ -24,10 +24,10 @@ const mdComponents: Components = {
   h2: ({ children }) => <h2 className="mb-2 mt-5 font-display text-xl font-semibold text-foreground">{children}</h2>,
   h3: ({ children }) => <h3 className="mb-2 mt-4 font-display text-base font-semibold text-foreground">{children}</h3>,
   h4: ({ children }) => <h4 className="mb-1 mt-4 text-sm font-semibold text-foreground">{children}</h4>,
-  p:  ({ children }) => <p className="mb-4 leading-7 text-foreground">{children}</p>,
-  ul: ({ children }) => <ul className="mb-4 list-disc space-y-1 pl-6 text-foreground">{children}</ul>,
-  ol: ({ children }) => <ol className="mb-4 list-decimal space-y-1 pl-6 text-foreground">{children}</ol>,
-  li: ({ children }) => <li className="leading-7">{children}</li>,
+  p:  ({ children }) => <p className="mb-4 text-lg leading-[1.7] text-foreground">{children}</p>,
+  ul: ({ children }) => <ul className="mb-4 list-disc space-y-1 pl-6 text-foreground text-lg">{children}</ul>,
+  ol: ({ children }) => <ol className="mb-4 list-decimal space-y-1 pl-6 text-foreground text-lg">{children}</ol>,
+  li: ({ children }) => <li className="leading-[1.7]">{children}</li>,
   blockquote: ({ children }) => (
     <blockquote className="my-4 border-l-4 border-primary pl-4 italic text-foreground-muted">
       {children}
@@ -124,7 +124,7 @@ function PdfViewer({ proxyUrl, fileName }: { proxyUrl: string; fileName: string 
             <a
               href={proxyUrl}
               download={fileName}
-              className="inline-block rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground transition-colors hover:bg-primary-hover active:bg-primary-active"
+              className="inline-block rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground transition-colors hover:bg-primary-hover active:bg-primary-active focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background"
             >
               Download {fileName}
             </a>
@@ -249,7 +249,7 @@ export function LessonViewer({ title, type, content, lessonId }: LessonViewerPro
             <a
               href={proxyUrl!}
               download={docRef.fileName}
-              className="shrink-0 rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground transition-colors hover:bg-primary-hover active:bg-primary-active"
+              className="shrink-0 rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground transition-colors hover:bg-primary-hover active:bg-primary-active focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background"
             >
               Download
             </a>
@@ -315,7 +315,7 @@ export function LessonViewer({ title, type, content, lessonId }: LessonViewerPro
         estimate={content ? `${minutes} min read` : null}
       />
       {content ? (
-        <div className="max-w-none text-sm">
+        <div className="max-w-none">
           <ReactMarkdown components={mdComponents}>{stripLeadingTitle(content, title)}</ReactMarkdown>
         </div>
       ) : (

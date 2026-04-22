@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { CourseStatusBadge } from "./CourseStatusBadge";
 import { CourseThumbnail } from "./CourseThumbnail";
-import { LockIcon } from "@/components/icons";
+import { LockIcon, AlertTriangleIcon } from "@/components/icons";
 import { cn } from "@/lib/utils";
 import type { CourseStatus } from "@/lib/types";
 
@@ -56,7 +56,7 @@ export function CourseCard({
       </div>
 
       {/* Content */}
-      <div className="p-5">
+      <div className="p-4">
         <div className="mb-2 flex items-center gap-2">
           {showStatus && <CourseStatusBadge status={status} />}
           {locked && (
@@ -65,7 +65,7 @@ export function CourseCard({
             </span>
           )}
         </div>
-        <h3 className="mb-1 line-clamp-2 font-display text-base font-semibold text-foreground transition-colors group-hover:text-primary">
+        <h3 className="mb-1 line-clamp-2 font-display text-lg font-semibold text-foreground transition-colors group-hover:text-primary">
           {title}
         </h3>
         {description && (
@@ -74,7 +74,8 @@ export function CourseCard({
           </p>
         )}
         {locked && lockReason && (
-          <p className="mb-1 line-clamp-2 text-xs text-warning">
+          <p className="mb-1 flex items-start gap-1 line-clamp-2 text-xs text-warning">
+            <AlertTriangleIcon className="h-3.5 w-3.5 mt-0.5 shrink-0" aria-hidden="true" />
             {lockReason}
           </p>
         )}
@@ -91,9 +92,16 @@ export function CourseCard({
                   {progressPercent}%
                 </span>
               </div>
-              <div className="h-1.5 overflow-hidden rounded-full bg-border">
+              <div
+                className="h-1.5 overflow-hidden rounded-full bg-border"
+                role="progressbar"
+                aria-label="Course progress"
+                aria-valuenow={progressPercent}
+                aria-valuemin={0}
+                aria-valuemax={100}
+              >
                 <div
-                  className="h-full rounded-full bg-primary transition-all"
+                  className="h-full rounded-full bg-primary transition-[width] duration-[400ms] ease-out"
                   style={{ width: `${progressPercent}%` }}
                 />
               </div>

@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
+import { Pencil } from "lucide-react";
 import { ConfirmDialog } from "@/components/ui/ConfirmDialog";
 
 interface QuizOption {
@@ -311,9 +312,9 @@ export function QuizBuilder({
                 value={passingScoreDraft}
                 onChange={(e) => setPassingScoreDraft(Number(e.target.value))}
                 aria-label="Passing score"
-                className="w-16 rounded border border-border bg-surface px-2 py-0.5 text-sm text-foreground focus:outline-none focus:ring-1 focus:ring-ring"
+                className="w-16 rounded border border-border bg-surface px-2 py-0.5 text-sm text-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
               />
-              <span className="text-xs text-foreground-muted">%</span>
+              <span className="text-xs text-foreground-muted">% <span className="text-foreground-subtle">(1–100)</span></span>
               <button
                 onClick={handleSavePassingScore}
                 disabled={savingPassingScore}
@@ -338,16 +339,17 @@ export function QuizBuilder({
                 setEditingPassingScore(true);
               }}
               aria-label="Edit passing score"
-              className="mt-0.5 text-xs text-foreground-muted transition-colors hover:text-primary"
+              className="mt-0.5 inline-flex items-center gap-1 text-xs text-foreground-muted transition-colors hover:text-primary"
             >
-              Passing score: {currentPassingScore}% ✎
+              <span>Passing score: {currentPassingScore}%</span>
+              <Pencil className="w-3 h-3" aria-hidden="true" />
             </button>
           )}
         </div>
         {!showForm && (
           <button
             onClick={() => setShowForm(true)}
-            className="rounded-md bg-primary px-3 py-1.5 text-sm font-medium text-primary-foreground transition-colors hover:bg-primary/90"
+            className="rounded-md bg-primary px-3 py-1.5 text-sm font-medium text-primary-foreground transition-colors hover:bg-primary-hover"
           >
             Add question
           </button>
@@ -375,7 +377,7 @@ export function QuizBuilder({
                   value={editQuestionText}
                   onChange={(e) => setEditQuestionText(e.target.value)}
                   aria-label="Edit question text"
-                  className="w-full rounded-md border border-border bg-surface px-3 py-2 text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-ring"
+                  className="w-full rounded-md border border-border bg-surface px-3 py-2 text-sm text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
                 />
                 <div className="space-y-2">
                   {editOptions.map((opt, oidx) => (
@@ -394,7 +396,7 @@ export function QuizBuilder({
                         onChange={(e) => handleEditOptionText(oidx, e.target.value)}
                         placeholder={`Option ${oidx + 1}`}
                         aria-label={`Option ${oidx + 1} text`}
-                        className="flex-1 rounded-md border border-border bg-surface px-3 py-1.5 text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-ring"
+                        className="flex-1 rounded-md border border-border bg-surface px-3 py-1.5 text-sm text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
                       />
                       {editOptions.length > 2 && (
                         <button
@@ -425,7 +427,7 @@ export function QuizBuilder({
                   <button
                     onClick={() => handleSaveEdit(question.id)}
                     disabled={savingEditId === question.id}
-                    className="rounded-md bg-primary px-3 py-1.5 text-xs font-medium text-primary-foreground transition-colors hover:bg-primary/90 disabled:opacity-50"
+                    className="rounded-md bg-primary px-3 py-1.5 text-xs font-medium text-primary-foreground transition-colors hover:bg-primary-hover disabled:opacity-50"
                   >
                     {savingEditId === question.id ? "Saving…" : "Save"}
                   </button>
@@ -515,7 +517,7 @@ export function QuizBuilder({
               value={questionText}
               onChange={(e) => setQuestionText(e.target.value)}
               placeholder="Enter your question…"
-              className="w-full rounded-md border border-border bg-surface px-3 py-2 text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-ring"
+              className="w-full rounded-md border border-border bg-surface px-3 py-2 text-sm text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
             />
           </div>
 
@@ -539,7 +541,7 @@ export function QuizBuilder({
                     value={opt.text}
                     onChange={(e) => handleOptionText(idx, e.target.value)}
                     placeholder={`Option ${idx + 1}`}
-                    className="flex-1 rounded-md border border-border bg-surface px-3 py-1.5 text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-ring"
+                    className="flex-1 rounded-md border border-border bg-surface px-3 py-1.5 text-sm text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
                   />
                   {options.length > 2 && (
                     <button
@@ -573,7 +575,7 @@ export function QuizBuilder({
             <button
               type="submit"
               disabled={submitting}
-              className="rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground transition-colors hover:bg-primary/90 disabled:opacity-50"
+              className="rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground transition-colors hover:bg-primary-hover disabled:opacity-50"
             >
               {submitting ? "Adding…" : "Add question"}
             </button>

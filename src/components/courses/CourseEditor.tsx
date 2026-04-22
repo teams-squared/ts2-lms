@@ -139,7 +139,7 @@ export function CourseEditor({
               type="text"
               value={title}
               onChange={(e) => setTitle(e.target.value)}
-              className="w-full rounded-lg border border-border bg-surface text-sm text-foreground px-3 py-2 focus:outline-none focus:ring-2 focus:ring-ring"
+              className="w-full rounded-lg border border-border bg-surface text-sm text-foreground px-3 py-2 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
             />
           </div>
           <div>
@@ -150,7 +150,7 @@ export function CourseEditor({
               value={description}
               onChange={(e) => setDescription(e.target.value)}
               rows={3}
-              className="w-full rounded-lg border border-border bg-surface text-sm text-foreground px-3 py-2 focus:outline-none focus:ring-2 focus:ring-ring resize-none"
+              className="w-full rounded-lg border border-border bg-surface text-sm text-foreground px-3 py-2 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring resize-none"
             />
           </div>
           <div>
@@ -160,7 +160,7 @@ export function CourseEditor({
             <select
               value={status}
               onChange={(e) => setStatus(e.target.value as CourseStatus)}
-              className="rounded-lg border border-border bg-surface text-sm text-foreground px-3 py-2 focus:outline-none focus:ring-2 focus:ring-ring"
+              className="rounded-lg border border-border bg-surface text-sm text-foreground px-3 py-2 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
             >
               <option value="draft">Draft</option>
               <option value="published">Published</option>
@@ -169,13 +169,16 @@ export function CourseEditor({
           </div>
           <div>
             <label className="block text-xs font-medium text-foreground-muted mb-1">
-              Node
+              Category / Folder
             </label>
             <NodeTreeSelect
               nodes={nodeTree}
               value={nodeId || null}
               onChange={(id) => setNodeId(id ?? "")}
             />
+            <p className="text-xs text-foreground-subtle mt-1">
+              Optional. Groups this course in the catalog tree. Leave blank to publish without a category.
+            </p>
           </div>
           {courseError && (
             <p className="text-sm text-danger">{courseError}</p>
@@ -183,7 +186,7 @@ export function CourseEditor({
           <button
             onClick={handleSaveCourse}
             disabled={courseSaving}
-            className="rounded-lg bg-primary hover:bg-primary/90 disabled:opacity-50 text-white text-sm font-medium px-4 py-2 transition-colors"
+            className="rounded-lg bg-primary hover:bg-primary-hover disabled:opacity-50 text-primary-foreground text-sm font-medium px-4 py-2 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background"
           >
             {courseSaving ? "Saving…" : "Save course"}
           </button>
@@ -199,12 +202,12 @@ export function CourseEditor({
             </h2>
             <p className="text-xs text-foreground-muted">
               Add, edit, delete, and reorder modules and lessons on the dedicated
-              management page.
+              management page. You&apos;ll need to add at least one module before you can add lessons to it.
             </p>
           </div>
           <Link
             href={`/admin/courses/${courseId}/modules`}
-            className="shrink-0 rounded-lg bg-primary hover:bg-primary/90 text-white text-sm font-medium px-4 py-2 transition-colors"
+            className="shrink-0 rounded-lg bg-primary hover:bg-primary-hover text-primary-foreground text-sm font-medium px-4 py-2 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background"
           >
             Manage modules &amp; lessons →
           </Link>
@@ -220,22 +223,31 @@ export function CourseEditor({
           Email addresses that will be notified when an employee completes this course.
         </p>
 
-        <div className="flex items-center gap-2 mb-3">
-          <input
-            type="email"
-            value={newEmail}
-            onChange={(e) => { setNewEmail(e.target.value); setSubError(null); }}
-            onKeyDown={(e) => { if (e.key === "Enter") void handleAddSubscription(); }}
-            placeholder="email@example.com"
-            className="flex-1 rounded-lg border border-border bg-surface text-sm text-foreground px-3 py-2 placeholder-foreground-subtle focus:outline-none focus:ring-2 focus:ring-ring"
-          />
-          <button
-            onClick={() => void handleAddSubscription()}
-            disabled={addingSub}
-            className="rounded-lg bg-primary hover:bg-primary/90 disabled:opacity-50 text-white text-sm font-medium px-4 py-2 transition-colors"
+        <div className="mb-3">
+          <label
+            htmlFor="completion-alert-email"
+            className="block text-xs font-medium text-foreground-muted mb-1"
           >
-            {addingSub ? "Adding…" : "Add"}
-          </button>
+            Add email to notify
+          </label>
+          <div className="flex items-center gap-2">
+            <input
+              id="completion-alert-email"
+              type="email"
+              value={newEmail}
+              onChange={(e) => { setNewEmail(e.target.value); setSubError(null); }}
+              onKeyDown={(e) => { if (e.key === "Enter") void handleAddSubscription(); }}
+              placeholder="email@example.com"
+              className="flex-1 rounded-lg border border-border bg-surface text-sm text-foreground px-3 py-2 placeholder-foreground-subtle focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+            />
+            <button
+              onClick={() => void handleAddSubscription()}
+              disabled={addingSub}
+              className="rounded-lg bg-primary hover:bg-primary-hover disabled:opacity-50 text-primary-foreground text-sm font-medium px-4 py-2 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background"
+            >
+              {addingSub ? "Adding…" : "Add email"}
+            </button>
+          </div>
         </div>
 
         {subError && (
@@ -257,7 +269,7 @@ export function CourseEditor({
                 <button
                   onClick={() => setPendingRemoveSub(email)}
                   disabled={removingSub === email}
-                  className="text-xs text-red-500 hover:text-red-700 disabled:opacity-50"
+                  className="text-xs text-danger hover:text-danger/80 disabled:opacity-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring rounded"
                 >
                   {removingSub === email ? "Removing…" : "Remove"}
                 </button>

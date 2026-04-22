@@ -44,7 +44,7 @@ export default async function CourseEditPage({
           ← Back
         </Link>
       </div>
-      <h1 className="text-xl font-bold text-foreground mb-6">
+      <h1 className="font-display text-xl font-bold text-foreground mb-6">
         Edit: {data.course.title}
       </h1>
       <CourseEditor

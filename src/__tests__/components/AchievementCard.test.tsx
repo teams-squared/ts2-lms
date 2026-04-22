@@ -32,9 +32,10 @@ describe("AchievementCard", () => {
     expect(dateParagraph.textContent).toMatch(/Unlocked\s+\d/);
   });
 
-  it("renders lock emoji when unlockedAt is null", () => {
-    render(<AchievementCard {...lockedProps} />);
-    expect(screen.getByText("🔒")).toBeInTheDocument();
+  it("renders lock icon when unlockedAt is null", () => {
+    const { container } = render(<AchievementCard {...lockedProps} />);
+    // LockIcon is decorative (aria-hidden) — assert by class hook
+    expect(container.querySelector(".lucide-lock")).toBeInTheDocument();
   });
 
   it("does not render unlock date when locked", () => {

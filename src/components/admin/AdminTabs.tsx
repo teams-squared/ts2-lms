@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useSession } from "next-auth/react";
+import { cn } from "@/lib/utils";
 
 const TABS = [
   { href: "/admin", label: "Overview", exact: true, adminOnly: false },
@@ -30,11 +31,12 @@ export function AdminTabs() {
           <Link
             key={tab.href}
             href={tab.href}
-            className={`px-4 py-2.5 text-sm font-medium border-b-2 -mb-px transition-colors ${
+            className={cn(
+              "px-4 py-2.5 text-sm font-medium border-b-2 -mb-px transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background rounded-sm",
               isActive
                 ? "border-primary text-primary"
-                : "border-transparent text-foreground-muted hover:text-foreground"
-            }`}
+                : "border-transparent text-foreground-muted hover:text-foreground",
+            )}
           >
             {tab.label}
           </Link>

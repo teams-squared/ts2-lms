@@ -378,9 +378,21 @@ export function ModuleManager({
         </div>
 
         {modules.length === 0 && !showAddModule && (
-          <p className="text-sm text-foreground-subtle italic">
-            No modules yet. Add one above.
-          </p>
+          <div className="rounded-lg border border-dashed border-border bg-surface/30 px-5 py-8 text-center">
+            <h3 className="text-sm font-semibold text-foreground mb-1">
+              No modules yet
+            </h3>
+            <p className="text-sm text-foreground-muted mb-4 max-w-md mx-auto">
+              Modules group lessons together. You need to add at least one module before you can add lessons.
+            </p>
+            <button
+              type="button"
+              onClick={() => setShowAddModule(true)}
+              className="rounded-lg bg-primary hover:bg-primary-hover text-primary-foreground text-sm font-medium px-4 py-2 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background"
+            >
+              Add your first module
+            </button>
+          </div>
         )}
 
         <div className="space-y-3">
@@ -441,7 +453,7 @@ export function ModuleManager({
                       setPendingDeleteModule(module);
                     }}
                     disabled={deletingModuleId === module.id}
-                    className="text-xs text-red-500 hover:text-red-700 disabled:opacity-50 ml-2"
+                    className="text-xs text-danger hover:text-danger/80 disabled:opacity-50 ml-2"
                     aria-label={`Delete module ${module.title}`}
                   >
                     Delete
@@ -487,13 +499,23 @@ export function ModuleManager({
                             </div>
 
                             {lesson.type === "quiz" ? (
-                              <button
-                                onClick={() => toggleQuizBuilder(lesson.id)}
-                                className="text-xs text-primary hover:underline"
-                                data-testid={`toggle-quiz-builder-${lesson.id}`}
-                              >
-                                {expandedQuizLessons.has(lesson.id) ? "Quiz Builder ▲" : "Quiz Builder ▼"}
-                              </button>
+                              <>
+                                {(quizDataByLessonId[lesson.id]?.questions.length ?? 0) === 0 && (
+                                  <span
+                                    className="inline-flex items-center rounded-md bg-warning-subtle text-warning border border-warning/40 text-[10px] font-medium px-1.5 py-0.5"
+                                    title="This quiz has no questions yet. Learners won't be able to complete it."
+                                  >
+                                    Empty
+                                  </span>
+                                )}
+                                <button
+                                  onClick={() => toggleQuizBuilder(lesson.id)}
+                                  className="text-xs text-primary hover:underline"
+                                  data-testid={`toggle-quiz-builder-${lesson.id}`}
+                                >
+                                  {expandedQuizLessons.has(lesson.id) ? "Quiz Builder ▲" : "Quiz Builder ▼"}
+                                </button>
+                              </>
                             ) : (
                               <button
                                 onClick={() => startEditLesson(module.id, lesson)}
@@ -505,7 +527,7 @@ export function ModuleManager({
                             <button
                               onClick={() => setPendingDeleteLesson({ moduleId: module.id, lesson })}
                               disabled={deletingLessonId === lesson.id}
-                              className="text-xs text-red-500 hover:text-red-700 disabled:opacity-50"
+                              className="text-xs text-danger hover:text-danger/80 disabled:opacity-50"
                               aria-label={`Delete lesson ${lesson.title}`}
                             >
                               Delete
@@ -535,39 +557,63 @@ export function ModuleManager({
 
                     {/* Add lesson */}
                     {addLessonModuleId === module.id ? (
-                      <div className="flex items-center gap-2 mt-2">
-                        <input
-                          type="text"
-                          value={newLessonTitle}
-                          onChange={(e) => setNewLessonTitle(e.target.value)}
-                          placeholder="Lesson title"
-                          className="flex-1 rounded-lg border border-border bg-surface text-sm px-2 py-1.5 focus:outline-none focus:ring-2 focus:ring-ring"
-                        />
-                        <select
-                          value={newLessonType}
-                          onChange={(e) => setNewLessonType(e.target.value as LessonType)}
-                          className="rounded-lg border border-border bg-surface text-sm px-2 py-1.5 focus:outline-none focus:ring-2 focus:ring-ring"
-                          aria-label="Lesson type"
-                        >
-                          <option value="text">Text</option>
-                          <option value="video">Video</option>
-                          <option value="quiz">Quiz</option>
-                          <option value="document">Document</option>
-                          <option value="html">HTML</option>
-                        </select>
-                        <button
-                          onClick={() => void handleAddLesson(module.id)}
-                          disabled={addingLesson}
-                          className="rounded-lg bg-primary text-white text-xs px-3 py-1.5 disabled:opacity-50"
-                        >
-                          Add
-                        </button>
-                        <button
-                          onClick={() => setAddLessonModuleId(null)}
-                          className="text-xs text-foreground-muted hover:text-foreground"
-                        >
-                          Cancel
-                        </button>
+                      <div className="mt-2 rounded-lg border border-border bg-surface/40 p-3">
+                        <div className="flex flex-wrap items-end gap-3">
+                          <div className="flex-1 min-w-[200px]">
+                            <label
+                              htmlFor={`new-lesson-title-${module.id}`}
+                              className="block text-xs font-medium text-foreground-muted mb-1"
+                            >
+                              Lesson title <span className="text-danger">*</span>
+                            </label>
+                            <input
+                              id={`new-lesson-title-${module.id}`}
+                              type="text"
+                              value={newLessonTitle}
+                              onChange={(e) => setNewLessonTitle(e.target.value)}
+                              placeholder="e.g. Phishing fundamentals"
+                              className="w-full rounded-lg border border-border bg-background text-sm px-3 py-2 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                            />
+                          </div>
+                          <div>
+                            <label
+                              htmlFor={`new-lesson-type-${module.id}`}
+                              className="block text-xs font-medium text-foreground-muted mb-1"
+                            >
+                              Type
+                            </label>
+                            <select
+                              id={`new-lesson-type-${module.id}`}
+                              value={newLessonType}
+                              onChange={(e) => setNewLessonType(e.target.value as LessonType)}
+                              className="rounded-lg border border-border bg-background text-sm px-3 py-2 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                            >
+                              <option value="text">Text — written content</option>
+                              <option value="video">Video — SharePoint clip or URL</option>
+                              <option value="quiz">Quiz — graded questions</option>
+                              <option value="document">Document — SharePoint file</option>
+                              <option value="html">HTML — embedded page</option>
+                            </select>
+                          </div>
+                          <div className="flex items-center gap-2">
+                            <button
+                              onClick={() => void handleAddLesson(module.id)}
+                              disabled={addingLesson}
+                              className="rounded-lg bg-primary hover:bg-primary-hover text-primary-foreground text-sm font-medium px-4 py-2 disabled:opacity-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background"
+                            >
+                              {addingLesson ? "Adding…" : "Add lesson"}
+                            </button>
+                            <button
+                              onClick={() => setAddLessonModuleId(null)}
+                              className="text-xs text-foreground-muted hover:text-foreground"
+                            >
+                              Cancel
+                            </button>
+                          </div>
+                        </div>
+                        <p className="text-xs text-foreground-subtle mt-2">
+                          You&apos;ll be able to add the lesson&apos;s content after creating it.
+                        </p>
                       </div>
                     ) : (
                       <button
@@ -590,38 +636,50 @@ export function ModuleManager({
 
         {/* Add module form */}
         {showAddModule && (
-          <div className="mt-3 flex items-center gap-2">
-            <input
-              type="text"
-              value={newModuleTitle}
-              onChange={(e) => setNewModuleTitle(e.target.value)}
-              placeholder="Module title"
-              className="flex-1 rounded-lg border border-border bg-card text-sm px-3 py-2 focus:outline-none focus:ring-2 focus:ring-ring"
-            />
-            <button
-              onClick={() => void handleAddModule()}
-              disabled={addingModule}
-              className="rounded-lg bg-primary text-white text-sm px-4 py-2 disabled:opacity-50"
+          <div className="mt-3">
+            <label
+              htmlFor="new-module-title"
+              className="block text-xs font-medium text-foreground-muted mb-1"
             >
-              {addingModule ? "Adding…" : "Add"}
-            </button>
-            <button
-              onClick={() => setShowAddModule(false)}
-              className="text-sm text-foreground-muted hover:text-foreground"
-            >
-              Cancel
-            </button>
+              Module title <span className="text-danger">*</span>
+            </label>
+            <div className="flex items-center gap-2">
+              <input
+                id="new-module-title"
+                type="text"
+                value={newModuleTitle}
+                onChange={(e) => setNewModuleTitle(e.target.value)}
+                placeholder="e.g. Week 1 — Security basics"
+                className="flex-1 rounded-lg border border-border bg-card text-sm px-3 py-2 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+              />
+              <button
+                onClick={() => void handleAddModule()}
+                disabled={addingModule}
+                className="rounded-lg bg-primary hover:bg-primary-hover text-primary-foreground text-sm px-4 py-2 disabled:opacity-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background"
+              >
+                {addingModule ? "Adding…" : "Add module"}
+              </button>
+              <button
+                onClick={() => setShowAddModule(false)}
+                className="text-sm text-foreground-muted hover:text-foreground"
+              >
+                Cancel
+              </button>
+            </div>
           </div>
         )}
       </section>
 
       {/* Lesson edit modal */}
       {editingLesson && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50">
-          <div className="w-full max-w-lg bg-card rounded-2xl shadow-2xl border border-border p-6">
-            <h3 className="text-base font-semibold text-foreground mb-4">
-              Edit Lesson
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-foreground/50 backdrop-blur-sm">
+          <div className="w-full max-w-lg bg-background rounded-lg shadow-lg border border-border p-6">
+            <h3 className="text-base font-semibold text-foreground">
+              Edit lesson
             </h3>
+            <p className="text-xs text-foreground-muted mt-0.5 mb-4 truncate">
+              {editingLesson.title}
+            </p>
             <div className="space-y-4">
               <div>
                 <label className="block text-xs font-medium text-foreground-muted mb-1">
@@ -631,7 +689,7 @@ export function ModuleManager({
                   type="text"
                   value={editTitle}
                   onChange={(e) => setEditTitle(e.target.value)}
-                  className="w-full rounded-lg border border-border bg-surface text-sm px-3 py-2 focus:outline-none focus:ring-2 focus:ring-ring"
+                  className="w-full rounded-lg border border-border bg-surface text-sm px-3 py-2 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
                 />
               </div>
               <div>
@@ -644,7 +702,7 @@ export function ModuleManager({
                     setEditType(e.target.value as LessonType);
                     setEditContent("");
                   }}
-                  className="rounded-lg border border-border bg-surface text-sm px-3 py-2 focus:outline-none focus:ring-2 focus:ring-ring"
+                  className="rounded-lg border border-border bg-surface text-sm px-3 py-2 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
                   aria-label="Edit lesson type"
                 >
                   <option value="text">Text</option>
@@ -750,7 +808,7 @@ export function ModuleManager({
                     value={editContent}
                     onChange={(e) => setEditContent(e.target.value)}
                     rows={editType === "text" ? 6 : 2}
-                    className="w-full rounded-lg border border-border bg-surface text-sm px-3 py-2 focus:outline-none focus:ring-2 focus:ring-ring resize-none"
+                    className="w-full rounded-lg border border-border bg-surface text-sm px-3 py-2 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring resize-none"
                     placeholder={editType === "video" ? "https://www.youtube.com/embed/..." : "Markdown content…"}
                   />
                 </div>
@@ -758,10 +816,14 @@ export function ModuleManager({
 
               {/* Deadline */}
               <div>
-                <label className="block text-xs font-medium text-foreground-muted mb-1">
-                  Deadline (days after enrollment)
+                <label
+                  htmlFor="edit-lesson-deadline"
+                  className="block text-xs font-medium text-foreground-muted mb-1"
+                >
+                  Deadline (days from enrollment)
                 </label>
                 <input
+                  id="edit-lesson-deadline"
                   type="number"
                   min="1"
                   value={editDeadlineDays ?? ""}
@@ -769,10 +831,10 @@ export function ModuleManager({
                     setEditDeadlineDays(e.target.value ? parseInt(e.target.value, 10) : null)
                   }
                   placeholder="No deadline"
-                  className="w-full rounded-lg border border-border bg-surface text-sm text-foreground px-3 py-2 placeholder-foreground-subtle focus:outline-none focus:ring-2 focus:ring-ring"
+                  className="w-full rounded-lg border border-border bg-surface text-sm text-foreground px-3 py-2 placeholder-foreground-subtle focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
                 />
                 <p className="text-xs text-foreground-subtle mt-1">
-                  Leave empty for no deadline
+                  Days from the learner&apos;s enrollment date before this specific lesson must be completed. Leave empty for no deadline.
                 </p>
               </div>
 
@@ -784,9 +846,9 @@ export function ModuleManager({
                 <button
                   onClick={() => void handleSaveLesson()}
                   disabled={editSaving}
-                  className="rounded-lg bg-primary hover:bg-primary/90 disabled:opacity-50 text-white text-sm font-medium px-4 py-2"
+                  className="rounded-lg bg-primary hover:bg-primary-hover disabled:opacity-50 text-primary-foreground text-sm font-medium px-4 py-2 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background"
                 >
-                  {editSaving ? "Saving…" : "Save"}
+                  {editSaving ? "Saving…" : "Save lesson"}
                 </button>
                 <button
                   onClick={() => {
@@ -813,6 +875,13 @@ export function ModuleManager({
             ? (m) => m.startsWith("video/")
             : editType === "html"
               ? (m) => m === "text/html" || m.startsWith("text/html")
+              : undefined
+        }
+        filterLabel={
+          editType === "video"
+            ? "video files"
+            : editType === "html"
+              ? "HTML files"
               : undefined
         }
       />

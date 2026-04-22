@@ -14,6 +14,13 @@ interface InviteBody {
   name?: string | null;
   role?: Role;
   courseIds?: string[];
+  /**
+   * If true, re-send the invite email for an already-invited user and update
+   * role/courses as requested. Without this flag, a row that looks like a real
+   * prior invite returns 409 with `code: "already_invited"` so the UI can
+   * prompt the admin to confirm a resend.
+   */
+  resend?: boolean;
 }
 
 /**
@@ -23,6 +30,17 @@ interface InviteBody {
  * dispatches an invite email. When the invited user later signs in via SSO,
  * the jwt-callback upsert in src/lib/auth.ts merges into the same row by
  * email — so pre-assigned enrollments are waiting on their first login.
+ *
+ * Idempotency: if a user row already exists for the email, we branch on
+ * whether it looks like a prior invite (has `invitedAt`) or a passive
+ * SSO-upsert ghost (no `invitedAt`, created when someone with that email hit
+ * the auth callback — e.g. after a hard-delete + their session refreshed).
+ *
+ *  - SSO ghost (no `invitedAt`): silently adopt the row, treat as a fresh
+ *    invite — update role/invitedAt/invitedById, run enrollments, send email.
+ *  - Real prior invite (`invitedAt != null`): return 409 with
+ *    `code: "already_invited"` unless the caller passes `resend: true`, in
+ *    which case we refresh the invite metadata and re-send the email.
  *
  * Admin-only for inviting `admin` or `course_manager` users; course_manager
  * can invite `employee` users only.
@@ -43,6 +61,7 @@ export async function POST(request: Request) {
   const name = body.name?.trim() || null;
   const role = body.role ?? "employee";
   const courseIds = Array.isArray(body.courseIds) ? body.courseIds : [];
+  const resendRequested = body.resend === true;
 
   if (!email || !EMAIL_RE.test(email)) {
     return NextResponse.json({ error: "A valid email is required" }, { status: 400 });
@@ -57,28 +76,57 @@ export async function POST(request: Request) {
     );
   }
 
-  // Duplicate guard — surface a clear 409 before we begin the transaction.
-  const existing = await prisma.user.findUnique({ where: { email } });
-  if (existing) {
+  // Classify the existing row (if any) before the transaction. An SSO ghost
+  // (no `invitedAt`) is absorbed; a real prior invite requires `resend: true`.
+  const existing = await prisma.user.findUnique({
+    where: { email },
+    select: { id: true, invitedAt: true },
+  });
+
+  const isSsoGhost = existing !== null && existing.invitedAt === null;
+  const isPriorInvite = existing !== null && existing.invitedAt !== null;
+
+  if (isPriorInvite && !resendRequested) {
     return NextResponse.json(
-      { error: "A user with this email already exists" },
+      {
+        error: "A user with this email has already been invited",
+        code: "already_invited",
+      },
       { status: 409 },
     );
   }
 
-  // Pre-create user + enrollments atomically.
-  const { user, created, skipped, invalid, courseTitleMap } = await prisma.$transaction(
-    async (tx) => {
-      const user = await tx.user.create({
-        data: {
-          email,
-          name,
-          role: appRoleToPrisma(role),
-          invitedAt: new Date(),
-          invitedById: inviterId,
-        },
-        select: { id: true, email: true, name: true, role: true, createdAt: true },
-      });
+  // Pre-create (or update) user + enrollments atomically.
+  const { user, created, skipped, invalid, courseTitleMap, wasUpdate } =
+    await prisma.$transaction(async (tx) => {
+      let user;
+      let wasUpdate = false;
+
+      if (existing) {
+        // Ghost adoption or resend — refresh invite metadata and role.
+        user = await tx.user.update({
+          where: { id: existing.id },
+          data: {
+            name: name ?? undefined,
+            role: appRoleToPrisma(role),
+            invitedAt: new Date(),
+            invitedById: inviterId,
+          },
+          select: { id: true, email: true, name: true, role: true, createdAt: true },
+        });
+        wasUpdate = true;
+      } else {
+        user = await tx.user.create({
+          data: {
+            email,
+            name,
+            role: appRoleToPrisma(role),
+            invitedAt: new Date(),
+            invitedById: inviterId,
+          },
+          select: { id: true, email: true, name: true, role: true, createdAt: true },
+        });
+      }
 
       const enrollmentResult =
         courseIds.length > 0
@@ -94,9 +142,8 @@ export async function POST(request: Request) {
               courseTitleMap: new Map<string, string>(),
             };
 
-      return { user, ...enrollmentResult };
-    },
-  );
+      return { user, ...enrollmentResult, wasUpdate };
+    });
 
   // Fire off the invite email. Don't fail the request if Resend is down —
   // the user row already exists and the admin can resend later.
@@ -108,14 +155,20 @@ export async function POST(request: Request) {
   const assignedCourses = created.map((c) => c.course.title);
 
   let emailSent = false;
+  let emailError: string | null = null;
   try {
     emailSent = await sendUserInviteEmail({
       to: email,
       inviterName,
       assignedCourses,
     });
+    if (!emailSent) {
+      // sendUserInviteEmail returns false when RESEND_API_KEY is unset.
+      emailError = "email_not_configured";
+    }
   } catch (err) {
     console.error("[invite] Failed to send invite email", err);
+    emailError = "send_failed";
   }
 
   return NextResponse.json(
@@ -131,10 +184,12 @@ export async function POST(request: Request) {
       skippedCount: skipped.length,
       invalidCourseIds: invalid,
       emailSent,
+      emailError,
+      resent: wasUpdate && (isPriorInvite || isSsoGhost),
       assignedCourseTitles: assignedCourses,
       // Debug hint in case the caller wants to surface invalid IDs
       courseTitles: Object.fromEntries(courseTitleMap),
     },
-    { status: 201 },
+    { status: wasUpdate ? 200 : 201 },
   );
 }

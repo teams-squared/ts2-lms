@@ -131,7 +131,7 @@ export function NodeManager({ initialTree }: NodeManagerProps) {
           {/* Expand/collapse */}
           <button
             onClick={() => toggle(node.id)}
-            className="w-5 h-5 flex items-center justify-center text-foreground-subtle hover:text-foreground"
+            className="w-5 h-5 flex items-center justify-center text-foreground-subtle hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring rounded"
             aria-label={isExpanded ? "Collapse" : "Expand"}
           >
             {hasChildren ? (
@@ -161,7 +161,7 @@ export function NodeManager({ initialTree }: NodeManagerProps) {
                 value={editName}
                 onChange={(e) => setEditName(e.target.value)}
                 onBlur={() => setEditingId(null)}
-                className="text-sm px-1.5 py-0.5 rounded border border-primary/30 bg-surface text-foreground focus:outline-none focus:ring-1 focus:ring-ring"
+                className="text-sm px-1.5 py-0.5 rounded border border-primary/30 bg-surface text-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
               />
             </form>
           ) : (
@@ -219,12 +219,12 @@ export function NodeManager({ initialTree }: NodeManagerProps) {
               onChange={(e) => setNewNodeName(e.target.value)}
               onKeyDown={(e) => { if (e.key === "Escape") setAddingParentId(null); if (e.key === "Enter") void handleCreate(node.id); }}
               placeholder="New node name…"
-              className="text-sm px-2 py-1 rounded-lg border border-border bg-surface text-foreground focus:outline-none focus:ring-1 focus:ring-ring w-48"
+              className="text-sm px-2 py-1 rounded-lg border border-border bg-surface text-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring w-48"
             />
             <button
               onClick={() => void handleCreate(node.id)}
               disabled={loading || !newNodeName.trim()}
-              className="text-xs text-white bg-primary hover:bg-primary/90 disabled:opacity-50 px-2.5 py-1 rounded-lg"
+              className="text-xs text-primary-foreground bg-primary hover:bg-primary-hover disabled:opacity-50 px-2.5 py-1 rounded-lg focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background"
             >
               Add
             </button>
@@ -284,7 +284,7 @@ export function NodeManager({ initialTree }: NodeManagerProps) {
             <button
               onClick={() => void handleCreate(null)}
               disabled={loading || !newNodeName.trim()}
-              className="text-xs text-white bg-primary hover:bg-primary/90 disabled:opacity-50 px-3 py-1.5 rounded-lg"
+              className="text-xs text-primary-foreground bg-primary hover:bg-primary-hover disabled:opacity-50 px-3 py-1.5 rounded-lg focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background"
             >
               Add
             </button>

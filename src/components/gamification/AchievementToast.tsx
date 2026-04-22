@@ -28,17 +28,17 @@ export function AchievementToast({ achievements, onDismiss }: AchievementToastPr
   if (!visible || achievements.length === 0) return null;
 
   return (
-    <div className="fixed bottom-6 right-6 z-50 flex flex-col gap-2 animate-slide-up">
+    <div className="fixed bottom-6 right-6 z-50 flex flex-col gap-2 motion-safe:animate-slide-up">
       {achievements.map((a) => (
         <div
           key={a.key}
-          className="flex items-center gap-3 px-4 py-3 rounded-lg bg-primary text-white shadow-elevated"
+          className="flex items-center gap-3 px-4 py-3 rounded-lg bg-primary text-primary-foreground shadow-lg"
         >
           <span className="text-2xl" role="img" aria-label={a.title}>
             {a.icon}
           </span>
           <div>
-            <p className="text-xs font-medium text-brand-100">Achievement Unlocked!</p>
+            <p className="text-xs font-medium text-primary-foreground/80">Achievement Unlocked!</p>
             <p className="text-sm font-semibold">{a.title}</p>
           </div>
         </div>

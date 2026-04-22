@@ -4,7 +4,7 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { Spinner } from "@/components/ui/Spinner";
-import { ChevronRightIcon } from "@/components/icons";
+import { ChevronRightIcon, AlertTriangleIcon, CheckCircleIcon } from "@/components/icons";
 import { CourseCompletionModal } from "@/components/courses/CourseCompletionModal";
 
 interface QuizOption {
@@ -199,7 +199,7 @@ export function QuizViewer({
         {bestAttempt?.passed && (
           <div className="flex items-center justify-between gap-3 rounded-lg border border-success/30 bg-success-subtle px-5 py-3">
             <div className="flex items-center gap-2">
-              <span className="text-base text-success">✓</span>
+              <CheckCircleIcon className="h-5 w-5 text-success" aria-hidden="true" />
               <p className="text-sm font-semibold text-success">
                 You passed this quiz.
               </p>
@@ -243,7 +243,7 @@ export function QuizViewer({
           </div>
           <button
             onClick={handleStart}
-            className="w-full rounded-md bg-primary px-4 py-2.5 text-sm font-medium text-primary-foreground transition-colors hover:bg-primary/90"
+            className="w-full rounded-md bg-primary px-4 py-2.5 text-sm font-medium text-primary-foreground transition-colors hover:bg-primary-hover focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background"
           >
             {courseLocked ? "Review Quiz" : bestAttempt ? "Retake Quiz" : "Start Quiz"}
           </button>
@@ -304,7 +304,7 @@ export function QuizViewer({
                     value={option.id}
                     checked={selectedAnswers[question.id] === option.id}
                     onChange={() => handleSelect(question.id, option.id)}
-                    className="text-primary focus:ring-primary"
+                    className="text-primary focus-visible:ring-2 focus-visible:ring-ring"
                   />
                   <span className="text-sm text-foreground">
                     {option.text}
@@ -316,13 +316,16 @@ export function QuizViewer({
         ))}
 
         {error && (
-          <p className="text-sm text-danger">{error}</p>
+          <p className="flex items-center gap-1.5 text-sm text-danger">
+            <AlertTriangleIcon className="h-4 w-4 shrink-0" aria-hidden="true" />
+            {error}
+          </p>
         )}
 
         <button
           onClick={handleSubmit}
           disabled={!allAnswered || submitting}
-          className="w-full rounded-md bg-primary px-4 py-2.5 text-sm font-medium text-primary-foreground transition-colors hover:bg-primary/90 disabled:cursor-not-allowed disabled:opacity-50"
+          className="w-full rounded-md bg-primary px-4 py-2.5 text-sm font-medium text-primary-foreground transition-colors hover:bg-primary-hover disabled:cursor-not-allowed disabled:opacity-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background"
         >
           {submitting ? <span className="inline-flex items-center gap-2"><Spinner size="sm" className="border-primary-foreground border-t-transparent" /> Submitting…</span> : "Submit Quiz"}
         </button>
@@ -384,7 +387,7 @@ export function QuizViewer({
         {currentResult.passed && nextLessonUrl && (
           <Link
             href={nextLessonUrl}
-            className="mt-4 inline-flex items-center gap-2 rounded-md bg-primary px-5 py-2.5 text-sm font-semibold text-primary-foreground transition-colors hover:bg-primary/90"
+            className="mt-4 inline-flex items-center gap-2 rounded-md bg-primary px-5 py-2.5 text-sm font-semibold text-primary-foreground transition-colors hover:bg-primary-hover focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background"
           >
             Continue to Next Lesson
             <ChevronRightIcon className="h-4 w-4" />
@@ -453,7 +456,7 @@ export function QuizViewer({
       {!currentResult.passed && (
         <button
           onClick={handleRetry}
-          className="w-full rounded-md bg-primary px-4 py-2.5 text-sm font-medium text-primary-foreground transition-colors hover:bg-primary/90"
+          className="w-full rounded-md bg-primary px-4 py-2.5 text-sm font-medium text-primary-foreground transition-colors hover:bg-primary-hover focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background"
         >
           Try Again
         </button>

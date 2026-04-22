@@ -8,6 +8,8 @@ interface SharePointFilePickerProps {
   onClose: () => void;
   onSelect: (ref: SharePointDocumentRef) => void;
   mimeTypeFilter?: (mimeType: string) => boolean;
+  /** Human-readable name of the filter for the header, e.g. "video files". */
+  filterLabel?: string;
 }
 
 function fileIcon(mimeType: string): string {
@@ -26,7 +28,7 @@ function formatSize(bytes: number): string {
   return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
 }
 
-export function SharePointFilePicker({ isOpen, onClose, onSelect, mimeTypeFilter }: SharePointFilePickerProps) {
+export function SharePointFilePicker({ isOpen, onClose, onSelect, mimeTypeFilter, filterLabel }: SharePointFilePickerProps) {
   const [currentFolderId, setCurrentFolderId] = useState<string | undefined>(undefined);
   const [items, setItems] = useState<SharePointBrowseItem[]>([]);
   const [breadcrumbs, setBreadcrumbs] = useState<SharePointBreadcrumb[]>([]);
@@ -91,16 +93,29 @@ export function SharePointFilePicker({ isOpen, onClose, onSelect, mimeTypeFilter
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50">
-      <div className="w-full max-w-2xl bg-card rounded-2xl shadow-2xl border border-border flex flex-col max-h-[80vh]">
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-foreground/50 backdrop-blur-sm">
+      <div className="w-full max-w-2xl bg-background rounded-lg shadow-lg border border-border flex flex-col max-h-[80vh]">
         {/* Header */}
-        <div className="flex items-center justify-between px-6 py-4 border-b border-border">
-          <h2 className="text-lg font-semibold text-foreground">
-            Browse SharePoint
-          </h2>
+        <div className="flex items-start justify-between px-6 py-4 border-b border-border gap-4">
+          <div className="flex-1 min-w-0">
+            <h2 className="text-lg font-semibold text-foreground">
+              Browse SharePoint
+            </h2>
+            <p className="text-xs text-foreground-muted mt-0.5">
+              Navigate folders in your organisation&apos;s LMS library to find a file to attach to this lesson.
+              {mimeTypeFilter && filterLabel ? (
+                <>
+                  {" "}
+                  <span className="inline-flex items-center rounded-md bg-primary-subtle text-primary border border-primary/20 text-[10px] font-medium px-1.5 py-0.5 ml-1 align-middle">
+                    Showing: {filterLabel} only
+                  </span>
+                </>
+              ) : null}
+            </p>
+          </div>
           <button
             onClick={onClose}
-            className="text-foreground-subtle hover:text-foreground transition-colors"
+            className="text-foreground-subtle hover:text-foreground transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring rounded shrink-0"
             aria-label="Close"
           >
             ✕
@@ -160,13 +175,13 @@ export function SharePointFilePicker({ isOpen, onClose, onSelect, mimeTypeFilter
               );
             }
             return (
-            <ul className="divide-y divide-gray-100 dark:divide-[#2a2a38]">
+            <ul className="divide-y divide-border">
               {visible.map((item) => (
                 <li key={item.id}>
                   {item.type === "folder" ? (
                     <button
                       onClick={() => handleFolderClick(item.id)}
-                      className="w-full flex items-center gap-3 py-3 text-left hover:bg-surface-muted dark:hover:bg-[#22222e] rounded-lg px-2 transition-colors"
+                      className="w-full flex items-center gap-3 py-3 text-left hover:bg-surface-muted rounded-lg px-2 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
                     >
                       <span className="text-xl">📁</span>
                       <div className="flex-1 min-w-0">
@@ -182,7 +197,7 @@ export function SharePointFilePicker({ isOpen, onClose, onSelect, mimeTypeFilter
                   ) : (
                     <button
                       onClick={() => handleFileClick(item)}
-                      className="w-full flex items-center gap-3 py-3 text-left hover:bg-primary-subtle rounded-lg px-2 transition-colors"
+                      className="w-full flex items-center gap-3 py-3 text-left hover:bg-primary-subtle rounded-lg px-2 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
                     >
                       <span className="text-xl">{fileIcon(item.mimeType)}</span>
                       <div className="flex-1 min-w-0">

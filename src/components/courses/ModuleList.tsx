@@ -62,12 +62,12 @@ export function ModuleList({
   }
 
   return (
-    <div className="divide-y divide-gray-100 dark:divide-[#26262e]">
+    <div className="divide-y divide-border">
       {modules.map((mod) => (
         <div key={mod.id}>
           <button
             onClick={() => toggle(mod.id)}
-            className="w-full flex items-center gap-2 px-4 py-3 text-left hover:bg-surface-muted transition-colors"
+            className="w-full flex items-center gap-2 px-4 py-3 text-left hover:bg-surface-muted transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-inset"
           >
             {expanded.has(mod.id) ? (
               <ChevronDownIcon className="w-4 h-4 text-foreground-subtle flex-shrink-0" />
@@ -90,7 +90,7 @@ export function ModuleList({
                 <Link
                   key={lesson.id}
                   href={`/courses/${courseId}/lessons/${lesson.id}`}
-                  className="flex items-center gap-2 px-3 py-2 rounded-lg text-sm text-foreground-muted hover:bg-surface-muted transition-colors"
+                  className="flex items-center gap-2 px-3 py-2 rounded-lg text-sm text-foreground-muted hover:bg-surface-muted transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background"
                 >
                   {(() => { const LessonIcon = LESSON_TYPE_ICON[lesson.type]; return <LessonIcon className="w-4 h-4 text-foreground-subtle flex-shrink-0" />; })()}
                   <span className="flex-1">{lesson.title}</span>
@@ -99,12 +99,12 @@ export function ModuleList({
                     if (!info || info.status === "none" || info.status === "completed") return null;
                     const deadline = new Date(info.absoluteDeadline!);
                     if (info.status === "overdue") return (
-                      <span className="flex items-center gap-1 text-xs text-red-600 dark:text-red-400 flex-shrink-0">
+                      <span className="flex items-center gap-1 text-xs text-danger flex-shrink-0">
                         <ClockIcon className="w-3 h-3" />Overdue
                       </span>
                     );
                     if (info.status === "due-soon") return (
-                      <span className="flex items-center gap-1 text-xs text-amber-600 dark:text-amber-400 flex-shrink-0">
+                      <span className="flex items-center gap-1 text-xs text-warning flex-shrink-0">
                         <ClockIcon className="w-3 h-3" />Due soon
                       </span>
                     );
@@ -115,7 +115,7 @@ export function ModuleList({
                     );
                   })()}
                   {completedLessonIds?.has(lesson.id) && (
-                    <CheckCircleIcon className="w-4 h-4 flex-shrink-0 text-emerald-500" />
+                    <CheckCircleIcon className="w-4 h-4 flex-shrink-0 text-success" />
                   )}
                 </Link>
               ))}

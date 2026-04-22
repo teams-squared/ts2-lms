@@ -54,7 +54,7 @@ export function CourseSidebar({
       <div className="space-y-1 border-b border-border px-4 py-3">
         <Link
           href={`/courses/${courseId}`}
-          className="inline-flex items-center gap-1 text-xs text-foreground-subtle transition-colors hover:text-foreground"
+          className="inline-flex items-center gap-1 text-xs text-foreground-subtle transition-colors hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-surface rounded-sm"
         >
           <ChevronLeftIcon className="h-3.5 w-3.5" />
           Back to course
@@ -109,7 +109,7 @@ export function CourseSidebar({
                     key={lesson.id}
                     href={`/courses/${courseId}/lessons/${lesson.id}`}
                     onClick={() => setMobileOpen(false)}
-                    className={`relative mx-2 flex items-center gap-2 rounded-md px-3 py-2.5 text-sm transition-colors ${
+                    className={`relative mx-2 flex items-center gap-2 rounded-md px-3 py-2.5 text-sm transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-surface ${
                       isActive
                         ? "bg-primary-subtle font-medium text-primary before:absolute before:left-0 before:top-1/2 before:-translate-y-1/2 before:h-5 before:w-[3px] before:rounded-r before:bg-primary"
                         : "text-foreground hover:bg-surface-muted"
@@ -154,7 +154,7 @@ export function CourseSidebar({
       {/* Mobile toggle button */}
       <button
         onClick={() => setMobileOpen(true)}
-        className="fixed bottom-5 left-5 z-30 flex items-center gap-2 rounded-md bg-primary px-4 py-3 text-sm font-medium text-primary-foreground shadow-lg transition-colors hover:bg-primary/90 active:bg-primary/80 lg:hidden"
+        className="fixed bottom-5 left-5 z-30 flex items-center gap-2 rounded-md bg-primary px-4 py-3 text-sm font-medium text-primary-foreground shadow-lg transition-colors hover:bg-primary-hover active:bg-primary-active lg:hidden focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background"
         aria-label="Open course navigation"
       >
         <HamburgerIcon className="h-5 w-5" />
@@ -169,12 +169,12 @@ export function CourseSidebar({
             onClick={() => setMobileOpen(false)}
             aria-hidden="true"
           />
-          <aside className="animate-slide-in-left relative w-80 max-w-[85vw] flex-shrink-0 overflow-y-auto bg-card">
+          <aside className="motion-safe:animate-slide-in-left relative w-80 max-w-[85vw] flex-shrink-0 overflow-y-auto bg-card">
             <div className="flex items-center justify-between border-b border-border px-4 py-3">
               <span className="text-sm font-semibold text-foreground">Course Navigation</span>
               <button
                 onClick={() => setMobileOpen(false)}
-                className="rounded-md p-2 transition-colors hover:bg-surface-muted"
+                className="rounded-md p-2 transition-colors hover:bg-surface-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background"
                 aria-label="Close course navigation"
               >
                 <CloseIcon className="h-5 w-5 text-foreground-muted" />

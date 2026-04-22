@@ -274,7 +274,7 @@ export default async function LessonPage({
                 <p className="text-sm font-semibold text-success">
                   Course complete!
                 </p>
-                <p className="mt-0.5 text-xs text-success/80">
+                <p className="mt-0.5 text-xs text-foreground-muted">
                   You&apos;ve finished all {totalLessons} lesson{totalLessons !== 1 ? "s" : ""} in this course.
                 </p>
               </div>

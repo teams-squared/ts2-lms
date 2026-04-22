@@ -20,10 +20,10 @@ export default function LoginPage() {
         <div className="overflow-hidden rounded-lg border border-border bg-card shadow-lg">
           <div className="h-1 w-full bg-gradient-to-r from-primary via-primary-hover to-primary" />
 
-          <div className="p-7">
-            <div className="mb-7 flex flex-col items-center">
+          <div className="p-6">
+            <div className="mb-6 flex flex-col items-center">
               <Logo size={36} showText />
-              <h1 className="mt-4 text-lg font-semibold tracking-tight text-foreground">
+              <h1 className="mt-4 font-display text-lg font-semibold tracking-tight text-foreground">
                 Welcome back
               </h1>
               <p className="mt-1 text-sm text-foreground-muted">
@@ -45,7 +45,7 @@ export default function LoginPage() {
             </Suspense>
 
             {!hasMicrosoftProvider && !isProduction && (
-              <div className="mt-5 rounded-md border border-border bg-info-subtle p-3.5 text-xs leading-relaxed text-info">
+              <div className="mt-5 rounded-md border border-border bg-info-subtle p-4 text-xs leading-relaxed text-info">
                 <strong className="font-semibold">Demo accounts</strong>
                 <div className="mt-1.5 space-y-0.5 font-mono">
                   <div>admin@teamssquared.com / admin123</div>

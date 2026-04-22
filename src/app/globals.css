@@ -196,7 +196,7 @@
 
   /* ── Font families ─────────────────────────────────────────────────────── */
   --font-sans: var(--font-inter), "Inter", system-ui, -apple-system, sans-serif;
-  --font-display: var(--font-display), "Plus Jakarta Sans", var(--font-inter), "Inter", system-ui, sans-serif;
+  --font-display: var(--font-jakarta), "Plus Jakarta Sans", var(--font-inter), "Inter", system-ui, sans-serif;
   --font-mono: var(--font-geist-mono);
 }
 
@@ -223,13 +223,9 @@
 
 /* ── Base ──────────────────────────────────────────────────────────────────── */
 body {
-  background: #f5f5f8;
-  color: #171717;
+  background: var(--background);
+  color: var(--foreground);
   font-family: var(--font-sans);
-}
-.dark body {
-  background: #0f0f14;
-  color: #ededf3;
 }
 
 /* ── Animation ─────────────────────────────────────────────────────────────── */
@@ -321,9 +317,8 @@ body {
   .animate-spin,
   .animate-bounce { animation: none !important; }
   *, *::before, *::after {
+    animation: none !important;
     transition-duration: 0.01ms !important;
-    animation-duration: 0.01ms !important;
-    animation-iteration-count: 1 !important;
     scroll-behavior: auto !important;
   }
 }
