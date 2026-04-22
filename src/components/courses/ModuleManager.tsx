@@ -211,6 +211,10 @@ export function ModuleManager({
       setNewLessonTitle("");
       setNewLessonType("text");
       setAddLessonModuleId(null);
+      // Drop the admin straight into the edit dialog so they can fill in the
+      // body — avoids leaving an empty-content lesson stranded in the system
+      // and saves the round-trip click.
+      startEditLesson(moduleId, created);
       router.refresh();
     } catch {
       /* retry */
