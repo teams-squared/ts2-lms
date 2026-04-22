@@ -54,6 +54,8 @@ export function PolicyDocLessonEditor({ lessonId }: { lessonId: string }) {
   const [syncing, setSyncing] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [lastSyncMessage, setLastSyncMessage] = useState<string | null>(null);
+  const [shareUrl, setShareUrl] = useState("");
+  const [resolving, setResolving] = useState(false);
 
   const refresh = useCallback(async () => {
     setLoading(true);
@@ -118,6 +120,35 @@ export function PolicyDocLessonEditor({ lessonId }: { lessonId: string }) {
     [runSync],
   );
 
+  const handleResolveLink = useCallback(async () => {
+    const url = shareUrl.trim();
+    if (!url) return;
+    setResolving(true);
+    setError(null);
+    setLastSyncMessage(null);
+    try {
+      const res = await fetch("/api/admin/policy-doc/resolve-share", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ shareUrl: url }),
+      });
+      const data = (await res.json().catch(() => ({}))) as {
+        driveId?: string;
+        itemId?: string;
+        error?: string;
+      };
+      if (!res.ok || !data.driveId || !data.itemId) {
+        throw new Error(data.error ?? `Could not resolve link (${res.status})`);
+      }
+      setShareUrl("");
+      await runSync(data.driveId, data.itemId);
+    } catch (e) {
+      setError(e instanceof Error ? e.message : "Could not resolve link");
+    } finally {
+      setResolving(false);
+    }
+  }, [shareUrl, runSync]);
+
   if (loading) {
     return (
       <div className="rounded-lg border border-border bg-surface px-3 py-2 text-sm text-foreground-muted">
@@ -179,14 +210,56 @@ export function PolicyDocLessonEditor({ lessonId }: { lessonId: string }) {
           </div>
         </div>
       ) : (
-        <button
-          type="button"
-          onClick={() => setPickerOpen(true)}
-          disabled={syncing}
-          className="rounded-lg border border-dashed border-border px-4 py-3 text-sm text-primary w-full text-center hover:bg-primary-subtle transition-colors disabled:opacity-50"
-        >
-          {syncing ? "Syncing…" : "Browse SharePoint for policy doc…"}
-        </button>
+        <div className="space-y-2">
+          <div className="rounded-lg border border-border bg-surface p-3 space-y-2">
+            <label className="block text-xs font-medium text-foreground-muted">
+              Paste SharePoint link
+            </label>
+            <div className="flex items-center gap-2">
+              <input
+                type="url"
+                value={shareUrl}
+                onChange={(e) => setShareUrl(e.target.value)}
+                placeholder="https://teamssquared.sharepoint.com/…/POL-002.docx"
+                disabled={syncing || resolving}
+                className="flex-1 rounded-md border border-border bg-background px-2.5 py-1.5 text-sm text-foreground placeholder:text-foreground-subtle focus:outline-none focus:ring-2 focus:ring-primary/40 disabled:opacity-50"
+                onKeyDown={(e) => {
+                  if (e.key === "Enter") {
+                    e.preventDefault();
+                    void handleResolveLink();
+                  }
+                }}
+              />
+              <button
+                type="button"
+                onClick={() => void handleResolveLink()}
+                disabled={!shareUrl.trim() || syncing || resolving}
+                className="rounded-md bg-primary text-primary-foreground text-xs px-3 py-1.5 hover:opacity-90 disabled:opacity-50"
+              >
+                {resolving ? "Resolving…" : syncing ? "Syncing…" : "Use link"}
+              </button>
+            </div>
+            <p className="text-xs text-foreground-subtle">
+              Works for any .docx in the tenant — copy a link from SharePoint&rsquo;s
+              &ldquo;Copy link&rdquo; button or paste the file&rsquo;s URL from the address bar.
+            </p>
+          </div>
+
+          <div className="flex items-center gap-3 text-xs text-foreground-subtle">
+            <span className="flex-1 border-t border-border" />
+            <span>or</span>
+            <span className="flex-1 border-t border-border" />
+          </div>
+
+          <button
+            type="button"
+            onClick={() => setPickerOpen(true)}
+            disabled={syncing || resolving}
+            className="rounded-lg border border-dashed border-border px-4 py-3 text-sm text-primary w-full text-center hover:bg-primary-subtle transition-colors disabled:opacity-50"
+          >
+            {syncing ? "Syncing…" : "Browse LMS Materials folder…"}
+          </button>
+        </div>
       )}
 
       {lastSyncMessage && (
