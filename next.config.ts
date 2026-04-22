@@ -15,8 +15,8 @@ const securityHeaders = [
       "font-src 'self' https://fonts.gstatic.com",
       // Allow external HTTPS images (user-provided thumbnails)
       "img-src 'self' data: blob: https:",
-      // Allow YouTube/Vimeo video embeds, SharePoint PDF proxy, and PostHog dashboard embeds
-      "frame-src 'self' blob: https://www.youtube.com https://www.youtube-nocookie.com https://player.vimeo.com https://us.posthog.com https://eu.posthog.com",
+      // Allow YouTube/Vimeo/Loom video embeds, SharePoint PDF proxy, and PostHog dashboard embeds
+      "frame-src 'self' blob: https://www.youtube.com https://www.youtube-nocookie.com https://player.vimeo.com https://www.loom.com https://us.posthog.com https://eu.posthog.com",
       // Allow self + MS Graph/login + PostHog ingestion
       "connect-src 'self' https://graph.microsoft.com https://login.microsoftonline.com https://us.i.posthog.com https://us-assets.i.posthog.com https://us.posthog.com",
     ].join("; "),
