@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import Link from "next/link";
-import { ChevronLeftIcon, CheckCircleIcon, HamburgerIcon, CloseIcon, DocumentTextIcon, VideoIcon, QuizIcon, PaperclipIcon, LayoutGridIcon, ClockIcon } from "@/components/icons";
+import { ChevronLeftIcon, CheckCircleIcon, HamburgerIcon, CloseIcon, DocumentTextIcon, VideoIcon, QuizIcon, PaperclipIcon, LayoutGridIcon, ClockIcon, ShieldIcon } from "@/components/icons";
 import type { LessonType } from "@/lib/types";
 import type { DeadlineInfo } from "@/lib/deadlines";
 
@@ -26,6 +26,7 @@ const LESSON_TYPE_ICON: Record<LessonType, React.FC<{ className?: string }>> = {
   quiz: QuizIcon,
   document: PaperclipIcon,
   html: LayoutGridIcon,
+  policy_doc: ShieldIcon,
 };
 
 export function CourseSidebar({

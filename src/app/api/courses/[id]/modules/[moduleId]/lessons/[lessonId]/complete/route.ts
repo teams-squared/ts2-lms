@@ -18,14 +18,35 @@ export async function POST(_request: Request, { params }: Params) {
   const { id: courseId, moduleId, lessonId } = await params;
   const userId = session.user.id;
 
-  // Verify the lesson exists and belongs to the correct module and course
+  // Verify the lesson exists and belongs to the correct module and course.
+  // We also pull the PolicyDocLesson row (if any) so we can stamp the audit
+  // snapshot in the same write — server-trusted, never client-supplied.
   const lesson = await prisma.lesson.findUnique({
     where: { id: lessonId },
-    include: { module: { select: { courseId: true } } },
+    include: {
+      module: { select: { courseId: true } },
+      policyDoc: {
+        select: {
+          sourceVersion: true,
+          sourceETag: true,
+          renderedHTMLHash: true,
+        },
+      },
+    },
   });
 
   if (!lesson || lesson.moduleId !== moduleId || lesson.module.courseId !== courseId) {
     return NextResponse.json({ error: "Lesson not found" }, { status: 404 });
+  }
+
+  // POLICY_DOC lessons must have a synced PolicyDocLesson row before they
+  // can be acknowledged. Without one, there's nothing to snapshot — the
+  // admin hasn't finished binding the lesson to a SharePoint doc yet.
+  if (lesson.type === "POLICY_DOC" && !lesson.policyDoc) {
+    return NextResponse.json(
+      { error: "Policy document not yet synced — ask an admin." },
+      { status: 409 },
+    );
   }
 
   // User must be enrolled to track progress
@@ -59,11 +80,47 @@ export async function POST(_request: Request, { params }: Params) {
   }
 
   const now = new Date();
+
+  // For POLICY_DOC lessons, stamp the audit snapshot from the latest
+  // PolicyDocLesson row. This is the auditor-visible proof of *which*
+  // version the learner attested to reading. Pulled server-side so the
+  // client cannot lie about which version they saw.
+  const policyAuditFields =
+    lesson.type === "POLICY_DOC" && lesson.policyDoc
+      ? {
+          acknowledgedAt: now,
+          acknowledgedVersion: lesson.policyDoc.sourceVersion,
+          acknowledgedETag: lesson.policyDoc.sourceETag,
+          acknowledgedHash: lesson.policyDoc.renderedHTMLHash,
+        }
+      : {};
+
   const progress = await prisma.lessonProgress.upsert({
     where: { userId_lessonId: { userId, lessonId } },
-    create: { userId, lessonId, startedAt: now, completedAt: now },
-    update: { completedAt: now },
+    create: {
+      userId,
+      lessonId,
+      startedAt: now,
+      completedAt: now,
+      ...policyAuditFields,
+    },
+    update: {
+      completedAt: now,
+      ...policyAuditFields,
+    },
   });
+
+  // Separate analytics for policy doc acknowledgements — distinct from
+  // generic lesson completion because auditors will pull these by name.
+  if (lesson.type === "POLICY_DOC" && lesson.policyDoc) {
+    trackEvent(userId, "policy_doc_acknowledged", {
+      courseId,
+      moduleId,
+      lessonId,
+      sourceVersion: lesson.policyDoc.sourceVersion,
+      renderedHTMLHash: lesson.policyDoc.renderedHTMLHash,
+    });
+  }
 
   // Award XP and track event (fire-and-forget)
   const { newAchievements } = await awardXp(userId, 10);
