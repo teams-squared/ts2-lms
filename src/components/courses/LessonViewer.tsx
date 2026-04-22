@@ -16,6 +16,7 @@ const ReactMarkdown = dynamic(() => import("react-markdown"), {
 });
 import type { LessonType } from "@/lib/types";
 import type { SharePointDocumentRef } from "@/lib/sharepoint/types";
+import { toEmbedUrl } from "@/lib/video-embed";
 import { LessonTitleHeader, estimateReadingMinutes } from "@/components/courses/LessonTitleHeader";
 
 /** Explicit Tailwind styling for every markdown element — no typography plugin needed. */
@@ -287,7 +288,7 @@ export function LessonViewer({ title, type, content, lessonId }: LessonViewerPro
         ) : content ? (
           <div className="aspect-video overflow-hidden rounded-lg bg-black">
             <iframe
-              src={content}
+              src={toEmbedUrl(content)}
               title={title}
               className="h-full w-full"
               allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
