@@ -82,6 +82,11 @@ export function ModuleManager({
 
   const [editingLesson, setEditingLesson] = useState<Lesson | null>(null);
   const [editingLessonModuleId, setEditingLessonModuleId] = useState<string | null>(null);
+  // Tracks a lesson that was just created via "Add lesson" and immediately
+  // opened in the edit dialog. If the admin cancels out without saving body
+  // content, we discard the row so empty lessons don't pile up.
+  const [justCreatedLessonId, setJustCreatedLessonId] = useState<string | null>(null);
+  const [discardingLesson, setDiscardingLesson] = useState(false);
   const [editTitle, setEditTitle] = useState("");
   const [editContent, setEditContent] = useState("");
   const [editType, setEditType] = useState<LessonType>("text");
@@ -213,7 +218,9 @@ export function ModuleManager({
       setAddLessonModuleId(null);
       // Drop the admin straight into the edit dialog so they can fill in the
       // body — avoids leaving an empty-content lesson stranded in the system
-      // and saves the round-trip click.
+      // and saves the round-trip click. Tracking the id lets the dialog's
+      // Cancel button become "Discard lesson" for this single session.
+      setJustCreatedLessonId(created.id);
       startEditLesson(moduleId, created);
       router.refresh();
     } catch {
@@ -349,12 +356,53 @@ export function ModuleManager({
       );
       setEditingLesson(null);
       setEditingLessonModuleId(null);
+      setJustCreatedLessonId(null);
       router.refresh();
     } catch (err) {
       setEditError(err instanceof Error ? err.message : "Failed to save");
     } finally {
       setEditSaving(false);
     }
+  };
+
+  /**
+   * Cancel handler for the edit dialog. For an *existing* lesson this is just
+   * a close. For a *just-created* lesson (one we forced the dialog open on),
+   * we DELETE the row so admins can't accidentally leave empty lessons behind.
+   */
+  const handleCancelEdit = async () => {
+    if (!editingLesson) return;
+    const isJustCreated =
+      justCreatedLessonId !== null && editingLesson.id === justCreatedLessonId;
+    const moduleId = editingLessonModuleId;
+    const lessonId = editingLesson.id;
+
+    if (isJustCreated && moduleId) {
+      setDiscardingLesson(true);
+      try {
+        await apiFetch(
+          `/api/courses/${courseId}/modules/${moduleId}/lessons/${lessonId}`,
+          { method: "DELETE" },
+        );
+        setModules(
+          modules.map((m) =>
+            m.id === moduleId
+              ? { ...m, lessons: m.lessons.filter((l) => l.id !== lessonId) }
+              : m,
+          ),
+        );
+        router.refresh();
+      } catch {
+        // If delete fails for some reason, fall through to closing the
+        // dialog anyway — the lesson sticks around but admin isn't trapped.
+      } finally {
+        setDiscardingLesson(false);
+      }
+    }
+
+    setEditingLesson(null);
+    setEditingLessonModuleId(null);
+    setJustCreatedLessonId(null);
   };
 
   const handlePickerSelect = (ref: SharePointDocumentRef) => {
@@ -859,15 +907,24 @@ export function ModuleManager({
                 >
                   {editSaving ? "Saving…" : "Save lesson"}
                 </button>
-                <button
-                  onClick={() => {
-                    setEditingLesson(null);
-                    setEditingLessonModuleId(null);
-                  }}
-                  className="rounded-lg border border-border text-sm text-foreground px-4 py-2 hover:bg-surface-muted"
-                >
-                  Cancel
-                </button>
+                {editingLesson.id === justCreatedLessonId ? (
+                  <button
+                    onClick={() => void handleCancelEdit()}
+                    disabled={editSaving || discardingLesson}
+                    className="rounded-lg border border-danger/40 text-sm text-danger px-4 py-2 hover:bg-danger/10 disabled:opacity-50"
+                    title="This lesson was just created — closing without saving will delete it."
+                  >
+                    {discardingLesson ? "Discarding…" : "Discard lesson"}
+                  </button>
+                ) : (
+                  <button
+                    onClick={() => void handleCancelEdit()}
+                    disabled={editSaving}
+                    className="rounded-lg border border-border text-sm text-foreground px-4 py-2 hover:bg-surface-muted disabled:opacity-50"
+                  >
+                    Cancel
+                  </button>
+                )}
               </div>
             </div>
           </div>
