@@ -4,6 +4,7 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { SharePointFilePicker } from "./SharePointFilePicker";
 import { QuizBuilder } from "./QuizBuilder";
+import { PolicyDocLessonEditor } from "./PolicyDocLessonEditor";
 import { ConfirmDialog } from "@/components/ui/ConfirmDialog";
 import type { LessonType } from "@/lib/types";
 import type { SharePointDocumentRef } from "@/lib/sharepoint/types";
@@ -593,6 +594,7 @@ export function ModuleManager({
                               <option value="quiz">Quiz — graded questions</option>
                               <option value="document">Document — SharePoint file</option>
                               <option value="html">HTML — embedded page</option>
+                              <option value="policy_doc">Policy doc — ISO Word doc + acknowledgement</option>
                             </select>
                           </div>
                           <div className="flex items-center gap-2">
@@ -710,10 +712,13 @@ export function ModuleManager({
                   <option value="quiz">Quiz</option>
                   <option value="document">Document</option>
                   <option value="html">HTML</option>
+                  <option value="policy_doc">Policy doc</option>
                 </select>
               </div>
 
-              {editType === "document" || editType === "html" || (editType === "video" && videoSource === "sharepoint") ? (
+              {editType === "policy_doc" ? (
+                <PolicyDocLessonEditor lessonId={editingLesson.id} />
+              ) : editType === "document" || editType === "html" || (editType === "video" && videoSource === "sharepoint") ? (
                 <div>
                   <label className="block text-xs font-medium text-foreground-muted mb-1">
                     {editType === "video"

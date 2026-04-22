@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { CheckCircleIcon, ChevronLeftIcon, ChevronRightIcon } from "@/components/icons";
 import { Spinner } from "@/components/ui/Spinner";
 import { useToast } from "@/components/ui/ToastProvider";
@@ -43,6 +43,20 @@ interface LessonFooterProps {
    * Only an admin reset reopens the course.
    */
   courseLocked?: boolean;
+  /**
+   * For POLICY_DOC lessons: gates the Mark-complete button until the learner
+   * scrolls to the bottom of the document. PolicyDocViewer fires a window
+   * CustomEvent `policy-doc-acknowledgeable` with `{ lessonId }` when its
+   * sentinel intersects the viewport. If the lesson is already completed
+   * (re-visit), the gate is bypassed.
+   */
+  requireScrollToComplete?: boolean;
+  /**
+   * Custom CTA label for the Mark-complete button. POLICY_DOC lessons use
+   * "Acknowledge" / "Saving acknowledgement…" instead of "Mark complete" to
+   * make the audit framing explicit.
+   */
+  completeLabel?: string;
 }
 
 /**
@@ -65,6 +79,8 @@ export function LessonFooter({
   courseTitle,
   hideMarkComplete = false,
   courseLocked = false,
+  requireScrollToComplete = false,
+  completeLabel,
 }: LessonFooterProps) {
   const router = useRouter();
   const { toast } = useToast();
@@ -72,6 +88,24 @@ export function LessonFooter({
   const [isLoading, setIsLoading] = useState(false);
   const [modalOpen, setModalOpen] = useState(false);
   const [courseStats, setCourseStats] = useState<CourseStats | null>(null);
+  // Scroll-gate: enabled when (a) the lesson doesn't require scroll, (b)
+  // the lesson was already completed (re-visit), or (c) the PolicyDocViewer
+  // has fired its sentinel-intersection event for THIS lesson.
+  const [scrollUnlocked, setScrollUnlocked] = useState(
+    !requireScrollToComplete || initialCompleted,
+  );
+
+  useEffect(() => {
+    if (!requireScrollToComplete || scrollUnlocked) return;
+    function handler(e: Event) {
+      const detail = (e as CustomEvent<{ lessonId?: string }>).detail;
+      if (detail?.lessonId === lessonId) {
+        setScrollUnlocked(true);
+      }
+    }
+    window.addEventListener("policy-doc-acknowledgeable", handler);
+    return () => window.removeEventListener("policy-doc-acknowledgeable", handler);
+  }, [requireScrollToComplete, scrollUnlocked, lessonId]);
 
   const endpoint = `/api/courses/${courseId}/modules/${moduleId}/lessons/${lessonId}/complete`;
 
@@ -204,8 +238,13 @@ export function LessonFooter({
               <button
                 type="button"
                 onClick={() => void handleMarkComplete()}
-                disabled={isLoading}
+                disabled={isLoading || !scrollUnlocked}
                 data-testid="mark-complete-button"
+                title={
+                  !scrollUnlocked
+                    ? "Scroll to the bottom of the document to enable"
+                    : undefined
+                }
                 className={cn(
                   "inline-flex items-center gap-1.5 rounded-md bg-primary px-3 py-2 text-sm font-medium text-primary-foreground",
                   "transition-colors hover:bg-primary-hover disabled:cursor-not-allowed disabled:opacity-60",
@@ -218,7 +257,11 @@ export function LessonFooter({
                   <CheckCircleIcon className="h-4 w-4" aria-hidden="true" />
                 )}
                 <span className="hidden sm:inline">
-                  {isLoading ? "Saving…" : "Mark complete"}
+                  {isLoading
+                    ? completeLabel
+                      ? `Saving ${completeLabel.toLowerCase()}…`
+                      : "Saving…"
+                    : completeLabel ?? "Mark complete"}
                 </span>
               </button>
             )
