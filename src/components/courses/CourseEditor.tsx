@@ -169,13 +169,16 @@ export function CourseEditor({
           </div>
           <div>
             <label className="block text-xs font-medium text-foreground-muted mb-1">
-              Node
+              Category / Folder
             </label>
             <NodeTreeSelect
               nodes={nodeTree}
               value={nodeId || null}
               onChange={(id) => setNodeId(id ?? "")}
             />
+            <p className="text-xs text-foreground-subtle mt-1">
+              Optional. Groups this course in the catalog tree. Leave blank to publish without a category.
+            </p>
           </div>
           {courseError && (
             <p className="text-sm text-danger">{courseError}</p>
@@ -220,22 +223,31 @@ export function CourseEditor({
           Email addresses that will be notified when an employee completes this course.
         </p>
 
-        <div className="flex items-center gap-2 mb-3">
-          <input
-            type="email"
-            value={newEmail}
-            onChange={(e) => { setNewEmail(e.target.value); setSubError(null); }}
-            onKeyDown={(e) => { if (e.key === "Enter") void handleAddSubscription(); }}
-            placeholder="email@example.com"
-            className="flex-1 rounded-lg border border-border bg-surface text-sm text-foreground px-3 py-2 placeholder-foreground-subtle focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
-          />
-          <button
-            onClick={() => void handleAddSubscription()}
-            disabled={addingSub}
-            className="rounded-lg bg-primary hover:bg-primary-hover disabled:opacity-50 text-primary-foreground text-sm font-medium px-4 py-2 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background"
+        <div className="mb-3">
+          <label
+            htmlFor="completion-alert-email"
+            className="block text-xs font-medium text-foreground-muted mb-1"
           >
-            {addingSub ? "Adding…" : "Add"}
-          </button>
+            Add email to notify
+          </label>
+          <div className="flex items-center gap-2">
+            <input
+              id="completion-alert-email"
+              type="email"
+              value={newEmail}
+              onChange={(e) => { setNewEmail(e.target.value); setSubError(null); }}
+              onKeyDown={(e) => { if (e.key === "Enter") void handleAddSubscription(); }}
+              placeholder="email@example.com"
+              className="flex-1 rounded-lg border border-border bg-surface text-sm text-foreground px-3 py-2 placeholder-foreground-subtle focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+            />
+            <button
+              onClick={() => void handleAddSubscription()}
+              disabled={addingSub}
+              className="rounded-lg bg-primary hover:bg-primary-hover disabled:opacity-50 text-primary-foreground text-sm font-medium px-4 py-2 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background"
+            >
+              {addingSub ? "Adding…" : "Add email"}
+            </button>
+          </div>
         </div>
 
         {subError && (

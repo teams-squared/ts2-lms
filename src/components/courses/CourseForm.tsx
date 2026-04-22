@@ -145,13 +145,16 @@ export function CourseForm({
           <label
             className="block text-xs font-medium text-foreground-muted mb-1.5"
           >
-            Node
+            Category / Folder
           </label>
           <NodeTreeSelect
             nodes={nodeTree}
             value={nodeId || null}
             onChange={(id) => setNodeId(id ?? "")}
           />
+          <p className="text-xs text-foreground-subtle mt-1">
+            Optional. Groups this course in the catalog tree. Leave blank to publish without a category.
+          </p>
         </div>
       )}
 

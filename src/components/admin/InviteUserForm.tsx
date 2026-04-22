@@ -217,8 +217,11 @@ export function InviteUserForm({
 
       <div>
         <label className="block text-xs font-medium text-foreground-muted mb-1.5">
-          Pre-assign courses ({selectedCourseIds.size} selected)
+          Enroll in courses <span className="text-foreground-subtle font-normal">(optional · {selectedCourseIds.size} selected)</span>
         </label>
+        <p className="text-xs text-foreground-subtle mb-1.5">
+          The user will be enrolled immediately when the invite is sent. You can add or remove courses later from the Assignments page.
+        </p>
         {nodeTree.length === 0 ? (
           <p className="text-xs text-foreground-subtle px-3 py-2 rounded-lg border border-dashed border-border">
             No published courses yet. You can invite without courses; assign later from the

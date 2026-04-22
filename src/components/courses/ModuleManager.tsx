@@ -535,39 +535,63 @@ export function ModuleManager({
 
                     {/* Add lesson */}
                     {addLessonModuleId === module.id ? (
-                      <div className="flex items-center gap-2 mt-2">
-                        <input
-                          type="text"
-                          value={newLessonTitle}
-                          onChange={(e) => setNewLessonTitle(e.target.value)}
-                          placeholder="Lesson title"
-                          className="flex-1 rounded-lg border border-border bg-surface text-sm px-2 py-1.5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
-                        />
-                        <select
-                          value={newLessonType}
-                          onChange={(e) => setNewLessonType(e.target.value as LessonType)}
-                          className="rounded-lg border border-border bg-surface text-sm px-2 py-1.5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
-                          aria-label="Lesson type"
-                        >
-                          <option value="text">Text</option>
-                          <option value="video">Video</option>
-                          <option value="quiz">Quiz</option>
-                          <option value="document">Document</option>
-                          <option value="html">HTML</option>
-                        </select>
-                        <button
-                          onClick={() => void handleAddLesson(module.id)}
-                          disabled={addingLesson}
-                          className="rounded-lg bg-primary hover:bg-primary-hover text-primary-foreground text-xs px-3 py-1.5 disabled:opacity-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background"
-                        >
-                          Add
-                        </button>
-                        <button
-                          onClick={() => setAddLessonModuleId(null)}
-                          className="text-xs text-foreground-muted hover:text-foreground"
-                        >
-                          Cancel
-                        </button>
+                      <div className="mt-2 rounded-lg border border-border bg-surface/40 p-3">
+                        <div className="flex flex-wrap items-end gap-3">
+                          <div className="flex-1 min-w-[200px]">
+                            <label
+                              htmlFor={`new-lesson-title-${module.id}`}
+                              className="block text-xs font-medium text-foreground-muted mb-1"
+                            >
+                              Lesson title <span className="text-danger">*</span>
+                            </label>
+                            <input
+                              id={`new-lesson-title-${module.id}`}
+                              type="text"
+                              value={newLessonTitle}
+                              onChange={(e) => setNewLessonTitle(e.target.value)}
+                              placeholder="e.g. Phishing fundamentals"
+                              className="w-full rounded-lg border border-border bg-background text-sm px-3 py-2 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                            />
+                          </div>
+                          <div>
+                            <label
+                              htmlFor={`new-lesson-type-${module.id}`}
+                              className="block text-xs font-medium text-foreground-muted mb-1"
+                            >
+                              Type
+                            </label>
+                            <select
+                              id={`new-lesson-type-${module.id}`}
+                              value={newLessonType}
+                              onChange={(e) => setNewLessonType(e.target.value as LessonType)}
+                              className="rounded-lg border border-border bg-background text-sm px-3 py-2 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                            >
+                              <option value="text">Text — written content</option>
+                              <option value="video">Video — SharePoint clip or URL</option>
+                              <option value="quiz">Quiz — graded questions</option>
+                              <option value="document">Document — SharePoint file</option>
+                              <option value="html">HTML — embedded page</option>
+                            </select>
+                          </div>
+                          <div className="flex items-center gap-2">
+                            <button
+                              onClick={() => void handleAddLesson(module.id)}
+                              disabled={addingLesson}
+                              className="rounded-lg bg-primary hover:bg-primary-hover text-primary-foreground text-sm font-medium px-4 py-2 disabled:opacity-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background"
+                            >
+                              {addingLesson ? "Adding…" : "Add lesson"}
+                            </button>
+                            <button
+                              onClick={() => setAddLessonModuleId(null)}
+                              className="text-xs text-foreground-muted hover:text-foreground"
+                            >
+                              Cancel
+                            </button>
+                          </div>
+                        </div>
+                        <p className="text-xs text-foreground-subtle mt-2">
+                          You&apos;ll be able to add the lesson&apos;s content after creating it.
+                        </p>
                       </div>
                     ) : (
                       <button
@@ -590,27 +614,36 @@ export function ModuleManager({
 
         {/* Add module form */}
         {showAddModule && (
-          <div className="mt-3 flex items-center gap-2">
-            <input
-              type="text"
-              value={newModuleTitle}
-              onChange={(e) => setNewModuleTitle(e.target.value)}
-              placeholder="Module title"
-              className="flex-1 rounded-lg border border-border bg-card text-sm px-3 py-2 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
-            />
-            <button
-              onClick={() => void handleAddModule()}
-              disabled={addingModule}
-              className="rounded-lg bg-primary hover:bg-primary-hover text-primary-foreground text-sm px-4 py-2 disabled:opacity-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background"
+          <div className="mt-3">
+            <label
+              htmlFor="new-module-title"
+              className="block text-xs font-medium text-foreground-muted mb-1"
             >
-              {addingModule ? "Adding…" : "Add"}
-            </button>
-            <button
-              onClick={() => setShowAddModule(false)}
-              className="text-sm text-foreground-muted hover:text-foreground"
-            >
-              Cancel
-            </button>
+              Module title <span className="text-danger">*</span>
+            </label>
+            <div className="flex items-center gap-2">
+              <input
+                id="new-module-title"
+                type="text"
+                value={newModuleTitle}
+                onChange={(e) => setNewModuleTitle(e.target.value)}
+                placeholder="e.g. Week 1 — Security basics"
+                className="flex-1 rounded-lg border border-border bg-card text-sm px-3 py-2 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+              />
+              <button
+                onClick={() => void handleAddModule()}
+                disabled={addingModule}
+                className="rounded-lg bg-primary hover:bg-primary-hover text-primary-foreground text-sm px-4 py-2 disabled:opacity-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background"
+              >
+                {addingModule ? "Adding…" : "Add module"}
+              </button>
+              <button
+                onClick={() => setShowAddModule(false)}
+                className="text-sm text-foreground-muted hover:text-foreground"
+              >
+                Cancel
+              </button>
+            </div>
           </div>
         )}
       </section>
@@ -619,9 +652,12 @@ export function ModuleManager({
       {editingLesson && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-foreground/50 backdrop-blur-sm">
           <div className="w-full max-w-lg bg-background rounded-lg shadow-lg border border-border p-6">
-            <h3 className="text-base font-semibold text-foreground mb-4">
-              Edit Lesson
+            <h3 className="text-base font-semibold text-foreground">
+              Edit lesson
             </h3>
+            <p className="text-xs text-foreground-muted mt-0.5 mb-4 truncate">
+              {editingLesson.title}
+            </p>
             <div className="space-y-4">
               <div>
                 <label className="block text-xs font-medium text-foreground-muted mb-1">
@@ -758,10 +794,14 @@ export function ModuleManager({
 
               {/* Deadline */}
               <div>
-                <label className="block text-xs font-medium text-foreground-muted mb-1">
-                  Deadline (days after enrollment)
+                <label
+                  htmlFor="edit-lesson-deadline"
+                  className="block text-xs font-medium text-foreground-muted mb-1"
+                >
+                  Deadline (days from enrollment)
                 </label>
                 <input
+                  id="edit-lesson-deadline"
                   type="number"
                   min="1"
                   value={editDeadlineDays ?? ""}
@@ -772,7 +812,7 @@ export function ModuleManager({
                   className="w-full rounded-lg border border-border bg-surface text-sm text-foreground px-3 py-2 placeholder-foreground-subtle focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
                 />
                 <p className="text-xs text-foreground-subtle mt-1">
-                  Leave empty for no deadline
+                  Days from the learner&apos;s enrollment date before this specific lesson must be completed. Leave empty for no deadline.
                 </p>
               </div>
 
@@ -786,7 +826,7 @@ export function ModuleManager({
                   disabled={editSaving}
                   className="rounded-lg bg-primary hover:bg-primary-hover disabled:opacity-50 text-primary-foreground text-sm font-medium px-4 py-2 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background"
                 >
-                  {editSaving ? "Saving…" : "Save"}
+                  {editSaving ? "Saving…" : "Save lesson"}
                 </button>
                 <button
                   onClick={() => {

@@ -114,20 +114,29 @@ export function EnrollmentManager({
     <div className="space-y-6">
       {/* Enroll form */}
       <div className="rounded-lg border border-border bg-card p-5 space-y-4">
-        <p className="text-xs font-medium text-foreground-muted">
-          Select courses from the tree and a user to enroll
-        </p>
+        <div>
+          <h3 className="text-sm font-semibold text-foreground">Enroll a user</h3>
+          <p className="text-xs text-foreground-muted mt-0.5">
+            Pick one or more courses from the tree, choose a user, then click Enroll.
+          </p>
+        </div>
 
         {/* Course tree */}
         <div>
           <label className="block text-xs font-medium text-foreground-muted mb-1.5">
-            Courses ({selectedCourseIds.size} selected)
+            Courses <span className="text-foreground-subtle font-normal">({selectedCourseIds.size} selected)</span>
           </label>
-          <CourseNodeTree
-            nodes={nodeTree}
-            selectedCourseIds={selectedCourseIds}
-            onSelectionChange={setSelectedCourseIds}
-          />
+          {nodeTree.length === 0 ? (
+            <p className="text-xs text-foreground-subtle px-3 py-2 rounded-lg border border-dashed border-border">
+              No published courses available. Publish a course first, then return here to enroll users.
+            </p>
+          ) : (
+            <CourseNodeTree
+              nodes={nodeTree}
+              selectedCourseIds={selectedCourseIds}
+              onSelectionChange={setSelectedCourseIds}
+            />
+          )}
         </div>
 
         {/* User select + enroll button */}
