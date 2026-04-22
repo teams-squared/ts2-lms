@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
+import { Pencil } from "lucide-react";
 import { ConfirmDialog } from "@/components/ui/ConfirmDialog";
 
 interface QuizOption {
@@ -313,7 +314,7 @@ export function QuizBuilder({
                 aria-label="Passing score"
                 className="w-16 rounded border border-border bg-surface px-2 py-0.5 text-sm text-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
               />
-              <span className="text-xs text-foreground-muted">%</span>
+              <span className="text-xs text-foreground-muted">% <span className="text-foreground-subtle">(1–100)</span></span>
               <button
                 onClick={handleSavePassingScore}
                 disabled={savingPassingScore}
@@ -338,9 +339,10 @@ export function QuizBuilder({
                 setEditingPassingScore(true);
               }}
               aria-label="Edit passing score"
-              className="mt-0.5 text-xs text-foreground-muted transition-colors hover:text-primary"
+              className="mt-0.5 inline-flex items-center gap-1 text-xs text-foreground-muted transition-colors hover:text-primary"
             >
-              Passing score: {currentPassingScore}% ✎
+              <span>Passing score: {currentPassingScore}%</span>
+              <Pencil className="w-3 h-3" aria-hidden="true" />
             </button>
           )}
         </div>

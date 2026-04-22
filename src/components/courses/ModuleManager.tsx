@@ -877,6 +877,13 @@ export function ModuleManager({
               ? (m) => m === "text/html" || m.startsWith("text/html")
               : undefined
         }
+        filterLabel={
+          editType === "video"
+            ? "video files"
+            : editType === "html"
+              ? "HTML files"
+              : undefined
+        }
       />
 
       <ConfirmDialog
