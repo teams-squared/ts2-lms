@@ -323,9 +323,28 @@ export default function AdminCourseTable({ nodeTree = [] }: { nodeTree?: NodeTre
 
       {/* Grouped course table */}
       {paginatedGroups.length === 0 ? (
-        <div className="rounded-lg border border-border bg-card shadow-sm px-5 py-10 text-center text-sm text-foreground-subtle">
-          No courses match your filters.
-        </div>
+        courses.length === 0 ? (
+          <div className="rounded-lg border border-border bg-card shadow-sm px-5 py-12 text-center">
+            <h3 className="text-sm font-semibold text-foreground mb-1">
+              No courses yet
+            </h3>
+            <p className="text-sm text-foreground-muted mb-4 max-w-sm mx-auto">
+              Create your first course to start building learning content for your team.
+            </p>
+            <button
+              type="button"
+              onClick={() => setShowForm(true)}
+              className="inline-flex items-center gap-1.5 px-4 py-2.5 rounded-lg bg-primary text-primary-foreground text-sm font-medium hover:bg-primary-hover transition-colors shadow-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background"
+            >
+              <PlusIcon className="w-4 h-4" />
+              Create your first course
+            </button>
+          </div>
+        ) : (
+          <div className="rounded-lg border border-border bg-card shadow-sm px-5 py-10 text-center text-sm text-foreground-subtle">
+            No courses match your filters. Try clearing filters or adjusting your search.
+          </div>
+        )
       ) : (
         <div className="space-y-4">
           {paginatedGroups.map((group) => {

@@ -202,7 +202,7 @@ export function CourseEditor({
             </h2>
             <p className="text-xs text-foreground-muted">
               Add, edit, delete, and reorder modules and lessons on the dedicated
-              management page.
+              management page. You&apos;ll need to add at least one module before you can add lessons to it.
             </p>
           </div>
           <Link
