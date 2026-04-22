@@ -134,7 +134,7 @@ export function linkCrossReferences(
 ): string {
   // Match TSPL-style codes: 2-6 uppercase letters / hyphens / digits.
   // Examples: TSPL-ISMS-POL-004, TS-OPS-PROC-001
-  const pattern = /\b(TS[A-Z]+(?:-[A-Z]+){2,4}-\d+)\b/g;
+  const pattern = /\b(TS[A-Z]*(?:-[A-Z]+){2,4}-\d+)\b/g;
 
   return html.replace(pattern, (match) => {
     const href = codeToHref[match];
@@ -152,7 +152,7 @@ export function linkCrossReferences(
 
 /** "TSPL-ISMS-POL-002 - Access Control Policy.docx" → "TSPL-ISMS-POL-002" */
 function fileNameToCode(fileName: string): string | null {
-  const match = fileName.match(/^(TS[A-Z]+(?:-[A-Z]+){1,4}-\d+)/);
+  const match = fileName.match(/^(TS[A-Z]*(?:-[A-Z]+){1,4}-\d+)/);
   return match ? match[1] : null;
 }
 

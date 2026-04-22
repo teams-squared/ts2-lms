@@ -89,7 +89,26 @@ export const mockPrisma = {
     create: vi.fn(),
     createMany: vi.fn(),
   },
-  $transaction: vi.fn((ops: unknown[]) => Promise.all(ops)),
+  policyDocLesson: {
+    findUnique: vi.fn(),
+    findMany: vi.fn().mockResolvedValue([]),
+    upsert: vi.fn(),
+    update: vi.fn(),
+    delete: vi.fn(),
+  },
+  // Supports both array-form and callback-form. Callback form is used by
+  // routes that need to atomically combine multiple writes (e.g. the
+  // policy-doc sync transaction).
+  $transaction: vi.fn(
+    (
+      arg: unknown[] | ((tx: typeof mockPrisma) => Promise<unknown>),
+    ): Promise<unknown> => {
+      if (typeof arg === "function") {
+        return Promise.resolve(arg(mockPrisma));
+      }
+      return Promise.all(arg as unknown[]);
+    },
+  ),
   courseNode: {
     findUnique: vi.fn(),
     findMany: vi.fn(),
