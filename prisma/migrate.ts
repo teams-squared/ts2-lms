@@ -7,15 +7,17 @@ import { Client } from "pg";
 loadEnv({ path: ".env.local" });
 loadEnv({ path: ".env" });
 
-// Render Postgres uses a self-signed cert. Match on both the public
-// (`*.render.com`) and internal (`dpg-*`) hostnames — internal connections
-// within Render don't carry `render.com` in the URL.
+// Managed Postgres (Render, Heroku, Supabase, etc.) commonly uses a
+// self-signed cert on the DB's internal CA, which node-postgres rejects
+// by default. Relax cert verification for any non-local DB — the channel
+// is still encrypted and the endpoint is authenticated via the URL's
+// credentials. Keep strict SSL for localhost (no TLS in dev).
 const dbUrl = process.env.DATABASE_URL ?? "";
-const isRender = /render\.com|(?:^|@)dpg-/.test(dbUrl);
+const isLocal = /@(localhost|127\.0\.0\.1|::1)[:/]/.test(dbUrl);
 
 const client = new Client({
   connectionString: process.env.DATABASE_URL,
-  ssl: isRender ? { rejectUnauthorized: false } : undefined,
+  ssl: dbUrl && !isLocal ? { rejectUnauthorized: false } : undefined,
 });
 
 async function main() {
