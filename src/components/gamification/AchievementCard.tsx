@@ -12,6 +12,10 @@ interface AchievementCardProps {
 
 export function AchievementCard({ icon, title, description, unlockedAt }: AchievementCardProps) {
   const isLocked = !unlockedAt;
+  // resolveAchievementIcon returns a stable, module-scoped lucide component
+  // reference (Trophy, Flame, etc.) — never a freshly-created component.
+  // The lint rule can't see across the function boundary so it flags this
+  // as if it were a render-time component declaration; it isn't.
   const Icon = resolveAchievementIcon(icon);
 
   return (
@@ -23,6 +27,7 @@ export function AchievementCard({ icon, title, description, unlockedAt }: Achiev
       }`}
     >
       <div className="mb-2" role="img" aria-label={title}>
+        {/* eslint-disable-next-line react-hooks/static-components */}
         <Icon className="w-8 h-8 text-primary" aria-hidden="true" />
       </div>
       <h3 className="text-base font-semibold text-foreground mb-0.5">
