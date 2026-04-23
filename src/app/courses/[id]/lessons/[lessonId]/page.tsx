@@ -280,11 +280,12 @@ export default async function LessonPage({
         deadlineInfoMap={deadlineInfoMap}
       />
 
-      <main className="flex flex-1 flex-col overflow-hidden">
+      <main className="flex flex-1 flex-col overflow-hidden min-w-0">
         <div className="flex-1 overflow-y-auto">
         {/* Width scale per design-system §8.7: media (pdf/video) gets wider
             reading column; text/markdown/quiz stays at max-w-3xl for comfortable
             line length. */}
+        <div className="overflow-x-auto">
         <div
           className={`${
             lessonType === "document" || lessonType === "video" || lessonType === "html" || lessonType === "policy_doc"
@@ -305,8 +306,8 @@ export default async function LessonPage({
           {showDeadlineBanner && currentDeadlineInfo && (
             <div className={`mb-6 flex items-center gap-3 rounded-lg border px-5 py-4 ${
               currentDeadlineInfo.status === "overdue"
-                ? "border-danger/30 bg-danger-subtle"
-                : "border-warning/30 bg-warning-subtle"
+                ? "border-danger/60 bg-danger-subtle"
+                : "border-warning/60 bg-warning-subtle"
             }`}>
               {currentDeadlineInfo.status === "overdue" ? (
                 <AlertTriangleIcon className="h-5 w-5 flex-shrink-0 text-danger" />
@@ -325,7 +326,7 @@ export default async function LessonPage({
 
           {/* Course complete banner */}
           {isCourseComplete && (
-            <div className="mb-6 flex items-center gap-3 rounded-lg border border-success/30 bg-success-subtle px-5 py-4">
+            <div className="mb-6 flex items-center gap-3 rounded-lg border border-success/60 bg-success-subtle px-5 py-4">
               <CheckCircleIcon className="h-5 w-5 flex-shrink-0 text-success" />
               <div>
                 <p className="text-sm font-semibold text-success">
@@ -361,7 +362,7 @@ export default async function LessonPage({
                 courseLocked={courseLocked}
               />
               {isCurrentLessonCompleted && (
-                <div className="mt-6 flex items-center gap-3 rounded-lg border border-success/30 bg-success-subtle px-5 py-4">
+                <div className="mt-6 flex items-center gap-3 rounded-lg border border-success/60 bg-success-subtle px-5 py-4">
                   <CheckCircleIcon className="h-5 w-5 flex-shrink-0 text-success" />
                   <p className="text-sm font-semibold text-success">
                     Lesson complete — you passed this quiz.
@@ -398,6 +399,7 @@ export default async function LessonPage({
               lessonId={lesson.id}
             />
           )}
+        </div>
         </div>
         </div>
         <LessonFooter
