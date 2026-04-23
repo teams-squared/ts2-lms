@@ -124,7 +124,7 @@ export function PolicyDocViewer(props: PolicyDocViewProps) {
       />
 
       {isStaleAck && (
-        <div className="mb-6 flex items-start gap-3 rounded-lg border border-warning/30 bg-warning-subtle px-5 py-4">
+        <div className="mb-6 flex items-start gap-3 rounded-lg border border-warning/60 bg-warning-subtle px-5 py-4">
           <AlertTriangle className="h-5 w-5 flex-shrink-0 text-warning mt-0.5" aria-hidden="true" />
           <div className="text-sm">
             <p className="font-semibold text-warning">
@@ -284,7 +284,7 @@ function DisclosureButton({
     <button
       type="button"
       onClick={onClick}
-      className="inline-flex items-center gap-1 text-xs text-foreground-muted hover:text-foreground"
+      className="inline-flex items-center gap-1 text-xs text-foreground-muted hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background rounded-sm"
       aria-expanded={open}
     >
       <Icon className="h-3.5 w-3.5" aria-hidden="true" />

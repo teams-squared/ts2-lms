@@ -14,17 +14,17 @@ const VARIANT_STYLES: Record<ToastVariant, { bg: string; icon: string; border: s
   success: {
     bg: "bg-success-subtle",
     icon: "text-success",
-    border: "border-success/30",
+    border: "border-success/60",
   },
   error: {
     bg: "bg-danger-subtle",
     icon: "text-danger",
-    border: "border-danger/30",
+    border: "border-danger/60",
   },
   info: {
     bg: "bg-primary-subtle",
     icon: "text-primary",
-    border: "border-primary/30",
+    border: "border-primary/60",
   },
 };
 

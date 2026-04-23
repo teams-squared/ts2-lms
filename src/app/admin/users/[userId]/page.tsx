@@ -130,7 +130,7 @@ export default async function AdminUserDetailPage({
       />
 
       {overdueList.length > 0 && (
-        <div className="mt-6 rounded-lg border border-danger/30 bg-danger-subtle p-4">
+        <div className="mt-6 rounded-lg border border-danger/60 bg-danger-subtle p-4">
           <h3 className="text-sm font-semibold text-danger mb-3">
             Overdue lessons: {overdueList.length}
           </h3>

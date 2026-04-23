@@ -4,6 +4,7 @@ import { prisma } from "@/lib/prisma";
 import { UserAvatar } from "@/components/ui/UserAvatar";
 import { CourseStatusBadge } from "@/components/courses/CourseStatusBadge";
 import { AlertTriangleIcon } from "@/components/icons";
+import { Button } from "@/components/ui/button";
 import { computeDeadline } from "@/lib/deadlines";
 
 export const dynamic = "force-dynamic";
@@ -92,7 +93,7 @@ async function OverdueSection() {
   const overdueCount = overdueItems.length;
 
   return (
-    <div className="mb-8 rounded-lg border border-danger/30 bg-danger-subtle shadow-sm overflow-hidden">
+    <div className="mb-8 rounded-lg border border-danger/60 bg-danger-subtle shadow-sm overflow-hidden">
       <div className="h-1 bg-danger" />
       <div className="p-5 flex items-center gap-3">
         <AlertTriangleIcon className="w-6 h-6 text-danger flex-shrink-0" />
@@ -215,9 +216,9 @@ export default async function AdminPage() {
         <div>
           <div className="flex items-center justify-between mb-3">
             <h2 className="text-sm font-semibold text-foreground">Recent Signups</h2>
-            <Link href="/admin/users" className="text-xs text-primary hover:underline">
-              View all →
-            </Link>
+            <Button asChild variant="ghost" size="xs">
+              <Link href="/admin/users">View all →</Link>
+            </Button>
           </div>
           <div className="rounded-lg border border-border bg-surface shadow-sm divide-y divide-border">
             {recentUsers.map((user) => (
@@ -235,12 +236,9 @@ export default async function AdminPage() {
                   <span className="text-xs text-foreground-subtle">
                     {new Date(user.createdAt).toLocaleDateString()}
                   </span>
-                  <Link
-                    href={`/admin/users/${user.id}`}
-                    className="text-xs text-primary hover:underline"
-                  >
-                    Manage →
-                  </Link>
+                  <Button asChild variant="secondary" size="xs">
+                    <Link href={`/admin/users/${user.id}`}>Manage</Link>
+                  </Button>
                 </div>
               </div>
             ))}
@@ -251,9 +249,9 @@ export default async function AdminPage() {
         <div>
           <div className="flex items-center justify-between mb-3">
             <h2 className="text-sm font-semibold text-foreground">Recent Courses</h2>
-            <Link href="/admin/courses" className="text-xs text-primary hover:underline">
-              View all →
-            </Link>
+            <Button asChild variant="ghost" size="xs">
+              <Link href="/admin/courses">View all →</Link>
+            </Button>
           </div>
           <div className="rounded-lg border border-border bg-surface shadow-sm divide-y divide-border">
             {recentCourses.map((course) => (
@@ -268,12 +266,9 @@ export default async function AdminPage() {
                 </div>
                 <div className="flex items-center gap-3 flex-shrink-0 ml-3">
                   <CourseStatusBadge status={course.status.toLowerCase() as "draft" | "published" | "archived"} />
-                  <Link
-                    href={`/admin/courses/${course.id}/edit`}
-                    className="text-xs text-primary hover:underline"
-                  >
-                    Edit →
-                  </Link>
+                  <Button asChild variant="secondary" size="xs">
+                    <Link href={`/admin/courses/${course.id}/edit`}>Edit</Link>
+                  </Button>
                 </div>
               </div>
             ))}

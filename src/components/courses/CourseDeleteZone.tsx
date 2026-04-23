@@ -54,7 +54,7 @@ export function CourseDeleteZone({ courseId, courseTitle }: CourseDeleteZoneProp
 
   return (
     <>
-      <div className="rounded-lg border border-danger/30 bg-card p-6">
+      <div className="rounded-lg border border-danger/60 bg-card p-6">
         <h3 className="text-sm font-semibold text-danger mb-1">Danger zone</h3>
         <p className="text-xs text-foreground-muted mb-4">
           Permanently delete this course and all of its content — modules, lessons, quiz

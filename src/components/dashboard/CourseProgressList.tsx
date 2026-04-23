@@ -7,6 +7,7 @@ import {
   GraduationCapIcon,
   ChevronLeftIcon,
   ChevronRightIcon,
+  CheckCircleIcon,
   CATEGORY_ICONS,
   CATEGORY_COLORS,
   CATEGORY_ACCENT_COLORS,
@@ -116,10 +117,11 @@ function ScrollableRow({ courses }: { courses: CourseItem[] }) {
                 </div>
                 {course.isComplete ? (
                   <span
-                    className="inline-flex shrink-0 items-center gap-1 whitespace-nowrap rounded-full border border-success/30 bg-success-subtle px-2 py-0.5 text-[10px] font-semibold text-success"
+                    className="inline-flex shrink-0 items-center gap-1 whitespace-nowrap rounded-full border border-success/60 bg-success-subtle px-2 py-0.5 text-[10px] font-semibold text-success"
                     title="Course completed"
                   >
-                    ✓ Completed
+                    <CheckCircleIcon className="w-4 h-4 text-success" aria-hidden="true" />
+                    Completed
                   </span>
                 ) : isAlmostDone ? (
                   <span
@@ -170,7 +172,7 @@ function ScrollableRow({ courses }: { courses: CourseItem[] }) {
         onClick={() => scrollBy("left")}
         aria-label="Scroll to previous courses"
         disabled={!canScrollLeft}
-        className={`absolute left-0 top-1/2 z-10 h-9 w-9 -translate-y-1/2 rounded-full border border-border bg-card text-foreground shadow-sm transition-all hover:shadow-md focus:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background ${
+        className={`absolute left-0 top-1/2 z-10 h-10 w-10 -translate-y-1/2 rounded-full border border-border bg-card text-foreground shadow-sm transition-all hover:shadow-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background ${
           canScrollLeft ? "opacity-100" : "pointer-events-none opacity-0"
         }`}
       >
@@ -183,7 +185,7 @@ function ScrollableRow({ courses }: { courses: CourseItem[] }) {
         onClick={() => scrollBy("right")}
         aria-label="Scroll to more courses"
         disabled={!canScrollRight}
-        className={`absolute right-0 top-1/2 z-10 h-9 w-9 -translate-y-1/2 rounded-full border border-border bg-card text-foreground shadow-sm transition-all hover:shadow-md focus:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background ${
+        className={`absolute right-0 top-1/2 z-10 h-10 w-10 -translate-y-1/2 rounded-full border border-border bg-card text-foreground shadow-sm transition-all hover:shadow-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background ${
           canScrollRight ? "opacity-100" : "pointer-events-none opacity-0"
         }`}
       >
