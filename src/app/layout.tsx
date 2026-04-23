@@ -3,6 +3,7 @@ import { Inter, Plus_Jakarta_Sans } from "next/font/google";
 import { Suspense } from "react";
 import Providers from "@/components/auth/Providers";
 import { DashboardShell } from "@/components/layout/DashboardShell";
+import PostHogIdentify from "@/components/analytics/PostHogIdentify";
 import PostHogPageView from "@/components/analytics/PostHogPageView";
 import "./globals.css";
 
@@ -57,6 +58,7 @@ export default function RootLayout({
           <Suspense fallback={null}>
             <PostHogPageView />
           </Suspense>
+          <PostHogIdentify />
           <DashboardShell>{children}</DashboardShell>
         </Providers>
       </body>
