@@ -12,8 +12,8 @@ describe("AchievementToast", () => {
   });
 
   const achievements = [
-    { key: "first-lesson", title: "First Lesson", icon: "📚" },
-    { key: "streak-7", title: "Week Warrior", icon: "🔥" },
+    { key: "first-lesson", title: "First Lesson", icon: "book" },
+    { key: "streak-7", title: "Week Warrior", icon: "flame" },
   ];
 
   it("returns null when achievements is empty array", () => {

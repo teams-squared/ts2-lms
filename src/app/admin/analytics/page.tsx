@@ -284,7 +284,17 @@ export default async function AdminAnalyticsPage() {
                     {stat.xp.toLocaleString()}
                   </td>
                   <td className="px-4 py-3 text-right tabular-nums text-foreground">
-                    {stat.streak > 0 ? `🔥 ${stat.streak}` : "—"}
+                    {stat.streak > 0 ? (
+                      <span className="inline-flex items-center gap-1.5 justify-end">
+                        <span
+                          aria-hidden="true"
+                          className="w-1.5 h-1.5 rounded-full bg-warning"
+                        />
+                        {stat.streak}
+                      </span>
+                    ) : (
+                      "—"
+                    )}
                   </td>
                   <td className="px-4 py-3 text-right tabular-nums text-foreground">
                     {stat.user._count.enrollments}

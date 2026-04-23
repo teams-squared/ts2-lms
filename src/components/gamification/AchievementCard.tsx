@@ -1,6 +1,7 @@
 "use client";
 
 import { LockIcon } from "lucide-react";
+import { resolveAchievementIcon } from "@/lib/achievement-icons";
 
 interface AchievementCardProps {
   icon: string;
@@ -11,6 +12,7 @@ interface AchievementCardProps {
 
 export function AchievementCard({ icon, title, description, unlockedAt }: AchievementCardProps) {
   const isLocked = !unlockedAt;
+  const Icon = resolveAchievementIcon(icon);
 
   return (
     <div
@@ -20,8 +22,8 @@ export function AchievementCard({ icon, title, description, unlockedAt }: Achiev
           : "border-border bg-card shadow-sm hover:shadow-md hover:-translate-y-0.5 transition-[transform,box-shadow] duration-150 ease-out"
       }`}
     >
-      <div className="text-3xl mb-2" role="img" aria-label={title}>
-        {icon}
+      <div className="mb-2" role="img" aria-label={title}>
+        <Icon className="w-8 h-8 text-primary" aria-hidden="true" />
       </div>
       <h3 className="text-base font-semibold text-foreground mb-0.5">
         {title}

@@ -1,6 +1,18 @@
 "use client";
 
 import { useState, useEffect, useCallback } from "react";
+import {
+  File,
+  FileText,
+  FileSpreadsheet,
+  FileVideo,
+  Folder,
+  Image as ImageIcon,
+  Paperclip,
+  Presentation,
+  X,
+  type LucideIcon,
+} from "lucide-react";
 import type { SharePointBrowseItem, SharePointBreadcrumb, SharePointDocumentRef } from "@/lib/sharepoint/types";
 
 interface SharePointFilePickerProps {
@@ -12,14 +24,15 @@ interface SharePointFilePickerProps {
   filterLabel?: string;
 }
 
-function fileIcon(mimeType: string): string {
-  if (mimeType === "application/pdf") return "📄";
-  if (mimeType.startsWith("video/")) return "🎬";
-  if (mimeType.includes("word")) return "📝";
-  if (mimeType.includes("excel") || mimeType.includes("spreadsheet")) return "📊";
-  if (mimeType.includes("powerpoint") || mimeType.includes("presentation")) return "📋";
-  if (mimeType.startsWith("image/")) return "🖼️";
-  return "📎";
+function fileIcon(mimeType: string): LucideIcon {
+  if (mimeType === "application/pdf") return FileText;
+  if (mimeType.startsWith("video/")) return FileVideo;
+  if (mimeType.includes("word")) return FileText;
+  if (mimeType.includes("excel") || mimeType.includes("spreadsheet")) return FileSpreadsheet;
+  if (mimeType.includes("powerpoint") || mimeType.includes("presentation")) return Presentation;
+  if (mimeType.startsWith("image/")) return ImageIcon;
+  if (mimeType === "text/html" || mimeType === "application/xhtml+xml") return File;
+  return Paperclip;
 }
 
 function formatSize(bytes: number): string {
@@ -118,7 +131,7 @@ export function SharePointFilePicker({ isOpen, onClose, onSelect, mimeTypeFilter
             className="text-foreground-subtle hover:text-foreground transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring rounded shrink-0"
             aria-label="Close"
           >
-            ✕
+            <X className="w-4 h-4" aria-hidden="true" />
           </button>
         </div>
 
@@ -183,7 +196,7 @@ export function SharePointFilePicker({ isOpen, onClose, onSelect, mimeTypeFilter
                       onClick={() => handleFolderClick(item.id)}
                       className="w-full flex items-center gap-3 py-3 text-left hover:bg-surface-muted rounded-lg px-2 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
                     >
-                      <span className="text-xl">📁</span>
+                      <Folder className="w-5 h-5 text-foreground-muted shrink-0" aria-hidden="true" />
                       <div className="flex-1 min-w-0">
                         <p className="text-sm font-medium text-foreground truncate">
                           {item.name}
@@ -192,14 +205,17 @@ export function SharePointFilePicker({ isOpen, onClose, onSelect, mimeTypeFilter
                           {item.childCount} item{item.childCount !== 1 ? "s" : ""}
                         </p>
                       </div>
-                      <span className="text-foreground-subtle text-sm">›</span>
+                      <span className="text-foreground-subtle text-sm" aria-hidden="true">›</span>
                     </button>
                   ) : (
                     <button
                       onClick={() => handleFileClick(item)}
                       className="w-full flex items-center gap-3 py-3 text-left hover:bg-primary-subtle rounded-lg px-2 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
                     >
-                      <span className="text-xl">{fileIcon(item.mimeType)}</span>
+                      {(() => {
+                        const Icon = fileIcon(item.mimeType);
+                        return <Icon className="w-5 h-5 text-foreground-muted shrink-0" aria-hidden="true" />;
+                      })()}
                       <div className="flex-1 min-w-0">
                         <p className="text-sm font-medium text-foreground truncate">
                           {item.name}

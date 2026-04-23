@@ -4,22 +4,26 @@ import { AchievementCard } from "@/components/gamification/AchievementCard";
 
 describe("AchievementCard", () => {
   const unlockedProps = {
-    icon: "🏆",
+    icon: "trophy",
     title: "First Win",
     description: "Complete your first course",
     unlockedAt: "2026-01-15T00:00:00.000Z",
   };
 
   const lockedProps = {
-    icon: "🏆",
+    icon: "trophy",
     title: "First Win",
     description: "Complete your first course",
     unlockedAt: null,
   };
 
   it("renders icon, title, and description when unlocked", () => {
-    render(<AchievementCard {...unlockedProps} />);
-    expect(screen.getByRole("img", { name: "First Win" })).toHaveTextContent("🏆");
+    const { container } = render(<AchievementCard {...unlockedProps} />);
+    // Icon is rendered as a lucide component (svg), labelled by the
+    // achievement title. Assert the aria-label is set and that no emoji
+    // text content leaks into the card.
+    expect(screen.getByRole("img", { name: "First Win" })).toBeInTheDocument();
+    expect(container.textContent ?? "").not.toMatch(/\p{Extended_Pictographic}/u);
     expect(screen.getByText("First Win")).toBeInTheDocument();
     expect(screen.getByText("Complete your first course")).toBeInTheDocument();
   });
