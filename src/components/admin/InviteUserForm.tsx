@@ -4,6 +4,7 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { useToast } from "@/components/ui/ToastProvider";
 import { CourseNodeTree } from "@/components/admin/CourseNodeTree";
+import { Button } from "@/components/ui/button";
 import type { NodeWithChildren } from "@/lib/courseNodes";
 import type { Role } from "@/lib/types";
 
@@ -240,35 +241,36 @@ export function InviteUserForm({
 
       <div className="flex items-center gap-2">
         {pendingResend ? (
-          <button
+          <Button
             type="button"
+            size="sm"
             onClick={handleConfirmResend}
             disabled={submitting}
-            className="rounded-lg bg-primary hover:bg-primary-hover disabled:opacity-50 disabled:cursor-not-allowed text-primary-foreground text-sm font-medium px-4 py-2 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background"
           >
             {submitting ? "Re-sending…" : "Re-send invite email"}
-          </button>
+          </Button>
         ) : (
-          <button
+          <Button
             type="submit"
+            size="sm"
             disabled={submitting || !email.trim()}
-            className="rounded-lg bg-primary hover:bg-primary-hover disabled:opacity-50 disabled:cursor-not-allowed text-primary-foreground text-sm font-medium px-4 py-2 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background"
           >
             {submitting
               ? "Sending…"
               : selectedCourseIds.size > 0
                 ? `Send invite · ${selectedCourseIds.size} course${selectedCourseIds.size !== 1 ? "s" : ""}`
                 : "Send invite"}
-          </button>
+          </Button>
         )}
-        <button
+        <Button
           type="button"
+          variant="secondary"
+          size="sm"
           onClick={onCancel}
           disabled={submitting}
-          className="rounded-lg border border-border bg-surface hover:bg-surface-muted text-sm font-medium text-foreground px-4 py-2 transition-colors disabled:opacity-50"
         >
           Cancel
-        </button>
+        </Button>
       </div>
     </form>
   );

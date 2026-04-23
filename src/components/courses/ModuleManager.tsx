@@ -594,7 +594,7 @@ export function ModuleManager({
                             if (!qData) return null;
                             return (
                               <div
-                                className="mt-1 mb-1 rounded-lg border border-primary/30 bg-primary-subtle/30 px-4 pb-4"
+                                className="mt-1 mb-1 rounded-lg border border-primary/60 bg-primary-subtle/30 px-4 pb-4"
                                 data-testid={`quiz-builder-panel-${lesson.id}`}
                               >
                                 <QuizBuilder
@@ -733,8 +733,8 @@ export function ModuleManager({
 
       {/* Lesson edit modal */}
       {editingLesson && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-foreground/50 backdrop-blur-sm">
-          <div className="w-full max-w-lg bg-background rounded-lg shadow-lg border border-border p-6">
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 sm:p-6 bg-foreground/50 backdrop-blur-sm">
+          <div className="w-full max-w-2xl max-h-[90dvh] overflow-y-auto bg-background rounded-lg shadow-lg border border-border p-6">
             <h3 className="text-base font-semibold text-foreground">
               Edit lesson
             </h3>

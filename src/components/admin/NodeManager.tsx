@@ -162,7 +162,7 @@ export function NodeManager({ initialTree }: NodeManagerProps) {
                 value={editName}
                 onChange={(e) => setEditName(e.target.value)}
                 onBlur={() => setEditingId(null)}
-                className="text-sm px-1.5 py-0.5 rounded border border-primary/30 bg-surface text-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
+                className="text-sm px-1.5 py-0.5 rounded border border-primary/60 bg-surface text-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
               />
             </form>
           ) : (

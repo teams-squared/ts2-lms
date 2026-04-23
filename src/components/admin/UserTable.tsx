@@ -5,6 +5,7 @@ import Link from "next/link";
 import { UserAvatar } from "@/components/ui/UserAvatar";
 import { Spinner } from "@/components/ui/Spinner";
 import { SkeletonTableRow } from "@/components/ui/Skeleton";
+import { Button } from "@/components/ui/button";
 import { useToast } from "@/components/ui/ToastProvider";
 import type { Role } from "@/lib/types";
 
@@ -166,12 +167,9 @@ export default function UserTable() {
                   {new Date(user.createdAt).toLocaleDateString()}
                 </td>
                 <td className="px-5 py-3 text-right">
-                  <Link
-                    href={`/admin/users/${user.id}`}
-                    className="text-xs text-primary hover:underline"
-                  >
-                    Manage →
-                  </Link>
+                  <Button asChild variant="secondary" size="xs">
+                    <Link href={`/admin/users/${user.id}`}>Manage</Link>
+                  </Button>
                 </td>
               </tr>
             ))}
