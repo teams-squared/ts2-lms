@@ -361,6 +361,17 @@ model CoursePrerequisite {
   @@id([courseId, prerequisiteId])
 }
 
+/// Singleton settings row for ISO acknowledgement email recipients.
+/// Configured by admins via /admin/settings. When `toEmails` is empty the
+/// feature is off — no email is sent on POLICY_DOC acknowledgement.
+model IsoNotificationSettings {
+  id        String   @id @default("singleton")
+  toEmails  String[]
+  ccEmails  String[]
+  updatedAt DateTime @updatedAt
+  updatedBy String?
+}
+
 model DeadlineReminderLog {
   id       String   @id @default(cuid())
   userId   String

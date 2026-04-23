@@ -3,7 +3,7 @@ import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { awardXp } from "@/lib/xp";
 import { trackEvent } from "@/lib/posthog-server";
-import { sendCourseCompletionEmail } from "@/lib/email";
+import { sendCourseCompletionEmail, sendIsoAcknowledgementEmail } from "@/lib/email";
 import { computeCourseCompletionStats } from "@/lib/enrollments";
 
 type Params = { params: Promise<{ id: string; moduleId: string; lessonId: string }> };
@@ -24,12 +24,19 @@ export async function POST(_request: Request, { params }: Params) {
   const lesson = await prisma.lesson.findUnique({
     where: { id: lessonId },
     include: {
-      module: { select: { courseId: true } },
+      module: {
+        select: {
+          courseId: true,
+          course: { select: { title: true } },
+        },
+      },
       policyDoc: {
         select: {
           sourceVersion: true,
           sourceETag: true,
           renderedHTMLHash: true,
+          documentTitle: true,
+          documentCode: true,
         },
       },
     },
@@ -120,6 +127,45 @@ export async function POST(_request: Request, { params }: Params) {
       sourceVersion: lesson.policyDoc.sourceVersion,
       renderedHTMLHash: lesson.policyDoc.renderedHTMLHash,
     });
+
+    // Audit-trail email to ISO Officer / ISO Owner. Recipients live in the
+    // IsoNotificationSettings singleton (configured via /admin/settings).
+    // No recipients = feature off; the ack itself still records to the DB.
+    // The acknowledging employee is Cc'd as a personal receipt.
+    try {
+      const [settings, userData] = await Promise.all([
+        prisma.isoNotificationSettings.findUnique({ where: { id: "singleton" } }),
+        prisma.user.findUnique({
+          where: { id: userId },
+          select: { name: true, email: true },
+        }),
+      ]);
+      if (settings && settings.toEmails.length > 0 && userData) {
+        // Cc admin-configured Cc list + the employee themselves (dedup; never
+        // duplicate into Cc if they're already in To).
+        const ccSet = new Set<string>(settings.ccEmails);
+        if (!settings.toEmails.includes(userData.email)) {
+          ccSet.add(userData.email);
+        }
+        sendIsoAcknowledgementEmail({
+          to: settings.toEmails,
+          cc: [...ccSet],
+          employeeName: userData.name,
+          employeeEmail: userData.email,
+          courseTitle: lesson.module.course.title,
+          documentTitle: lesson.policyDoc.documentTitle,
+          documentCode: lesson.policyDoc.documentCode,
+          documentVersion: lesson.policyDoc.sourceVersion,
+          acknowledgedAt: now,
+          acknowledgedHash: lesson.policyDoc.renderedHTMLHash,
+        }).catch((err) =>
+          console.error("[email] ISO acknowledgement send failed:", err),
+        );
+      }
+    } catch (err) {
+      // Non-critical: never fail the ack write because of an email outage
+      console.error("[email] ISO acknowledgement settings lookup failed:", err);
+    }
   }
 
   // Award XP and track event (fire-and-forget)

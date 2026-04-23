@@ -3,9 +3,10 @@
 import * as React from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { useSession, signOut } from "next-auth/react";
+import { useSession } from "next-auth/react";
 import { Search, LogOut } from "lucide-react";
 
+import { useSignOut } from "@/hooks/useSignOut";
 import { cn } from "@/lib/utils";
 import { ThemeToggle } from "@/components/theme/ThemeToggle";
 import { NotificationBell } from "@/components/layout/NotificationBell";
@@ -41,6 +42,7 @@ interface TopBarProps {
 export function TopBar({ className, compact = false, slim = false }: TopBarProps) {
   const router = useRouter();
   const { data: session } = useSession();
+  const signOut = useSignOut();
   const [query, setQuery] = React.useState("");
 
   function handleSearchSubmit(e: React.FormEvent) {

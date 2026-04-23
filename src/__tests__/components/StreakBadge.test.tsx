@@ -13,11 +13,13 @@ describe("StreakBadge", () => {
     expect(screen.getByText("5-day streak")).toBeInTheDocument();
   });
 
-  it("renders fire emoji with role='img' and aria-label='fire'", () => {
-    render(<StreakBadge streak={3} />);
-    const emoji = screen.getByRole("img", { name: "fire" });
-    expect(emoji).toBeInTheDocument();
-    expect(emoji).toHaveTextContent("🔥");
+  it("renders a decorative streak indicator (not an emoji)", () => {
+    const { container } = render(<StreakBadge streak={3} />);
+    // The streak indicator is a decorative dot, aria-hidden. Assert it
+    // exists and that no emoji text content leaks into the badge.
+    const dot = container.querySelector('[aria-hidden="true"]');
+    expect(dot).not.toBeNull();
+    expect(container.textContent ?? "").not.toMatch(/\p{Extended_Pictographic}/u);
   });
 
   it("renders '1-day streak' for streak=1", () => {

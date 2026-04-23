@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { resolveAchievementIcon } from "@/lib/achievement-icons";
 
 interface Achievement {
   key: string;
@@ -29,20 +30,23 @@ export function AchievementToast({ achievements, onDismiss }: AchievementToastPr
 
   return (
     <div className="fixed bottom-6 right-6 z-50 flex flex-col gap-2 motion-safe:animate-slide-up">
-      {achievements.map((a) => (
-        <div
-          key={a.key}
-          className="flex items-center gap-3 px-4 py-3 rounded-lg bg-primary text-primary-foreground shadow-lg"
-        >
-          <span className="text-2xl" role="img" aria-label={a.title}>
-            {a.icon}
-          </span>
-          <div>
-            <p className="text-xs font-medium text-primary-foreground/80">Achievement Unlocked!</p>
-            <p className="text-sm font-semibold">{a.title}</p>
+      {achievements.map((a) => {
+        const Icon = resolveAchievementIcon(a.icon);
+        return (
+          <div
+            key={a.key}
+            className="flex items-center gap-3 px-4 py-3 rounded-lg bg-primary text-primary-foreground shadow-lg"
+          >
+            <span role="img" aria-label={a.title}>
+              <Icon className="w-6 h-6" aria-hidden="true" />
+            </span>
+            <div>
+              <p className="text-xs font-medium text-primary-foreground/80">Achievement Unlocked!</p>
+              <p className="text-sm font-semibold">{a.title}</p>
+            </div>
           </div>
-        </div>
-      ))}
+        );
+      })}
     </div>
   );
 }

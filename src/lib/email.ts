@@ -183,6 +183,94 @@ export async function sendDeadlineReminderEmail({
   await resend.emails.send({ from: FROM, to, subject, html });
 }
 
+/**
+ * Send an ISO acknowledgement notification when an employee acknowledges a
+ * POLICY_DOC lesson. Recipients are configured by admins under
+ * /admin/settings → ISO notifications. Cc'd to the acknowledging employee
+ * as their personal receipt.
+ *
+ * No-ops gracefully if RESEND_API_KEY is missing or `to` is empty (feature
+ * is treated as disabled when no admin recipients are configured).
+ */
+export async function sendIsoAcknowledgementEmail({
+  to,
+  cc,
+  employeeName,
+  employeeEmail,
+  courseTitle,
+  documentTitle,
+  documentCode,
+  documentVersion,
+  acknowledgedAt,
+  acknowledgedHash,
+}: {
+  to: string[];
+  cc: string[];
+  employeeName: string | null;
+  employeeEmail: string;
+  courseTitle: string;
+  documentTitle: string;
+  documentCode: string | null;
+  documentVersion: string;
+  acknowledgedAt: Date;
+  acknowledgedHash: string;
+}): Promise<void> {
+  if (!resend || to.length === 0) {
+    if (!resend) {
+      console.info("[email] Resend not configured — skipping ISO ack email");
+    }
+    return;
+  }
+
+  const safeEmployee = escapeHtml(employeeName ?? employeeEmail);
+  const safeEmail = escapeHtml(employeeEmail);
+  const safeCourse = escapeHtml(courseTitle);
+  const safeDoc = escapeHtml(documentTitle);
+  const safeCode = documentCode ? escapeHtml(documentCode) : null;
+  const safeVersion = escapeHtml(documentVersion);
+  const isoTime = acknowledgedAt.toISOString();
+  const localTime = acknowledgedAt.toUTCString();
+  const safeHash = escapeHtml(acknowledgedHash);
+
+  const docLine = safeCode
+    ? `${safeDoc} <span style="color: #8e8e93;">(${safeCode})</span> v${safeVersion}`
+    : `${safeDoc} v${safeVersion}`;
+
+  const subject = `ISO ack: ${employeeName ?? employeeEmail} — ${documentTitle}${documentCode ? ` (${documentCode})` : ""} v${documentVersion}`;
+
+  const html = `
+    <div style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; max-width: 620px; margin: 0 auto; padding: 32px 0;">
+      <h2 style="color: #1a1a2e; margin-bottom: 16px;">ISO Document Acknowledgement</h2>
+      <p style="color: #4a4a5a; font-size: 15px; line-height: 1.6;">
+        <strong>${safeEmployee}</strong> has acknowledged reading the following ISO document.
+      </p>
+      <table style="width: 100%; border-collapse: collapse; margin: 20px 0; font-size: 14px;">
+        <tbody>
+          <tr><td style="padding: 8px 0; color: #8e8e93; width: 160px;">Employee</td><td style="padding: 8px 0; color: #1a1a2e;">${safeEmployee} &lt;${safeEmail}&gt;</td></tr>
+          <tr><td style="padding: 8px 0; color: #8e8e93;">Course</td><td style="padding: 8px 0; color: #1a1a2e;">${safeCourse}</td></tr>
+          <tr><td style="padding: 8px 0; color: #8e8e93;">Document</td><td style="padding: 8px 0; color: #1a1a2e;">${docLine}</td></tr>
+          <tr><td style="padding: 8px 0; color: #8e8e93;">Acknowledged</td><td style="padding: 8px 0; color: #1a1a2e;">${escapeHtml(localTime)}<br/><span style="color: #8e8e93; font-size: 12px;">${escapeHtml(isoTime)}</span></td></tr>
+          <tr><td style="padding: 8px 0; color: #8e8e93;">Audit hash</td><td style="padding: 8px 0; color: #1a1a2e; font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 12px; word-break: break-all;">${safeHash}</td></tr>
+        </tbody>
+      </table>
+      <hr style="border: none; border-top: 1px solid #e5e5ea; margin: 24px 0;" />
+      <p style="color: #8e8e93; font-size: 12px;">
+        Automated audit notification from Teams Squared LMS. The audit hash above is the SHA-256 of the
+        rendered document body the employee attested to reading and is recorded against their
+        LessonProgress row for surveillance audits.
+      </p>
+    </div>
+  `;
+
+  await resend.emails.send({
+    from: FROM,
+    to,
+    cc: cc.length > 0 ? cc : undefined,
+    subject,
+    html,
+  });
+}
+
 function escapeHtml(input: string): string {
   return input
     .replace(/&/g, "&amp;")
