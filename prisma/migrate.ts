@@ -7,11 +7,15 @@ import { Client } from "pg";
 loadEnv({ path: ".env.local" });
 loadEnv({ path: ".env" });
 
+// Render Postgres uses a self-signed cert. Match on both the public
+// (`*.render.com`) and internal (`dpg-*`) hostnames — internal connections
+// within Render don't carry `render.com` in the URL.
+const dbUrl = process.env.DATABASE_URL ?? "";
+const isRender = /render\.com|(?:^|@)dpg-/.test(dbUrl);
+
 const client = new Client({
   connectionString: process.env.DATABASE_URL,
-  ssl: process.env.DATABASE_URL?.includes("render.com")
-    ? { rejectUnauthorized: false }
-    : undefined,
+  ssl: isRender ? { rejectUnauthorized: false } : undefined,
 });
 
 async function main() {

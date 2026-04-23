@@ -5,8 +5,9 @@ import bcrypt from "bcryptjs";
 
 const connectionString = process.env.DATABASE_URL!;
 const url = new URL(connectionString);
-if (connectionString.includes("render.com")) {
-  url.searchParams.set("sslmode", "require");
+// Match public (`*.render.com`) and internal (`dpg-*`) Render hostnames.
+if (/render\.com|dpg-/.test(connectionString)) {
+  url.searchParams.set("sslmode", "no-verify");
 }
 const adapter = new PrismaPg({ connectionString: url.toString() });
 const prisma = new PrismaClient({ adapter });
