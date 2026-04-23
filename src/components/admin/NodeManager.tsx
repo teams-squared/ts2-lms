@@ -4,6 +4,7 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { useToast } from "@/components/ui/ToastProvider";
 import { ConfirmDialog } from "@/components/ui/ConfirmDialog";
+import { Button } from "@/components/ui/button";
 import {
   ChevronRightIcon,
   ChevronDownIcon,
@@ -183,14 +184,17 @@ export function NodeManager({ initialTree }: NodeManagerProps) {
 
           {/* Actions */}
           <div className="ml-auto flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
-            <button
+            <Button
+              variant="secondary"
+              size="xs"
               onClick={() => { setAddingParentId(node.id); setNewNodeName(""); setExpanded((p) => new Set(p).add(node.id)); }}
-              className="text-xs text-primary hover:underline px-1.5 py-0.5"
               title="Add child node"
             >
               + Child
-            </button>
-            <button
+            </Button>
+            <Button
+              variant="destructive"
+              size="xs"
               onClick={() =>
                 setPendingDelete({
                   id: node.id,
@@ -199,11 +203,10 @@ export function NodeManager({ initialTree }: NodeManagerProps) {
                   childCount: node.children.length,
                 })
               }
-              className="text-xs text-danger hover:text-danger px-1.5 py-0.5"
               title="Delete node"
             >
               Delete
-            </button>
+            </Button>
           </div>
         </div>
 
@@ -221,19 +224,20 @@ export function NodeManager({ initialTree }: NodeManagerProps) {
               placeholder="New node name…"
               className="text-sm px-2 py-1 rounded-lg border border-border bg-surface text-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring w-48"
             />
-            <button
+            <Button
+              size="xs"
               onClick={() => void handleCreate(node.id)}
               disabled={loading || !newNodeName.trim()}
-              className="text-xs text-primary-foreground bg-primary hover:bg-primary-hover disabled:opacity-50 px-2.5 py-1 rounded-lg focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background"
             >
               Add
-            </button>
-            <button
+            </Button>
+            <Button
+              variant="ghost"
+              size="xs"
               onClick={() => setAddingParentId(null)}
-              className="text-xs text-foreground-muted hover:text-foreground"
             >
               Cancel
-            </button>
+            </Button>
           </div>
         )}
 
@@ -281,28 +285,30 @@ export function NodeManager({ initialTree }: NodeManagerProps) {
               placeholder="Root node name…"
               className="text-sm px-2 py-1.5 rounded-lg border border-border bg-surface text-foreground focus:outline-none focus:ring-1 focus:ring-ring w-48"
             />
-            <button
+            <Button
+              size="sm"
               onClick={() => void handleCreate(null)}
               disabled={loading || !newNodeName.trim()}
-              className="text-xs text-primary-foreground bg-primary hover:bg-primary-hover disabled:opacity-50 px-3 py-1.5 rounded-lg focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background"
             >
               Add
-            </button>
-            <button
+            </Button>
+            <Button
+              variant="ghost"
+              size="sm"
               onClick={() => setAddingParentId(null)}
-              className="text-xs text-foreground-muted hover:text-foreground"
             >
               Cancel
-            </button>
+            </Button>
           </div>
         ) : (
-          <button
+          <Button
+            variant="secondary"
+            size="sm"
             onClick={() => { setAddingParentId("root"); setNewNodeName(""); }}
-            className="inline-flex items-center gap-1.5 text-sm font-medium text-primary hover:text-primary px-3 py-1.5 rounded-lg border border-primary/20 hover:bg-primary-subtle transition-colors"
           >
             <PlusIcon className="w-3.5 h-3.5" />
             Add root node
-          </button>
+          </Button>
         )}
       </div>
 

@@ -8,6 +8,7 @@ import { Spinner } from "@/components/ui/Spinner";
 import { useToast } from "@/components/ui/ToastProvider";
 import { cn } from "@/lib/utils";
 import { CourseCompletionModal } from "@/components/courses/CourseCompletionModal";
+import { Button } from "@/components/ui/button";
 
 interface CourseStats {
   totalLessons: number;
@@ -215,28 +216,25 @@ export function LessonFooter({
             </span>
           ) : !hideMarkComplete && (
             isCompleted ? (
-              <button
-                type="button"
+              <Button
+                variant="secondary"
+                size="sm"
                 onClick={() => void handleMarkIncomplete()}
                 disabled={isLoading}
                 data-testid="mark-incomplete-button"
                 aria-label="Mark this lesson incomplete"
                 title="Click to mark incomplete"
-                className={cn(
-                  "group inline-flex items-center gap-1.5 rounded-md px-3 py-2 text-sm font-medium text-success",
-                  "transition-colors hover:bg-success-subtle disabled:cursor-not-allowed disabled:opacity-60",
-                  "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background",
-                )}
+                className="group text-success hover:bg-success-subtle disabled:cursor-not-allowed"
               >
                 <CheckCircleIcon className="h-4 w-4" aria-hidden="true" />
                 <span className="hidden sm:inline">
                   <span className="group-hover:hidden">Completed</span>
                   <span className="hidden group-hover:inline">Mark incomplete</span>
                 </span>
-              </button>
+              </Button>
             ) : (
-              <button
-                type="button"
+              <Button
+                size="sm"
                 onClick={() => void handleMarkComplete()}
                 disabled={isLoading || !scrollUnlocked}
                 data-testid="mark-complete-button"
@@ -245,11 +243,7 @@ export function LessonFooter({
                     ? "Scroll to the bottom of the document to enable"
                     : undefined
                 }
-                className={cn(
-                  "inline-flex items-center gap-1.5 rounded-md bg-primary px-3 py-2 text-sm font-medium text-primary-foreground",
-                  "transition-colors hover:bg-primary-hover disabled:cursor-not-allowed disabled:opacity-60",
-                  "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background",
-                )}
+                className="disabled:cursor-not-allowed"
               >
                 {isLoading ? (
                   <Spinner size="sm" className="border-primary-foreground border-t-transparent" />
@@ -263,22 +257,17 @@ export function LessonFooter({
                       : "Saving…"
                     : completeLabel ?? "Mark complete"}
                 </span>
-              </button>
+              </Button>
             )
           )}
 
           {nextLessonUrl ? (
-            <Link
-              href={nextLessonUrl}
-              className={cn(
-                "inline-flex items-center gap-1.5 rounded-md border border-border-strong bg-card px-3 py-2 text-sm font-medium text-foreground",
-                "transition-colors hover:bg-surface-muted",
-                "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background",
-              )}
-            >
-              <span className="hidden sm:inline">Next</span>
-              <ChevronRightIcon className="h-4 w-4" aria-hidden="true" />
-            </Link>
+            <Button asChild variant="secondary" size="sm">
+              <Link href={nextLessonUrl}>
+                <span className="hidden sm:inline">Next</span>
+                <ChevronRightIcon className="h-4 w-4" aria-hidden="true" />
+              </Link>
+            </Button>
           ) : (
             <div className="w-[68px]" aria-hidden="true" />
           )}

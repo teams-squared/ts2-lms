@@ -9,7 +9,8 @@ import { getNodeTree, getDescendantCourseIds, countCoursesInSubtree } from "@/li
 import { CourseCard } from "@/components/courses/CourseCard";
 import { SearchBar } from "@/components/courses/SearchBar";
 import { CatalogSidebar } from "@/components/courses/CatalogSidebar";
-import { GraduationCapIcon, BookOpenIcon, ChevronRightIcon } from "@/components/icons";
+import { GraduationCapIcon, BookOpenIcon } from "@/components/icons";
+import { Button } from "@/components/ui/button";
 import { Breadcrumbs } from "@/components/ui/Breadcrumbs";
 import type { Prisma } from "@prisma/client";
 import type { Role } from "@/lib/types";
@@ -375,13 +376,9 @@ export default async function CourseCatalogPage({
                   : "No courses have been assigned to you yet. Contact your administrator."}
               </p>
               {isPrivileged && (
-                <Link
-                  href="/courses"
-                  className="inline-flex items-center gap-1 text-sm font-medium text-primary hover:underline"
-                >
-                  Browse all courses
-                  <ChevronRightIcon className="w-4 h-4" />
-                </Link>
+                <Button asChild size="default">
+                  <Link href="/courses">Browse all courses</Link>
+                </Button>
               )}
             </div>
           ) : (

@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { useEffect, useRef, useState } from "react";
+import { Button } from "@/components/ui/button";
 import {
   GraduationCapIcon,
   ChevronLeftIcon,
@@ -216,12 +217,9 @@ export function CourseProgressList({
               : "Contact your administrator to get enrolled in courses."}
           </p>
           {userRole === "admin" && (
-            <Link
-              href="/courses"
-              className="text-xs font-medium text-primary hover:underline"
-            >
-              Browse the catalog →
-            </Link>
+            <Button asChild size="default">
+              <Link href="/courses">Browse the catalog</Link>
+            </Button>
           )}
         </div>
       </section>

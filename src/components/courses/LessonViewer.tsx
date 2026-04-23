@@ -18,6 +18,7 @@ import type { LessonType } from "@/lib/types";
 import type { SharePointDocumentRef } from "@/lib/sharepoint/types";
 import { toEmbedUrl } from "@/lib/video-embed";
 import { LessonTitleHeader, estimateReadingMinutes } from "@/components/courses/LessonTitleHeader";
+import { Button } from "@/components/ui/button";
 
 /** Explicit Tailwind styling for every markdown element — no typography plugin needed. */
 const mdComponents: Components = {
@@ -122,13 +123,11 @@ function PdfViewer({ proxyUrl, fileName }: { proxyUrl: string; fileName: string 
             <p className="mb-4 text-xs text-foreground-muted">
               The document could not be loaded. You can download it directly instead.
             </p>
-            <a
-              href={proxyUrl}
-              download={fileName}
-              className="inline-block rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground transition-colors hover:bg-primary-hover active:bg-primary-active focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background"
-            >
-              Download {fileName}
-            </a>
+            <Button asChild size="sm">
+              <a href={proxyUrl} download={fileName}>
+                Download {fileName}
+              </a>
+            </Button>
           </div>
         </div>
       ) : ready ? (
@@ -247,13 +246,11 @@ export function LessonViewer({ title, type, content, lessonId }: LessonViewerPro
                 {docRef.mimeType}
               </p>
             </div>
-            <a
-              href={proxyUrl!}
-              download={docRef.fileName}
-              className="shrink-0 rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground transition-colors hover:bg-primary-hover active:bg-primary-active focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background"
-            >
-              Download
-            </a>
+            <Button asChild size="sm" className="shrink-0">
+              <a href={proxyUrl!} download={docRef.fileName}>
+                Download
+              </a>
+            </Button>
           </div>
         )}
       </div>

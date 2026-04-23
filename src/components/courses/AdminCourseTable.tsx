@@ -12,6 +12,7 @@ import {
 } from "@/components/icons";
 import { Spinner } from "@/components/ui/Spinner";
 import { SkeletonTableRow } from "@/components/ui/Skeleton";
+import { Button } from "@/components/ui/button";
 import type { CourseStatus } from "@/lib/types";
 
 interface Course {
@@ -422,12 +423,9 @@ export default function AdminCourseTable({ nodeTree = [] }: { nodeTree?: NodeTre
                             {course.createdBy.name || course.createdBy.email}
                           </td>
                           <td className="px-5 py-3 text-right">
-                            <Link
-                              href={`/admin/courses/${course.id}/edit`}
-                              className="text-xs text-primary hover:underline font-medium"
-                            >
-                              Edit
-                            </Link>
+                            <Button asChild variant="secondary" size="xs">
+                              <Link href={`/admin/courses/${course.id}/edit`}>Edit</Link>
+                            </Button>
                           </td>
                         </tr>
                       ))}
