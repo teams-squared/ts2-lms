@@ -5,8 +5,11 @@ import bcrypt from "bcryptjs";
 
 const connectionString = process.env.DATABASE_URL!;
 const url = new URL(connectionString);
-// Match public (`*.render.com`) and internal (`dpg-*`) Render hostnames.
-if (/render\.com|dpg-/.test(connectionString)) {
+// Managed Postgres commonly uses self-signed certs on an internal CA.
+// Force `sslmode=no-verify` for any non-local DB so TLS is used without
+// aborting on cert validation. Keep defaults for localhost.
+const isLocal = /^(localhost|127\.0\.0\.1|::1)$/.test(url.hostname);
+if (!isLocal) {
   url.searchParams.set("sslmode", "no-verify");
 }
 const adapter = new PrismaPg({ connectionString: url.toString() });
