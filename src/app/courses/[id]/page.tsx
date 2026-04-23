@@ -14,6 +14,7 @@ import { ModuleList } from "@/components/courses/ModuleList";
 import { CheckCircleIcon } from "@/components/icons";
 import { Breadcrumbs } from "@/components/ui/Breadcrumbs";
 import { EnrollButton } from "@/components/courses/EnrollButton";
+import { Button } from "@/components/ui/button";
 
 export const dynamic = "force-dynamic";
 
@@ -193,12 +194,9 @@ export default async function CourseDetailPage({
                 Course complete
               </p>
             ) : continueUrl ? (
-              <Link
-                href={continueUrl}
-                className="text-xs font-medium text-primary hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background rounded-sm"
-              >
-                Continue where you left off →
-              </Link>
+              <Button asChild variant="default" size="default">
+                <Link href={continueUrl}>Continue where you left off</Link>
+              </Button>
             ) : null}
           </div>
         )}

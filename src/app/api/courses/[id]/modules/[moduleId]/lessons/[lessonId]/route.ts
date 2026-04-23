@@ -72,7 +72,7 @@ export async function PATCH(request: Request, { params }: Params) {
   }
   if (body.type !== undefined) {
     const type = body.type as LessonType;
-    if (!["text", "video", "quiz", "document", "html"].includes(type)) {
+    if (!["text", "video", "quiz", "document", "html", "policy_doc"].includes(type)) {
       return NextResponse.json({ error: "Invalid lesson type" }, { status: 400 });
     }
     if ((type === "document" || type === "html") && body.content) {

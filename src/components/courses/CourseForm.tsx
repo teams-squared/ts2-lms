@@ -64,7 +64,7 @@ export function CourseForm({
   return (
     <form onSubmit={handleSubmit} className="space-y-4">
       {error && (
-        <div className="p-3 rounded-lg bg-danger-subtle border border-danger/30 text-danger text-sm">
+        <div className="p-3 rounded-lg bg-danger-subtle border border-danger/60 text-danger text-sm">
           {error}
         </div>
       )}

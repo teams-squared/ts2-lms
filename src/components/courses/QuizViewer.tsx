@@ -175,7 +175,7 @@ export function QuizViewer({
 
   if (questions.length === 0) {
     return (
-      <div className="rounded-lg border border-warning/30 bg-warning-subtle p-8 text-center">
+      <div className="rounded-lg border border-warning/60 bg-warning-subtle p-8 text-center">
         <p className="text-sm text-warning">
           No questions have been added to this quiz yet.
         </p>
@@ -197,7 +197,7 @@ export function QuizViewer({
           />
         )}
         {bestAttempt?.passed && (
-          <div className="flex items-center justify-between gap-3 rounded-lg border border-success/30 bg-success-subtle px-5 py-3">
+          <div className="flex items-center justify-between gap-3 rounded-lg border border-success/60 bg-success-subtle px-5 py-3">
             <div className="flex items-center gap-2">
               <CheckCircleIcon className="h-5 w-5 text-success" aria-hidden="true" />
               <p className="text-sm font-semibold text-success">
@@ -352,7 +352,7 @@ export function QuizViewer({
       {/* Review-mode banner — shown when the server returned locked:true.
           Course is already completed; this attempt was scored but not saved. */}
       {currentResult.locked && (
-        <div className="rounded-lg border border-info/30 bg-info-subtle px-5 py-3 text-sm text-info">
+        <div className="rounded-lg border border-info/60 bg-info-subtle px-5 py-3 text-sm text-info">
           Review mode — your answers aren&apos;t recorded. The course is already
           marked complete.
         </div>
@@ -362,8 +362,8 @@ export function QuizViewer({
       <div
         className={`rounded-lg border p-6 text-center ${
           currentResult.passed
-            ? "border-success/30 bg-success-subtle"
-            : "border-danger/30 bg-danger-subtle"
+            ? "border-success/60 bg-success-subtle"
+            : "border-danger/60 bg-danger-subtle"
         }`}
       >
         <p

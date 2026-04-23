@@ -4,7 +4,9 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { SharePointFilePicker } from "./SharePointFilePicker";
 import { QuizBuilder } from "./QuizBuilder";
+import { PolicyDocLessonEditor } from "./PolicyDocLessonEditor";
 import { ConfirmDialog } from "@/components/ui/ConfirmDialog";
+import { Button } from "@/components/ui/button";
 import type { LessonType } from "@/lib/types";
 import type { SharePointDocumentRef } from "@/lib/sharepoint/types";
 
@@ -81,6 +83,11 @@ export function ModuleManager({
 
   const [editingLesson, setEditingLesson] = useState<Lesson | null>(null);
   const [editingLessonModuleId, setEditingLessonModuleId] = useState<string | null>(null);
+  // Tracks a lesson that was just created via "Add lesson" and immediately
+  // opened in the edit dialog. If the admin cancels out without saving body
+  // content, we discard the row so empty lessons don't pile up.
+  const [justCreatedLessonId, setJustCreatedLessonId] = useState<string | null>(null);
+  const [discardingLesson, setDiscardingLesson] = useState(false);
   const [editTitle, setEditTitle] = useState("");
   const [editContent, setEditContent] = useState("");
   const [editType, setEditType] = useState<LessonType>("text");
@@ -210,6 +217,12 @@ export function ModuleManager({
       setNewLessonTitle("");
       setNewLessonType("text");
       setAddLessonModuleId(null);
+      // Drop the admin straight into the edit dialog so they can fill in the
+      // body — avoids leaving an empty-content lesson stranded in the system
+      // and saves the round-trip click. Tracking the id lets the dialog's
+      // Cancel button become "Discard lesson" for this single session.
+      setJustCreatedLessonId(created.id);
+      startEditLesson(moduleId, created);
       router.refresh();
     } catch {
       /* retry */
@@ -344,11 +357,48 @@ export function ModuleManager({
       );
       setEditingLesson(null);
       setEditingLessonModuleId(null);
+      setJustCreatedLessonId(null);
       router.refresh();
     } catch (err) {
       setEditError(err instanceof Error ? err.message : "Failed to save");
     } finally {
       setEditSaving(false);
+    }
+  };
+
+  /** Close the edit dialog without changes (works for both new & existing lessons). */
+  const handleCancelEdit = () => {
+    setEditingLesson(null);
+    setEditingLessonModuleId(null);
+    setJustCreatedLessonId(null);
+  };
+
+  /** Explicitly discard the lesson — only offered for just-created lessons. */
+  const handleDiscardLesson = async () => {
+    if (!editingLesson || !editingLessonModuleId) return;
+    const moduleId = editingLessonModuleId;
+    const lessonId = editingLesson.id;
+    setDiscardingLesson(true);
+    try {
+      await apiFetch(
+        `/api/courses/${courseId}/modules/${moduleId}/lessons/${lessonId}`,
+        { method: "DELETE" },
+      );
+      setModules(
+        modules.map((m) =>
+          m.id === moduleId
+            ? { ...m, lessons: m.lessons.filter((l) => l.id !== lessonId) }
+            : m,
+        ),
+      );
+      router.refresh();
+    } catch {
+      // On failure, leave the lesson and close the dialog rather than trap.
+    } finally {
+      setDiscardingLesson(false);
+      setEditingLesson(null);
+      setEditingLessonModuleId(null);
+      setJustCreatedLessonId(null);
     }
   };
 
@@ -369,12 +419,13 @@ export function ModuleManager({
           <h2 className="text-sm font-semibold text-foreground">
             Modules &amp; Lessons
           </h2>
-          <button
+          <Button
+            variant="secondary"
+            size="xs"
             onClick={() => setShowAddModule(true)}
-            className="text-xs text-primary hover:underline font-medium"
           >
             + Add module
-          </button>
+          </Button>
         </div>
 
         {modules.length === 0 && !showAddModule && (
@@ -385,13 +436,13 @@ export function ModuleManager({
             <p className="text-sm text-foreground-muted mb-4 max-w-md mx-auto">
               Modules group lessons together. You need to add at least one module before you can add lessons.
             </p>
-            <button
+            <Button
               type="button"
+              size="sm"
               onClick={() => setShowAddModule(true)}
-              className="rounded-lg bg-primary hover:bg-primary-hover text-primary-foreground text-sm font-medium px-4 py-2 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background"
             >
               Add your first module
-            </button>
+            </Button>
           </div>
         )}
 
@@ -447,17 +498,19 @@ export function ModuleManager({
                     </button>
                   </div>
 
-                  <button
+                  <Button
+                    variant="destructive"
+                    size="xs"
                     onClick={(e) => {
                       e.stopPropagation();
                       setPendingDeleteModule(module);
                     }}
                     disabled={deletingModuleId === module.id}
-                    className="text-xs text-danger hover:text-danger/80 disabled:opacity-50 ml-2"
+                    className="ml-2"
                     aria-label={`Delete module ${module.title}`}
                   >
                     Delete
-                  </button>
+                  </Button>
                 </div>
 
                 {/* Module lessons */}
@@ -508,37 +561,40 @@ export function ModuleManager({
                                     Empty
                                   </span>
                                 )}
-                                <button
+                                <Button
+                                  variant="secondary"
+                                  size="xs"
                                   onClick={() => toggleQuizBuilder(lesson.id)}
-                                  className="text-xs text-primary hover:underline"
                                   data-testid={`toggle-quiz-builder-${lesson.id}`}
                                 >
                                   {expandedQuizLessons.has(lesson.id) ? "Quiz Builder ▲" : "Quiz Builder ▼"}
-                                </button>
+                                </Button>
                               </>
                             ) : (
-                              <button
+                              <Button
+                                variant="secondary"
+                                size="xs"
                                 onClick={() => startEditLesson(module.id, lesson)}
-                                className="text-xs text-primary hover:underline"
                               >
                                 Edit
-                              </button>
+                              </Button>
                             )}
-                            <button
+                            <Button
+                              variant="destructive"
+                              size="xs"
                               onClick={() => setPendingDeleteLesson({ moduleId: module.id, lesson })}
                               disabled={deletingLessonId === lesson.id}
-                              className="text-xs text-danger hover:text-danger/80 disabled:opacity-50"
                               aria-label={`Delete lesson ${lesson.title}`}
                             >
                               Delete
-                            </button>
+                            </Button>
                           </div>
                           {lesson.type === "quiz" && expandedQuizLessons.has(lesson.id) && (() => {
                             const qData = quizDataByLessonId[lesson.id];
                             if (!qData) return null;
                             return (
                               <div
-                                className="mt-1 mb-1 rounded-lg border border-primary/30 bg-primary-subtle/30 px-4 pb-4"
+                                className="mt-1 mb-1 rounded-lg border border-primary/60 bg-primary-subtle/30 px-4 pb-4"
                                 data-testid={`quiz-builder-panel-${lesson.id}`}
                               >
                                 <QuizBuilder
@@ -593,22 +649,24 @@ export function ModuleManager({
                               <option value="quiz">Quiz — graded questions</option>
                               <option value="document">Document — SharePoint file</option>
                               <option value="html">HTML — embedded page</option>
+                              <option value="policy_doc">Policy doc — ISO Word doc + acknowledgement</option>
                             </select>
                           </div>
                           <div className="flex items-center gap-2">
-                            <button
+                            <Button
+                              size="sm"
                               onClick={() => void handleAddLesson(module.id)}
                               disabled={addingLesson}
-                              className="rounded-lg bg-primary hover:bg-primary-hover text-primary-foreground text-sm font-medium px-4 py-2 disabled:opacity-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background"
                             >
                               {addingLesson ? "Adding…" : "Add lesson"}
-                            </button>
-                            <button
+                            </Button>
+                            <Button
+                              variant="ghost"
+                              size="xs"
                               onClick={() => setAddLessonModuleId(null)}
-                              className="text-xs text-foreground-muted hover:text-foreground"
                             >
                               Cancel
-                            </button>
+                            </Button>
                           </div>
                         </div>
                         <p className="text-xs text-foreground-subtle mt-2">
@@ -616,16 +674,18 @@ export function ModuleManager({
                         </p>
                       </div>
                     ) : (
-                      <button
+                      <Button
+                        variant="secondary"
+                        size="xs"
                         onClick={() => {
                           setAddLessonModuleId(module.id);
                           setNewLessonTitle("");
                           setNewLessonType("text");
                         }}
-                        className="text-xs text-primary hover:underline mt-1"
+                        className="mt-1"
                       >
                         + Add lesson
-                      </button>
+                      </Button>
                     )}
                   </div>
                 )}
@@ -652,19 +712,20 @@ export function ModuleManager({
                 placeholder="e.g. Week 1 — Security basics"
                 className="flex-1 rounded-lg border border-border bg-card text-sm px-3 py-2 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
               />
-              <button
+              <Button
+                size="sm"
                 onClick={() => void handleAddModule()}
                 disabled={addingModule}
-                className="rounded-lg bg-primary hover:bg-primary-hover text-primary-foreground text-sm px-4 py-2 disabled:opacity-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background"
               >
                 {addingModule ? "Adding…" : "Add module"}
-              </button>
-              <button
+              </Button>
+              <Button
+                variant="ghost"
+                size="sm"
                 onClick={() => setShowAddModule(false)}
-                className="text-sm text-foreground-muted hover:text-foreground"
               >
                 Cancel
-              </button>
+              </Button>
             </div>
           </div>
         )}
@@ -672,8 +733,8 @@ export function ModuleManager({
 
       {/* Lesson edit modal */}
       {editingLesson && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-foreground/50 backdrop-blur-sm">
-          <div className="w-full max-w-lg bg-background rounded-lg shadow-lg border border-border p-6">
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 sm:p-6 bg-foreground/50 backdrop-blur-sm">
+          <div className="w-full max-w-2xl max-h-[90dvh] overflow-y-auto bg-background rounded-lg shadow-lg border border-border p-6">
             <h3 className="text-base font-semibold text-foreground">
               Edit lesson
             </h3>
@@ -710,10 +771,13 @@ export function ModuleManager({
                   <option value="quiz">Quiz</option>
                   <option value="document">Document</option>
                   <option value="html">HTML</option>
+                  <option value="policy_doc">Policy doc</option>
                 </select>
               </div>
 
-              {editType === "document" || editType === "html" || (editType === "video" && videoSource === "sharepoint") ? (
+              {editType === "policy_doc" ? (
+                <PolicyDocLessonEditor lessonId={editingLesson.id} />
+              ) : editType === "document" || editType === "html" || (editType === "video" && videoSource === "sharepoint") ? (
                 <div>
                   <label className="block text-xs font-medium text-foreground-muted mb-1">
                     {editType === "video"
@@ -754,16 +818,17 @@ export function ModuleManager({
                           }
                         })()}
                       </span>
-                      <button
+                      <Button
                         type="button"
+                        variant="secondary"
+                        size="xs"
                         onClick={() => {
                           setPickerTarget("edit");
                           setPickerOpen(true);
                         }}
-                        className="text-xs text-primary hover:underline"
                       >
                         Change
-                      </button>
+                      </Button>
                     </div>
                   ) : (
                     <button
@@ -843,22 +908,35 @@ export function ModuleManager({
               )}
 
               <div className="flex gap-2 pt-2">
-                <button
+                <Button
+                  size="sm"
                   onClick={() => void handleSaveLesson()}
                   disabled={editSaving}
-                  className="rounded-lg bg-primary hover:bg-primary-hover disabled:opacity-50 text-primary-foreground text-sm font-medium px-4 py-2 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background"
                 >
                   {editSaving ? "Saving…" : "Save lesson"}
-                </button>
-                <button
-                  onClick={() => {
-                    setEditingLesson(null);
-                    setEditingLessonModuleId(null);
-                  }}
-                  className="rounded-lg border border-border text-sm text-foreground px-4 py-2 hover:bg-surface-muted"
+                </Button>
+                <Button
+                  variant="secondary"
+                  size="sm"
+                  onClick={handleCancelEdit}
+                  disabled={editSaving || discardingLesson}
+                  title={
+                    editingLesson.id === justCreatedLessonId
+                      ? "Close without changes — the lesson will stay in the module so you can fill it in later."
+                      : undefined
+                  }
                 >
-                  Cancel
-                </button>
+                  {editingLesson.id === justCreatedLessonId ? "Leave blank" : "Cancel"}
+                </Button>
+                {editingLesson.id === justCreatedLessonId && (
+                  <button
+                    onClick={() => void handleDiscardLesson()}
+                    disabled={editSaving || discardingLesson}
+                    className="ml-auto rounded-lg border border-danger/40 text-sm text-danger px-4 py-2 hover:bg-danger/10 disabled:opacity-50"
+                  >
+                    {discardingLesson ? "Discarding…" : "Discard lesson"}
+                  </button>
+                )}
               </div>
             </div>
           </div>

@@ -6,6 +6,7 @@ import { UserAvatar } from "@/components/ui/UserAvatar";
 import type { Role } from "@/lib/types";
 import type { NodeWithChildren } from "@/lib/courseNodes";
 import { InviteUserForm } from "@/components/admin/InviteUserForm";
+import { Button } from "@/components/ui/button";
 
 interface User {
   id: string;
@@ -89,14 +90,13 @@ export function UserList({ users, nodeTree, inviterRole }: UserListProps) {
           <option value="course_manager">Course Manager</option>
           <option value="employee">Employee</option>
         </select>
-        <button
+        <Button
           type="button"
           onClick={() => setShowInvite((v) => !v)}
-          className="rounded-lg bg-primary hover:bg-primary-hover text-primary-foreground text-sm font-medium px-4 py-2.5 transition-colors whitespace-nowrap focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background"
           aria-expanded={showInvite}
         >
           {showInvite ? "Close" : "Invite user"}
-        </button>
+        </Button>
       </div>
 
       {showInvite && (
@@ -156,12 +156,9 @@ export function UserList({ users, nodeTree, inviterRole }: UserListProps) {
                     {new Date(user.createdAt).toLocaleDateString()}
                   </td>
                   <td className="px-5 py-3 text-right">
-                    <Link
-                      href={`/admin/users/${user.id}`}
-                      className="text-xs text-primary hover:underline"
-                    >
-                      Manage →
-                    </Link>
+                    <Button asChild variant="secondary" size="xs">
+                      <Link href={`/admin/users/${user.id}`}>Manage</Link>
+                    </Button>
                   </td>
                 </tr>
               ))
@@ -177,20 +174,22 @@ export function UserList({ users, nodeTree, inviterRole }: UserListProps) {
             Page {safePage} of {totalPages}
           </span>
           <div className="flex gap-2">
-            <button
+            <Button
+              variant="secondary"
+              size="sm"
               onClick={() => setPage((p) => Math.max(1, p - 1))}
               disabled={safePage === 1}
-              className="px-3 py-1.5 rounded-lg border border-border text-xs font-medium text-foreground hover:bg-surface-muted disabled:opacity-40 disabled:cursor-not-allowed transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background"
             >
               Previous
-            </button>
-            <button
+            </Button>
+            <Button
+              variant="secondary"
+              size="sm"
               onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
               disabled={safePage === totalPages}
-              className="px-3 py-1.5 rounded-lg border border-border text-xs font-medium text-foreground hover:bg-surface-muted disabled:opacity-40 disabled:cursor-not-allowed transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background"
             >
               Next
-            </button>
+            </Button>
           </div>
         </div>
       )}

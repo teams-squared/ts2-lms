@@ -11,6 +11,9 @@ import { QuizBuilder } from "@/components/courses/QuizBuilder";
 import { CourseSidebar } from "@/components/courses/CourseSidebar";
 import { LessonFooter } from "@/components/courses/LessonFooter";
 import { LessonTitleHeader } from "@/components/courses/LessonTitleHeader";
+import { PolicyDocViewer } from "@/components/courses/PolicyDocViewer";
+import { linkCrossReferences } from "@/lib/policy-doc/parser";
+import type { ReviewHistoryEntry, RevisionHistoryEntry } from "@/lib/policy-doc/types";
 import { CheckCircleIcon, ClockIcon, AlertTriangleIcon } from "@/components/icons";
 import { Breadcrumbs } from "@/components/ui/Breadcrumbs";
 import { computeDeadline, getDeadlineStatus, formatDeadlineRelative } from "@/lib/deadlines";
@@ -138,7 +141,61 @@ export default async function LessonPage({
 
   const lessonType = prismaLessonTypeToApp(lesson.type);
   const isQuiz = lessonType === "quiz";
+  const isPolicyDoc = lessonType === "policy_doc";
   const isPrivileged = isPrivilegedUser;
+
+  // ── Policy doc fetch ──────────────────────────────────────────────────────
+  // Pull the snapshot + the learner's prior acknowledgement (for stale-banner
+  // detection) + a code→href map of every other policy_doc lesson in this
+  // course (for cross-reference auto-linking at render time).
+  let policyDocViewProps: React.ComponentProps<typeof PolicyDocViewer> | null = null;
+  if (isPolicyDoc) {
+    const [policyDoc, lastProgress, siblings] = await Promise.all([
+      prisma.policyDocLesson.findUnique({ where: { lessonId } }),
+      prisma.lessonProgress.findUnique({
+        where: { userId_lessonId: { userId, lessonId } },
+        select: { acknowledgedVersion: true, acknowledgedAt: true },
+      }),
+      prisma.policyDocLesson.findMany({
+        where: {
+          documentCode: { not: null },
+          lesson: { module: { courseId } },
+        },
+        select: { lessonId: true, documentCode: true },
+      }),
+    ]);
+
+    if (policyDoc) {
+      const codeToHref: Record<string, string> = {};
+      for (const s of siblings) {
+        if (s.documentCode && s.lessonId !== lessonId) {
+          codeToHref[s.documentCode] = `/courses/${courseId}/lessons/${s.lessonId}`;
+        }
+      }
+      const linkedHTML = linkCrossReferences(policyDoc.renderedHTML, codeToHref);
+
+      policyDocViewProps = {
+        lessonId,
+        lessonTitle: lesson.title,
+        documentTitle: policyDoc.documentTitle,
+        documentCode: policyDoc.documentCode,
+        sourceVersion: policyDoc.sourceVersion,
+        approver: policyDoc.approver,
+        approvedOn: policyDoc.approvedOn?.toISOString() ?? null,
+        lastReviewedOn: policyDoc.lastReviewedOn?.toISOString() ?? null,
+        renderedHTML: linkedHTML,
+        revisionHistory: (policyDoc.revisionHistory as unknown as RevisionHistoryEntry[]) ?? [],
+        reviewHistory: (policyDoc.reviewHistory as unknown as ReviewHistoryEntry[]) ?? [],
+        sharePointWebUrl: policyDoc.sharePointWebUrl,
+        lastAcknowledgement: lastProgress
+          ? {
+              version: lastProgress.acknowledgedVersion ?? null,
+              acknowledgedAt: lastProgress.acknowledgedAt?.toISOString() ?? null,
+            }
+          : null,
+      };
+    }
+  }
 
   // Compute prev/next lesson URLs for quiz "Continue" CTA and lesson footer nav
   const allLessonsFlat = sidebarModules.flatMap((m) => m.lessons);
@@ -212,7 +269,7 @@ export default async function LessonPage({
   }
 
   return (
-    <div className="flex h-[calc(100vh-4rem)] overflow-hidden">
+    <div className="flex h-[calc(100dvh-4rem)] overflow-hidden">
       <CourseSidebar
         modules={sidebarModules}
         courseId={courseId}
@@ -223,14 +280,15 @@ export default async function LessonPage({
         deadlineInfoMap={deadlineInfoMap}
       />
 
-      <main className="flex flex-1 flex-col overflow-hidden">
+      <main className="flex flex-1 flex-col overflow-hidden min-w-0">
         <div className="flex-1 overflow-y-auto">
         {/* Width scale per design-system §8.7: media (pdf/video) gets wider
             reading column; text/markdown/quiz stays at max-w-3xl for comfortable
             line length. */}
+        <div className="overflow-x-auto">
         <div
           className={`${
-            lessonType === "document" || lessonType === "video" || lessonType === "html"
+            lessonType === "document" || lessonType === "video" || lessonType === "html" || lessonType === "policy_doc"
               ? "max-w-5xl"
               : "max-w-3xl"
           } mx-auto px-4 sm:px-6 py-8`}
@@ -248,8 +306,8 @@ export default async function LessonPage({
           {showDeadlineBanner && currentDeadlineInfo && (
             <div className={`mb-6 flex items-center gap-3 rounded-lg border px-5 py-4 ${
               currentDeadlineInfo.status === "overdue"
-                ? "border-danger/30 bg-danger-subtle"
-                : "border-warning/30 bg-warning-subtle"
+                ? "border-danger/60 bg-danger-subtle"
+                : "border-warning/60 bg-warning-subtle"
             }`}>
               {currentDeadlineInfo.status === "overdue" ? (
                 <AlertTriangleIcon className="h-5 w-5 flex-shrink-0 text-danger" />
@@ -268,7 +326,7 @@ export default async function LessonPage({
 
           {/* Course complete banner */}
           {isCourseComplete && (
-            <div className="mb-6 flex items-center gap-3 rounded-lg border border-success/30 bg-success-subtle px-5 py-4">
+            <div className="mb-6 flex items-center gap-3 rounded-lg border border-success/60 bg-success-subtle px-5 py-4">
               <CheckCircleIcon className="h-5 w-5 flex-shrink-0 text-success" />
               <div>
                 <p className="text-sm font-semibold text-success">
@@ -304,7 +362,7 @@ export default async function LessonPage({
                 courseLocked={courseLocked}
               />
               {isCurrentLessonCompleted && (
-                <div className="mt-6 flex items-center gap-3 rounded-lg border border-success/30 bg-success-subtle px-5 py-4">
+                <div className="mt-6 flex items-center gap-3 rounded-lg border border-success/60 bg-success-subtle px-5 py-4">
                   <CheckCircleIcon className="h-5 w-5 flex-shrink-0 text-success" />
                   <p className="text-sm font-semibold text-success">
                     Lesson complete — you passed this quiz.
@@ -321,6 +379,18 @@ export default async function LessonPage({
                 />
               )}
             </>
+          ) : isPolicyDoc ? (
+            policyDocViewProps ? (
+              <PolicyDocViewer {...policyDocViewProps} />
+            ) : (
+              <div>
+                <LessonTitleHeader title={lesson.title} type="policy_doc" />
+                <p className="text-sm text-foreground-muted">
+                  This policy document hasn&apos;t been synced from SharePoint yet.
+                  Ask an admin to bind it before reading.
+                </p>
+              </div>
+            )
           ) : (
             <LessonViewer
               title={lesson.title}
@@ -329,6 +399,7 @@ export default async function LessonPage({
               lessonId={lesson.id}
             />
           )}
+        </div>
         </div>
         </div>
         <LessonFooter
@@ -344,6 +415,8 @@ export default async function LessonPage({
           courseTitle={course.title}
           hideMarkComplete={isQuiz}
           courseLocked={courseLocked}
+          requireScrollToComplete={isPolicyDoc && policyDocViewProps != null}
+          completeLabel={isPolicyDoc ? "Acknowledge" : undefined}
         />
       </main>
     </div>

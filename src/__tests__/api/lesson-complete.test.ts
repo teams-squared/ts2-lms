@@ -267,6 +267,102 @@ describe("POST .../lessons/[lessonId]/complete", () => {
     const res2 = await POST(makeReq(), makeParams("c1", "m1", "l1"));
     expect(res2.status).toBe(200);
   });
+
+  // ── POLICY_DOC audit snapshot ─────────────────────────────────────────────
+
+  it("POLICY_DOC: stamps audit fields from PolicyDocLesson onto LessonProgress", async () => {
+    mockAuth.mockResolvedValue(mockSession({ id: "user-1" }));
+    mockPrisma.lesson.findUnique.mockResolvedValue({
+      id: "l1",
+      moduleId: "m1",
+      type: "POLICY_DOC",
+      module: { courseId: "c1" },
+      policyDoc: {
+        sourceVersion: "1.1.0",
+        sourceETag: "etag-xyz",
+        renderedHTMLHash: "hash-deadbeef",
+      },
+    });
+    mockPrisma.enrollment.findUnique.mockResolvedValue(baseEnrollment);
+    mockPrisma.lessonProgress.upsert.mockResolvedValue({
+      id: "lp1",
+      userId: "user-1",
+      lessonId: "l1",
+      startedAt: new Date(),
+      completedAt: new Date(),
+    });
+    mockPrisma.module.findMany.mockResolvedValue([{ lessons: [{ id: "l1" }, { id: "l2" }] }]);
+    mockPrisma.lessonProgress.count.mockResolvedValue(1);
+
+    const req = new Request(
+      "http://localhost/api/courses/c1/modules/m1/lessons/l1/complete",
+      { method: "POST" },
+    );
+    const res = await POST(req, makeParams("c1", "m1", "l1"));
+    expect(res.status).toBe(200);
+
+    const upsertArgs = mockPrisma.lessonProgress.upsert.mock.calls[0][0];
+    // Both create and update branches must carry the audit fields — server
+    // never trusts the client about which version the user saw.
+    expect(upsertArgs.create.acknowledgedVersion).toBe("1.1.0");
+    expect(upsertArgs.create.acknowledgedETag).toBe("etag-xyz");
+    expect(upsertArgs.create.acknowledgedHash).toBe("hash-deadbeef");
+    expect(upsertArgs.create.acknowledgedAt).toBeInstanceOf(Date);
+    expect(upsertArgs.update.acknowledgedVersion).toBe("1.1.0");
+  });
+
+  it("POLICY_DOC: returns 409 when the lesson has no PolicyDocLesson row yet", async () => {
+    mockAuth.mockResolvedValue(mockSession({ id: "user-1" }));
+    mockPrisma.lesson.findUnique.mockResolvedValue({
+      id: "l1",
+      moduleId: "m1",
+      type: "POLICY_DOC",
+      module: { courseId: "c1" },
+      policyDoc: null, // not yet synced
+    });
+    // enrollment lookup never reached — guard fires first
+
+    const req = new Request(
+      "http://localhost/api/courses/c1/modules/m1/lessons/l1/complete",
+      { method: "POST" },
+    );
+    const res = await POST(req, makeParams("c1", "m1", "l1"));
+    expect(res.status).toBe(409);
+    const body = await res.json();
+    expect(body.error).toMatch(/not yet synced/i);
+    expect(mockPrisma.lessonProgress.upsert).not.toHaveBeenCalled();
+  });
+
+  it("non-POLICY_DOC lesson does not write audit fields", async () => {
+    mockAuth.mockResolvedValue(mockSession({ id: "user-1" }));
+    mockPrisma.lesson.findUnique.mockResolvedValue({
+      id: "l1",
+      moduleId: "m1",
+      type: "TEXT",
+      module: { courseId: "c1" },
+      policyDoc: null,
+    });
+    mockPrisma.enrollment.findUnique.mockResolvedValue(baseEnrollment);
+    mockPrisma.lessonProgress.upsert.mockResolvedValue({
+      id: "lp1",
+      userId: "user-1",
+      lessonId: "l1",
+      startedAt: new Date(),
+      completedAt: new Date(),
+    });
+    mockPrisma.module.findMany.mockResolvedValue([{ lessons: [{ id: "l1" }] }]);
+    mockPrisma.lessonProgress.count.mockResolvedValue(0);
+
+    const req = new Request(
+      "http://localhost/api/courses/c1/modules/m1/lessons/l1/complete",
+      { method: "POST" },
+    );
+    await POST(req, makeParams("c1", "m1", "l1"));
+
+    const upsertArgs = mockPrisma.lessonProgress.upsert.mock.calls[0][0];
+    expect(upsertArgs.create.acknowledgedVersion).toBeUndefined();
+    expect(upsertArgs.update.acknowledgedVersion).toBeUndefined();
+  });
 });
 
 describe("DELETE .../lessons/[lessonId]/complete", () => {

@@ -2,12 +2,13 @@
 
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { CheckCircleIcon, ChevronLeftIcon, ChevronRightIcon } from "@/components/icons";
 import { Spinner } from "@/components/ui/Spinner";
 import { useToast } from "@/components/ui/ToastProvider";
 import { cn } from "@/lib/utils";
 import { CourseCompletionModal } from "@/components/courses/CourseCompletionModal";
+import { Button } from "@/components/ui/button";
 
 interface CourseStats {
   totalLessons: number;
@@ -43,6 +44,20 @@ interface LessonFooterProps {
    * Only an admin reset reopens the course.
    */
   courseLocked?: boolean;
+  /**
+   * For POLICY_DOC lessons: gates the Mark-complete button until the learner
+   * scrolls to the bottom of the document. PolicyDocViewer fires a window
+   * CustomEvent `policy-doc-acknowledgeable` with `{ lessonId }` when its
+   * sentinel intersects the viewport. If the lesson is already completed
+   * (re-visit), the gate is bypassed.
+   */
+  requireScrollToComplete?: boolean;
+  /**
+   * Custom CTA label for the Mark-complete button. POLICY_DOC lessons use
+   * "Acknowledge" / "Saving acknowledgement…" instead of "Mark complete" to
+   * make the audit framing explicit.
+   */
+  completeLabel?: string;
 }
 
 /**
@@ -65,6 +80,8 @@ export function LessonFooter({
   courseTitle,
   hideMarkComplete = false,
   courseLocked = false,
+  requireScrollToComplete = false,
+  completeLabel,
 }: LessonFooterProps) {
   const router = useRouter();
   const { toast } = useToast();
@@ -72,6 +89,24 @@ export function LessonFooter({
   const [isLoading, setIsLoading] = useState(false);
   const [modalOpen, setModalOpen] = useState(false);
   const [courseStats, setCourseStats] = useState<CourseStats | null>(null);
+  // Scroll-gate: enabled when (a) the lesson doesn't require scroll, (b)
+  // the lesson was already completed (re-visit), or (c) the PolicyDocViewer
+  // has fired its sentinel-intersection event for THIS lesson.
+  const [scrollUnlocked, setScrollUnlocked] = useState(
+    !requireScrollToComplete || initialCompleted,
+  );
+
+  useEffect(() => {
+    if (!requireScrollToComplete || scrollUnlocked) return;
+    function handler(e: Event) {
+      const detail = (e as CustomEvent<{ lessonId?: string }>).detail;
+      if (detail?.lessonId === lessonId) {
+        setScrollUnlocked(true);
+      }
+    }
+    window.addEventListener("policy-doc-acknowledgeable", handler);
+    return () => window.removeEventListener("policy-doc-acknowledgeable", handler);
+  }, [requireScrollToComplete, scrollUnlocked, lessonId]);
 
   const endpoint = `/api/courses/${courseId}/modules/${moduleId}/lessons/${lessonId}/complete`;
 
@@ -181,36 +216,34 @@ export function LessonFooter({
             </span>
           ) : !hideMarkComplete && (
             isCompleted ? (
-              <button
-                type="button"
+              <Button
+                variant="secondary"
+                size="sm"
                 onClick={() => void handleMarkIncomplete()}
                 disabled={isLoading}
                 data-testid="mark-incomplete-button"
                 aria-label="Mark this lesson incomplete"
                 title="Click to mark incomplete"
-                className={cn(
-                  "group inline-flex items-center gap-1.5 rounded-md px-3 py-2 text-sm font-medium text-success",
-                  "transition-colors hover:bg-success-subtle disabled:cursor-not-allowed disabled:opacity-60",
-                  "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background",
-                )}
+                className="group text-success hover:bg-success-subtle disabled:cursor-not-allowed"
               >
                 <CheckCircleIcon className="h-4 w-4" aria-hidden="true" />
                 <span className="hidden sm:inline">
                   <span className="group-hover:hidden">Completed</span>
                   <span className="hidden group-hover:inline">Mark incomplete</span>
                 </span>
-              </button>
+              </Button>
             ) : (
-              <button
-                type="button"
+              <Button
+                size="sm"
                 onClick={() => void handleMarkComplete()}
-                disabled={isLoading}
+                disabled={isLoading || !scrollUnlocked}
                 data-testid="mark-complete-button"
-                className={cn(
-                  "inline-flex items-center gap-1.5 rounded-md bg-primary px-3 py-2 text-sm font-medium text-primary-foreground",
-                  "transition-colors hover:bg-primary-hover disabled:cursor-not-allowed disabled:opacity-60",
-                  "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background",
-                )}
+                title={
+                  !scrollUnlocked
+                    ? "Scroll to the bottom of the document to enable"
+                    : undefined
+                }
+                className="disabled:cursor-not-allowed"
               >
                 {isLoading ? (
                   <Spinner size="sm" className="border-primary-foreground border-t-transparent" />
@@ -218,24 +251,23 @@ export function LessonFooter({
                   <CheckCircleIcon className="h-4 w-4" aria-hidden="true" />
                 )}
                 <span className="hidden sm:inline">
-                  {isLoading ? "Saving…" : "Mark complete"}
+                  {isLoading
+                    ? completeLabel
+                      ? `Saving ${completeLabel.toLowerCase()}…`
+                      : "Saving…"
+                    : completeLabel ?? "Mark complete"}
                 </span>
-              </button>
+              </Button>
             )
           )}
 
           {nextLessonUrl ? (
-            <Link
-              href={nextLessonUrl}
-              className={cn(
-                "inline-flex items-center gap-1.5 rounded-md border border-border-strong bg-card px-3 py-2 text-sm font-medium text-foreground",
-                "transition-colors hover:bg-surface-muted",
-                "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background",
-              )}
-            >
-              <span className="hidden sm:inline">Next</span>
-              <ChevronRightIcon className="h-4 w-4" aria-hidden="true" />
-            </Link>
+            <Button asChild variant="secondary" size="sm">
+              <Link href={nextLessonUrl}>
+                <span className="hidden sm:inline">Next</span>
+                <ChevronRightIcon className="h-4 w-4" aria-hidden="true" />
+              </Link>
+            </Button>
           ) : (
             <div className="w-[68px]" aria-hidden="true" />
           )}

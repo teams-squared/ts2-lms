@@ -22,6 +22,7 @@ export {
   listDriveItems,
   getDriveItemContent,
   getDriveItemMetadata,
+  resolveShareUrl,
   _resetTokenCache,
 } from "./graph-client";
 export type { DriveItem } from "./graph-client";

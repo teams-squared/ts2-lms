@@ -177,7 +177,8 @@ export default async function AdminAnalyticsPage() {
           Course Activity
         </h2>
         <div className="rounded-lg border border-border bg-card shadow-sm overflow-hidden">
-          <table className="w-full text-sm">
+          <div className="overflow-x-auto">
+          <table className="w-full min-w-[44rem] text-sm">
             <thead>
               <tr className="border-b border-border text-left">
                 <th className="px-4 py-3 text-xs font-medium text-foreground-muted">
@@ -230,6 +231,7 @@ export default async function AdminAnalyticsPage() {
               )}
             </tbody>
           </table>
+          </div>
         </div>
       </div>
 
@@ -239,7 +241,8 @@ export default async function AdminAnalyticsPage() {
           Top Learners
         </h2>
         <div className="rounded-lg border border-border bg-card shadow-sm overflow-hidden">
-          <table className="w-full text-sm">
+          <div className="overflow-x-auto">
+          <table className="w-full min-w-[44rem] text-sm">
             <thead>
               <tr className="border-b border-border text-left">
                 <th className="px-4 py-3 text-xs font-medium text-foreground-muted">
@@ -300,6 +303,7 @@ export default async function AdminAnalyticsPage() {
               )}
             </tbody>
           </table>
+          </div>
         </div>
       </div>
 

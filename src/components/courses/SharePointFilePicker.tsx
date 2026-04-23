@@ -152,7 +152,7 @@ export function SharePointFilePicker({ isOpen, onClose, onSelect, mimeTypeFilter
           )}
 
           {error && !loading && (
-            <div className="rounded-lg bg-danger-subtle border border-danger/30 p-4 text-sm text-danger">
+            <div className="rounded-lg bg-danger-subtle border border-danger/60 p-4 text-sm text-danger">
               {error}
             </div>
           )}

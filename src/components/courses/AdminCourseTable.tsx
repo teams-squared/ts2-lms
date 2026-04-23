@@ -12,6 +12,7 @@ import {
 } from "@/components/icons";
 import { Spinner } from "@/components/ui/Spinner";
 import { SkeletonTableRow } from "@/components/ui/Skeleton";
+import { Button } from "@/components/ui/button";
 import type { CourseStatus } from "@/lib/types";
 
 interface Course {
@@ -252,66 +253,62 @@ export default function AdminCourseTable({ nodeTree = [] }: { nodeTree?: NodeTre
   return (
     <div>
       {statusError && (
-        <div className="mb-3 px-4 py-2.5 rounded-lg bg-danger-subtle border border-danger/30 text-danger text-sm">
+        <div className="mb-3 px-4 py-2.5 rounded-lg bg-danger-subtle border border-danger/60 text-danger text-sm">
           {statusError}
         </div>
       )}
 
       {/* Toolbar */}
-      <div className="flex flex-col gap-3 mb-4">
-        <div className="flex items-center gap-3">
-          <div className="relative flex-1">
-            <SearchIcon className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-foreground-subtle" />
-            <input
-              type="text"
-              value={search}
-              onChange={(e) => { setSearch(e.target.value); resetPage(); }}
-              placeholder="Search courses…"
-              className="w-full pl-9 pr-3 py-2.5 rounded-lg border border-border bg-surface text-sm text-foreground placeholder-foreground-subtle focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring transition-all"
-            />
-          </div>
-          <button
-            onClick={() => setShowForm(true)}
-            className="flex items-center gap-1.5 px-3 py-2.5 rounded-lg bg-primary text-primary-foreground text-sm font-medium hover:bg-primary-hover transition-colors shadow-sm whitespace-nowrap focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background"
-          >
-            <PlusIcon className="w-4 h-4" />
-            New Course
-          </button>
+      <div className="flex flex-col sm:flex-row flex-wrap gap-3 mb-4">
+        <div className="relative w-full sm:flex-1">
+          <SearchIcon className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-foreground-subtle" />
+          <input
+            type="text"
+            value={search}
+            onChange={(e) => { setSearch(e.target.value); resetPage(); }}
+            placeholder="Search courses…"
+            className="w-full pl-9 pr-3 py-2.5 rounded-lg border border-border bg-surface text-sm text-foreground placeholder-foreground-subtle focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring transition-all"
+          />
         </div>
-
-        <div className="flex flex-wrap gap-3">
-          <select
-            value={statusFilter}
-            onChange={(e) => { setStatusFilter(e.target.value as CourseStatus | "all"); resetPage(); }}
-            className={selectClass}
-          >
-            <option value="all">All statuses</option>
-            <option value="draft">Draft</option>
-            <option value="published">Published</option>
-            <option value="archived">Archived</option>
-          </select>
-          <select
-            value={authorFilter}
-            onChange={(e) => { setAuthorFilter(e.target.value); resetPage(); }}
-            className={selectClass}
-          >
-            <option value="all">All authors</option>
-            {authors.map(([email, name]) => (
-              <option key={email} value={email}>{name}</option>
-            ))}
-          </select>
-          <select
-            value={nodeFilter}
-            onChange={(e) => { setNodeFilter(e.target.value); resetPage(); }}
-            className={selectClass}
-          >
-            <option value="all">All nodes</option>
-            {nodes.map(([id, name]) => (
-              <option key={id} value={id}>{name}</option>
-            ))}
-            <option value="unassigned">Unassigned</option>
-          </select>
-        </div>
+        <select
+          value={statusFilter}
+          onChange={(e) => { setStatusFilter(e.target.value as CourseStatus | "all"); resetPage(); }}
+          className={`${selectClass} w-full sm:w-auto`}
+        >
+          <option value="all">All statuses</option>
+          <option value="draft">Draft</option>
+          <option value="published">Published</option>
+          <option value="archived">Archived</option>
+        </select>
+        <select
+          value={authorFilter}
+          onChange={(e) => { setAuthorFilter(e.target.value); resetPage(); }}
+          className={`${selectClass} w-full sm:w-auto`}
+        >
+          <option value="all">All authors</option>
+          {authors.map(([email, name]) => (
+            <option key={email} value={email}>{name}</option>
+          ))}
+        </select>
+        <select
+          value={nodeFilter}
+          onChange={(e) => { setNodeFilter(e.target.value); resetPage(); }}
+          className={`${selectClass} w-full sm:w-auto`}
+        >
+          <option value="all">All nodes</option>
+          {nodes.map(([id, name]) => (
+            <option key={id} value={id}>{name}</option>
+          ))}
+          <option value="unassigned">Unassigned</option>
+        </select>
+        <Button
+          size="sm"
+          onClick={() => setShowForm(true)}
+          className="w-full sm:w-auto"
+        >
+          <PlusIcon className="w-4 h-4" />
+          New Course
+        </Button>
       </div>
 
       {/* Count */}
@@ -331,14 +328,14 @@ export default function AdminCourseTable({ nodeTree = [] }: { nodeTree?: NodeTre
             <p className="text-sm text-foreground-muted mb-4 max-w-sm mx-auto">
               Create your first course to start building learning content for your team.
             </p>
-            <button
+            <Button
               type="button"
+              size="sm"
               onClick={() => setShowForm(true)}
-              className="inline-flex items-center gap-1.5 px-4 py-2.5 rounded-lg bg-primary text-primary-foreground text-sm font-medium hover:bg-primary-hover transition-colors shadow-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background"
             >
               <PlusIcon className="w-4 h-4" />
               Create your first course
-            </button>
+            </Button>
           </div>
         ) : (
           <div className="rounded-lg border border-border bg-card shadow-sm px-5 py-10 text-center text-sm text-foreground-subtle">
@@ -422,12 +419,9 @@ export default function AdminCourseTable({ nodeTree = [] }: { nodeTree?: NodeTre
                             {course.createdBy.name || course.createdBy.email}
                           </td>
                           <td className="px-5 py-3 text-right">
-                            <Link
-                              href={`/admin/courses/${course.id}/edit`}
-                              className="text-xs text-primary hover:underline font-medium"
-                            >
-                              Edit
-                            </Link>
+                            <Button asChild variant="secondary" size="xs">
+                              <Link href={`/admin/courses/${course.id}/edit`}>Edit</Link>
+                            </Button>
                           </td>
                         </tr>
                       ))}
@@ -447,20 +441,22 @@ export default function AdminCourseTable({ nodeTree = [] }: { nodeTree?: NodeTre
             Page {safePage} of {totalPages}
           </span>
           <div className="flex gap-2">
-            <button
+            <Button
+              variant="secondary"
+              size="sm"
               onClick={() => setPage((p) => Math.max(1, p - 1))}
               disabled={safePage === 1}
-              className="px-3 py-1.5 rounded-lg border border-border text-xs font-medium text-foreground hover:bg-surface-muted disabled:opacity-40 disabled:cursor-not-allowed transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background"
             >
               Previous
-            </button>
-            <button
+            </Button>
+            <Button
+              variant="secondary"
+              size="sm"
               onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
               disabled={safePage === totalPages}
-              className="px-3 py-1.5 rounded-lg border border-border text-xs font-medium text-foreground hover:bg-surface-muted disabled:opacity-40 disabled:cursor-not-allowed transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background"
             >
               Next
-            </button>
+            </Button>
           </div>
         </div>
       )}

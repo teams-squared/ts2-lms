@@ -141,6 +141,35 @@ export async function getDriveItemMetadata(
   return res.json();
 }
 
+/**
+ * Resolve a SharePoint sharing URL (or any tenant URL to a file/folder) to a
+ * DriveItem. Works across sites and drives — useful when the document lives
+ * outside the LMS-Materials folder (e.g. a separate ISO policies library).
+ *
+ * Requires Sites.Read.All / Files.Read.All application permissions.
+ */
+export async function resolveShareUrl(shareUrl: string): Promise<DriveItem> {
+  const trimmed = shareUrl.trim();
+  if (!trimmed) {
+    throw new Error("Share URL is empty");
+  }
+
+  // Per Microsoft Graph: base64url-encode the URL, prepend "u!".
+  // https://learn.microsoft.com/en-us/graph/api/shares-get#encoding-sharing-urls
+  const b64 = Buffer.from(trimmed, "utf8").toString("base64");
+  const shareId =
+    "u!" + b64.replace(/\+/g, "-").replace(/\//g, "_").replace(/=+$/, "");
+
+  const res = await graphFetch(
+    `/shares/${shareId}/driveItem?$select=id,name,size,file,folder,webUrl,lastModifiedDateTime,eTag,parentReference`,
+  );
+  if (!res.ok) {
+    const text = await res.text().catch(() => "");
+    throw new Error(`Failed to resolve share URL (${res.status}): ${text}`);
+  }
+  return res.json();
+}
+
 // ─── Graph API types ───────────────────────────────────────────────────────
 
 export interface DriveItem {

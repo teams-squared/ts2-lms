@@ -35,6 +35,7 @@ model User {
   stats               UserStats?
   clearances          UserClearance[]
   deadlineReminderLogs DeadlineReminderLog[]
+  policyDocSyncs      PolicyDocLesson[]    @relation("PolicyDocSyncs")
 }
 
 enum CourseStatus {
@@ -93,6 +94,12 @@ enum LessonType {
   QUIZ
   DOCUMENT
   HTML
+  POLICY_DOC
+}
+
+enum PolicyDocRenderMode {
+  PARSED
+  EMBED
 }
 
 model Module {
@@ -121,11 +128,55 @@ model Lesson {
   quizQuestions QuizQuestion[]
   quizAttempts  QuizAttempt[]
   deadlineReminderLogs DeadlineReminderLog[]
+  policyDoc     PolicyDocLesson?
   createdAt     DateTime         @default(now())
   updatedAt     DateTime         @updatedAt
 
   @@unique([moduleId, order])
   @@index([deadlineDays])
+}
+
+/// Policy-doc lesson body — one row per Lesson where type === POLICY_DOC.
+/// Holds the SharePoint pointer + the rendered snapshot. Re-syncing the
+/// lesson updates this row in place; if `sourceVersion` changes, all prior
+/// `LessonProgress.acknowledgedAt` values for this lesson are cleared so
+/// employees must re-acknowledge the new version.
+model PolicyDocLesson {
+  id                  String              @id @default(cuid())
+  lessonId            String              @unique
+  lesson              Lesson              @relation(fields: [lessonId], references: [id], onDelete: Cascade)
+
+  // Source pointer (SharePoint)
+  sharePointDriveId   String
+  sharePointItemId    String
+  sharePointWebUrl    String
+
+  // Snapshot from last sync
+  documentTitle       String
+  documentCode        String?
+  sourceVersion       String
+  sourceETag          String
+  sourceLastModified  DateTime
+  approver            String?
+  approvedOn          DateTime?
+  lastReviewedOn      DateTime?
+  reviewHistory       Json
+  revisionHistory     Json
+
+  // Rendered output
+  renderMode          PolicyDocRenderMode @default(PARSED)
+  renderedHTML        String              @db.Text
+  renderedHTMLHash    String
+
+  // Sync bookkeeping
+  lastSyncedAt        DateTime
+  lastSyncedById      String
+  lastSyncedBy        User                @relation("PolicyDocSyncs", fields: [lastSyncedById], references: [id], onDelete: Restrict)
+
+  createdAt           DateTime            @default(now())
+  updatedAt           DateTime            @updatedAt
+
+  @@index([documentCode])
 }
 
 model Enrollment {
@@ -150,6 +201,16 @@ model LessonProgress {
   lessonId    String
   startedAt   DateTime?
   completedAt DateTime?
+
+  // Audit snapshot — populated only for POLICY_DOC lessons. Captures the
+  // exact version + ETag + content hash the user acknowledged, so we can
+  // prove what they actually read in an ISO surveillance audit. Cleared
+  // on re-sync when sourceVersion changes (forces re-acknowledgement of
+  // the new version).
+  acknowledgedAt        DateTime?
+  acknowledgedVersion   String?
+  acknowledgedETag      String?
+  acknowledgedHash      String?
 
   user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
   lesson Lesson @relation(fields: [lessonId], references: [id], onDelete: Cascade)
