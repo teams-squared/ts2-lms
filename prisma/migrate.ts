@@ -7,17 +7,30 @@ import { Client } from "pg";
 loadEnv({ path: ".env.local" });
 loadEnv({ path: ".env" });
 
-// Managed Postgres (Render, Heroku, Supabase, etc.) commonly uses a
-// self-signed cert on the DB's internal CA, which node-postgres rejects
-// by default. Relax cert verification for any non-local DB — the channel
-// is still encrypted and the endpoint is authenticated via the URL's
-// credentials. Keep strict SSL for localhost (no TLS in dev).
-const dbUrl = process.env.DATABASE_URL ?? "";
-const isLocal = /@(localhost|127\.0\.0\.1|::1)[:/]/.test(dbUrl);
+// Managed Postgres (Render, Heroku, Supabase, etc.) uses self-signed
+// certs on an internal CA. node-postgres' merge of a URL's sslmode
+// param with a Client-level `ssl` option is unreliable across versions —
+// the URL's sslmode can end up enforcing strict verification even when
+// the ssl option says otherwise. Normalise by rewriting the URL itself
+// to `sslmode=no-verify` for any non-local DB, so there is exactly one
+// source of truth for TLS behaviour.
+function resolveConnectionString(): string | undefined {
+  const raw = process.env.DATABASE_URL;
+  if (!raw) return undefined;
+  try {
+    const url = new URL(raw);
+    const isLocal = /^(localhost|127\.0\.0\.1|::1)$/.test(url.hostname);
+    if (!isLocal) {
+      url.searchParams.set("sslmode", "no-verify");
+    }
+    return url.toString();
+  } catch {
+    return raw;
+  }
+}
 
 const client = new Client({
-  connectionString: process.env.DATABASE_URL,
-  ssl: dbUrl && !isLocal ? { rejectUnauthorized: false } : undefined,
+  connectionString: resolveConnectionString(),
 });
 
 async function main() {
