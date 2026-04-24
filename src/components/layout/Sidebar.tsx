@@ -92,18 +92,40 @@ export function Sidebar({ className }: SidebarProps) {
 
   const visibleItems = NAV_ITEMS.filter((i) => !i.manage || canManage);
 
+  // When `collapsible` is true (unpinned mode), labels and brand text are
+  // hidden at the 64px rail and fade in only when the parent `aside.group`
+  // is hovered or receives keyboard focus. When pinned, labels are always
+  // visible. Rows use w-full so nothing overflows the narrow rail.
+  const collapsible = !pinned;
+  // Tailwind class for "hidden at rail, visible when aside is expanded".
+  // Kept as a string so we can reuse it for the brand text and button label.
+  const labelCls = collapsible
+    ? "opacity-0 transition-opacity duration-150 group-hover:opacity-100 group-focus-within:opacity-100"
+    : "";
+
   const navContent = (
     <>
-      {/* Logo / brand row — 64px to align with top bar. Rendered at the
-         full 264px width; when the aside is 64px, overflow-hidden clips
-         the brand text on the right. */}
-      <div className="flex h-16 w-[264px] shrink-0 items-center border-b border-border px-4">
+      {/* Logo / brand row — 64px to align with top bar. */}
+      <div className="flex h-16 w-full shrink-0 items-center border-b border-border px-4">
         <Link
           href="/"
           className="flex items-center gap-2 rounded-md outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-surface"
           aria-label="Teams Squared home"
         >
-          <Logo size={28} showText={true} />
+          {collapsible ? (
+            // Stack icon-only and with-text variants; cross-fade on expand
+            // so the narrow rail always shows just the icon cleanly.
+            <div className="relative flex h-7 w-[84px] items-center">
+              <div className="absolute inset-y-0 left-0 flex items-center transition-opacity duration-150 group-hover:opacity-0 group-focus-within:opacity-0">
+                <Logo size={28} showText={false} />
+              </div>
+              <div className={cn("absolute inset-y-0 left-0 flex items-center", labelCls)}>
+                <Logo size={28} showText={true} />
+              </div>
+            </div>
+          ) : (
+            <Logo size={28} showText={true} />
+          )}
         </Link>
       </div>
 
@@ -120,7 +142,7 @@ export function Sidebar({ className }: SidebarProps) {
                   aria-current={active ? "page" : undefined}
                   title={label}
                   className={cn(
-                    "relative flex h-10 w-[248px] items-center gap-3 rounded-md px-3 text-sm transition-colors",
+                    "relative flex h-10 w-full items-center gap-3 rounded-md px-3 text-sm transition-colors",
                     "text-foreground-muted hover:bg-surface-muted hover:text-foreground",
                     "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-surface",
                     active &&
@@ -128,7 +150,9 @@ export function Sidebar({ className }: SidebarProps) {
                   )}
                 >
                   <Icon className="h-5 w-5 shrink-0" aria-hidden="true" />
-                  <span className="truncate">{label}</span>
+                  <span className={cn("truncate whitespace-nowrap", labelCls)}>
+                    {label}
+                  </span>
                 </Link>
               </li>
             );
@@ -137,7 +161,7 @@ export function Sidebar({ className }: SidebarProps) {
       </nav>
 
       {/* Pin toggle — bottom breathing room per §8.6 */}
-      <div className="w-[264px] shrink-0 border-t border-border px-2 pt-2 pb-3">
+      <div className="w-full shrink-0 border-t border-border px-2 pt-2 pb-3">
         <button
           type="button"
           onClick={() => setPinned((v) => !v)}
@@ -155,7 +179,9 @@ export function Sidebar({ className }: SidebarProps) {
           ) : (
             <PanelLeftOpen className="h-5 w-5 shrink-0" aria-hidden="true" />
           )}
-          <span className="truncate">{pinned ? "Unpin" : "Pin sidebar"}</span>
+          <span className={cn("truncate whitespace-nowrap", labelCls)}>
+            {pinned ? "Unpin" : "Pin sidebar"}
+          </span>
         </button>
       </div>
     </>
@@ -185,7 +211,7 @@ export function Sidebar({ className }: SidebarProps) {
       <aside
         aria-label="Primary"
         className={cn(
-          "fixed left-0 top-0 z-30 flex h-screen w-16 flex-col overflow-hidden border-r border-border bg-surface",
+          "group fixed left-0 top-0 z-30 flex h-screen w-16 flex-col overflow-hidden border-r border-border bg-surface",
           "transition-[width,box-shadow] duration-200 ease-out",
           "hover:w-[264px] hover:shadow-lg",
           "focus-within:w-[264px] focus-within:shadow-lg",
