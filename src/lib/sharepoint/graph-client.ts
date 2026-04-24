@@ -108,15 +108,22 @@ export async function listDriveItems(
   return res.json();
 }
 
-/** Get the binary content of a drive item (for streaming to the client). */
+/** Get the binary content of a drive item (for streaming to the client).
+ *
+ * When `format` is set, Graph performs a server-side conversion — e.g.
+ * `format: "pdf"` returns a PDF of a .docx/.pptx. Supported sources per
+ * Microsoft docs: csv, doc, docx, odp, ods, odt, pot, potm, potx, pps,
+ * ppsx, ppsxm, ppt, pptm, pptx, rtf, xls, xlsx.
+ */
 export async function getDriveItemContent(
   driveId: string,
   itemId: string,
-  options?: { range?: string | null }
+  options?: { range?: string | null; format?: "pdf" }
 ): Promise<Response> {
   const headers: Record<string, string> = {};
   if (options?.range) headers.Range = options.range;
-  const res = await graphFetch(`/drives/${driveId}/items/${itemId}/content`, {
+  const qs = options?.format ? `?format=${encodeURIComponent(options.format)}` : "";
+  const res = await graphFetch(`/drives/${driveId}/items/${itemId}/content${qs}`, {
     redirect: "follow",
     headers,
   });

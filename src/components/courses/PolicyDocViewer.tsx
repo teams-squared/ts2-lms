@@ -3,19 +3,32 @@
 /**
  * Learner-facing renderer for POLICY_DOC lessons.
  *
+ * Renders the original ISO/policy Word document inline as a PDF (Microsoft
+ * Graph converts the .docx → .pdf server-side; we stream it through the
+ * SharePoint proxy with ?format=pdf). This preserves the Word doc's
+ * formatting, tables, and images exactly as authored.
+ *
+ * The "Acknowledge" button (in LessonFooter) is gated by **two** signals:
+ *   1. A minimum dwell of 10 seconds with the tab focused — short enough
+ *      not to annoy, long enough to prevent drive-by clicks.
+ *   2. An explicit attestation checkbox — "I have read and understood
+ *      [title] v[version]". This is what ISO auditors actually recognize.
+ *
+ * When both signals are satisfied, we fire `POLICY_ACK_EVENT` on the
+ * window. LessonFooter listens for that event (unchanged from the old
+ * scroll-sentinel flow) and enables its CTA.
+ *
  * Surfaces:
  *   - Document Control panel (title, code, version, approver, dates,
  *     collapsed full revision history)
  *   - Stale acknowledgement banner — when the user previously acknowledged
  *     an older version
- *   - The sanitized HTML body (already cross-ref linked server-side)
- *   - Sentinel-based scroll-to-bottom signal — fires a window CustomEvent
- *     so LessonFooter can enable its Mark-complete button only after the
- *     learner has actually reached the bottom of the document
+ *   - Inline PDF render of the current version
+ *   - Attestation block (dwell progress + checkbox)
  */
 
 import { useEffect, useRef, useState } from "react";
-import { ShieldCheck, ChevronDown, ChevronRight, AlertTriangle } from "lucide-react";
+import { ShieldCheck, ChevronDown, ChevronRight, AlertTriangle, CheckCircle2 } from "lucide-react";
 import { LessonTitleHeader } from "./LessonTitleHeader";
 
 export interface PolicyDocViewProps {
@@ -27,7 +40,9 @@ export interface PolicyDocViewProps {
   approver: string | null;
   approvedOn: string | null; // ISO
   lastReviewedOn: string | null; // ISO
-  renderedHTML: string;
+  /** IDs needed to stream the PDF conversion through our SharePoint proxy. */
+  sharePointDriveId: string;
+  sharePointItemId: string;
   /** Pulled from RevisionHistoryEntry[]; parsed JSON shape. */
   revisionHistory: RevisionRow[];
   /** Pulled from ReviewHistoryEntry[]. */
@@ -40,6 +55,9 @@ export interface PolicyDocViewProps {
     version: string | null;
     acknowledgedAt: string | null;
   } | null;
+  /** If the learner has already completed this lesson, we skip the dwell/
+   *  attestation gate — the ack is already captured. */
+  alreadyCompleted?: boolean;
 }
 
 interface RevisionRow {
@@ -61,9 +79,12 @@ interface ReviewRow {
   approvedBy: string | null;
 }
 
-/** Window event fired when the learner scrolls past the sentinel. The
+/** Window event fired when dwell + attestation are both satisfied. The
  *  LessonFooter listens for this matching `lessonId` to enable its CTA. */
 export const POLICY_ACK_EVENT = "policy-doc-acknowledgeable";
+
+/** Minimum focused-tab dwell before the attestation checkbox is accepted. */
+const DWELL_MS = 10_000;
 
 export function PolicyDocViewer(props: PolicyDocViewProps) {
   const {
@@ -75,45 +96,74 @@ export function PolicyDocViewer(props: PolicyDocViewProps) {
     approver,
     approvedOn,
     lastReviewedOn,
-    renderedHTML,
+    sharePointDriveId,
+    sharePointItemId,
     revisionHistory,
     reviewHistory,
     sharePointWebUrl,
     lastAcknowledgement,
+    alreadyCompleted = false,
   } = props;
 
-  const sentinelRef = useRef<HTMLDivElement | null>(null);
-  const firedRef = useRef(false);
   const [showRevisionHistory, setShowRevisionHistory] = useState(false);
   const [showReviewHistory, setShowReviewHistory] = useState(false);
 
-  // Scroll-to-bottom gate. Once the sentinel has crossed the viewport once,
-  // we fire the event and stop watching — the footer button stays enabled
-  // even if the user scrolls back up.
+  // Dwell: accumulated ms of focused-tab time. We tick a 100ms interval
+  // only while document.visibilityState === "visible", so background tabs
+  // don't count.
+  const [dwellMs, setDwellMs] = useState(alreadyCompleted ? DWELL_MS : 0);
+  const [attested, setAttested] = useState(false);
+  const firedRef = useRef(false);
+
   useEffect(() => {
-    const node = sentinelRef.current;
-    if (!node) return;
-    const observer = new IntersectionObserver(
-      (entries) => {
-        for (const e of entries) {
-          if (e.isIntersecting && !firedRef.current) {
-            firedRef.current = true;
-            window.dispatchEvent(
-              new CustomEvent(POLICY_ACK_EVENT, { detail: { lessonId } }),
-            );
-            observer.disconnect();
-          }
-        }
-      },
-      { rootMargin: "0px 0px -10% 0px", threshold: 0 },
+    if (alreadyCompleted) return;
+    if (dwellMs >= DWELL_MS) return;
+
+    let intervalId: ReturnType<typeof setInterval> | null = null;
+
+    function start() {
+      if (intervalId != null) return;
+      intervalId = setInterval(() => {
+        setDwellMs((ms) => Math.min(DWELL_MS, ms + 100));
+      }, 100);
+    }
+    function stop() {
+      if (intervalId == null) return;
+      clearInterval(intervalId);
+      intervalId = null;
+    }
+    function onVisibility() {
+      if (document.visibilityState === "visible") start();
+      else stop();
+    }
+
+    if (document.visibilityState === "visible") start();
+    document.addEventListener("visibilitychange", onVisibility);
+    return () => {
+      stop();
+      document.removeEventListener("visibilitychange", onVisibility);
+    };
+  }, [dwellMs, alreadyCompleted]);
+
+  // Fire the unlock event once dwell + attestation are both satisfied.
+  const dwellDone = dwellMs >= DWELL_MS;
+  const unlocked = alreadyCompleted || (dwellDone && attested);
+  useEffect(() => {
+    if (!unlocked || firedRef.current) return;
+    firedRef.current = true;
+    window.dispatchEvent(
+      new CustomEvent(POLICY_ACK_EVENT, { detail: { lessonId } }),
     );
-    observer.observe(node);
-    return () => observer.disconnect();
-  }, [lessonId]);
+  }, [unlocked, lessonId]);
 
   const isStaleAck =
     lastAcknowledgement?.version != null &&
     lastAcknowledgement.version !== sourceVersion;
+
+  const pdfSrc = `/api/sharepoint/files/${encodeURIComponent(sharePointDriveId)}/${encodeURIComponent(sharePointItemId)}?format=pdf#toolbar=1&navpanes=0&view=FitH`;
+
+  const dwellPct = Math.round((dwellMs / DWELL_MS) * 100);
+  const dwellSecondsRemaining = Math.max(0, Math.ceil((DWELL_MS - dwellMs) / 1000));
 
   return (
     <div>
@@ -142,7 +192,7 @@ export function PolicyDocViewer(props: PolicyDocViewProps) {
           full revision/review history hidden behind disclosure toggles. */}
       <section
         aria-label="Document control"
-        className="mb-6 rounded-lg border border-border bg-surface p-4"
+        className="mb-4 rounded-lg border border-border bg-surface p-4"
       >
         <div className="flex items-start gap-3">
           <ShieldCheck className="h-5 w-5 flex-shrink-0 text-primary mt-0.5" aria-hidden="true" />
@@ -196,67 +246,80 @@ export function PolicyDocViewer(props: PolicyDocViewProps) {
         </div>
       </section>
 
-      {/* Sanitized policy body. Class hooks (.policy-h1/2/3, .policy-xref)
-          come straight from the parser. Heading + paragraph + list styling
-          is applied via the prose-ish ruleset below. */}
-      <article
-        className="policy-prose"
-        dangerouslySetInnerHTML={{ __html: renderedHTML }}
-      />
+      {/* Inline PDF render of the original Word document. height uses dvh
+          so it scales with the viewport on mobile too. */}
+      <div
+        className="mb-4 overflow-hidden rounded-lg border border-border bg-surface"
+        style={{ height: "calc(100dvh - 18rem)", minHeight: "32rem" }}
+      >
+        <iframe
+          src={pdfSrc}
+          title={`${documentTitle} — v${sourceVersion}`}
+          className="h-full w-full"
+          // sandbox intentionally omitted: we serve the PDF from our own
+          // origin via the SharePoint proxy, so same-origin rules apply.
+        />
+      </div>
 
-      <div ref={sentinelRef} aria-hidden="true" className="h-px w-full" />
+      {/* Attestation block. Hidden entirely on re-visit of a completed
+          lesson — the ack is already banked. */}
+      {!alreadyCompleted && (
+        <section
+          aria-label="Acknowledgement"
+          className="mb-6 rounded-lg border border-border bg-surface p-4"
+        >
+          {/* Dwell progress bar — visible only while we're still waiting. */}
+          {!dwellDone && (
+            <div className="mb-3">
+              <div className="flex items-center justify-between text-xs text-foreground-muted">
+                <span>Reading time</span>
+                <span>{dwellSecondsRemaining}s remaining</span>
+              </div>
+              <div className="mt-1.5 h-1.5 w-full overflow-hidden rounded-full bg-surface-muted">
+                <div
+                  className="h-full bg-primary transition-[width] duration-100 ease-linear"
+                  style={{ width: `${dwellPct}%` }}
+                />
+              </div>
+            </div>
+          )}
 
-      <p className="mt-6 text-xs text-foreground-subtle">
-        By acknowledging, you confirm you&apos;ve read and understood the
-        current version of this policy. Your acknowledgement, the version
-        identifier, and a content hash are stored as audit evidence.
-      </p>
+          <label
+            className={`flex cursor-pointer items-start gap-3 rounded-md p-2 -m-2 ${
+              dwellDone ? "hover:bg-surface-muted" : "opacity-60 cursor-not-allowed"
+            }`}
+          >
+            <input
+              type="checkbox"
+              className="mt-0.5 h-4 w-4 shrink-0 rounded border-border text-primary focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-surface disabled:cursor-not-allowed"
+              checked={attested}
+              disabled={!dwellDone}
+              onChange={(e) => setAttested(e.target.checked)}
+              aria-describedby={`attest-desc-${lessonId}`}
+            />
+            <span className="text-sm">
+              <span className="font-medium text-foreground">
+                I have read and understood{" "}
+                <span className="font-semibold">{documentTitle}</span> v{sourceVersion}.
+              </span>
+              <span
+                id={`attest-desc-${lessonId}`}
+                className="mt-1 block text-xs text-foreground-muted"
+              >
+                Your attestation, the version, and a content hash are stored
+                as audit evidence.
+              </span>
+            </span>
+          </label>
 
-      {/* Inline minimal styles for the rendered body — keeps the typography
-          consistent with the rest of the LMS without adding a global CSS
-          dependency. */}
-      <style jsx global>{`
-        .policy-prose .policy-h1 {
-          font-family: var(--font-display, inherit);
-          font-size: 1.5rem;
-          font-weight: 600;
-          margin: 1.5rem 0 1rem;
-          color: var(--color-foreground, #111);
-        }
-        .policy-prose .policy-h2 {
-          font-family: var(--font-display, inherit);
-          font-size: 1.25rem;
-          font-weight: 600;
-          margin: 1.5rem 0 0.75rem;
-          color: var(--color-foreground, #111);
-        }
-        .policy-prose .policy-h3 {
-          font-size: 1rem;
-          font-weight: 600;
-          margin: 1.25rem 0 0.5rem;
-          color: var(--color-foreground, #111);
-        }
-        .policy-prose p {
-          font-size: 1rem;
-          line-height: 1.7;
-          margin-bottom: 1rem;
-        }
-        .policy-prose ul,
-        .policy-prose ol {
-          padding-left: 1.5rem;
-          margin-bottom: 1rem;
-        }
-        .policy-prose ul { list-style: disc; }
-        .policy-prose ol { list-style: decimal; }
-        .policy-prose li {
-          line-height: 1.7;
-          margin-bottom: 0.25rem;
-        }
-        .policy-prose a.policy-xref {
-          color: var(--color-primary, #2563eb);
-          text-decoration: underline;
-        }
-      `}</style>
+          {unlocked && (
+            <p className="mt-3 flex items-center gap-2 text-xs text-success">
+              <CheckCircle2 className="h-4 w-4" aria-hidden="true" />
+              Ready to acknowledge — use the button below.
+            </p>
+          )}
+        </section>
+      )}
     </div>
   );
 }

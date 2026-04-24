@@ -46,10 +46,11 @@ interface LessonFooterProps {
   courseLocked?: boolean;
   /**
    * For POLICY_DOC lessons: gates the Mark-complete button until the learner
-   * scrolls to the bottom of the document. PolicyDocViewer fires a window
-   * CustomEvent `policy-doc-acknowledgeable` with `{ lessonId }` when its
-   * sentinel intersects the viewport. If the lesson is already completed
-   * (re-visit), the gate is bypassed.
+   * has satisfied both a minimum dwell (10s focused) AND ticked an explicit
+   * "I have read and understood" attestation checkbox inside the viewer.
+   * PolicyDocViewer fires a window CustomEvent `policy-doc-acknowledgeable`
+   * with `{ lessonId }` when both signals land. If the lesson is already
+   * completed (re-visit), the gate is bypassed.
    */
   requireScrollToComplete?: boolean;
   /**
