@@ -8,8 +8,8 @@ import {
   Home,
   GraduationCap,
   Shield,
-  ChevronsLeft,
-  ChevronsRight,
+  PanelLeftClose,
+  PanelLeftOpen,
 } from "lucide-react";
 
 import { cn } from "@/lib/utils";
@@ -18,12 +18,23 @@ import Logo from "@/components/Logo";
 /**
  * Sidebar — design-system Section 8.6 (primary navigation).
  *
- * Width: 264px expanded, 64px collapsed. bg-surface + border-right.
- * Items: 40px tall, rounded-md. Active state uses bg-primary-subtle +
- * 3px primary accent bar on the left edge (pseudo-element).
+ * Two layout modes:
  *
- * Collapsible state is persisted to localStorage (key: "sidebar-collapsed").
- * Collapse toggle sits at the bottom of the sidebar.
+ * 1. **Unpinned (default)** — the sidebar sits at 64px in the layout flow but
+ *    is rendered as a `position: fixed` overlay. On hover or keyboard focus
+ *    it expands to 264px, floating over the page content without reflowing
+ *    it. This keeps the maximum content width available for lessons and
+ *    reading flows while leaving navigation a single mouse-over away.
+ *
+ * 2. **Pinned** — the sidebar behaves like a classic fixed-width rail:
+ *    264px wide, in the layout flow (no overlay). Use this when you want
+ *    labels always visible and don't mind the content-width cost.
+ *
+ * Pin state is persisted to localStorage (key: "sidebar-pinned"). A legacy
+ * "sidebar-collapsed" key from the old manual-collapse implementation is
+ * migrated on first read — users who previously kept the sidebar expanded
+ * (collapsed=false) are promoted to pinned=true so their preference is
+ * preserved.
  */
 
 interface NavItem {
@@ -41,21 +52,26 @@ const NAV_ITEMS: NavItem[] = [
 ];
 
 interface SidebarProps {
-  /** Exposed so the shell can adjust its own left-padding to match. */
-  onCollapseChange?: (collapsed: boolean) => void;
   className?: string;
 }
 
-export function Sidebar({ onCollapseChange, className }: SidebarProps) {
+export function Sidebar({ className }: SidebarProps) {
   const pathname = usePathname();
   const { data: session } = useSession();
-  const [collapsed, setCollapsed] = React.useState(false);
+  const [pinned, setPinned] = React.useState(false);
   const [mounted, setMounted] = React.useState(false);
 
+  // Load persisted pref, with a one-time migration from the legacy key.
   React.useEffect(() => {
     try {
-      const stored = localStorage.getItem("sidebar-collapsed");
-      if (stored === "true") setCollapsed(true);
+      const stored = localStorage.getItem("sidebar-pinned");
+      if (stored !== null) {
+        setPinned(stored === "true");
+      } else {
+        const legacy = localStorage.getItem("sidebar-collapsed");
+        if (legacy === "false") setPinned(true);
+        if (legacy !== null) localStorage.removeItem("sidebar-collapsed");
+      }
     } catch {
       /* ignore */
     }
@@ -64,41 +80,30 @@ export function Sidebar({ onCollapseChange, className }: SidebarProps) {
 
   React.useEffect(() => {
     if (!mounted) return;
-    onCollapseChange?.(collapsed);
     try {
-      localStorage.setItem("sidebar-collapsed", String(collapsed));
+      localStorage.setItem("sidebar-pinned", String(pinned));
     } catch {
       /* ignore */
     }
-  }, [collapsed, mounted, onCollapseChange]);
+  }, [pinned, mounted]);
 
   const canManage =
     session?.user?.role === "admin" || session?.user?.role === "course_manager";
 
   const visibleItems = NAV_ITEMS.filter((i) => !i.manage || canManage);
 
-  return (
-    <aside
-      aria-label="Primary"
-      className={cn(
-        "sticky top-0 z-30 flex h-screen shrink-0 flex-col border-r border-border bg-surface transition-[width] duration-200 ease-out",
-        collapsed ? "w-16" : "w-[264px]",
-        className,
-      )}
-    >
-      {/* Logo / brand row — 64px to align with top bar */}
-      <div
-        className={cn(
-          "flex h-16 items-center border-b border-border",
-          collapsed ? "justify-center px-2" : "px-4",
-        )}
-      >
+  const navContent = (
+    <>
+      {/* Logo / brand row — 64px to align with top bar. Rendered at the
+         full 264px width; when the aside is 64px, overflow-hidden clips
+         the brand text on the right. */}
+      <div className="flex h-16 w-[264px] shrink-0 items-center border-b border-border px-4">
         <Link
           href="/"
           className="flex items-center gap-2 rounded-md outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-surface"
           aria-label="Teams Squared home"
         >
-          <Logo size={28} showText={!collapsed} />
+          <Logo size={28} showText={true} />
         </Link>
       </div>
 
@@ -113,18 +118,17 @@ export function Sidebar({ onCollapseChange, className }: SidebarProps) {
                 <Link
                   href={href}
                   aria-current={active ? "page" : undefined}
-                  title={collapsed ? label : undefined}
+                  title={label}
                   className={cn(
-                    "relative flex h-10 items-center gap-3 rounded-md px-3 text-sm transition-colors",
+                    "relative flex h-10 w-[248px] items-center gap-3 rounded-md px-3 text-sm transition-colors",
                     "text-foreground-muted hover:bg-surface-muted hover:text-foreground",
                     "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-surface",
                     active &&
                       "bg-primary-subtle text-primary-subtle-foreground font-medium before:absolute before:left-0 before:top-1/2 before:h-6 before:w-[3px] before:-translate-y-1/2 before:rounded-r before:bg-primary",
-                    collapsed && "justify-center px-0",
                   )}
                 >
                   <Icon className="h-5 w-5 shrink-0" aria-hidden="true" />
-                  {!collapsed && <span className="truncate">{label}</span>}
+                  <span className="truncate">{label}</span>
                 </Link>
               </li>
             );
@@ -132,30 +136,64 @@ export function Sidebar({ onCollapseChange, className }: SidebarProps) {
         </ul>
       </nav>
 
-      {/* Collapse toggle — bottom breathing room per §8.6 */}
-      <div className="border-t border-border px-2 pt-2 pb-3">
+      {/* Pin toggle — bottom breathing room per §8.6 */}
+      <div className="w-[264px] shrink-0 border-t border-border px-2 pt-2 pb-3">
         <button
           type="button"
-          onClick={() => setCollapsed((v) => !v)}
-          aria-label={collapsed ? "Expand sidebar" : "Collapse sidebar"}
-          aria-pressed={collapsed}
+          onClick={() => setPinned((v) => !v)}
+          aria-label={pinned ? "Unpin sidebar" : "Pin sidebar"}
+          aria-pressed={pinned}
+          title={pinned ? "Unpin sidebar" : "Pin sidebar"}
           className={cn(
             "flex h-10 w-full items-center gap-3 rounded-md px-3 text-sm text-foreground-muted transition-colors",
             "hover:bg-surface-muted hover:text-foreground",
             "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-surface",
-            collapsed && "justify-center px-0",
           )}
         >
-          {collapsed ? (
-            <ChevronsRight className="h-5 w-5" aria-hidden="true" />
+          {pinned ? (
+            <PanelLeftClose className="h-5 w-5 shrink-0" aria-hidden="true" />
           ) : (
-            <>
-              <ChevronsLeft className="h-5 w-5" aria-hidden="true" />
-              <span>Collapse</span>
-            </>
+            <PanelLeftOpen className="h-5 w-5 shrink-0" aria-hidden="true" />
           )}
+          <span className="truncate">{pinned ? "Unpin" : "Pin sidebar"}</span>
         </button>
       </div>
-    </aside>
+    </>
+  );
+
+  // --- Pinned: classic in-flow 264px rail ---
+  if (pinned) {
+    return (
+      <aside
+        aria-label="Primary"
+        className={cn(
+          "sticky top-0 z-30 flex h-screen w-[264px] shrink-0 flex-col overflow-hidden border-r border-border bg-surface",
+          className,
+        )}
+      >
+        {navContent}
+      </aside>
+    );
+  }
+
+  // --- Unpinned: 64px spacer in flow + fixed overlay sidebar ---
+  return (
+    <>
+      {/* Spacer reserves the 64px rail in the flex flow so main content
+         starts 64px from the left, regardless of overlay state. */}
+      <div aria-hidden="true" className="w-16 shrink-0" />
+      <aside
+        aria-label="Primary"
+        className={cn(
+          "fixed left-0 top-0 z-30 flex h-screen w-16 flex-col overflow-hidden border-r border-border bg-surface",
+          "transition-[width,box-shadow] duration-200 ease-out",
+          "hover:w-[264px] hover:shadow-lg",
+          "focus-within:w-[264px] focus-within:shadow-lg",
+          className,
+        )}
+      >
+        {navContent}
+      </aside>
+    </>
   );
 }
