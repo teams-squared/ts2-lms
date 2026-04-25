@@ -1,5 +1,4 @@
 import type { NextConfig } from "next";
-import path from "path";
 
 const securityHeaders = [
   { key: "X-Content-Type-Options", value: "nosniff" },
@@ -26,8 +25,9 @@ const securityHeaders = [
 const nextConfig: NextConfig = {
   // Explicitly set the project root so Turbopack doesn't mistake the parent
   // directory's stale package-lock.json as the workspace root.
+  // `import.meta.dirname` is the ESM-safe replacement for `__dirname` (Node ≥20.11).
   turbopack: {
-    root: path.resolve(__dirname),
+    root: import.meta.dirname,
   },
   async headers() {
     return [

@@ -54,8 +54,9 @@ export async function cleanExpiredMetadata(): Promise<number> {
 
 const CACHE_DIR = path.join(process.cwd(), ".cache", "sharepoint");
 
-function fileCacheHash(driveId: string, itemId: string): string {
-  return createHash("sha256").update(`${driveId}:${itemId}`).digest("hex");
+function fileCacheHash(driveId: string, itemId: string, variant?: string): string {
+  const key = variant ? `${driveId}:${itemId}:${variant}` : `${driveId}:${itemId}`;
+  return createHash("sha256").update(key).digest("hex");
 }
 
 function fileCachePath(hash: string): string {
@@ -75,9 +76,10 @@ interface FileCacheMeta {
 
 export async function getCachedFile(
   driveId: string,
-  itemId: string
+  itemId: string,
+  variant?: string
 ): Promise<{ data: Buffer; meta: FileCacheMeta } | null> {
-  const hash = fileCacheHash(driveId, itemId);
+  const hash = fileCacheHash(driveId, itemId, variant);
   try {
     const metaRaw = await readFile(fileMetaPath(hash), "utf-8");
     const meta: FileCacheMeta = JSON.parse(metaRaw);
@@ -93,9 +95,10 @@ export async function setCachedFile(
   driveId: string,
   itemId: string,
   data: Buffer,
-  meta: Omit<FileCacheMeta, "expiresAt">
+  meta: Omit<FileCacheMeta, "expiresAt">,
+  variant?: string
 ): Promise<void> {
-  const hash = fileCacheHash(driveId, itemId);
+  const hash = fileCacheHash(driveId, itemId, variant);
   const fullMeta: FileCacheMeta = { ...meta, expiresAt: Date.now() + METADATA_CACHE_TTL_MS };
 
   await mkdir(CACHE_DIR, { recursive: true });

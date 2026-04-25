@@ -12,7 +12,6 @@ import { CourseSidebar } from "@/components/courses/CourseSidebar";
 import { LessonFooter } from "@/components/courses/LessonFooter";
 import { LessonTitleHeader } from "@/components/courses/LessonTitleHeader";
 import { PolicyDocViewer } from "@/components/courses/PolicyDocViewer";
-import { linkCrossReferences } from "@/lib/policy-doc/parser";
 import type { ReviewHistoryEntry, RevisionHistoryEntry } from "@/lib/policy-doc/types";
 import { CheckCircleIcon, ClockIcon, AlertTriangleIcon } from "@/components/icons";
 import { Breadcrumbs } from "@/components/ui/Breadcrumbs";
@@ -146,34 +145,20 @@ export default async function LessonPage({
 
   // ── Policy doc fetch ──────────────────────────────────────────────────────
   // Pull the snapshot + the learner's prior acknowledgement (for stale-banner
-  // detection) + a code→href map of every other policy_doc lesson in this
-  // course (for cross-reference auto-linking at render time).
+  // detection). The document body itself is rendered by streaming the
+  // SharePoint .docx through our proxy with ?format=pdf — no HTML snapshot
+  // needs to cross the wire.
   let policyDocViewProps: React.ComponentProps<typeof PolicyDocViewer> | null = null;
   if (isPolicyDoc) {
-    const [policyDoc, lastProgress, siblings] = await Promise.all([
+    const [policyDoc, lastProgress] = await Promise.all([
       prisma.policyDocLesson.findUnique({ where: { lessonId } }),
       prisma.lessonProgress.findUnique({
         where: { userId_lessonId: { userId, lessonId } },
         select: { acknowledgedVersion: true, acknowledgedAt: true },
       }),
-      prisma.policyDocLesson.findMany({
-        where: {
-          documentCode: { not: null },
-          lesson: { module: { courseId } },
-        },
-        select: { lessonId: true, documentCode: true },
-      }),
     ]);
 
     if (policyDoc) {
-      const codeToHref: Record<string, string> = {};
-      for (const s of siblings) {
-        if (s.documentCode && s.lessonId !== lessonId) {
-          codeToHref[s.documentCode] = `/courses/${courseId}/lessons/${s.lessonId}`;
-        }
-      }
-      const linkedHTML = linkCrossReferences(policyDoc.renderedHTML, codeToHref);
-
       policyDocViewProps = {
         lessonId,
         lessonTitle: lesson.title,
@@ -183,7 +168,8 @@ export default async function LessonPage({
         approver: policyDoc.approver,
         approvedOn: policyDoc.approvedOn?.toISOString() ?? null,
         lastReviewedOn: policyDoc.lastReviewedOn?.toISOString() ?? null,
-        renderedHTML: linkedHTML,
+        sharePointDriveId: policyDoc.sharePointDriveId,
+        sharePointItemId: policyDoc.sharePointItemId,
         revisionHistory: (policyDoc.revisionHistory as unknown as RevisionHistoryEntry[]) ?? [],
         reviewHistory: (policyDoc.reviewHistory as unknown as ReviewHistoryEntry[]) ?? [],
         sharePointWebUrl: policyDoc.sharePointWebUrl,
@@ -193,6 +179,7 @@ export default async function LessonPage({
               acknowledgedAt: lastProgress.acknowledgedAt?.toISOString() ?? null,
             }
           : null,
+        alreadyCompleted: completedIds.has(lessonId),
       };
     }
   }
