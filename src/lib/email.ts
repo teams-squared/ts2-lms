@@ -4,7 +4,7 @@ const resend = process.env.RESEND_API_KEY
   ? new Resend(process.env.RESEND_API_KEY)
   : null;
 
-const FROM = process.env.EMAIL_FROM ?? "Teams Squared LMS <lms@teamsquared.io>";
+const FROM = process.env.EMAIL_FROM ?? "Teams Squared LMS <lms-noreply@teamsquared.io>";
 
 const APP_URL =
   process.env.NEXT_PUBLIC_APP_URL ??
