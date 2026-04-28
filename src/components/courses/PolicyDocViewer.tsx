@@ -9,8 +9,9 @@
  * formatting, tables, and images exactly as authored.
  *
  * The "Acknowledge" button (in LessonFooter) is gated by **two** signals:
- *   1. A minimum dwell of 10 seconds with the tab focused — short enough
- *      not to annoy, long enough to prevent drive-by clicks.
+ *   1. A minimum dwell of 6 minutes with the tab focused — long enough
+ *      that the learner has actually had time to read a typical policy.
+ *      Background tabs do not count.
  *   2. An explicit attestation checkbox — "I have read and understood
  *      [title] v[version]". This is what ISO auditors actually recognize.
  *
@@ -28,7 +29,7 @@
  */
 
 import { useEffect, useRef, useState } from "react";
-import { ShieldCheck, ChevronDown, ChevronRight, AlertTriangle, CheckCircle2 } from "lucide-react";
+import { ShieldCheck, ChevronDown, ChevronRight, AlertTriangle, CheckCircle2, Clock } from "lucide-react";
 import { LessonTitleHeader } from "./LessonTitleHeader";
 
 export interface PolicyDocViewProps {
@@ -84,7 +85,7 @@ interface ReviewRow {
 export const POLICY_ACK_EVENT = "policy-doc-acknowledgeable";
 
 /** Minimum focused-tab dwell before the attestation checkbox is accepted. */
-const DWELL_MS = 10_000;
+const DWELL_MS = 6 * 60 * 1000;
 
 export function PolicyDocViewer(props: PolicyDocViewProps) {
   const {
@@ -164,6 +165,9 @@ export function PolicyDocViewer(props: PolicyDocViewProps) {
 
   const dwellPct = Math.round((dwellMs / DWELL_MS) * 100);
   const dwellSecondsRemaining = Math.max(0, Math.ceil((DWELL_MS - dwellMs) / 1000));
+  const dwellMmSs = `${Math.floor(dwellSecondsRemaining / 60)
+    .toString()
+    .padStart(1, "0")}:${(dwellSecondsRemaining % 60).toString().padStart(2, "0")}`;
 
   return (
     <div>
@@ -246,6 +250,44 @@ export function PolicyDocViewer(props: PolicyDocViewProps) {
         </div>
       </section>
 
+      {/* Reading-time timer — prominent so the learner immediately
+          understands they need to wait. Hidden on already-completed
+          re-visits and once the dwell has elapsed. */}
+      {!alreadyCompleted && !dwellDone && (
+        <div className="mb-4 flex items-center gap-4 rounded-lg border border-info/60 bg-info-subtle px-5 py-4">
+          <Clock className="h-6 w-6 flex-shrink-0 text-info" aria-hidden="true" />
+          <div className="min-w-0 flex-1">
+            <p className="text-sm font-semibold text-info">
+              Reading time required — {dwellMmSs} remaining
+            </p>
+            <p className="mt-0.5 text-xs text-foreground-muted">
+              Please review the document below. The acknowledgement option
+              unlocks once you&apos;ve had the page open for 6 minutes
+              (background tabs don&apos;t count).
+            </p>
+            <div
+              className="mt-2 h-1.5 w-full overflow-hidden rounded-full bg-info/15"
+              role="progressbar"
+              aria-valuenow={dwellPct}
+              aria-valuemin={0}
+              aria-valuemax={100}
+              aria-label="Reading time progress"
+            >
+              <div
+                className="h-full bg-info transition-[width] duration-100 ease-linear"
+                style={{ width: `${dwellPct}%` }}
+              />
+            </div>
+          </div>
+          <span
+            className="hidden shrink-0 font-mono text-2xl font-bold tabular-nums text-info sm:block"
+            aria-hidden="true"
+          >
+            {dwellMmSs}
+          </span>
+        </div>
+      )}
+
       {/* Inline PDF render of the original Word document. height uses dvh
           so it scales with the viewport on mobile too. */}
       <div
@@ -268,22 +310,6 @@ export function PolicyDocViewer(props: PolicyDocViewProps) {
           aria-label="Acknowledgement"
           className="mb-6 rounded-lg border border-border bg-surface p-4"
         >
-          {/* Dwell progress bar — visible only while we're still waiting. */}
-          {!dwellDone && (
-            <div className="mb-3">
-              <div className="flex items-center justify-between text-xs text-foreground-muted">
-                <span>Reading time</span>
-                <span>{dwellSecondsRemaining}s remaining</span>
-              </div>
-              <div className="mt-1.5 h-1.5 w-full overflow-hidden rounded-full bg-surface-muted">
-                <div
-                  className="h-full bg-primary transition-[width] duration-100 ease-linear"
-                  style={{ width: `${dwellPct}%` }}
-                />
-              </div>
-            </div>
-          )}
-
           <label
             className={`flex cursor-pointer items-start gap-3 rounded-md p-2 -m-2 ${
               dwellDone ? "hover:bg-surface-muted" : "opacity-60 cursor-not-allowed"

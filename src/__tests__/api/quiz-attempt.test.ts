@@ -175,9 +175,8 @@ describe("POST .../lessons/[lessonId]/quiz/attempt", () => {
     expect(body.percentage).toBe(100);
     expect(body.passed).toBe(true);
     expect(body.passingScore).toBe(70);
-    expect(body.answers).toHaveLength(2);
-    expect(body.answers[0].correct).toBe(true);
-    expect(body.answers[1].correct).toBe(true);
+    // Per-question reveal is intentionally omitted (anti-gaming).
+    expect(body.answers).toBeUndefined();
   });
 
   it("scores correctly for all wrong answers and does not auto-complete", async () => {
@@ -235,7 +234,10 @@ describe("POST .../lessons/[lessonId]/quiz/attempt", () => {
     );
   });
 
-  it("returns correct answer IDs in response", async () => {
+  it("does NOT leak per-question correct/incorrect breakdown in the response", async () => {
+    // Anti-gaming: the server must only return the score summary so a
+    // learner can't submit, inspect the network response to see which
+    // answer was correct, then resubmit with full knowledge.
     mockAuth.mockResolvedValue(mockSession({ id: "test-user-id" }));
     mockPrisma.lesson.findUnique.mockResolvedValue(mockLesson);
     mockPrisma.quizQuestion.findMany.mockResolvedValue(mockQuestions);
@@ -258,12 +260,13 @@ describe("POST .../lessons/[lessonId]/quiz/attempt", () => {
     );
 
     const body = await res.json();
-    const q1Result = body.answers.find((a: { questionId: string }) => a.questionId === "q1");
-    const q2Result = body.answers.find((a: { questionId: string }) => a.questionId === "q2");
-    expect(q1Result.correctOptionId).toBe("o2");
-    expect(q1Result.correct).toBe(true);
-    expect(q2Result.correctOptionId).toBe("o4");
-    expect(q2Result.correct).toBe(false);
+    expect(body.score).toBe(1);
+    expect(body.totalQuestions).toBe(2);
+    expect(body.passed).toBe(false);
+    // Per-question reveal must be absent
+    expect(body.answers).toBeUndefined();
+    // And no stray correctOptionId / correct flags anywhere on the body
+    expect(JSON.stringify(body)).not.toContain("correctOptionId");
   });
 
   it("scores attempt but skips persistence when course is locked at completed", async () => {
