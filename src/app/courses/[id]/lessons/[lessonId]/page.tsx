@@ -256,7 +256,7 @@ export default async function LessonPage({
   }
 
   return (
-    <div className="flex h-[calc(100dvh-4rem)] overflow-hidden">
+    <div className="relative flex h-[calc(100dvh-4rem)] overflow-hidden">
       <CourseSidebar
         modules={sidebarModules}
         courseId={courseId}
