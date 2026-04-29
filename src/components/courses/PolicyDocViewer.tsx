@@ -166,7 +166,10 @@ export function PolicyDocViewer(props: PolicyDocViewProps) {
     lastAcknowledgement?.version != null &&
     lastAcknowledgement.version !== sourceVersion;
 
-  const pdfSrc = `/api/sharepoint/files/${encodeURIComponent(sharePointDriveId)}/${encodeURIComponent(sharePointItemId)}?format=pdf#toolbar=1&navpanes=0&view=FitH`;
+  // No `view=` directive — letting the browser pick its default keeps the
+  // PDF at its native zoom instead of scaling it up to fill our wider
+  // iframe (which made text huge and dropped lines-per-screen).
+  const pdfSrc = `/api/sharepoint/files/${encodeURIComponent(sharePointDriveId)}/${encodeURIComponent(sharePointItemId)}?format=pdf#toolbar=1&navpanes=0`;
 
   const dwellPct = Math.round((dwellMs / DWELL_MS) * 100);
   const dwellSecondsRemaining = Math.max(0, Math.ceil((DWELL_MS - dwellMs) / 1000));
@@ -286,37 +289,33 @@ export function PolicyDocViewer(props: PolicyDocViewProps) {
         )}
       </section>
 
-      {/* Reading-time timer — prominent so the learner immediately
-          understands they need to wait. Hidden on already-completed
-          re-visits and once the dwell has elapsed. */}
+      {/* Reading-time timer — slim single-line bar with the rule explained
+          via the title attribute (tooltip). Saves ~80px of vertical space
+          vs the previous full-card banner so the PDF gets more lines. */}
       {!alreadyCompleted && !dwellDone && (
-        <div className="mb-4 flex items-center gap-4 rounded-lg border border-info/60 bg-info-subtle px-5 py-4">
-          <Clock className="h-6 w-6 flex-shrink-0 text-info" aria-hidden="true" />
-          <div className="min-w-0 flex-1">
-            <p className="text-sm font-semibold text-info">
-              Reading time required — {dwellMmSs} remaining
-            </p>
-            <p className="mt-0.5 text-xs text-foreground-muted">
-              Please review the document below. The acknowledgement option
-              unlocks once you&apos;ve had the page open for 6 minutes
-              (background tabs don&apos;t count).
-            </p>
+        <div
+          className="mb-2 flex items-center gap-3 rounded-md border border-info/60 bg-info-subtle px-3 py-1.5"
+          title="The acknowledgement option unlocks once you've had the page open for 6 minutes (background tabs don't count)."
+        >
+          <Clock className="h-4 w-4 flex-shrink-0 text-info" aria-hidden="true" />
+          <span className="text-xs font-medium text-info">
+            Reading time required
+          </span>
+          <div
+            className="h-1.5 flex-1 overflow-hidden rounded-full bg-info/15"
+            role="progressbar"
+            aria-valuenow={dwellPct}
+            aria-valuemin={0}
+            aria-valuemax={100}
+            aria-label="Reading time progress"
+          >
             <div
-              className="mt-2 h-1.5 w-full overflow-hidden rounded-full bg-info/15"
-              role="progressbar"
-              aria-valuenow={dwellPct}
-              aria-valuemin={0}
-              aria-valuemax={100}
-              aria-label="Reading time progress"
-            >
-              <div
-                className="h-full bg-info transition-[width] duration-100 ease-linear"
-                style={{ width: `${dwellPct}%` }}
-              />
-            </div>
+              className="h-full bg-info transition-[width] duration-100 ease-linear"
+              style={{ width: `${dwellPct}%` }}
+            />
           </div>
           <span
-            className="hidden shrink-0 font-mono text-2xl font-bold tabular-nums text-info sm:block"
+            className="shrink-0 font-mono text-sm font-semibold tabular-nums text-info"
             aria-hidden="true"
           >
             {dwellMmSs}
@@ -329,7 +328,7 @@ export function PolicyDocViewer(props: PolicyDocViewProps) {
           the full available area minus the slim header bar + footer. */}
       <div
         className="mb-4 overflow-hidden rounded-lg border border-border bg-surface"
-        style={{ height: "calc(100dvh - 12rem)", minHeight: "36rem" }}
+        style={{ height: "calc(100dvh - 9rem)", minHeight: "40rem" }}
       >
         <iframe
           src={pdfSrc}

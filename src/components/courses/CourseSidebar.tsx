@@ -97,42 +97,45 @@ export function CourseSidebar({
     }
   }, [pinned, mounted]);
 
-  // When `collapsible` is true (unpinned mode) the aside is a 64px rail
-  // that expands on hover/focus-within; non-icon labels fade in via the
-  // shared group state. When pinned, labels are always visible.
+  // When `collapsible` is true (unpinned mode), chrome elements (back link,
+  // course title, progress bar, module headers, pin label) hide entirely
+  // via display:none and re-appear on hover/focus-within. Lesson icons stay
+  // visible always so the rail stays scannable; their text labels fade in.
   const collapsible = !pinned;
+  const chromeBlockCls = collapsible
+    ? "hidden group-hover:block group-focus-within:block"
+    : "";
   const labelCls = collapsible
     ? "opacity-0 transition-opacity duration-150 group-hover:opacity-100 group-focus-within:opacity-100"
     : "";
 
   const sidebarContent = (
     <>
-      {/* Back to course + title — at narrow rail we show only the chevron;
-          the title fades in once the aside is hovered. */}
-      <div className="space-y-1 border-b border-border px-4 py-3">
+      {/* Back to course + course title — hidden entirely when collapsed so
+          the rail starts cleanly with the lesson icons; appears on hover. */}
+      <div
+        className={`shrink-0 space-y-1 border-b border-border px-4 py-3 ${chromeBlockCls}`}
+      >
         <Link
           href={`/courses/${courseId}`}
           className="inline-flex items-center gap-1 text-xs text-foreground-subtle transition-colors hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-surface rounded-sm"
         >
           <ChevronLeftIcon className="h-3.5 w-3.5 shrink-0" />
-          <span className={`whitespace-nowrap ${labelCls}`}>Back to course</span>
+          <span className="whitespace-nowrap">Back to course</span>
         </Link>
-        <h2
-          className={`line-clamp-2 font-display text-base font-semibold text-foreground ${labelCls}`}
-        >
+        <h2 className="line-clamp-2 font-display text-base font-semibold text-foreground">
           {courseTitle}
         </h2>
       </div>
 
-      {/* Progress bar */}
+      {/* Progress bar — hidden when collapsed (the bar without a percent
+          label was confusing); appears on hover. */}
       {totalLessons > 0 && (
         <div
-          className="border-b border-border px-4 py-2.5"
+          className={`shrink-0 border-b border-border px-4 py-2.5 ${chromeBlockCls}`}
           data-testid="progress-bar-container"
         >
-          <div
-            className={`mb-1.5 flex justify-between text-xs text-foreground-muted ${labelCls}`}
-          >
+          <div className="mb-1.5 flex justify-between text-xs text-foreground-muted">
             <span>Progress</span>
             <span data-testid="progress-percent">{percentComplete}%</span>
           </div>
@@ -153,14 +156,21 @@ export function CourseSidebar({
         </div>
       )}
 
-      {/* Module/Lesson navigation */}
+      {/* Module/Lesson navigation. When collapsed, modules are visually
+          separated by a 1px divider (between groups, not before the first)
+          so the icon clusters are interpretable without titles. */}
       <nav className="flex-1 overflow-y-auto py-2" aria-label="Course lessons">
-        {modules.map((mod) => (
-          <div key={mod.id} className="mb-1">
-            <div className="px-4 py-2">
-              <span
-                className={`text-xs font-semibold uppercase tracking-wider text-foreground-subtle ${labelCls}`}
-              >
+        {modules.map((mod, modIdx) => (
+          <div
+            key={mod.id}
+            className={
+              collapsible && modIdx > 0
+                ? "mt-2 border-t border-border pt-2"
+                : "mb-1"
+            }
+          >
+            <div className={`px-4 py-2 ${chromeBlockCls}`}>
+              <span className="text-xs font-semibold uppercase tracking-wider text-foreground-subtle">
                 {mod.title}
               </span>
             </div>
@@ -184,7 +194,11 @@ export function CourseSidebar({
                         : "text-foreground hover:bg-surface-muted"
                     }`}
                   >
-                    <LessonIcon className="h-4 w-4 flex-shrink-0 text-foreground-subtle" />
+                    <LessonIcon
+                      className={`h-4 w-4 flex-shrink-0 ${
+                        isActive ? "text-primary" : "text-foreground-subtle"
+                      }`}
+                    />
                     <span className={`line-clamp-1 flex-1 whitespace-nowrap ${labelCls}`}>
                       {lesson.title}
                     </span>
@@ -210,7 +224,7 @@ export function CourseSidebar({
         ))}
       </nav>
 
-      {/* Pin toggle — bottom of the rail, mirrors the app Sidebar */}
+      {/* Pin toggle — icon always visible, label fades in on hover. */}
       <div className="shrink-0 border-t border-border px-2 pt-2 pb-3">
         <button
           type="button"
