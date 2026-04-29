@@ -108,6 +108,11 @@ export function PolicyDocViewer(props: PolicyDocViewProps) {
 
   const [showRevisionHistory, setShowRevisionHistory] = useState(false);
   const [showReviewHistory, setShowReviewHistory] = useState(false);
+  // The full Document Control panel collapses by default to maximise the
+  // vertical space the PDF gets. The slim header always shows the essentials
+  // (code · version · approver). Learners who want the full detail can
+  // expand it.
+  const [showDocControl, setShowDocControl] = useState(false);
 
   // Dwell: accumulated ms of focused-tab time. We tick a 100ms interval
   // only while document.visibilityState === "visible", so background tabs
@@ -192,35 +197,67 @@ export function PolicyDocViewer(props: PolicyDocViewProps) {
         </div>
       )}
 
-      {/* Document Control panel — always-visible header summary, with the
-          full revision/review history hidden behind disclosure toggles. */}
-      <section
-        aria-label="Document control"
-        className="mb-4 rounded-lg border border-border bg-surface p-4"
-      >
-        <div className="flex items-start gap-3">
-          <ShieldCheck className="h-5 w-5 flex-shrink-0 text-primary mt-0.5" aria-hidden="true" />
-          <div className="min-w-0 flex-1">
-            <p className="text-sm font-semibold text-foreground">{documentTitle}</p>
-            <dl className="mt-2 grid grid-cols-1 gap-x-6 gap-y-1.5 text-xs sm:grid-cols-2">
+      {/* Document Control — slim header by default with a disclosure that
+          expands the full metadata grid + revision/review history tables.
+          The header is one line so it doesn't push the PDF down. */}
+      <section aria-label="Document control" className="mb-4">
+        <div className="flex items-center gap-3 rounded-lg border border-border bg-surface px-4 py-2.5 text-sm">
+          <ShieldCheck className="h-4 w-4 flex-shrink-0 text-primary" aria-hidden="true" />
+          <span className="min-w-0 flex-1 truncate">
+            <span className="font-semibold text-foreground">{documentTitle}</span>
+            <span className="text-foreground-muted">
               {documentCode && (
-                <Row label="Document code" value={documentCode} />
+                <>
+                  {" · "}
+                  <span className="font-mono text-xs">{documentCode}</span>
+                </>
               )}
+              {" · "}v{sourceVersion}
+              {approver && (
+                <span className="hidden sm:inline">
+                  {" · "}Approved by {approver}
+                </span>
+              )}
+            </span>
+          </span>
+          <a
+            href={sharePointWebUrl}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="hidden shrink-0 text-xs text-primary hover:underline sm:inline"
+          >
+            Open in SharePoint ↗
+          </a>
+          <button
+            type="button"
+            onClick={() => setShowDocControl((s) => !s)}
+            aria-expanded={showDocControl}
+            className="shrink-0 inline-flex items-center gap-1 text-xs text-foreground-muted hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-surface rounded-sm"
+          >
+            {showDocControl ? (
+              <ChevronDown className="h-3.5 w-3.5" aria-hidden="true" />
+            ) : (
+              <ChevronRight className="h-3.5 w-3.5" aria-hidden="true" />
+            )}
+            Details
+          </button>
+        </div>
+
+        {showDocControl && (
+          <div className="mt-2 rounded-lg border border-border bg-surface p-4">
+            <dl className="grid grid-cols-1 gap-x-6 gap-y-1.5 text-xs sm:grid-cols-2">
+              {documentCode && <Row label="Document code" value={documentCode} />}
               <Row label="Version" value={sourceVersion} />
               {approver && <Row label="Approved by" value={approver} />}
-              {approvedOn && (
-                <Row label="Approved on" value={formatDate(approvedOn)} />
-              )}
-              {lastReviewedOn && (
-                <Row label="Last reviewed" value={formatDate(lastReviewedOn)} />
-              )}
+              {approvedOn && <Row label="Approved on" value={formatDate(approvedOn)} />}
+              {lastReviewedOn && <Row label="Last reviewed" value={formatDate(lastReviewedOn)} />}
             </dl>
             <div className="mt-3 flex flex-wrap items-center gap-x-4 gap-y-1">
               <a
                 href={sharePointWebUrl}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="text-xs text-primary hover:underline"
+                className="text-xs text-primary hover:underline sm:hidden"
               >
                 Open original in SharePoint ↗
               </a>
@@ -239,7 +276,6 @@ export function PolicyDocViewer(props: PolicyDocViewProps) {
                 />
               )}
             </div>
-
             {showRevisionHistory && revisionHistory.length > 0 && (
               <RevisionTable rows={revisionHistory} />
             )}
@@ -247,7 +283,7 @@ export function PolicyDocViewer(props: PolicyDocViewProps) {
               <ReviewTable rows={reviewHistory} />
             )}
           </div>
-        </div>
+        )}
       </section>
 
       {/* Reading-time timer — prominent so the learner immediately
@@ -288,11 +324,12 @@ export function PolicyDocViewer(props: PolicyDocViewProps) {
         </div>
       )}
 
-      {/* Inline PDF render of the original Word document. height uses dvh
-          so it scales with the viewport on mobile too. */}
+      {/* Inline PDF render of the original Word document. Height uses dvh
+          so it scales with the viewport on mobile too — and now consumes
+          the full available area minus the slim header bar + footer. */}
       <div
         className="mb-4 overflow-hidden rounded-lg border border-border bg-surface"
-        style={{ height: "calc(100dvh - 18rem)", minHeight: "32rem" }}
+        style={{ height: "calc(100dvh - 12rem)", minHeight: "36rem" }}
       >
         <iframe
           src={pdfSrc}
