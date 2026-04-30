@@ -102,24 +102,63 @@ export async function POST(_request: Request, { params }: Params) {
         }
       : {};
 
-  const progress = await prisma.lessonProgress.upsert({
-    where: { userId_lessonId: { userId, lessonId } },
-    create: {
-      userId,
-      lessonId,
-      startedAt: now,
-      completedAt: now,
-      ...policyAuditFields,
-    },
-    update: {
-      completedAt: now,
-      ...policyAuditFields,
-    },
-  });
+  // Race-safe transition detection. Two requests racing on the same
+  // (userId, lessonId) must yield exactly one "transitioned" outcome —
+  // otherwise XP, achievements, ISO ack emails, and course-completion
+  // emails all double-fire on a quick double-click.
+  //
+  // Strategy:
+  //   1. Try CREATE. The unique constraint on (userId, lessonId) means
+  //      only one concurrent request can win the create — that one
+  //      transitioned (incomplete → complete in a single shot).
+  //   2. If create fails with P2002 (unique violation), fall back to a
+  //      conditional UPDATE that requires `completedAt: null`. The
+  //      database serialises this — exactly one of the racing requests
+  //      flips a non-null completedAt; the rest see count=0.
+  //
+  // `transitioned` drives the side-effect blocks below.
+  let progress: Awaited<ReturnType<typeof prisma.lessonProgress.findUnique>>;
+  let transitioned: boolean;
+  try {
+    progress = await prisma.lessonProgress.create({
+      data: {
+        userId,
+        lessonId,
+        startedAt: now,
+        completedAt: now,
+        ...policyAuditFields,
+      },
+    });
+    transitioned = true;
+  } catch (err: unknown) {
+    // P2002 = unique constraint violation; row already exists.
+    if (
+      typeof err === "object" &&
+      err !== null &&
+      "code" in err &&
+      (err as { code: string }).code === "P2002"
+    ) {
+      const updateResult = await prisma.lessonProgress.updateMany({
+        where: { userId, lessonId, completedAt: null },
+        data: { completedAt: now, ...policyAuditFields },
+      });
+      transitioned = updateResult.count === 1;
+      progress = await prisma.lessonProgress.findUnique({
+        where: { userId_lessonId: { userId, lessonId } },
+      });
+      if (!progress) {
+        // Should be impossible after the unique-violation path.
+        throw new Error("LessonProgress disappeared mid-write");
+      }
+    } else {
+      throw err;
+    }
+  }
 
   // Separate analytics for policy doc acknowledgements — distinct from
   // generic lesson completion because auditors will pull these by name.
-  if (lesson.type === "POLICY_DOC" && lesson.policyDoc) {
+  // Only fires on the genuine transition; re-clicks don't re-send.
+  if (transitioned && lesson.type === "POLICY_DOC" && lesson.policyDoc) {
     trackEvent(userId, "policy_doc_acknowledged", {
       courseId,
       moduleId,
@@ -168,14 +207,28 @@ export async function POST(_request: Request, { params }: Params) {
     }
   }
 
-  // Award XP and track event (fire-and-forget)
-  const { newAchievements } = await awardXp(userId, 10);
-  trackEvent(userId, "lesson_completed", { courseId, moduleId, lessonId });
+  // Award XP and track event — only on the genuine transition. Re-clicks
+  // (which still update completedAt to refresh the timestamp) must not
+  // double-award XP or double-count completions in analytics.
+  let newAchievements: { key: string; title: string; icon: string }[] = [];
+  if (transitioned) {
+    const xpResult = await awardXp(userId, 10);
+    newAchievements = xpResult.newAchievements;
+    trackEvent(userId, "lesson_completed", { courseId, moduleId, lessonId });
+  }
 
   // ── Course completion check ───────────────────────────────────────────────
   // firstCompletion fires exactly once per enrollment: when all lessons are done
-  // AND enrollment.completedAt is still null. Re-completing after un/re-doing a
-  // lesson does NOT fire again because completedAt is sticky (never reset on DELETE).
+  // AND enrollment.completedAt is still null. We use a conditional updateMany
+  // (WHERE completedAt: null) to win the race atomically — two simultaneous
+  // requests both seeing every lesson as complete will only have one of them
+  // succeed in flipping completedAt to non-null, so the side-effect block
+  // (XP bonus, analytics, completion emails) fires exactly once.
+  //
+  // Skipping this entirely when `!transitioned` is also correct: if this
+  // request didn't actually flip a lesson incomplete→complete, the course
+  // can't have just become complete because of THIS request. Saves a
+  // count() query on every re-click.
   let courseComplete = false;
   let courseStats: {
     courseTitle: string;
@@ -185,66 +238,75 @@ export async function POST(_request: Request, { params }: Params) {
     daysTaken: number;
   } | null = null;
 
-  try {
-    const allModules = await prisma.module.findMany({
-      where: { courseId },
-      include: { lessons: { select: { id: true } } },
-    });
-    const allLessonIds = (allModules ?? []).flatMap((m) => m.lessons.map((l) => l.id));
-
-    if (allLessonIds.length > 0) {
-      const completedCount = await prisma.lessonProgress.count({
-        where: { userId, lessonId: { in: allLessonIds }, completedAt: { not: null } },
+  if (transitioned) {
+    try {
+      const allModules = await prisma.module.findMany({
+        where: { courseId },
+        include: { lessons: { select: { id: true } } },
       });
+      const allLessonIds = (allModules ?? []).flatMap((m) => m.lessons.map((l) => l.id));
 
-      const firstCompletion = completedCount >= allLessonIds.length && enrollment.completedAt === null;
-
-      if (firstCompletion) {
-        // Stamp the enrollment — subsequent re-completions won't trigger this block
-        await prisma.enrollment.update({
-          where: { id: enrollment.id },
-          data: { completedAt: now },
+      if (allLessonIds.length > 0) {
+        const completedCount = await prisma.lessonProgress.count({
+          where: { userId, lessonId: { in: allLessonIds }, completedAt: { not: null } },
         });
 
-        // Award course-completion XP bonus
-        await awardXp(userId, 100);
+        if (completedCount >= allLessonIds.length) {
+          // Conditional update: only flip enrollment.completedAt if it's
+          // still null. Concurrent requests racing past the lessonProgress
+          // gate above all converge here; exactly one wins.
+          const stamp = await prisma.enrollment.updateMany({
+            where: { id: enrollment.id, completedAt: null },
+            data: { completedAt: now },
+          });
 
-        // Fire analytics event
-        const stats = await computeCourseCompletionStats(userId, courseId, enrollment.enrolledAt);
-        trackEvent(userId, "course_completed", {
-          courseId,
-          xpEarned: stats.xpEarned,
-          daysTaken: stats.daysTaken,
-          lessonCount: stats.totalLessons,
-        });
+          if (stamp.count === 1) {
+            // Award course-completion XP bonus
+            await awardXp(userId, 100);
 
-        // Send completion alert emails
-        const [subs, userData] = await Promise.all([
-          prisma.courseEmailSubscription.findMany({ where: { courseId }, select: { email: true } }),
-          prisma.user.findUnique({ where: { id: userId }, select: { name: true, email: true } }),
-        ]);
-        if (subs.length > 0) {
-          sendCourseCompletionEmail(
-            subs.map((s) => s.email),
-            userData?.name ?? userData?.email ?? "A user",
-            stats.courseTitle,
-          ).catch((err) => console.error("[email] completion alert failed:", err));
+            // Fire analytics event
+            const stats = await computeCourseCompletionStats(userId, courseId, enrollment.enrolledAt);
+            trackEvent(userId, "course_completed", {
+              courseId,
+              xpEarned: stats.xpEarned,
+              daysTaken: stats.daysTaken,
+              lessonCount: stats.totalLessons,
+            });
+
+            // Send completion alert emails
+            const [subs, userData] = await Promise.all([
+              prisma.courseEmailSubscription.findMany({ where: { courseId }, select: { email: true } }),
+              prisma.user.findUnique({ where: { id: userId }, select: { name: true, email: true } }),
+            ]);
+            if (subs.length > 0) {
+              sendCourseCompletionEmail(
+                subs.map((s) => s.email),
+                userData?.name ?? userData?.email ?? "A user",
+                stats.courseTitle,
+              ).catch((err) => console.error("[email] completion alert failed:", err));
+            }
+
+            courseComplete = true;
+            courseStats = stats;
+          }
+          // stamp.count === 0: another concurrent request already stamped
+          // it. No-op — the response below shows courseComplete: false for
+          // this losing request, which is correct (the modal already fired
+          // on the winning request's response).
         }
-
-        courseComplete = true;
-        courseStats = stats;
       }
-      // If completedCount >= total but enrollment.completedAt is already set:
-      // re-completion after un/re-complete — no XP, no event, no email, courseComplete stays false.
+    } catch {
+      // Course completion check is non-critical; don't fail the request
     }
-  } catch {
-    // Course completion check is non-critical; don't fail the request
   }
 
   return NextResponse.json({
     completed: true,
     completedAt: progress.completedAt,
-    xpAwarded: 10,
+    // xpAwarded reflects what THIS request actually awarded — 0 if this
+    // was a re-click on an already-complete lesson, 10 on a real
+    // transition. Prevents the UI from flashing a fake "+10 XP" toast.
+    xpAwarded: transitioned ? 10 : 0,
     newAchievements: newAchievements.map((a) => ({
       key: a.key,
       title: a.title,
