@@ -27,6 +27,7 @@ const callDelete = (userId: string) =>
 function makeMockTx() {
   return {
     course: { updateMany: vi.fn().mockResolvedValue({ count: 0 }) },
+    policyDocLesson: { updateMany: vi.fn().mockResolvedValue({ count: 0 }) },
     user: { delete: vi.fn().mockResolvedValue({}) },
   };
 }
@@ -115,12 +116,15 @@ describe("DELETE /api/admin/users/[userId]", () => {
       async (cb: (tx: typeof mockTx) => Promise<unknown>) => cb(mockTx),
     );
 
+    // Default policy-doc count is 0 (mock); see below for the case where
+    // the demo admin had synced policy docs.
     const res = await callDelete("u2");
     expect(res.status).toBe(200);
     const body = await res.json();
     expect(body).toEqual({
       deleted: true,
       reassignedCourseCount: 2,
+      reassignedPolicyDocSyncCount: 0,
       enrollmentCount: 5,
     });
 
@@ -128,6 +132,10 @@ describe("DELETE /api/admin/users/[userId]", () => {
     expect(mockTx.course.updateMany).toHaveBeenCalledWith({
       where: { createdById: "u2" },
       data: { createdById: "admin-1" },
+    });
+    expect(mockTx.policyDocLesson.updateMany).toHaveBeenCalledWith({
+      where: { lastSyncedById: "u2" },
+      data: { lastSyncedById: "admin-1" },
     });
     expect(mockTx.user.delete).toHaveBeenCalledWith({ where: { id: "u2" } });
 
@@ -140,6 +148,7 @@ describe("DELETE /api/admin/users/[userId]", () => {
       targetEmail: "nadun@t.com",
       targetRole: "EMPLOYEE",
       reassignedCourseCount: 2,
+      reassignedPolicyDocSyncCount: 0,
       enrollmentCount: 5,
     });
   });
@@ -163,7 +172,42 @@ describe("DELETE /api/admin/users/[userId]", () => {
     expect(res.status).toBe(200);
     const body = await res.json();
     expect(body.reassignedCourseCount).toBe(0);
+    expect(body.reassignedPolicyDocSyncCount).toBe(0);
     expect(mockTx.course.updateMany).toHaveBeenCalledTimes(1);
+    expect(mockTx.policyDocLesson.updateMany).toHaveBeenCalledTimes(1);
     expect(mockTx.user.delete).toHaveBeenCalledTimes(1);
+  });
+
+  it("reassigns policy-doc sync history when target had synced any", async () => {
+    // Repro of the production bug we hit deleting demo admins:
+    // User_x had synced one or more policy docs, leaving
+    // PolicyDocLesson.lastSyncedById pointing at them. Without this
+    // reassignment in the same tx, the user-delete fails with
+    // FK-constraint "PolicyDocLesson_lastSyncedById_fkey".
+    mockRequireRole.mockResolvedValue({ userId: "admin-1", role: "admin" });
+    mockPrisma.user.findUnique.mockResolvedValue({
+      id: "u2",
+      email: "demo-admin@t.com",
+      role: "ADMIN",
+    });
+    mockPrisma.user.count.mockResolvedValue(2); // not last admin
+    mockPrisma.enrollment.count.mockResolvedValue(0);
+    mockPrisma.course.count.mockResolvedValue(0);
+    mockPrisma.policyDocLesson.count.mockResolvedValue(3); // synced 3 docs
+
+    const mockTx = makeMockTx();
+    mockPrisma.$transaction.mockImplementation(
+      async (cb: (tx: typeof mockTx) => Promise<unknown>) => cb(mockTx),
+    );
+
+    const res = await callDelete("u2");
+    expect(res.status).toBe(200);
+    const body = await res.json();
+    expect(body.reassignedPolicyDocSyncCount).toBe(3);
+    expect(mockTx.policyDocLesson.updateMany).toHaveBeenCalledWith({
+      where: { lastSyncedById: "u2" },
+      data: { lastSyncedById: "admin-1" },
+    });
+    expect(mockTx.user.delete).toHaveBeenCalled();
   });
 });
