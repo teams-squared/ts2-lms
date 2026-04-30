@@ -4,16 +4,17 @@ import { prisma } from "@/lib/prisma";
 import { IsoNotificationSettingsForm } from "@/components/admin/IsoNotificationSettingsForm";
 import { InviteEmailTemplateForm } from "@/components/admin/InviteEmailTemplateForm";
 import { EmailSignatureForm } from "@/components/admin/EmailSignatureForm";
+import { EmailsTabs, EmailsTabPanel } from "@/components/admin/EmailsTabs";
 import { DEFAULT_INVITE_BODY } from "@/lib/email";
 
 export const dynamic = "force-dynamic";
 
 /**
- * Consolidated email-management surface for admins. Holds two sections
- * today — the user-invite template (subject, body with {{placeholders}},
- * Cc list) and the ISO acknowledgement audit-trail recipients. Future
- * email types (deadline reminders, course completion alerts, etc.) can
- * slot in as additional sections without expanding the admin nav.
+ * Consolidated email-management surface for admins. Sub-tabbed by
+ * category (Invite | Signature | ISO acks) so admins don't have to
+ * scroll past unrelated forms to reach the one they want. Future
+ * email types (deadline reminders, course completion alerts) slot in
+ * as additional sub-tabs without expanding the top admin nav.
  */
 export default async function AdminEmailsPage() {
   // Layout already gates admin/course_manager; this page is admin-only.
@@ -29,9 +30,10 @@ export default async function AdminEmailsPage() {
   ]);
 
   return (
-    <div className="space-y-12">
-      {/* ── Invite email ──────────────────────────────────────────────── */}
-      <section>
+    <div>
+      <EmailsTabs />
+
+      <EmailsTabPanel tab="invite">
         <h2 className="text-sm font-semibold text-foreground mb-1">
           User invite email
         </h2>
@@ -53,12 +55,9 @@ export default async function AdminEmailsPage() {
           defaultBodyText={DEFAULT_INVITE_BODY}
           updatedAt={inviteTemplate?.updatedAt ?? null}
         />
-      </section>
+      </EmailsTabPanel>
 
-      <hr className="border-border" />
-
-      {/* ── Email signature ───────────────────────────────────────────── */}
-      <section>
+      <EmailsTabPanel tab="signature">
         <h2 className="text-sm font-semibold text-foreground mb-1">
           Email signature
         </h2>
@@ -81,12 +80,9 @@ export default async function AdminEmailsPage() {
           logoUrl={signature?.logoUrl ?? ""}
           updatedAt={signature?.updatedAt ?? null}
         />
-      </section>
+      </EmailsTabPanel>
 
-      <hr className="border-border" />
-
-      {/* ── ISO acknowledgement notifications ─────────────────────────── */}
-      <section>
+      <EmailsTabPanel tab="iso-ack">
         <h2 className="text-sm font-semibold text-foreground mb-1">
           ISO acknowledgement notifications
         </h2>
@@ -102,7 +98,7 @@ export default async function AdminEmailsPage() {
           initialCc={isoSettings?.ccEmails ?? []}
           updatedAt={isoSettings?.updatedAt ?? null}
         />
-      </section>
+      </EmailsTabPanel>
     </div>
   );
 }
