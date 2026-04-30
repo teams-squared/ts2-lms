@@ -8,15 +8,21 @@ Run these checks against `learn.teamsquared.io` using Claude in Chrome MCP tools
 - [ ] Logo and "Welcome back" heading visible
 - [ ] "Sign in to access your learning platform" subtext visible
 - [ ] Microsoft sign-in button present (blue, with MS logo)
-- [ ] Email/password form present (in non-production)
-- [ ] Demo account hint box visible (in non-production)
+- [ ] Email/password form present (in non-production only — credentials provider is gated to NODE_ENV !== "production")
+- [ ] Local-dev hint box visible (in non-production only) — points devs at the bootstrap notes in prisma/seed.ts
 - [ ] Dark mode toggle works (page re-renders with dark background)
 
-## Auth Flow (credential login)
+## Auth Flow (Microsoft SSO — production)
 
-- [ ] Fill admin@teamssquared.com / admin123 → redirected to home
-- [ ] NavBar visible with logo, Home link, Admin link, user avatar
-- [ ] User name "Admin" visible in nav
+- [ ] Click Microsoft sign-in → redirects to login.microsoftonline.com
+- [ ] After SSO success → redirected back to `/`
+- [ ] First-time SSO sign-in: User row auto-provisioned as EMPLOYEE
+- [ ] NavBar visible with logo, Home link, user avatar
+- [ ] User name visible in nav
+
+## Auth Flow (local-dev credentials, non-prod only)
+
+- [ ] No demo accounts are seeded; admins must invite themselves or insert a row + promote via SQL (see prisma/seed.ts header)
 
 ## Home Page (`/`)
 

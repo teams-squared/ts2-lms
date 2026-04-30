@@ -10,7 +10,11 @@ services:
     runtime: node
     plan: pro
     buildCommand: npm install && npx prisma generate && npm run build
-    startCommand: npx tsx prisma/migrate.ts && npx tsx prisma/seed.ts && npm start
+    # Demo users (admin@teamssquared.com etc.) used to be seeded here on
+    # every deploy via `npx tsx prisma/seed.ts`. Removed: those accounts
+    # were a backdoor risk and prod doesn't need test data. Real admins
+    # are invited via /admin/users like everyone else.
+    startCommand: npx tsx prisma/migrate.ts && npm start
     envVars:
       - key: NODE_ENV
         value: production

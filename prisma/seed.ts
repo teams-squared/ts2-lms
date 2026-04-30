@@ -1,44 +1,31 @@
-import "dotenv/config";
-import { PrismaClient, Role } from "@prisma/client";
-import { PrismaPg } from "@prisma/adapter-pg";
-import bcrypt from "bcryptjs";
-
-const connectionString = process.env.DATABASE_URL!;
-const url = new URL(connectionString);
-// Managed Postgres commonly uses self-signed certs on an internal CA.
-// Force `sslmode=no-verify` for any non-local DB so TLS is used without
-// aborting on cert validation. Keep defaults for localhost.
-const isLocal = /^(localhost|127\.0\.0\.1|::1)$/.test(url.hostname);
-if (!isLocal) {
-  url.searchParams.set("sslmode", "no-verify");
-}
-const adapter = new PrismaPg({ connectionString: url.toString() });
-const prisma = new PrismaClient({ adapter });
-
-const DEMO_USERS = [
-  { email: "admin@teamssquared.com", name: "Admin User", password: "admin123", role: Role.ADMIN },
-  { email: "manager@teamssquared.com", name: "Manager User", password: "manager123", role: Role.COURSE_MANAGER },
-  { email: "employee@teamssquared.com", name: "Employee User", password: "employee123", role: Role.EMPLOYEE },
-  { email: "sarah@teamssquared.com", name: "Sarah Admin", password: "admin123", role: Role.ADMIN },
-  { email: "carol@teamssquared.com", name: "Carol Manager", password: "manager123", role: Role.COURSE_MANAGER },
-];
+/**
+ * Database seed — intentionally a no-op.
+ *
+ * Historically this file upserted five demo users with hardcoded
+ * passwords (admin@teamssquared.com / admin123 etc.) so a fresh dev DB
+ * had something to log in with. That seed was running in production on
+ * every Render deploy and planting backdoor admin accounts in the prod
+ * `User` table — not great. The render.yaml `startCommand` no longer
+ * invokes this file, and the file itself is now empty so a future
+ * misconfigured deploy can't re-introduce demo creds.
+ *
+ * For local dev: invite yourself via /admin/users (or, on a fresh
+ * empty DB, sign in via SSO — the first user is auto-provisioned as
+ * EMPLOYEE; promote yourself in the DB via:
+ *   `UPDATE "User" SET role = 'ADMIN' WHERE email = 'you@…';`
+ * That's the documented bootstrap path; we deliberately don't keep a
+ * "seed an admin" shortcut around because it inevitably ends up shipping
+ * to production).
+ *
+ * The Prisma `db:seed` script in package.json still points here; this
+ * stub keeps the npm script working without doing anything risky.
+ */
 
 async function main() {
-  for (const user of DEMO_USERS) {
-    const passwordHash = await bcrypt.hash(user.password, 10);
-    await prisma.user.upsert({
-      where: { email: user.email },
-      update: { name: user.name, role: user.role, passwordHash },
-      create: { email: user.email, name: user.name, passwordHash, role: user.role },
-    });
-    console.log(`Upserted ${user.email} (${user.role})`);
-  }
+  console.log("[seed] No demo data to seed. See file header for bootstrap notes.");
 }
 
-main()
-  .then(() => prisma.$disconnect())
-  .catch((e) => {
-    console.error(e);
-    prisma.$disconnect();
-    process.exit(1);
-  });
+main().catch((err) => {
+  console.error(err);
+  process.exit(1);
+});

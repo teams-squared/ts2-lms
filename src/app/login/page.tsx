@@ -46,12 +46,13 @@ export default function LoginPage() {
 
             {!hasMicrosoftProvider && !isProduction && (
               <div className="mt-5 rounded-md border border-border bg-info-subtle p-4 text-xs leading-relaxed text-info">
-                <strong className="font-semibold">Demo accounts</strong>
-                <div className="mt-1.5 space-y-0.5 font-mono">
-                  <div>admin@teamssquared.com / admin123</div>
-                  <div>manager@teamssquared.com / manager123</div>
-                  <div>employee@teamssquared.com / employee123</div>
-                </div>
+                <strong className="font-semibold">Local dev sign-in</strong>
+                <p className="mt-1">
+                  No demo accounts are seeded by default. To bootstrap an
+                  admin: insert a user row, then promote yourself via SQL —
+                  see the file header comment in{" "}
+                  <code className="font-mono">prisma/seed.ts</code>.
+                </p>
               </div>
             )}
           </div>
