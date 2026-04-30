@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useCallback } from "react";
+import { useState, useCallback, useMemo } from "react";
 import {
   ChevronRightIcon,
   ChevronDownIcon,
@@ -12,6 +12,54 @@ interface CourseNodeTreeProps {
   nodes: NodeWithChildren[];
   selectedCourseIds: Set<string>;
   onSelectionChange: (ids: Set<string>) => void;
+  /** When true, shows a search input above the tree that filters
+   *  branches by node name or course title. Defaults to true since
+   *  most callers benefit from it; pass false to suppress in tight
+   *  layouts. */
+  showSearch?: boolean;
+}
+
+/** Recursively filter the tree to nodes/courses matching `term`. A node
+ *  is kept if its own name matches OR any descendant matches. When the
+ *  node itself matches, the entire subtree is preserved (so the admin
+ *  sees the full context); otherwise only matching descendants are kept. */
+function filterTree(
+  nodes: NodeWithChildren[],
+  term: string,
+): NodeWithChildren[] {
+  if (!term) return nodes;
+  const lower = term.toLowerCase();
+  const out: NodeWithChildren[] = [];
+  for (const node of nodes) {
+    const nodeMatches = node.name.toLowerCase().includes(lower);
+    const matchingCourses = node.courses.filter((c) =>
+      c.title.toLowerCase().includes(lower),
+    );
+    const filteredChildren = filterTree(node.children, term);
+    if (
+      nodeMatches ||
+      matchingCourses.length > 0 ||
+      filteredChildren.length > 0
+    ) {
+      out.push({
+        ...node,
+        children: nodeMatches ? node.children : filteredChildren,
+        courses: nodeMatches ? node.courses : matchingCourses,
+      });
+    }
+  }
+  return out;
+}
+
+/** Collect every node id in a tree (including descendants) so we can
+ *  auto-expand the visible portion when filtering. */
+function collectNodeIds(nodes: NodeWithChildren[]): string[] {
+  const ids: string[] = [];
+  for (const n of nodes) {
+    ids.push(n.id);
+    ids.push(...collectNodeIds(n.children));
+  }
+  return ids;
 }
 
 /** Collect all course IDs under a node (recursively) */
@@ -41,9 +89,20 @@ export function CourseNodeTree({
   nodes,
   selectedCourseIds,
   onSelectionChange,
+  showSearch = true,
 }: CourseNodeTreeProps) {
+  const [search, setSearch] = useState("");
+  const trimmedSearch = search.trim();
+
+  const visibleNodes = useMemo(
+    () => filterTree(nodes, trimmedSearch),
+    [nodes, trimmedSearch],
+  );
+
+  // Auto-expand any node that contains a selected course, so newly-mounted
+  // forms with prior selections show those selections without the admin
+  // hunting through the tree.
   const [expanded, setExpanded] = useState<Set<string>>(() => {
-    // Auto-expand nodes that have selected courses
     const ex = new Set<string>();
     function walk(nodeList: NodeWithChildren[]) {
       for (const n of nodeList) {
@@ -55,6 +114,15 @@ export function CourseNodeTree({
     walk(nodes);
     return ex;
   });
+
+  // While a search term is active, every node in the filtered tree is
+  // implicitly expanded — admins want to see the matches, not click into
+  // each one. When the search is cleared, we fall back to the user's
+  // expanded state from before the search.
+  const effectiveExpanded = useMemo(() => {
+    if (!trimmedSearch) return expanded;
+    return new Set(collectNodeIds(visibleNodes));
+  }, [trimmedSearch, expanded, visibleNodes]);
 
   const toggle = useCallback((id: string) => {
     setExpanded((prev) => {
@@ -119,7 +187,7 @@ export function CourseNodeTree({
   );
 
   const renderNode = (node: NodeWithChildren, depth: number) => {
-    const isExpanded = expanded.has(node.id);
+    const isExpanded = effectiveExpanded.has(node.id);
     const hasChildren = node.children.length > 0 || node.courses.length > 0;
     const checkState = getNodeCheckState(node, selectedCourseIds);
     const totalCourses = collectCourseIds(node).length;
@@ -198,8 +266,38 @@ export function CourseNodeTree({
   }
 
   return (
-    <div className="max-h-72 overflow-y-auto rounded-lg border border-border bg-surface p-1">
-      {nodes.map((node) => renderNode(node, 0))}
+    <div className="space-y-1.5">
+      {showSearch && (
+        <div className="relative">
+          <input
+            type="search"
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+            placeholder="Search courses or folders…"
+            className="w-full px-3 py-2 pr-8 rounded-lg border border-border bg-surface text-sm text-foreground placeholder-foreground-subtle focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring transition-all"
+            aria-label="Filter course tree"
+          />
+          {search && (
+            <button
+              type="button"
+              onClick={() => setSearch("")}
+              aria-label="Clear search"
+              className="absolute right-2 top-1/2 -translate-y-1/2 text-foreground-subtle hover:text-foreground rounded-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+            >
+              ×
+            </button>
+          )}
+        </div>
+      )}
+      <div className="max-h-72 overflow-y-auto rounded-lg border border-border bg-surface p-1">
+        {visibleNodes.length === 0 ? (
+          <p className="text-xs text-foreground-subtle py-4 text-center">
+            No nodes or courses match &ldquo;{trimmedSearch}&rdquo;.
+          </p>
+        ) : (
+          visibleNodes.map((node) => renderNode(node, 0))
+        )}
+      </div>
     </div>
   );
 }
