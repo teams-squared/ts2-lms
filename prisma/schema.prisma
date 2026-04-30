@@ -385,6 +385,25 @@ model InviteEmailTemplate {
   updatedBy String?
 }
 
+/// Singleton org-level email signature appended to outbound LMS emails
+/// (currently the user-invite email; extensible to others). When `enabled`
+/// is false or the row is missing, no signature block is rendered.
+model EmailSignature {
+  id           String   @id @default("singleton")
+  enabled      Boolean  @default(true)
+  signOff      String   @default("Best regards,")
+  name         String   @default("")
+  title        String   @default("")
+  email        String   @default("")
+  phone        String   @default("")
+  websiteUrl   String   @default("")
+  websiteLabel String   @default("")
+  addressLine  String   @default("")
+  logoUrl      String   @default("")
+  updatedAt    DateTime @updatedAt
+  updatedBy    String?
+}
+
 model DeadlineReminderLog {
   id       String   @id @default(cuid())
   userId   String
