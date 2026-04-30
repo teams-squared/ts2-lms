@@ -100,7 +100,14 @@ export interface EmailSignatureConfig {
   websiteLabel: string;
   addressLine: string;
   logoUrl: string;
+  disclaimer: string;
 }
+
+/** Standard confidentiality / legal disclaimer that admins can paste in
+ *  via the form's "Use default" link. Stored separately from the signature
+ *  block so the column default in the DB stays empty (admins opt in). */
+export const DEFAULT_SIGNATURE_DISCLAIMER =
+  "This email and any files transmitted with it are confidential and intended solely for the use of the individual or entity to whom they are addressed. This message contains confidential information and is intended only for the individual named. If you are not the named addressee, you should not disseminate, distribute, or copy this email. Please notify the sender immediately by e-mail if you have received this email by mistake and delete this email from your system. If you are not the intended recipient, you are notified that disclosing, copying, distributing or taking any action in reliance on the contents of this information is strictly prohibited.";
 
 /** Public URL of the bundled Teams Squared wordmark logo, served from the
  *  Next.js `public/` directory. Used as the default in email signatures
@@ -117,7 +124,10 @@ export function renderEmailSignatureHtml(
   sig: EmailSignatureConfig | null,
 ): string {
   if (!sig || !sig.enabled) return "";
-  const hasAnyContent =
+  // The "identity" block (name, title, contacts, logo) and the
+  // "disclaimer" block render independently — a signature with only a
+  // legal disclaimer is valid, and so is one with only contact rows.
+  const hasIdentity =
     sig.name.trim() ||
     sig.title.trim() ||
     sig.email.trim() ||
@@ -125,7 +135,8 @@ export function renderEmailSignatureHtml(
     sig.websiteUrl.trim() ||
     sig.addressLine.trim() ||
     sig.logoUrl.trim();
-  if (!hasAnyContent) return "";
+  const hasDisclaimer = sig.disclaimer.trim();
+  if (!hasIdentity && !hasDisclaimer) return "";
 
   // Default to the bundled wordmark in /public when the admin leaves the
   // logoUrl blank — that's the common case and avoids forcing them to
@@ -133,7 +144,7 @@ export function renderEmailSignatureHtml(
   const effectiveLogoUrl = sig.logoUrl.trim() || BUNDLED_LOGO_URL;
 
   const lines: string[] = [];
-  if (sig.signOff.trim()) {
+  if (hasIdentity && sig.signOff.trim()) {
     lines.push(
       `<p style="color: #4a4a5a; font-size: 14px; line-height: 1.6; margin: 0 0 8px;">${escapeHtml(sig.signOff)}</p>`,
     );
@@ -148,9 +159,11 @@ export function renderEmailSignatureHtml(
       `<p style="color: #6a6a7a; font-size: 13px; line-height: 1.5; margin: 0 0 12px;">${escapeHtml(sig.title)}</p>`,
     );
   }
-  lines.push(
-    `<p style="margin: 12px 0;"><img src="${escapeHtml(effectiveLogoUrl)}" alt="Teams Squared" height="40" style="display: block; height: 40px; max-width: 200px;" /></p>`,
-  );
+  if (hasIdentity) {
+    lines.push(
+      `<p style="margin: 12px 0;"><img src="${escapeHtml(effectiveLogoUrl)}" alt="Teams Squared" height="40" style="display: block; height: 40px; max-width: 200px;" /></p>`,
+    );
+  }
   if (sig.email.trim()) {
     lines.push(
       `<p style="color: #4a4a5a; font-size: 13px; line-height: 1.5; margin: 0;"><a href="mailto:${escapeHtml(sig.email)}" style="color: #4f46e5; text-decoration: underline;">${escapeHtml(sig.email)}</a></p>`,
@@ -170,6 +183,14 @@ export function renderEmailSignatureHtml(
   if (sig.addressLine.trim()) {
     lines.push(
       `<p style="color: #4a4a5a; font-size: 13px; line-height: 1.5; margin: 0;">${escapeHtml(sig.addressLine)}</p>`,
+    );
+  }
+  // Confidentiality / legal fine print — small muted block separated from
+  // the contact rows. Long-form text; rendered as a single paragraph with
+  // the natural reading width handled by the wrapper's max-width.
+  if (sig.disclaimer.trim()) {
+    lines.push(
+      `<p style="color: #8e8e93; font-size: 11px; line-height: 1.5; margin: 24px 0 0;">${escapeHtml(sig.disclaimer)}</p>`,
     );
   }
   return `<div style="margin: 28px 0 0;">${lines.join("")}</div>`;

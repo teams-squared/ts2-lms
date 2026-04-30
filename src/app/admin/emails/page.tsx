@@ -5,7 +5,7 @@ import { IsoNotificationSettingsForm } from "@/components/admin/IsoNotificationS
 import { InviteEmailTemplateForm } from "@/components/admin/InviteEmailTemplateForm";
 import { EmailSignatureForm } from "@/components/admin/EmailSignatureForm";
 import { EmailsTabs, EmailsTabPanel } from "@/components/admin/EmailsTabs";
-import { DEFAULT_INVITE_BODY } from "@/lib/email";
+import { DEFAULT_INVITE_BODY, DEFAULT_SIGNATURE_DISCLAIMER } from "@/lib/email";
 
 export const dynamic = "force-dynamic";
 
@@ -78,6 +78,8 @@ export default async function AdminEmailsPage() {
           websiteLabel={signature?.websiteLabel ?? ""}
           addressLine={signature?.addressLine ?? ""}
           logoUrl={signature?.logoUrl ?? ""}
+          disclaimer={signature?.disclaimer ?? ""}
+          defaultDisclaimer={DEFAULT_SIGNATURE_DISCLAIMER}
           updatedAt={signature?.updatedAt ?? null}
         />
       </EmailsTabPanel>
