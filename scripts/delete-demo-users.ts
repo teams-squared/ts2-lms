@@ -2,24 +2,38 @@
  * One-time cleanup: delete the demo accounts that the old prisma/seed.ts
  * planted into prod on every Render deploy.
  *
- * Usage:
+ * Usage (no extra installs needed):
+ *
  *   1. From the Render dashboard, copy the External Connection String for
  *      ts2-lms-db (Database → Connect → "External Database URL").
- *   2. Run from this repo's root, with that URL inline:
  *
- *        DATABASE_URL="<paste here>" npx tsx scripts/delete-demo-users.ts
+ *   2. Run a dry-run / preview first:
  *
- *   3. The script previews matches, deletes them, then prints a final
- *      "remaining" count. Expect 0.
+ *        DATABASE_URL="<paste>" npx tsx scripts/delete-demo-users.ts
+ *
+ *      The script will list the demo accounts it found and any rows
+ *      that block deletion (RESTRICT-onDelete foreign keys: namely
+ *      Course.createdById and PolicyDocLesson.lastSyncedById). If any
+ *      such blockers exist, it stops and tells you to re-run with a
+ *      reassignment target.
+ *
+ *   3. To reassign blockers and delete in one go, set REASSIGN_TO_EMAIL
+ *      to the email of a real admin who should inherit the orphaned
+ *      courses / policy-doc-syncs. Example:
+ *
+ *        DATABASE_URL="…" REASSIGN_TO_EMAIL="akil@teamsquared.io" \
+ *          npx tsx scripts/delete-demo-users.ts
  *
  * Safety:
- * - Only deletes accounts whose email is in the explicit DEMO_EMAILS list.
- * - The seed used the typo'd domain @teamssquared.com (double-s); real
- *   @teamsquared.io users (your actual employees) are NEVER touched.
- * - User row deletion cascades to Enrollment, LessonProgress, QuizAttempt,
- *   QuizAnswer, Notification, DeadlineReminderLog, UserStats,
- *   UserAchievement (per the Prisma schema). The preview shows the count
- *   of those before the delete runs.
+ * - Only deletes accounts whose email is in the explicit DEMO_EMAILS
+ *   list (the typo'd seed domain @teamssquared.com). Real
+ *   @teamsquared.io users are NEVER touched.
+ * - Reassignment only updates rows currently owned by demo users.
+ * - The reassignment target must already exist and have role
+ *   admin or course_manager.
+ * - User row deletion cascades to Enrollment, LessonProgress,
+ *   QuizAttempt, QuizAnswer, Notification, DeadlineReminderLog,
+ *   UserStats, UserAchievement.
  */
 
 import { PrismaClient } from "@prisma/client";
@@ -40,6 +54,8 @@ async function main() {
     process.exit(1);
   }
 
+  const reassignToEmail = process.env.REASSIGN_TO_EMAIL?.trim().toLowerCase();
+
   // Match the TLS handling the rest of the codebase uses for managed
   // Postgres (self-signed certs on internal CAs).
   const url = new URL(raw);
@@ -50,7 +66,7 @@ async function main() {
 
   console.log(`\nConnected to ${url.hostname}\n`);
 
-  // Preview
+  // ── 1. Find demo accounts ────────────────────────────────────────────────
   const matches = await prisma.user.findMany({
     where: { email: { in: DEMO_EMAILS } },
     select: {
@@ -76,8 +92,23 @@ async function main() {
     );
   }
 
-  // Cascade preview
   const userIds = matches.map((m) => m.id);
+
+  // ── 2. Detect RESTRICT-onDelete foreign keys that would block delete ────
+  // Course.createdById and PolicyDocLesson.lastSyncedById both block User
+  // deletion when referenced. Show counts; offer to reassign.
+  const [coursesOwned, policyDocSyncs] = await Promise.all([
+    prisma.course.findMany({
+      where: { createdById: { in: userIds } },
+      select: { id: true, title: true, createdById: true },
+    }),
+    prisma.policyDocLesson.findMany({
+      where: { lastSyncedById: { in: userIds } },
+      select: { lessonId: true, documentTitle: true, lastSyncedById: true },
+    }),
+  ]);
+
+  // ── 3. Cascade preview (informational) ──────────────────────────────────
   const [enrollments, progress, attempts, notifications] = await Promise.all([
     prisma.enrollment.count({ where: { userId: { in: userIds } } }),
     prisma.lessonProgress.count({ where: { userId: { in: userIds } } }),
@@ -91,14 +122,77 @@ async function main() {
   console.log(`  · Quiz attempts:   ${attempts}`);
   console.log(`  · Notifications:   ${notifications}`);
 
-  // Delete
-  console.log(`\nDeleting…`);
+  if (coursesOwned.length > 0 || policyDocSyncs.length > 0) {
+    console.log(`\nBlocking RESTRICT references that need reassignment:`);
+    if (coursesOwned.length > 0) {
+      console.log(`  · ${coursesOwned.length} course(s) owned (Course.createdById):`);
+      for (const c of coursesOwned) {
+        console.log(`      - "${c.title}"`);
+      }
+    }
+    if (policyDocSyncs.length > 0) {
+      console.log(`  · ${policyDocSyncs.length} policy-doc sync record(s) (PolicyDocLesson.lastSyncedById):`);
+      for (const p of policyDocSyncs) {
+        console.log(`      - "${p.documentTitle}"`);
+      }
+    }
+
+    if (!reassignToEmail) {
+      console.log(
+        `\nRe-run with REASSIGN_TO_EMAIL=<your-admin-email> to transfer these to a real admin and proceed with deletion. Example:\n\n` +
+          `    DATABASE_URL="…" REASSIGN_TO_EMAIL="akil@teamsquared.io" \\\n` +
+          `      npx tsx scripts/delete-demo-users.ts\n`,
+      );
+      await prisma.$disconnect();
+      process.exit(2);
+    }
+
+    // Validate the reassign target.
+    const target = await prisma.user.findUnique({
+      where: { email: reassignToEmail },
+      select: { id: true, email: true, role: true, name: true },
+    });
+    if (!target) {
+      console.error(
+        `\n✗ REASSIGN_TO_EMAIL=${reassignToEmail} not found in the User table. Aborting.\n`,
+      );
+      await prisma.$disconnect();
+      process.exit(3);
+    }
+    if (target.role !== "ADMIN" && target.role !== "COURSE_MANAGER") {
+      console.error(
+        `\n✗ ${target.email} has role ${target.role}; need ADMIN or COURSE_MANAGER to inherit course ownership. Aborting.\n`,
+      );
+      await prisma.$disconnect();
+      process.exit(4);
+    }
+
+    console.log(`\nReassigning to: ${target.email} (${target.role})`);
+
+    if (coursesOwned.length > 0) {
+      const cu = await prisma.course.updateMany({
+        where: { createdById: { in: userIds } },
+        data: { createdById: target.id },
+      });
+      console.log(`  · Course.createdById → ${cu.count} row(s) reassigned`);
+    }
+    if (policyDocSyncs.length > 0) {
+      const pu = await prisma.policyDocLesson.updateMany({
+        where: { lastSyncedById: { in: userIds } },
+        data: { lastSyncedById: target.id },
+      });
+      console.log(`  · PolicyDocLesson.lastSyncedById → ${pu.count} row(s) reassigned`);
+    }
+  }
+
+  // ── 4. Delete demo users ────────────────────────────────────────────────
+  console.log(`\nDeleting demo users…`);
   const result = await prisma.user.deleteMany({
     where: { email: { in: DEMO_EMAILS } },
   });
   console.log(`Deleted ${result.count} user row(s).`);
 
-  // Verify
+  // ── 5. Verify ───────────────────────────────────────────────────────────
   const remaining = await prisma.user.count({
     where: { email: { contains: "@teamssquared.com" } },
   });
