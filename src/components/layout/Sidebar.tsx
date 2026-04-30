@@ -193,7 +193,10 @@ export function Sidebar({ className }: SidebarProps) {
       <aside
         aria-label="Primary"
         className={cn(
-          "sticky top-0 z-30 flex h-screen w-[264px] shrink-0 flex-col overflow-hidden border-r border-border bg-surface",
+          // z-40 keeps the app shell sidebar above any in-page overlay
+          // sidebars (e.g. the course sidebar at z-30 inside lesson pages),
+          // so its expansion doesn't get occluded by them.
+          "sticky top-0 z-40 flex h-screen w-[264px] shrink-0 flex-col overflow-hidden border-r border-border bg-surface",
           className,
         )}
       >
@@ -211,7 +214,11 @@ export function Sidebar({ className }: SidebarProps) {
       <aside
         aria-label="Primary"
         className={cn(
-          "group fixed left-0 top-0 z-30 flex h-screen w-16 flex-col overflow-hidden border-r border-border bg-surface",
+          // z-40 — see pinned variant above. Must be higher than any
+          // in-page overlay sidebar (course sidebar uses z-30) so the
+          // app sidebar's hover-expand cleanly covers them rather than
+          // getting clipped behind them.
+          "group fixed left-0 top-0 z-40 flex h-screen w-16 flex-col overflow-hidden border-r border-border bg-surface",
           "transition-[width,box-shadow] duration-200 ease-out",
           "hover:w-[264px] hover:shadow-lg",
           "focus-within:w-[264px] focus-within:shadow-lg",
