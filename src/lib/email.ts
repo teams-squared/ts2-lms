@@ -43,7 +43,10 @@ export async function sendCourseCompletionEmail(
 
 /** Default invite-email body template. Used when the admin hasn't saved
  *  a custom one in the InviteEmailTemplate table. Plain text with
- *  {{placeholder}} markers; rendered into the system HTML wrapper. */
+ *  {{placeholder}} markers; rendered into the system HTML wrapper.
+ *
+ *  Note: don't include a sign-off here — the configured EmailSignature
+ *  block owns the closing. */
 export const DEFAULT_INVITE_BODY = `Hi {{firstName}},
 
 {{inviterName}} has added you to the Teams Squared learning platform. Sign in with your Microsoft work account to get started.
@@ -84,11 +87,110 @@ function renderInviteBody(
   );
 }
 
+/** Structured email signature config — matches `EmailSignature` columns.
+ *  Any blank field is omitted from the rendered block. */
+export interface EmailSignatureConfig {
+  enabled: boolean;
+  signOff: string;
+  name: string;
+  title: string;
+  email: string;
+  phone: string;
+  websiteUrl: string;
+  websiteLabel: string;
+  addressLine: string;
+  logoUrl: string;
+}
+
+/** Render the configured signature into a standalone HTML block, suitable
+ *  for appending after the main body of any outbound LMS email. Returns an
+ *  empty string when the signature is disabled or has no contentful
+ *  fields, so callers can interpolate it unconditionally. */
+export function renderEmailSignatureHtml(
+  sig: EmailSignatureConfig | null,
+): string {
+  if (!sig || !sig.enabled) return "";
+  const hasAnyContent =
+    sig.name.trim() ||
+    sig.title.trim() ||
+    sig.email.trim() ||
+    sig.phone.trim() ||
+    sig.websiteUrl.trim() ||
+    sig.addressLine.trim() ||
+    sig.logoUrl.trim();
+  if (!hasAnyContent) return "";
+
+  const lines: string[] = [];
+  if (sig.signOff.trim()) {
+    lines.push(
+      `<p style="color: #4a4a5a; font-size: 14px; line-height: 1.6; margin: 0 0 8px;">${escapeHtml(sig.signOff)}</p>`,
+    );
+  }
+  if (sig.name.trim()) {
+    lines.push(
+      `<p style="color: #1a1a2e; font-size: 15px; font-weight: 700; line-height: 1.4; margin: 0;">${escapeHtml(sig.name)}</p>`,
+    );
+  }
+  if (sig.title.trim()) {
+    lines.push(
+      `<p style="color: #6a6a7a; font-size: 13px; line-height: 1.5; margin: 0 0 12px;">${escapeHtml(sig.title)}</p>`,
+    );
+  }
+  if (sig.logoUrl.trim()) {
+    lines.push(
+      `<p style="margin: 12px 0;"><img src="${escapeHtml(sig.logoUrl)}" alt="Teams Squared" height="40" style="display: block; height: 40px; max-width: 200px;" /></p>`,
+    );
+  }
+  if (sig.email.trim()) {
+    lines.push(
+      `<p style="color: #4a4a5a; font-size: 13px; line-height: 1.5; margin: 0;"><a href="mailto:${escapeHtml(sig.email)}" style="color: #4f46e5; text-decoration: underline;">${escapeHtml(sig.email)}</a></p>`,
+    );
+  }
+  if (sig.phone.trim()) {
+    lines.push(
+      `<p style="color: #4a4a5a; font-size: 13px; line-height: 1.5; margin: 0;">${escapeHtml(sig.phone)}</p>`,
+    );
+  }
+  if (sig.websiteUrl.trim()) {
+    const label = sig.websiteLabel.trim() || sig.websiteUrl.trim();
+    lines.push(
+      `<p style="color: #4a4a5a; font-size: 13px; line-height: 1.5; margin: 0;"><a href="${escapeHtml(sig.websiteUrl)}" style="color: #4f46e5; text-decoration: underline;">${escapeHtml(label)}</a></p>`,
+    );
+  }
+  if (sig.addressLine.trim()) {
+    lines.push(
+      `<p style="color: #4a4a5a; font-size: 13px; line-height: 1.5; margin: 0;">${escapeHtml(sig.addressLine)}</p>`,
+    );
+  }
+  return `<div style="margin: 28px 0 0;">${lines.join("")}</div>`;
+}
+
+/** Best-effort fetch of the email signature singleton. Returns null when
+ *  the table is missing or the row hasn't been created yet — callers must
+ *  tolerate that. */
+async function loadEmailSignature(): Promise<EmailSignatureConfig | null> {
+  try {
+    const sig = await prisma.emailSignature.findUnique({
+      where: { id: "singleton" },
+    });
+    return sig ?? null;
+  } catch {
+    return null;
+  }
+}
+
 /** Render the rendered-text body into the standard branded HTML wrapper.
  *  Paragraphs are split on blank lines; bullets (lines beginning with
  *  whitespace + bullet glyph) become <li>. Keeps admins in control of
- *  the copy without exposing them to raw HTML. */
-function wrapInviteHtml(renderedBody: string, joinLink: string): string {
+ *  the copy without exposing them to raw HTML.
+ *
+ *  An admin-configured signature block is appended above the auto
+ *  disclaimer when present. */
+function wrapInviteHtml(
+  renderedBody: string,
+  joinLink: string,
+  signatureHtml: string = "",
+): string {
   const paragraphs = renderedBody
     .split(/\n{2,}/)
     .map((block) => block.trim())
@@ -132,6 +234,7 @@ function wrapInviteHtml(renderedBody: string, joinLink: string): string {
           Sign in to Teams Squared
         </a>
       </p>
+      ${signatureHtml}
       <hr style="border: none; border-top: 1px solid #e5e5ea; margin: 24px 0;" />
       <p style="color: #8e8e93; font-size: 12px;">
         Sent automatically by Teams Squared LMS. Do not reply to this email.
@@ -201,7 +304,10 @@ export async function sendUserInviteEmail({
     joinLink,
   });
 
-  const html = wrapInviteHtml(renderedBody, joinLink);
+  const sig = await loadEmailSignature();
+  const signatureHtml = renderEmailSignatureHtml(sig);
+
+  const html = wrapInviteHtml(renderedBody, joinLink, signatureHtml);
 
   await resend.emails.send({
     from: FROM,
