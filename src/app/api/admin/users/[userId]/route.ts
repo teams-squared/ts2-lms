@@ -38,9 +38,10 @@ export async function GET(_request: Request, { params }: Params) {
  * DELETE /api/admin/users/[userId] — permanently remove a user.
  *
  * Cascade handles most child data (enrollments, progress, quiz attempts,
- * notifications, achievements, stats, clearances). The only non-cascading
- * FK is `Course.createdById`, so authored courses are reassigned to the
- * deleting admin inside the same transaction.
+ * notifications, achievements, stats, clearances). The non-cascading FKs
+ * are RESTRICT — `Course.createdById` and `PolicyDocLesson.lastSyncedById`
+ * — so authored courses and policy-doc sync history are reassigned to
+ * the deleting admin inside the same transaction.
  *
  * Guards:
  *  - Must be ADMIN (stricter than course_manager).
@@ -83,9 +84,10 @@ export async function DELETE(_request: Request, { params }: Params) {
   }
 
   // Counts for response body + audit payload.
-  const [enrollmentCount, authoredCount] = await Promise.all([
+  const [enrollmentCount, authoredCount, policyDocSyncCount] = await Promise.all([
     prisma.enrollment.count({ where: { userId } }),
     prisma.course.count({ where: { createdById: userId } }),
+    prisma.policyDocLesson.count({ where: { lastSyncedById: userId } }),
   ]);
 
   await prisma.$transaction(async (tx) => {
@@ -96,6 +98,13 @@ export async function DELETE(_request: Request, { params }: Params) {
       where: { createdById: userId },
       data: { createdById: deletingAdminId },
     });
+    // Reassign policy-doc sync history to the deleting admin — same
+    // RESTRICT FK reasoning as Course above. updateMany is a no-op when
+    // policyDocSyncCount === 0.
+    await tx.policyDocLesson.updateMany({
+      where: { lastSyncedById: userId },
+      data: { lastSyncedById: deletingAdminId },
+    });
     await tx.user.delete({ where: { id: userId } });
   });
 
@@ -104,12 +113,14 @@ export async function DELETE(_request: Request, { params }: Params) {
     targetEmail: target.email,
     targetRole: target.role,
     reassignedCourseCount: authoredCount,
+    reassignedPolicyDocSyncCount: policyDocSyncCount,
     enrollmentCount,
   });
 
   return NextResponse.json({
     deleted: true,
     reassignedCourseCount: authoredCount,
+    reassignedPolicyDocSyncCount: policyDocSyncCount,
     enrollmentCount,
   });
 }
