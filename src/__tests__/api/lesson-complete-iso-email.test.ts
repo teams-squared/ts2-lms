@@ -53,7 +53,7 @@ describe("POST lesson-complete — ISO ack email hook", () => {
     mockAuth.mockResolvedValue(mockSession({ id: "user-1" }));
     mockPrisma.lesson.findUnique.mockResolvedValue(policyDocLesson);
     mockPrisma.enrollment.findUnique.mockResolvedValue(baseEnrollment);
-    mockPrisma.lessonProgress.upsert.mockResolvedValue({
+    mockPrisma.lessonProgress.create.mockResolvedValue({
       id: "lp1",
       userId: "user-1",
       lessonId: "l1",

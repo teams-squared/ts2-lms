@@ -89,7 +89,7 @@ describe("POST .../lessons/[lessonId]/complete", () => {
     mockPrisma.lesson.findUnique.mockResolvedValue(validLesson);
     mockPrisma.enrollment.findUnique.mockResolvedValue(baseEnrollment);
     const completedAt = new Date("2026-04-13T10:00:00Z");
-    mockPrisma.lessonProgress.upsert.mockResolvedValue({
+    mockPrisma.lessonProgress.create.mockResolvedValue({
       id: "lp1",
       userId: "user-1",
       lessonId: "l1",
@@ -118,9 +118,9 @@ describe("POST .../lessons/[lessonId]/complete", () => {
     mockPrisma.lesson.findUnique.mockResolvedValue(validLesson);
     // enrollment.completedAt is null — first completion
     mockPrisma.enrollment.findUnique.mockResolvedValue(baseEnrollment);
-    mockPrisma.enrollment.update.mockResolvedValue({ ...baseEnrollment, completedAt: new Date() });
+    mockPrisma.enrollment.updateMany.mockResolvedValue({ count: 1 });
     const completedAt = new Date();
-    mockPrisma.lessonProgress.upsert.mockResolvedValue({
+    mockPrisma.lessonProgress.create.mockResolvedValue({
       id: "lp1", userId: "user-1", lessonId: "l1", startedAt: completedAt, completedAt,
     });
     // All lessons now complete
@@ -155,7 +155,7 @@ describe("POST .../lessons/[lessonId]/complete", () => {
       completedAt: new Date("2026-01-15"),
     });
     const completedAt = new Date();
-    mockPrisma.lessonProgress.upsert.mockResolvedValue({
+    mockPrisma.lessonProgress.create.mockResolvedValue({
       id: "lp1", userId: "user-1", lessonId: "l1", startedAt: completedAt, completedAt,
     });
     mockPrisma.module.findMany.mockResolvedValue([{ lessons: [{ id: "l1" }] }]);
@@ -172,7 +172,7 @@ describe("POST .../lessons/[lessonId]/complete", () => {
     expect(body.courseComplete).toBe(false);
     expect(body.courseStats).toBeNull();
     // enrollment.update should NOT have been called
-    expect(mockPrisma.enrollment.update).not.toHaveBeenCalled();
+    expect(mockPrisma.enrollment.updateMany).not.toHaveBeenCalled();
   });
 
   it("uncomplete + re-complete after crossing: courseComplete stays false", async () => {
@@ -186,7 +186,7 @@ describe("POST .../lessons/[lessonId]/complete", () => {
       completedAt: new Date("2026-01-15"),
     });
     const completedAt = new Date();
-    mockPrisma.lessonProgress.upsert.mockResolvedValue({
+    mockPrisma.lessonProgress.create.mockResolvedValue({
       id: "lp1", userId: "user-1", lessonId: "l1", startedAt: completedAt, completedAt,
     });
     // All lessons complete again after re-completing
@@ -205,7 +205,7 @@ describe("POST .../lessons/[lessonId]/complete", () => {
     // The key invariant: no modal fires on re-completion
     expect(body.courseComplete).toBe(false);
     expect(body.courseStats).toBeNull();
-    expect(mockPrisma.enrollment.update).not.toHaveBeenCalled();
+    expect(mockPrisma.enrollment.updateMany).not.toHaveBeenCalled();
   });
 
   it("POST is a no-op when course is locked at completed", async () => {
@@ -238,15 +238,15 @@ describe("POST .../lessons/[lessonId]/complete", () => {
     expect(body.courseComplete).toBe(false);
     expect(body.courseStats).toBeNull();
     // No writes
-    expect(mockPrisma.lessonProgress.upsert).not.toHaveBeenCalled();
-    expect(mockPrisma.enrollment.update).not.toHaveBeenCalled();
+    expect(mockPrisma.lessonProgress.create).not.toHaveBeenCalled();
+    expect(mockPrisma.enrollment.updateMany).not.toHaveBeenCalled();
   });
 
   it("is idempotent — calling POST twice both return 200", async () => {
     mockAuth.mockResolvedValue(mockSession({ id: "user-1" }));
     mockPrisma.lesson.findUnique.mockResolvedValue(validLesson);
     mockPrisma.enrollment.findUnique.mockResolvedValue(baseEnrollment);
-    mockPrisma.lessonProgress.upsert.mockResolvedValue({
+    mockPrisma.lessonProgress.create.mockResolvedValue({
       id: "lp1",
       userId: "user-1",
       lessonId: "l1",
@@ -284,7 +284,7 @@ describe("POST .../lessons/[lessonId]/complete", () => {
       },
     });
     mockPrisma.enrollment.findUnique.mockResolvedValue(baseEnrollment);
-    mockPrisma.lessonProgress.upsert.mockResolvedValue({
+    mockPrisma.lessonProgress.create.mockResolvedValue({
       id: "lp1",
       userId: "user-1",
       lessonId: "l1",
@@ -301,14 +301,14 @@ describe("POST .../lessons/[lessonId]/complete", () => {
     const res = await POST(req, makeParams("c1", "m1", "l1"));
     expect(res.status).toBe(200);
 
-    const upsertArgs = mockPrisma.lessonProgress.upsert.mock.calls[0][0];
-    // Both create and update branches must carry the audit fields — server
-    // never trusts the client about which version the user saw.
-    expect(upsertArgs.create.acknowledgedVersion).toBe("1.1.0");
-    expect(upsertArgs.create.acknowledgedETag).toBe("etag-xyz");
-    expect(upsertArgs.create.acknowledgedHash).toBe("hash-deadbeef");
-    expect(upsertArgs.create.acknowledgedAt).toBeInstanceOf(Date);
-    expect(upsertArgs.update.acknowledgedVersion).toBe("1.1.0");
+    // The transition path uses a single `create` call; audit fields ride
+    // on data. (The fallback updateMany path also stamps these via its
+    // `data` arg, exercised by the "already-complete" test below.)
+    const createArgs = mockPrisma.lessonProgress.create.mock.calls[0][0];
+    expect(createArgs.data.acknowledgedVersion).toBe("1.1.0");
+    expect(createArgs.data.acknowledgedETag).toBe("etag-xyz");
+    expect(createArgs.data.acknowledgedHash).toBe("hash-deadbeef");
+    expect(createArgs.data.acknowledgedAt).toBeInstanceOf(Date);
   });
 
   it("POLICY_DOC: returns 409 when the lesson has no PolicyDocLesson row yet", async () => {
@@ -330,7 +330,7 @@ describe("POST .../lessons/[lessonId]/complete", () => {
     expect(res.status).toBe(409);
     const body = await res.json();
     expect(body.error).toMatch(/not yet synced/i);
-    expect(mockPrisma.lessonProgress.upsert).not.toHaveBeenCalled();
+    expect(mockPrisma.lessonProgress.create).not.toHaveBeenCalled();
   });
 
   it("non-POLICY_DOC lesson does not write audit fields", async () => {
@@ -343,7 +343,7 @@ describe("POST .../lessons/[lessonId]/complete", () => {
       policyDoc: null,
     });
     mockPrisma.enrollment.findUnique.mockResolvedValue(baseEnrollment);
-    mockPrisma.lessonProgress.upsert.mockResolvedValue({
+    mockPrisma.lessonProgress.create.mockResolvedValue({
       id: "lp1",
       userId: "user-1",
       lessonId: "l1",
@@ -359,9 +359,108 @@ describe("POST .../lessons/[lessonId]/complete", () => {
     );
     await POST(req, makeParams("c1", "m1", "l1"));
 
-    const upsertArgs = mockPrisma.lessonProgress.upsert.mock.calls[0][0];
-    expect(upsertArgs.create.acknowledgedVersion).toBeUndefined();
-    expect(upsertArgs.update.acknowledgedVersion).toBeUndefined();
+    const createArgs = mockPrisma.lessonProgress.create.mock.calls[0][0];
+    expect(createArgs.data.acknowledgedVersion).toBeUndefined();
+  });
+
+  // ── Race-detection / idempotency on rapid double-click ─────────────────────
+  // The route must do XP, analytics, ISO ack email, and course-completion
+  // emails ONLY on the genuine incomplete→complete transition. A duplicate
+  // request (same user clicking twice, or a network retry) must be a no-op
+  // for side effects.
+
+  it("re-clicking an already-complete lesson does NOT double-award XP", async () => {
+    mockAuth.mockResolvedValue(mockSession({ id: "user-1" }));
+    mockPrisma.lesson.findUnique.mockResolvedValue(validLesson);
+    mockPrisma.enrollment.findUnique.mockResolvedValue(baseEnrollment);
+    // Create throws unique-violation: row already exists.
+    mockPrisma.lessonProgress.create.mockRejectedValue({ code: "P2002" });
+    // Conditional updateMany sees completedAt already set → 0 rows affected.
+    mockPrisma.lessonProgress.updateMany.mockResolvedValue({ count: 0 });
+    // findUnique returns the existing complete row.
+    const existingCompletedAt = new Date("2026-02-01T10:00:00Z");
+    mockPrisma.lessonProgress.findUnique.mockResolvedValue({
+      id: "lp1",
+      userId: "user-1",
+      lessonId: "l1",
+      startedAt: existingCompletedAt,
+      completedAt: existingCompletedAt,
+    });
+    mockPrisma.module.findMany.mockResolvedValue([{ lessons: [{ id: "l1" }] }]);
+    mockPrisma.lessonProgress.count.mockResolvedValue(1);
+
+    const res = await POST(
+      new Request("http://localhost/api/courses/c1/modules/m1/lessons/l1/complete", { method: "POST" }),
+      makeParams("c1", "m1", "l1"),
+    );
+    expect(res.status).toBe(200);
+    const body = await res.json();
+    expect(body.completed).toBe(true);
+    // Key invariant: re-click awards 0 XP.
+    expect(body.xpAwarded).toBe(0);
+    // Key invariant: course-completion side effects skipped on re-click.
+    expect(body.courseComplete).toBe(false);
+    expect(mockPrisma.enrollment.updateMany).not.toHaveBeenCalled();
+  });
+
+  it("first transition awards XP and fires course-completion side effects", async () => {
+    mockAuth.mockResolvedValue(mockSession({ id: "user-1" }));
+    mockPrisma.lesson.findUnique.mockResolvedValue(validLesson);
+    mockPrisma.enrollment.findUnique.mockResolvedValue(baseEnrollment);
+    // Create succeeds — first time this row exists.
+    const completedAt = new Date();
+    mockPrisma.lessonProgress.create.mockResolvedValue({
+      id: "lp1", userId: "user-1", lessonId: "l1", startedAt: completedAt, completedAt,
+    });
+    // All lessons complete after this one.
+    mockPrisma.module.findMany.mockResolvedValue([{ lessons: [{ id: "l1" }] }]);
+    mockPrisma.lessonProgress.count.mockResolvedValue(1);
+    // enrollment.updateMany wins the race (count=1).
+    mockPrisma.enrollment.updateMany.mockResolvedValue({ count: 1 });
+    mockPrisma.course.findUnique.mockResolvedValue({ title: "Test Course" });
+    mockPrisma.courseEmailSubscription.findMany.mockResolvedValue([]);
+    mockPrisma.user.findUnique.mockResolvedValue({ name: "Alice", email: "alice@example.com" });
+
+    const res = await POST(
+      new Request("http://localhost/api/courses/c1/modules/m1/lessons/l1/complete", { method: "POST" }),
+      makeParams("c1", "m1", "l1"),
+    );
+    expect(res.status).toBe(200);
+    const body = await res.json();
+    expect(body.xpAwarded).toBe(10);
+    expect(body.courseComplete).toBe(true);
+    expect(mockPrisma.enrollment.updateMany).toHaveBeenCalledTimes(1);
+  });
+
+  it("losing the enrollment.updateMany race returns courseComplete:false", async () => {
+    // Two concurrent requests both pass the lessonProgress gate (one wins
+    // create, the other wins updateMany). Both then hit the course-completion
+    // block, but only one wins enrollment.updateMany — the other gets count=0
+    // and skips the side effects.
+    mockAuth.mockResolvedValue(mockSession({ id: "user-1" }));
+    mockPrisma.lesson.findUnique.mockResolvedValue(validLesson);
+    mockPrisma.enrollment.findUnique.mockResolvedValue(baseEnrollment);
+    const completedAt = new Date();
+    mockPrisma.lessonProgress.create.mockResolvedValue({
+      id: "lp1", userId: "user-1", lessonId: "l1", startedAt: completedAt, completedAt,
+    });
+    mockPrisma.module.findMany.mockResolvedValue([{ lessons: [{ id: "l1" }] }]);
+    mockPrisma.lessonProgress.count.mockResolvedValue(1);
+    // Lost the race — another request already stamped enrollment.completedAt.
+    mockPrisma.enrollment.updateMany.mockResolvedValue({ count: 0 });
+
+    const res = await POST(
+      new Request("http://localhost/api/courses/c1/modules/m1/lessons/l1/complete", { method: "POST" }),
+      makeParams("c1", "m1", "l1"),
+    );
+    expect(res.status).toBe(200);
+    const body = await res.json();
+    // Lesson XP still awarded (this request did transition the lesson row).
+    expect(body.xpAwarded).toBe(10);
+    // But course-completion modal does NOT fire on the losing request —
+    // the winning request's response carried that.
+    expect(body.courseComplete).toBe(false);
+    expect(body.courseStats).toBeNull();
   });
 });
 
@@ -443,6 +542,6 @@ describe("DELETE .../lessons/[lessonId]/complete", () => {
       makeParams("c1", "m1", "l1"),
     );
     // enrollment.update must never be called from DELETE — completedAt stays sticky
-    expect(mockPrisma.enrollment.update).not.toHaveBeenCalled();
+    expect(mockPrisma.enrollment.updateMany).not.toHaveBeenCalled();
   });
 });

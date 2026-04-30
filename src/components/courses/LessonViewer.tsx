@@ -38,11 +38,26 @@ const mdComponents: Components = {
   hr: () => <hr className="my-6 border-border" />,
   strong: ({ children }) => <strong className="font-semibold text-foreground">{children}</strong>,
   em: ({ children }) => <em className="italic text-foreground">{children}</em>,
-  a: ({ href, children }) => (
-    <a href={href} className="text-primary underline transition-colors hover:text-primary-hover">
-      {children}
-    </a>
-  ),
+  a: ({ href, children }) => {
+    // Defense-in-depth on outbound links from admin-authored markdown.
+    // react-markdown v10 already strips javascript:/data:/vbscript: URLs
+    // by default, so the protocol vector is closed. The remaining concern
+    // is window.opener tab-nabbing on target=_blank — adding `rel` and
+    // forcing `_blank` on external links eliminates that. Internal links
+    // (relative or same-origin) stay in the same tab.
+    const isExternal = typeof href === "string" && /^https?:\/\//i.test(href);
+    return (
+      <a
+        href={href}
+        className="text-primary underline transition-colors hover:text-primary-hover"
+        {...(isExternal
+          ? { target: "_blank", rel: "noopener noreferrer nofollow" }
+          : {})}
+      >
+        {children}
+      </a>
+    );
+  },
   pre: ({ children }) => (
     <pre className="mb-4 overflow-x-auto rounded-md border border-border bg-surface-muted p-4 text-sm">
       {children}

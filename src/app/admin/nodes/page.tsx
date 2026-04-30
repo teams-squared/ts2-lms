@@ -1,9 +1,22 @@
+import { redirect } from "next/navigation";
+import { auth } from "@/lib/auth";
 import { getNodeTree } from "@/lib/courseNodes";
 import { NodeManager } from "@/components/admin/NodeManager";
 
 export const dynamic = "force-dynamic";
 
 export default async function AdminNodesPage() {
+  // Defence in depth: the /admin layout already gates admin/course_manager,
+  // but explicit per-page gating means a future routing change (e.g.
+  // moving this out from under that layout) doesn't silently expose the
+  // node manager. Course managers can manage the node tree because
+  // hierarchy is a curation concern, not a security boundary.
+  const session = await auth();
+  const role = session?.user?.role;
+  if (role !== "admin" && role !== "course_manager") {
+    redirect("/admin");
+  }
+
   const tree = await getNodeTree();
 
   return (
