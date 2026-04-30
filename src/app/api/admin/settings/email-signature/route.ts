@@ -19,6 +19,7 @@ const PatchSchema = z.object({
   websiteLabel: z.string().trim().max(120),
   addressLine: z.string().trim().max(200),
   logoUrl: z.union([z.literal(""), z.string().trim().url()]),
+  disclaimer: z.string().max(2000),
 });
 
 /** GET — fetch the email signature config (admin-only). */
@@ -41,6 +42,7 @@ export async function GET() {
     websiteLabel: sig?.websiteLabel ?? "",
     addressLine: sig?.addressLine ?? "",
     logoUrl: sig?.logoUrl ?? "",
+    disclaimer: sig?.disclaimer ?? "",
     updatedAt: sig?.updatedAt ?? null,
     updatedBy: sig?.updatedBy ?? null,
   });
@@ -91,6 +93,7 @@ export async function PATCH(request: Request) {
     websiteLabel: updated.websiteLabel,
     addressLine: updated.addressLine,
     logoUrl: updated.logoUrl,
+    disclaimer: updated.disclaimer,
     updatedAt: updated.updatedAt,
     updatedBy: updated.updatedBy,
   });

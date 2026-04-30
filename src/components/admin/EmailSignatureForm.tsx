@@ -15,9 +15,11 @@ interface SignatureValues {
   websiteLabel: string;
   addressLine: string;
   logoUrl: string;
+  disclaimer: string;
 }
 
 interface Props extends SignatureValues {
+  defaultDisclaimer: string;
   updatedAt: Date | null;
 }
 
@@ -39,7 +41,7 @@ const BUNDLED_LOGO_URL = "/logo_w_text.png";
 
 function renderPreview(v: SignatureValues): string {
   if (!v.enabled) return "<em>Signature disabled — nothing will be appended.</em>";
-  const hasContent =
+  const hasIdentity =
     v.name.trim() ||
     v.title.trim() ||
     v.email.trim() ||
@@ -47,17 +49,18 @@ function renderPreview(v: SignatureValues): string {
     v.websiteUrl.trim() ||
     v.addressLine.trim() ||
     v.logoUrl.trim();
-  // The logo always renders when the signature has any other content; the
+  const hasDisclaimer = v.disclaimer.trim();
+  // The logo always renders when the signature has any identity content;
   // default is the bundled wordmark when logoUrl is blank.
   const effectiveLogoUrl = v.logoUrl.trim() || BUNDLED_LOGO_URL;
   const lines: string[] = [];
-  if (v.signOff.trim())
+  if (hasIdentity && v.signOff.trim())
     lines.push(`<p style="margin:0 0 8px;color:#4a4a5a;font-size:14px;">${esc(v.signOff)}</p>`);
   if (v.name.trim())
     lines.push(`<p style="margin:0;color:#1a1a2e;font-size:15px;font-weight:700;">${esc(v.name)}</p>`);
   if (v.title.trim())
     lines.push(`<p style="margin:0 0 12px;color:#6a6a7a;font-size:13px;">${esc(v.title)}</p>`);
-  if (hasContent)
+  if (hasIdentity)
     lines.push(`<p style="margin:12px 0;"><img src="${esc(effectiveLogoUrl)}" alt="logo" height="40" style="display:block;height:40px;max-width:200px;" /></p>`);
   if (v.email.trim())
     lines.push(`<p style="margin:0;font-size:13px;"><a href="mailto:${esc(v.email)}" style="color:#4f46e5;text-decoration:underline;">${esc(v.email)}</a></p>`);
@@ -69,7 +72,9 @@ function renderPreview(v: SignatureValues): string {
     );
   if (v.addressLine.trim())
     lines.push(`<p style="margin:0;color:#4a4a5a;font-size:13px;">${esc(v.addressLine)}</p>`);
-  if (lines.length === 0)
+  if (hasDisclaimer)
+    lines.push(`<p style="margin:24px 0 0;color:#8e8e93;font-size:11px;line-height:1.5;">${esc(v.disclaimer)}</p>`);
+  if (!hasIdentity && !hasDisclaimer)
     return "<em>No fields filled — nothing will be appended.</em>";
   return lines.join("");
 }
@@ -85,6 +90,8 @@ export function EmailSignatureForm({
   websiteLabel: initialWebsiteLabel,
   addressLine: initialAddressLine,
   logoUrl: initialLogoUrl,
+  disclaimer: initialDisclaimer,
+  defaultDisclaimer,
   updatedAt: initialUpdatedAt,
 }: Props) {
   const { toast } = useToast();
@@ -98,6 +105,7 @@ export function EmailSignatureForm({
   const [websiteLabel, setWebsiteLabel] = useState(initialWebsiteLabel);
   const [addressLine, setAddressLine] = useState(initialAddressLine);
   const [logoUrl, setLogoUrl] = useState(initialLogoUrl);
+  const [disclaimer, setDisclaimer] = useState(initialDisclaimer);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [updatedAt, setUpdatedAt] = useState<Date | null>(
@@ -117,6 +125,7 @@ export function EmailSignatureForm({
         websiteLabel,
         addressLine,
         logoUrl,
+        disclaimer,
       }),
     [
       enabled,
@@ -129,6 +138,7 @@ export function EmailSignatureForm({
       websiteLabel,
       addressLine,
       logoUrl,
+      disclaimer,
     ],
   );
 
@@ -151,6 +161,7 @@ export function EmailSignatureForm({
           websiteLabel,
           addressLine,
           logoUrl,
+          disclaimer,
         }),
       });
       if (!res.ok) {
@@ -170,6 +181,7 @@ export function EmailSignatureForm({
       setWebsiteLabel(data.websiteLabel);
       setAddressLine(data.addressLine);
       setLogoUrl(data.logoUrl);
+      setDisclaimer(data.disclaimer);
       setUpdatedAt(data.updatedAt ? new Date(data.updatedAt) : null);
       toast("Signature saved");
     } catch (err) {
@@ -267,6 +279,42 @@ export function EmailSignatureForm({
           maxLength={500}
           className="sm:col-span-2"
         />
+      </div>
+
+      {/* Confidentiality / legal fine print */}
+      <div>
+        <div className="flex items-center justify-between mb-1">
+          <label
+            htmlFor="signature-disclaimer"
+            className="block text-xs font-medium text-foreground-muted"
+          >
+            Confidentiality disclaimer (optional)
+          </label>
+          <button
+            type="button"
+            onClick={() => setDisclaimer(defaultDisclaimer)}
+            className="text-xs text-primary hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring rounded-sm"
+          >
+            Use standard disclaimer
+          </button>
+        </div>
+        <p className="text-xs text-foreground-muted mb-2">
+          Appended below the signature in small muted text. Leave blank to
+          omit. Click <em>Use standard disclaimer</em> to load Teams
+          Squared&apos;s default confidentiality notice.
+        </p>
+        <textarea
+          id="signature-disclaimer"
+          value={disclaimer}
+          onChange={(e) => setDisclaimer(e.target.value)}
+          rows={5}
+          maxLength={2000}
+          placeholder="(leave blank to omit the fine-print block)"
+          className="w-full px-3 py-2 rounded-lg border border-border bg-surface text-sm text-foreground placeholder-foreground-subtle focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring transition-all"
+        />
+        <p className="mt-1 text-xs text-foreground-subtle">
+          {disclaimer.length} / 2000 characters
+        </p>
       </div>
 
       {/* Live preview */}

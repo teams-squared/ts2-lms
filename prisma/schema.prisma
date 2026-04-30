@@ -388,6 +388,10 @@ model InviteEmailTemplate {
 /// Singleton org-level email signature appended to outbound LMS emails
 /// (currently the user-invite email; extensible to others). When `enabled`
 /// is false or the row is missing, no signature block is rendered.
+///
+/// `disclaimer` holds an optional confidentiality / legal fine-print block
+/// rendered as small muted text below the contact rows. Empty disables
+/// that section.
 model EmailSignature {
   id           String   @id @default("singleton")
   enabled      Boolean  @default(true)
@@ -400,6 +404,7 @@ model EmailSignature {
   websiteLabel String   @default("")
   addressLine  String   @default("")
   logoUrl      String   @default("")
+  disclaimer   String   @default("")
   updatedAt    DateTime @updatedAt
   updatedBy    String?
 }
