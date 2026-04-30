@@ -102,6 +102,13 @@ export interface EmailSignatureConfig {
   logoUrl: string;
 }
 
+/** Public URL of the bundled Teams Squared wordmark logo, served from the
+ *  Next.js `public/` directory. Used as the default in email signatures
+ *  when the admin hasn't pasted a custom `logoUrl`. Email clients fetch
+ *  this URL when the recipient opens the message, so it must remain
+ *  publicly reachable (no auth gate). */
+const BUNDLED_LOGO_URL = `${APP_URL}/logo_w_text.png`;
+
 /** Render the configured signature into a standalone HTML block, suitable
  *  for appending after the main body of any outbound LMS email. Returns an
  *  empty string when the signature is disabled or has no contentful
@@ -120,6 +127,11 @@ export function renderEmailSignatureHtml(
     sig.logoUrl.trim();
   if (!hasAnyContent) return "";
 
+  // Default to the bundled wordmark in /public when the admin leaves the
+  // logoUrl blank — that's the common case and avoids forcing them to
+  // host a logo somewhere themselves.
+  const effectiveLogoUrl = sig.logoUrl.trim() || BUNDLED_LOGO_URL;
+
   const lines: string[] = [];
   if (sig.signOff.trim()) {
     lines.push(
@@ -136,11 +148,9 @@ export function renderEmailSignatureHtml(
       `<p style="color: #6a6a7a; font-size: 13px; line-height: 1.5; margin: 0 0 12px;">${escapeHtml(sig.title)}</p>`,
     );
   }
-  if (sig.logoUrl.trim()) {
-    lines.push(
-      `<p style="margin: 12px 0;"><img src="${escapeHtml(sig.logoUrl)}" alt="Teams Squared" height="40" style="display: block; height: 40px; max-width: 200px;" /></p>`,
-    );
-  }
+  lines.push(
+    `<p style="margin: 12px 0;"><img src="${escapeHtml(effectiveLogoUrl)}" alt="Teams Squared" height="40" style="display: block; height: 40px; max-width: 200px;" /></p>`,
+  );
   if (sig.email.trim()) {
     lines.push(
       `<p style="color: #4a4a5a; font-size: 13px; line-height: 1.5; margin: 0;"><a href="mailto:${escapeHtml(sig.email)}" style="color: #4f46e5; text-decoration: underline;">${escapeHtml(sig.email)}</a></p>`,
