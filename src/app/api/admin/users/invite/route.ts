@@ -159,6 +159,7 @@ export async function POST(request: Request) {
   try {
     emailSent = await sendUserInviteEmail({
       to: email,
+      name: user.name ?? null,
       inviterName,
       assignedCourses,
     });

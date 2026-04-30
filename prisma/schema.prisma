@@ -362,11 +362,24 @@ model CoursePrerequisite {
 }
 
 /// Singleton settings row for ISO acknowledgement email recipients.
-/// Configured by admins via /admin/settings. When `toEmails` is empty the
+/// Configured by admins via /admin/emails. When `toEmails` is empty the
 /// feature is off — no email is sent on POLICY_DOC acknowledgement.
 model IsoNotificationSettings {
   id        String   @id @default("singleton")
   toEmails  String[]
+  ccEmails  String[]
+  updatedAt DateTime @updatedAt
+  updatedBy String?
+}
+
+/// Singleton template for the user-invite email. Configured by admins via
+/// /admin/emails. When `bodyText` is empty (or the row is missing), the
+/// system falls back to the built-in default. Body supports placeholders:
+///   {{name}}, {{firstName}}, {{inviterName}}, {{courses}}, {{joinLink}}
+model InviteEmailTemplate {
+  id        String   @id @default("singleton")
+  subject   String   @default("You've been added to Teams Squared LMS")
+  bodyText  String   @default("")
   ccEmails  String[]
   updatedAt DateTime @updatedAt
   updatedBy String?

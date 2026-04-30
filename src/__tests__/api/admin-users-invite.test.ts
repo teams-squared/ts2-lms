@@ -210,6 +210,7 @@ describe("POST /api/admin/users/invite", () => {
     expect(body.emailSent).toBe(true);
     expect(mockSendInvite).toHaveBeenCalledWith({
       to: "newhire@test.com",
+      name: null,
       inviterName: "Admin One",
       assignedCourses: [],
     });
