@@ -33,8 +33,23 @@ function esc(s: string): string {
     .replace(/'/g, "&#39;");
 }
 
+/** Mirrors the server-side default in src/lib/email.ts. The bundled
+ *  wordmark lives in /public so it's served at this absolute path. */
+const BUNDLED_LOGO_URL = "/logo_w_text.png";
+
 function renderPreview(v: SignatureValues): string {
   if (!v.enabled) return "<em>Signature disabled — nothing will be appended.</em>";
+  const hasContent =
+    v.name.trim() ||
+    v.title.trim() ||
+    v.email.trim() ||
+    v.phone.trim() ||
+    v.websiteUrl.trim() ||
+    v.addressLine.trim() ||
+    v.logoUrl.trim();
+  // The logo always renders when the signature has any other content; the
+  // default is the bundled wordmark when logoUrl is blank.
+  const effectiveLogoUrl = v.logoUrl.trim() || BUNDLED_LOGO_URL;
   const lines: string[] = [];
   if (v.signOff.trim())
     lines.push(`<p style="margin:0 0 8px;color:#4a4a5a;font-size:14px;">${esc(v.signOff)}</p>`);
@@ -42,8 +57,8 @@ function renderPreview(v: SignatureValues): string {
     lines.push(`<p style="margin:0;color:#1a1a2e;font-size:15px;font-weight:700;">${esc(v.name)}</p>`);
   if (v.title.trim())
     lines.push(`<p style="margin:0 0 12px;color:#6a6a7a;font-size:13px;">${esc(v.title)}</p>`);
-  if (v.logoUrl.trim())
-    lines.push(`<p style="margin:12px 0;"><img src="${esc(v.logoUrl)}" alt="logo" height="40" style="display:block;height:40px;max-width:200px;" /></p>`);
+  if (hasContent)
+    lines.push(`<p style="margin:12px 0;"><img src="${esc(effectiveLogoUrl)}" alt="logo" height="40" style="display:block;height:40px;max-width:200px;" /></p>`);
   if (v.email.trim())
     lines.push(`<p style="margin:0;font-size:13px;"><a href="mailto:${esc(v.email)}" style="color:#4f46e5;text-decoration:underline;">${esc(v.email)}</a></p>`);
   if (v.phone.trim())
@@ -243,12 +258,12 @@ export function EmailSignatureForm({
           className="sm:col-span-2"
         />
         <Field
-          label="Logo URL"
+          label="Logo URL (optional)"
           type="url"
           value={logoUrl}
           onChange={setLogoUrl}
-          placeholder="https://learn.teamsquared.io/logo_w_text.png"
-          helper="Public URL to a hosted logo image (PNG/JPG). Rendered ~40px tall."
+          placeholder="(leave blank to use the bundled Teams Squared wordmark)"
+          helper="Defaults to /logo_w_text.png from the LMS itself — no need to host a logo separately. Override only if you want a different image."
           maxLength={500}
           className="sm:col-span-2"
         />
