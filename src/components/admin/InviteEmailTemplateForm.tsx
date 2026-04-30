@@ -66,7 +66,12 @@ export function InviteEmailTemplateForm({
   );
   const [showPreview, setShowPreview] = useState(false);
 
-  const preview = useMemo(() => renderPreview(bodyText), [bodyText]);
+  // When the body is blank the server falls back to the default at send
+  // time — mirror that here so the preview reflects what recipients
+  // actually receive, not an empty page.
+  const effectiveBody = bodyText.trim() ? bodyText : defaultBodyText;
+  const preview = useMemo(() => renderPreview(effectiveBody), [effectiveBody]);
+  const usingDefault = !bodyText.trim();
 
   const handleSave = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -188,6 +193,11 @@ export function InviteEmailTemplateForm({
           <div className="mt-3 rounded-lg border border-border bg-surface-muted p-4">
             <p className="text-xs font-semibold text-foreground-muted mb-2 uppercase tracking-wider">
               Preview · sample data
+              {usingDefault && (
+                <span className="ml-2 normal-case font-medium text-foreground-subtle">
+                  · showing built-in default (body is blank)
+                </span>
+              )}
             </p>
             <pre className="whitespace-pre-wrap text-sm text-foreground font-sans">
               {preview}
