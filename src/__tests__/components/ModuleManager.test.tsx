@@ -51,15 +51,24 @@ describe("ModuleManager — quiz builder", () => {
     expect(screen.getByTestId("toggle-quiz-builder-lesson-quiz")).toHaveTextContent("Quiz Builder ▼");
   });
 
-  it("renders 'Edit' button for non-quiz lessons", () => {
+  it("renders 'Edit' button for every lesson, including quizzes", () => {
     render(
       <ModuleManager
         courseId="course1"
         initialModules={[moduleWithLessons]}
+        quizDataByLessonId={{
+          "lesson-quiz": { questions: [], passingScore: 70 },
+        }}
       />
     );
     fireEvent.click(screen.getByText(/Module One/));
-    expect(screen.getByText("Edit")).toBeInTheDocument();
+    // Both the text lesson and the quiz lesson get an Edit button now —
+    // quizzes need rename support too. Quiz also still keeps its
+    // "Quiz Builder ▼" toggle alongside.
+    expect(screen.getAllByText("Edit").length).toBe(2);
+    expect(
+      screen.getByTestId("toggle-quiz-builder-lesson-quiz"),
+    ).toBeInTheDocument();
   });
 
   it("shows inline QuizBuilder when toggle is clicked", () => {

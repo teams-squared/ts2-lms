@@ -25,10 +25,13 @@ jobs:
           # Fail on High (CVSS ≥ 7.0) or Critical vulnerabilities.
           fail-on-severity: high
 
-          # Deny licences incompatible with a private commercial application:
-          # AGPL requires source disclosure for networked apps; LGPL requires
-          # dynamic linking or source distribution; CC-BY-SA is ShareAlike.
-          deny-licenses: AGPL-3.0, LGPL-2.0, LGPL-2.1, LGPL-3.0, CC-BY-SA-4.0
+          # Allowlist of licences compatible with a private commercial app.
+          # Anything outside this set (e.g. AGPL, LGPL, CC-BY-SA) fails CI
+          # loudly so we can decide consciously whether to add it. This
+          # replaces the deprecated `deny-licenses` (denylist) approach.
+          allow-licenses: >-
+            0BSD, Apache-2.0, BlueOak-1.0.0, BSD-2-Clause, BSD-3-Clause,
+            CC0-1.0, ISC, MIT, MPL-2.0, Python-2.0, Unlicense, WTFPL
 
           # Post a summary comment on the PR (requires pull-requests: write).
           comment-summary-in-pr: always

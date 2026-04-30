@@ -256,7 +256,7 @@ export default async function LessonPage({
   }
 
   return (
-    <div className="flex h-[calc(100dvh-4rem)] overflow-hidden">
+    <div className="relative flex h-[calc(100dvh-4rem)] overflow-hidden">
       <CourseSidebar
         modules={sidebarModules}
         courseId={courseId}
@@ -269,15 +269,18 @@ export default async function LessonPage({
 
       <main className="flex flex-1 flex-col overflow-hidden min-w-0">
         <div className="flex-1 overflow-y-auto">
-        {/* Width scale per design-system §8.7: media (pdf/video) gets wider
-            reading column; text/markdown/quiz stays at max-w-3xl for comfortable
-            line length. */}
+        {/* Width scale per design-system §8.7: text/markdown/quiz stays at
+            max-w-3xl for comfortable line length; media gets a wider column;
+            policy_doc gets the full available width because the embedded PDF
+            is the focus and benefits from every available pixel. */}
         <div className="overflow-x-auto">
         <div
           className={`${
-            lessonType === "document" || lessonType === "video" || lessonType === "html" || lessonType === "policy_doc"
-              ? "max-w-5xl"
-              : "max-w-3xl"
+            lessonType === "policy_doc"
+              ? "w-full"
+              : lessonType === "document" || lessonType === "video" || lessonType === "html"
+                ? "max-w-5xl"
+                : "max-w-3xl"
           } mx-auto px-4 sm:px-6 py-8`}
         >
           <Breadcrumbs

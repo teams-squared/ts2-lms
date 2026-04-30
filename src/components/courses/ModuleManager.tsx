@@ -551,32 +551,29 @@ export function ModuleManager({
                               </button>
                             </div>
 
-                            {lesson.type === "quiz" ? (
-                              <>
-                                {(quizDataByLessonId[lesson.id]?.questions.length ?? 0) === 0 && (
-                                  <span
-                                    className="inline-flex items-center rounded-md bg-warning-subtle text-warning border border-warning/40 text-[10px] font-medium px-1.5 py-0.5"
-                                    title="This quiz has no questions yet. Learners won't be able to complete it."
-                                  >
-                                    Empty
-                                  </span>
-                                )}
-                                <Button
-                                  variant="secondary"
-                                  size="xs"
-                                  onClick={() => toggleQuizBuilder(lesson.id)}
-                                  data-testid={`toggle-quiz-builder-${lesson.id}`}
-                                >
-                                  {expandedQuizLessons.has(lesson.id) ? "Quiz Builder ▲" : "Quiz Builder ▼"}
-                                </Button>
-                              </>
-                            ) : (
+                            {lesson.type === "quiz" && (quizDataByLessonId[lesson.id]?.questions.length ?? 0) === 0 && (
+                              <span
+                                className="inline-flex items-center rounded-md bg-warning-subtle text-warning border border-warning/40 text-[10px] font-medium px-1.5 py-0.5"
+                                title="This quiz has no questions yet. Learners won't be able to complete it."
+                              >
+                                Empty
+                              </span>
+                            )}
+                            <Button
+                              variant="secondary"
+                              size="xs"
+                              onClick={() => startEditLesson(module.id, lesson)}
+                            >
+                              Edit
+                            </Button>
+                            {lesson.type === "quiz" && (
                               <Button
                                 variant="secondary"
                                 size="xs"
-                                onClick={() => startEditLesson(module.id, lesson)}
+                                onClick={() => toggleQuizBuilder(lesson.id)}
+                                data-testid={`toggle-quiz-builder-${lesson.id}`}
                               >
-                                Edit
+                                {expandedQuizLessons.has(lesson.id) ? "Quiz Builder ▲" : "Quiz Builder ▼"}
                               </Button>
                             )}
                             <Button
@@ -763,7 +760,8 @@ export function ModuleManager({
                     setEditType(e.target.value as LessonType);
                     setEditContent("");
                   }}
-                  className="rounded-lg border border-border bg-surface text-sm px-3 py-2 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                  disabled={editingLesson.type === "quiz"}
+                  className="rounded-lg border border-border bg-surface text-sm px-3 py-2 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-60"
                   aria-label="Edit lesson type"
                 >
                   <option value="text">Text</option>
@@ -773,6 +771,13 @@ export function ModuleManager({
                   <option value="html">HTML</option>
                   <option value="policy_doc">Policy doc</option>
                 </select>
+                {editingLesson.type === "quiz" && (
+                  <p className="text-xs text-foreground-subtle mt-1">
+                    Quiz type can&apos;t be changed — converting would orphan
+                    the questions. Delete and recreate if you need a different
+                    lesson type.
+                  </p>
+                )}
               </div>
 
               {editType === "policy_doc" ? (

@@ -28,13 +28,6 @@ interface BestAttempt {
   createdAt: string;
 }
 
-interface AnswerResult {
-  questionId: string;
-  selectedOptionId: string;
-  correctOptionId: string;
-  correct: boolean;
-}
-
 interface CourseStats {
   totalLessons: number;
   completedLessons: number;
@@ -48,7 +41,6 @@ interface QuizResult {
   percentage: number;
   passed: boolean;
   passingScore: number;
-  answers: AnswerResult[];
   courseComplete?: boolean;
   courseStats?: CourseStats | null;
   /**
@@ -395,63 +387,15 @@ export function QuizViewer({
         )}
       </div>
 
-      {/* Answer review */}
-      {questions.map((question, idx) => {
-        const answerResult = currentResult.answers.find(
-          (a) => a.questionId === question.id,
-        );
-        return (
-          <div
-            key={question.id}
-            className="rounded-lg border border-border p-5"
-          >
-            <div className="mb-3 flex items-start gap-2">
-              <span
-                className={`shrink-0 rounded-full px-2 py-0.5 text-xs font-semibold ${
-                  answerResult?.correct
-                    ? "bg-success-subtle text-success"
-                    : "bg-danger-subtle text-danger"
-                }`}
-              >
-                {answerResult?.correct ? "Correct" : "Incorrect"}
-              </span>
-              <p className="text-sm font-medium text-foreground">
-                {idx + 1}. {question.text}
-              </p>
-            </div>
-            <div className="space-y-2">
-              {question.options.map((option) => {
-                const isSelected = answerResult?.selectedOptionId === option.id;
-                const isCorrect = answerResult?.correctOptionId === option.id;
-                let optionClass = "border-border text-foreground";
-                if (isCorrect) {
-                  optionClass = "border-success/40 bg-success-subtle text-success";
-                } else if (isSelected && !isCorrect) {
-                  optionClass = "border-danger/40 bg-danger-subtle text-danger";
-                }
-                return (
-                  <div
-                    key={option.id}
-                    className={`flex items-center gap-3 rounded-md border px-4 py-3 ${optionClass}`}
-                  >
-                    <span className="text-sm">{option.text}</span>
-                    {isCorrect && (
-                      <span className="ml-auto text-xs font-medium text-success">
-                        Correct answer
-                      </span>
-                    )}
-                    {isSelected && !isCorrect && (
-                      <span className="ml-auto text-xs font-medium text-danger">
-                        Your answer
-                      </span>
-                    )}
-                  </div>
-                );
-              })}
-            </div>
-          </div>
-        );
-      })}
+      {/* Per-question review intentionally omitted: revealing the correct
+          answers makes the retry flow trivially gameable. Learners see only
+          the score summary above and must study the material to improve. */}
+      <div className="rounded-lg border border-border bg-surface-muted p-5 text-center">
+        <p className="text-sm text-foreground-muted">
+          Individual answers are not shown. Review the lesson content and
+          try again to improve your score.
+        </p>
+      </div>
 
       {!currentResult.passed && (
         <button

@@ -119,27 +119,19 @@ export async function POST(request: Request, { params }: Params) {
     }
   }
 
-  // Score the attempt
+  // Score the attempt. NOTE: per-question correctness is intentionally
+  // **not** returned to the client. Revealing which questions were right
+  // or wrong (let alone the correct option ID) lets a learner game the
+  // retry flow — submit, see the answers, retry with full knowledge. We
+  // only return the score summary; learners must actually study the
+  // material to pass.
   let correctCount = 0;
-  const answerResults: {
-    questionId: string;
-    selectedOptionId: string;
-    correctOptionId: string;
-    correct: boolean;
-  }[] = [];
 
   for (const answer of answers) {
     const question = questionMap.get(answer.questionId)!;
     const correctOption = question.options.find((o) => o.isCorrect);
     const correctOptionId = correctOption?.id ?? "";
-    const correct = answer.selectedOptionId === correctOptionId;
-    if (correct) correctCount++;
-    answerResults.push({
-      questionId: answer.questionId,
-      selectedOptionId: answer.selectedOptionId,
-      correctOptionId,
-      correct,
-    });
+    if (answer.selectedOptionId === correctOptionId) correctCount++;
   }
 
   const totalQuestions = questions.length;
@@ -168,7 +160,6 @@ export async function POST(request: Request, { params }: Params) {
       percentage,
       passed,
       passingScore,
-      answers: answerResults,
       xpAwarded: 0,
       newAchievements: [],
       courseComplete: false,
@@ -299,7 +290,6 @@ export async function POST(request: Request, { params }: Params) {
     percentage,
     passed,
     passingScore,
-    answers: answerResults,
     xpAwarded,
     newAchievements,
     courseComplete,
