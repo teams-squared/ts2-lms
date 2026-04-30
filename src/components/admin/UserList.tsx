@@ -104,7 +104,10 @@ export function UserList({ users, nodeTree, inviterRole }: UserListProps) {
           nodeTree={nodeTree}
           inviterRole={inviterRole}
           onCancel={() => setShowInvite(false)}
-          onSuccess={() => setShowInvite(false)}
+          // Don't auto-close on success — admin needs to see per-recipient
+          // status (some may need a re-send). They click Done/Cancel
+          // themselves once they're satisfied.
+          onSuccess={() => {}}
         />
       )}
 
