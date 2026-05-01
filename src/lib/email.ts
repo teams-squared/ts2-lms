@@ -340,13 +340,20 @@ export async function sendUserInviteEmail({
 
   const html = wrapInviteHtml(renderedBody, joinLink, signatureHtml);
 
-  await resend.emails.send({
-    from: FROM,
-    to,
-    cc,
-    subject,
-    html,
-  });
+  const payload = { from: FROM, to, cc, subject, html };
+  const { error } = await resend.emails.send(payload);
+  if (error) {
+    if (error.statusCode === 429 || error.name === "rate_limit_exceeded") {
+      // Rate-limited — wait and retry once (backstop for client-side throttle).
+      await new Promise<void>((resolve) => setTimeout(resolve, 1100));
+      const { error: retryError } = await resend.emails.send(payload);
+      if (retryError) {
+        throw new Error(`[Resend] ${retryError.name}: ${retryError.message}`);
+      }
+    } else {
+      throw new Error(`[Resend] ${error.name}: ${error.message}`);
+    }
+  }
   return true;
 }
 
