@@ -34,8 +34,13 @@ yarn-error.log*
 .env*
 !.env.example
 
-# local claude context
-.claude/
+# local claude context — keep personal settings out of git, but commit
+# project-shared slash commands so the whole team gets them. The
+# `.claude/*` pattern (vs `.claude/`) excludes direct children only,
+# leaving the directory itself un-ignored so the negation below can
+# re-include the commands subtree.
+.claude/*
+!.claude/commands/
 
 # SharePoint file cache
 .cache/

@@ -35,3 +35,23 @@ For non-trivial coding tasks and design audits, the supervising agent should spa
 - Research + implementation that can overlap → research worker in background, start planning while it runs.
 
 **When NOT to parallelize:** trivial single-file edits, tightly-coupled changes where workers would step on each other, or tasks where the supervisor's context is load-bearing.
+
+## Session continuity
+
+A fresh Claude session reads in this order:
+
+1. **`CLAUDE.md`** — evergreen project conventions (this file).
+2. **`docs/session-handoff.md`** — transient state: what just shipped, what's in flight, what's waiting on the operator, what the next move looks like.
+
+The two files have non-overlapping jobs. Don't restate evergreen rules from `CLAUDE.md` in the handoff, and don't smuggle transient state into `CLAUDE.md`. (No durable backlog file exists in this repo today; if one is added, it becomes the third entry in the read order.)
+
+### "prep for other sessions" trigger
+
+When the operator says **"prep for other sessions"** (or close paraphrase), or runs the **`/prep`** slash command, regenerate `docs/session-handoff.md` end-to-end and push. Steps:
+
+1. **Snapshot.** `git log --oneline -10`, `git status --short`, `git branch --show-current`, `git rev-parse HEAD`.
+2. **Handle in-flight.** If the working tree has real WIP (substantive uncommitted code, not local-only files like `.claude/settings.local.json`), commit it onto a fresh `wip/<topic>` branch and push. Don't pollute the `dev` deploy branch with half-baked work. The handoff's In-flight section names the branch and gives one paragraph of done / left / next-step. If the working tree is clean (or only contains local-only cruft), leave In-flight empty.
+3. **Rewrite from scratch** — last write wins, no merge. Six sections in order: **Last sync** · **What just shipped** · **In-flight** · **Pending external actions** · **Open questions / decisions** · **Pickup pointer**. Cap around 200 lines, scan-friendly.
+4. **Commit + push** to `dev` with a `docs(handoff):` subject prefix. (No PR needed — handoff regenerates frequently and lives on the integration branch.)
+
+When you read `docs/session-handoff.md` and the timestamp looks stale (e.g. several days old, or the listed HEAD doesn't match the actual `git rev-parse HEAD`), say so up front and offer to refresh before proceeding with substantive work.
