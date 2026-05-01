@@ -219,20 +219,19 @@ export function InviteUserForm({
       return next;
     });
 
-    const results = await Promise.all(
-      validPending.map(async (r) => ({
-        recipient: r,
-        status: await submitOne(r, false),
-      })),
-    );
-
-    setStatuses((prev) => {
-      const next = { ...prev };
-      for (const { recipient, status } of results) {
-        next[recipient.id] = status;
+    // Send sequentially with a 600 ms gap to stay under Resend's 2 req/s limit.
+    // Per-row status is written immediately after each send so the admin can
+    // watch progress tick along rather than waiting for the whole batch.
+    const results: { recipient: Recipient; status: RecipientStatus }[] = [];
+    for (let i = 0; i < validPending.length; i++) {
+      const r = validPending[i];
+      const status = await submitOne(r, false);
+      results.push({ recipient: r, status });
+      setStatuses((prev) => ({ ...prev, [r.id]: status }));
+      if (i < validPending.length - 1) {
+        await new Promise<void>((resolve) => setTimeout(resolve, 600));
       }
-      return next;
-    });
+    }
 
     const sent = results.filter((r) => r.status.kind === "sent");
     const already = results.filter((r) => r.status.kind === "already_invited");
