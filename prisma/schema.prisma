@@ -362,10 +362,13 @@ model CoursePrerequisite {
 }
 
 /// Singleton settings row for ISO acknowledgement email recipients.
-/// Configured by admins via /admin/emails. When `toEmails` is empty the
-/// feature is off — no email is sent on POLICY_DOC acknowledgement.
+/// Configured by admins via /admin/emails. The email is gated on `enabled`
+/// AND a non-empty `toEmails`; either makes the email a no-op. The audit
+/// snapshot on LessonProgress is written regardless — disabling the email
+/// never disables the audit record itself.
 model IsoNotificationSettings {
   id        String   @id @default("singleton")
+  enabled   Boolean  @default(true)
   toEmails  String[]
   ccEmails  String[]
   updatedAt DateTime @updatedAt
