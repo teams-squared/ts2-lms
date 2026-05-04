@@ -5,6 +5,7 @@ import { IsoNotificationSettingsForm } from "@/components/admin/IsoNotificationS
 import { InviteEmailTemplateForm } from "@/components/admin/InviteEmailTemplateForm";
 import { EmailSignatureForm } from "@/components/admin/EmailSignatureForm";
 import { EmailsTabs, EmailsTabPanel } from "@/components/admin/EmailsTabs";
+import { IsoAckLog } from "@/components/admin/IsoAckLog";
 import { DEFAULT_INVITE_BODY, DEFAULT_SIGNATURE_DISCLAIMER } from "@/lib/email";
 
 export const dynamic = "force-dynamic";
@@ -102,6 +103,19 @@ export default async function AdminEmailsPage() {
           initialCc={isoSettings?.ccEmails ?? []}
           updatedAt={isoSettings?.updatedAt ?? null}
         />
+      </EmailsTabPanel>
+
+      <EmailsTabPanel tab="iso-log">
+        <h2 className="text-sm font-semibold text-foreground mb-1">
+          ISO acknowledgement log
+        </h2>
+        <p className="text-sm text-foreground-muted mb-4">
+          Every employee acknowledgement of an ISO policy-document lesson
+          is recorded here with the document version, audit hash, and
+          timestamp the employee attested to. Filter by date range and
+          download a CSV to hand to your ISO auditor.
+        </p>
+        <IsoAckLog />
       </EmailsTabPanel>
     </div>
   );

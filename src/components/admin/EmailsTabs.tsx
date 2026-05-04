@@ -4,12 +4,13 @@ import { useSearchParams, useRouter, usePathname } from "next/navigation";
 import { useCallback } from "react";
 import { cn } from "@/lib/utils";
 
-export type EmailsTabKey = "invite" | "signature" | "iso-ack";
+export type EmailsTabKey = "invite" | "signature" | "iso-ack" | "iso-log";
 
 const TABS: { key: EmailsTabKey; label: string }[] = [
   { key: "invite", label: "Invite email" },
   { key: "signature", label: "Signature" },
-  { key: "iso-ack", label: "ISO acknowledgements" },
+  { key: "iso-ack", label: "ISO ack settings" },
+  { key: "iso-log", label: "ISO ack log" },
 ];
 
 /** Returns the active tab from the URL (?tab=...) with safe fallback. */
