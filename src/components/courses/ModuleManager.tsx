@@ -641,12 +641,12 @@ export function ModuleManager({
                               onChange={(e) => setNewLessonType(e.target.value as LessonType)}
                               className="rounded-lg border border-border bg-background text-sm px-3 py-2 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
                             >
-                              <option value="text">Text — written content</option>
-                              <option value="video">Video — SharePoint clip or URL</option>
-                              <option value="quiz">Quiz — graded questions</option>
-                              <option value="document">Document — SharePoint file</option>
-                              <option value="html">HTML — embedded page</option>
-                              <option value="policy_doc">Policy doc — ISO Word doc + acknowledgement</option>
+                              <option value="text">Text: written content</option>
+                              <option value="video">Video: SharePoint clip or URL</option>
+                              <option value="quiz">Quiz: graded questions</option>
+                              <option value="document">Document: SharePoint file</option>
+                              <option value="html">HTML: embedded page</option>
+                              <option value="policy_doc">Policy doc: ISO Word doc + acknowledgement</option>
                             </select>
                           </div>
                           <div className="flex items-center gap-2">
@@ -706,7 +706,7 @@ export function ModuleManager({
                 type="text"
                 value={newModuleTitle}
                 onChange={(e) => setNewModuleTitle(e.target.value)}
-                placeholder="e.g. Week 1 — Security basics"
+                placeholder="e.g. Week 1: Security basics"
                 className="flex-1 rounded-lg border border-border bg-card text-sm px-3 py-2 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
               />
               <Button
@@ -773,7 +773,7 @@ export function ModuleManager({
                 </select>
                 {editingLesson.type === "quiz" && (
                   <p className="text-xs text-foreground-subtle mt-1">
-                    Quiz type can&apos;t be changed — converting would orphan
+                    Quiz type can&apos;t be changed. Converting would orphan
                     the questions. Delete and recreate if you need a different
                     lesson type.
                   </p>
@@ -927,7 +927,7 @@ export function ModuleManager({
                   disabled={editSaving || discardingLesson}
                   title={
                     editingLesson.id === justCreatedLessonId
-                      ? "Close without changes — the lesson will stay in the module so you can fill it in later."
+                      ? "Close without changes. The lesson will stay in the module so you can fill it in later."
                       : undefined
                   }
                 >

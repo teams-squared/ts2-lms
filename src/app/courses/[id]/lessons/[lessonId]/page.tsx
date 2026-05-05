@@ -355,7 +355,7 @@ export default async function LessonPage({
                 <div className="mt-6 flex items-center gap-3 rounded-lg border border-success/60 bg-success-subtle px-5 py-4">
                   <CheckCircleIcon className="h-5 w-5 flex-shrink-0 text-success" />
                   <p className="text-sm font-semibold text-success">
-                    Lesson complete — you passed this quiz.
+                    Lesson complete. You passed this quiz.
                   </p>
                 </div>
               )}

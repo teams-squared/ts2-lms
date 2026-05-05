@@ -64,7 +64,7 @@ export async function POST(request: Request, { params }: Params) {
   // admin hasn't finished binding the lesson to a SharePoint doc yet.
   if (lesson.type === "POLICY_DOC" && !lesson.policyDoc) {
     return NextResponse.json(
-      { error: "Policy document not yet synced — ask an admin." },
+      { error: "Policy document not yet synced. Ask an admin." },
       { status: 409 },
     );
   }

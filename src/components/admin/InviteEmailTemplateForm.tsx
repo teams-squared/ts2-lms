@@ -158,7 +158,7 @@ export function InviteEmailTemplateForm({
           Plain text. Paragraphs split on blank lines. Lines starting with{" "}
           <code className="rounded bg-surface-muted px-1">•</code> become
           bulleted lists. The Sign-in button and outer wrapper are added
-          automatically — don&apos;t paste a join link, use{" "}
+          automatically. Don&apos;t paste a join link, use{" "}
           <code className="rounded bg-surface-muted px-1">{"{{joinLink}}"}</code>.
         </p>
         <textarea
@@ -209,7 +209,7 @@ export function InviteEmailTemplateForm({
       {/* CC */}
       <EmailListInput
         label="Cc"
-        helper="Optional — these addresses are CC'd on every invite email (e.g. HR or onboarding inboxes)."
+        helper="Optional. These addresses are CC'd on every invite email (e.g. HR or onboarding inboxes)."
         value={ccEmails}
         onChange={setCcEmails}
       />

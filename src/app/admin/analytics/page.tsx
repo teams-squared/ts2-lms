@@ -213,11 +213,11 @@ export default async function AdminAnalyticsPage() {
                     {c.totalLessons}
                   </td>
                   <td className="px-4 py-3 text-right tabular-nums text-foreground">
-                    {c.avgQuizScore !== null ? `${c.avgQuizScore}%` : "—"}
+                    {c.avgQuizScore !== null ? `${c.avgQuizScore}%` : "N/A"}
                   </td>
                   {hasAnyDeadlines && (
                     <td className="px-4 py-3 text-right tabular-nums text-foreground">
-                      {c.deadlineCompliance !== null ? `${c.deadlineCompliance}%` : "—"}
+                      {c.deadlineCompliance !== null ? `${c.deadlineCompliance}%` : "N/A"}
                     </td>
                   )}
                 </tr>
@@ -293,7 +293,7 @@ export default async function AdminAnalyticsPage() {
                         {stat.streak}
                       </span>
                     ) : (
-                      "—"
+                      "N/A"
                     )}
                   </td>
                   <td className="px-4 py-3 text-right tabular-nums text-foreground">

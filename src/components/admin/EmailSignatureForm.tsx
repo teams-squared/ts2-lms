@@ -40,7 +40,7 @@ function esc(s: string): string {
 const BUNDLED_LOGO_URL = "/logo_w_text.png";
 
 function renderPreview(v: SignatureValues): string {
-  if (!v.enabled) return "<em>Signature disabled — nothing will be appended.</em>";
+  if (!v.enabled) return "<em>Signature disabled. Nothing will be appended.</em>";
   const hasIdentity =
     v.name.trim() ||
     v.title.trim() ||
@@ -75,7 +75,7 @@ function renderPreview(v: SignatureValues): string {
   if (hasDisclaimer)
     lines.push(`<p style="margin:24px 0 0;color:#8e8e93;font-size:11px;line-height:1.5;">${esc(v.disclaimer)}</p>`);
   if (!hasIdentity && !hasDisclaimer)
-    return "<em>No fields filled — nothing will be appended.</em>";
+    return "<em>No fields filled. Nothing will be appended.</em>";
   return lines.join("");
 }
 
@@ -258,7 +258,7 @@ export function EmailSignatureForm({
           value={websiteLabel}
           onChange={setWebsiteLabel}
           placeholder="www.teamsquared.io"
-          helper="Optional — defaults to the URL itself."
+          helper="Optional. Defaults to the URL itself."
           maxLength={120}
         />
         <Field
@@ -275,7 +275,7 @@ export function EmailSignatureForm({
           value={logoUrl}
           onChange={setLogoUrl}
           placeholder="(leave blank to use the bundled Teams Squared wordmark)"
-          helper="Defaults to /logo_w_text.png from the LMS itself — no need to host a logo separately. Override only if you want a different image."
+          helper="Defaults to /logo_w_text.png from the LMS itself. No need to host a logo separately. Override only if you want a different image."
           maxLength={500}
           className="sm:col-span-2"
         />

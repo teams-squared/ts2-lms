@@ -94,7 +94,7 @@ export default async function AdminEmailsPage() {
           lesson, an audit email is sent to the addresses below. The
           acknowledging employee is automatically Cc&apos;d as their personal
           receipt. The audit record itself is always written to the database
-          regardless of this toggle — see the{" "}
+          regardless of this toggle. See the{" "}
           <span className="font-medium">ISO</span> tab in the top admin nav
           to view or export acknowledgements for auditors.
         </p>

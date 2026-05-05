@@ -86,7 +86,7 @@ export function IsoNotificationSettingsForm({
           helper="Primary recipients (e.g. ISO Officer, ISO Owner)."
           value={toEmails}
           onChange={setToEmails}
-          emptyHint="No recipients — email will not send even if enabled."
+          emptyHint="No recipients. Email will not send even if enabled."
         />
         <EmailListInput
           label="Cc"

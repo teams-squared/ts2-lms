@@ -49,7 +49,7 @@ export async function POST(request: Request) {
     if (item.file.mimeType !== DOCX_MIME) {
       return NextResponse.json(
         {
-          error: `Policy docs must be .docx — link resolved to "${item.name}" (${item.file.mimeType}).`,
+          error: `Policy docs must be .docx. Link resolved to "${item.name}" (${item.file.mimeType}).`,
         },
         { status: 400 },
       );

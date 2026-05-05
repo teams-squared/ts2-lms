@@ -14,13 +14,13 @@ interface NextStepBannerProps {
 }
 
 function getNudge(percent: number, isOverdue: boolean): string {
-  if (isOverdue) return "This lesson is overdue — let's get it done.";
+  if (isOverdue) return "This lesson is overdue. Let's get it done.";
   if (percent === 0) return "Kick things off and earn your first XP.";
-  if (percent < 25) return "You've started strong — keep the momentum going.";
-  if (percent < 50) return "You're getting there — one step at a time.";
-  if (percent < 75) return `You're ${percent}% of the way — more than halfway!`;
-  if (percent < 100) return "Almost there — push through to finish!";
-  return "Course complete — amazing work!";
+  if (percent < 25) return "You've started strong. Keep the momentum going.";
+  if (percent < 50) return "You're getting there, one step at a time.";
+  if (percent < 75) return `You're ${percent}% of the way. More than halfway!`;
+  if (percent < 100) return "Almost there. Push through to finish!";
+  return "Course complete. Amazing work!";
 }
 
 export function NextStepBanner({
