@@ -5,17 +5,17 @@ import { IsoNotificationSettingsForm } from "@/components/admin/IsoNotificationS
 import { InviteEmailTemplateForm } from "@/components/admin/InviteEmailTemplateForm";
 import { EmailSignatureForm } from "@/components/admin/EmailSignatureForm";
 import { EmailsTabs, EmailsTabPanel } from "@/components/admin/EmailsTabs";
-import { IsoAckLog } from "@/components/admin/IsoAckLog";
 import { DEFAULT_INVITE_BODY, DEFAULT_SIGNATURE_DISCLAIMER } from "@/lib/email";
 
 export const dynamic = "force-dynamic";
 
 /**
  * Consolidated email-management surface for admins. Sub-tabbed by
- * category (Invite | Signature | ISO acks) so admins don't have to
- * scroll past unrelated forms to reach the one they want. Future
+ * category (Invite | Signature | ISO Ack Email) so admins don't have
+ * to scroll past unrelated forms to reach the one they want. Future
  * email types (deadline reminders, course completion alerts) slot in
- * as additional sub-tabs without expanding the top admin nav.
+ * as additional sub-tabs without expanding the top admin nav. The
+ * ISO acknowledgement audit log lives separately under /admin/iso.
  */
 export default async function AdminEmailsPage() {
   // Layout already gates admin/course_manager; this page is admin-only.
@@ -87,15 +87,16 @@ export default async function AdminEmailsPage() {
 
       <EmailsTabPanel tab="iso-ack">
         <h2 className="text-sm font-semibold text-foreground mb-1">
-          ISO acknowledgement notifications
+          ISO Ack Email
         </h2>
         <p className="text-sm text-foreground-muted mb-4">
           When enabled and an employee acknowledges an ISO policy-document
           lesson, an audit email is sent to the addresses below. The
           acknowledging employee is automatically Cc&apos;d as their personal
           receipt. The audit record itself is always written to the database
-          regardless of this toggle — see the ISO ack log tab to view or
-          export acknowledgements for auditors.
+          regardless of this toggle — see the{" "}
+          <span className="font-medium">ISO</span> tab in the top admin nav
+          to view or export acknowledgements for auditors.
         </p>
         <IsoNotificationSettingsForm
           initialEnabled={isoSettings?.enabled ?? false}
@@ -103,19 +104,6 @@ export default async function AdminEmailsPage() {
           initialCc={isoSettings?.ccEmails ?? []}
           updatedAt={isoSettings?.updatedAt ?? null}
         />
-      </EmailsTabPanel>
-
-      <EmailsTabPanel tab="iso-log">
-        <h2 className="text-sm font-semibold text-foreground mb-1">
-          ISO acknowledgement log
-        </h2>
-        <p className="text-sm text-foreground-muted mb-4">
-          Every employee acknowledgement of an ISO policy-document lesson
-          is recorded here with the document version, audit hash, and
-          timestamp the employee attested to. Filter by date range and
-          download a CSV to hand to your ISO auditor.
-        </p>
-        <IsoAckLog />
       </EmailsTabPanel>
     </div>
   );

@@ -12,6 +12,7 @@ const TABS = [
   { href: "/admin/nodes", label: "Nodes", exact: false, adminOnly: false },
   { href: "/admin/assignments", label: "Enrollments", exact: false, adminOnly: false },
   { href: "/admin/analytics", label: "Analytics", exact: false, adminOnly: false },
+  { href: "/admin/iso", label: "ISO", exact: false, adminOnly: true },
   { href: "/admin/emails", label: "Emails", exact: false, adminOnly: true },
 ];
 
