@@ -136,4 +136,20 @@ describe("LessonViewer", () => {
     expect(screen.getByText("Pending Doc")).toBeInTheDocument();
     expect(screen.getByText("No document attached.")).toBeInTheDocument();
   });
+
+  it("dispatches to LinkLessonViewer for link lessons", () => {
+    render(
+      <LessonViewer
+        title="Article Lesson"
+        type="link"
+        content={JSON.stringify({ url: "https://example.com/post" })}
+        lessonId="l-link"
+      />,
+    );
+    expect(
+      screen.getByRole("heading", { name: "Article Lesson" }),
+    ).toBeInTheDocument();
+    const link = screen.getByRole("link", { name: /open article/i });
+    expect(link).toHaveAttribute("href", "https://example.com/post");
+  });
 });

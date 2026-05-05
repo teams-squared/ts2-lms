@@ -18,6 +18,7 @@ import type { LessonType } from "@/lib/types";
 import type { SharePointDocumentRef } from "@/lib/sharepoint/types";
 import { toEmbedUrl } from "@/lib/video-embed";
 import { LessonTitleHeader, estimateReadingMinutes } from "@/components/courses/LessonTitleHeader";
+import { LinkLessonViewer } from "@/components/courses/LinkLessonViewer";
 import { Button } from "@/components/ui/button";
 
 /** Explicit Tailwind styling for every markdown element — no typography plugin needed. */
@@ -90,6 +91,9 @@ interface LessonViewerProps {
   type: LessonType;
   content: string | null;
   lessonId?: string;
+  /** Used by LINK lessons to suppress the "Opening unlocks Mark complete"
+   *  hint on re-visit of an already-completed lesson. */
+  alreadyCompleted?: boolean;
 }
 
 function PdfViewer({ proxyUrl, fileName }: { proxyUrl: string; fileName: string }) {
@@ -191,7 +195,24 @@ function HtmlLessonViewer({ proxyUrl, fileName }: { proxyUrl: string; fileName: 
   );
 }
 
-export function LessonViewer({ title, type, content, lessonId }: LessonViewerProps) {
+export function LessonViewer({
+  title,
+  type,
+  content,
+  lessonId,
+  alreadyCompleted = false,
+}: LessonViewerProps) {
+  if (type === "link") {
+    return (
+      <LinkLessonViewer
+        lessonId={lessonId ?? ""}
+        title={title}
+        content={content}
+        alreadyCompleted={alreadyCompleted}
+      />
+    );
+  }
+
   if (type === "html") {
     let docRef: SharePointDocumentRef | null = null;
     if (content) {

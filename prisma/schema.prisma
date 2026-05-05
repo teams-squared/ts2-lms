@@ -95,6 +95,7 @@ enum LessonType {
   DOCUMENT
   HTML
   POLICY_DOC
+  LINK
 }
 
 enum PolicyDocRenderMode {

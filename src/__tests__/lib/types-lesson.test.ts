@@ -32,10 +32,23 @@ describe("appLessonTypeToPrisma", () => {
 });
 
 describe("LessonType roundtrip", () => {
-  it.each(["TEXT", "VIDEO", "QUIZ", "DOCUMENT"] as const)(
+  it.each([
+    "TEXT",
+    "VIDEO",
+    "QUIZ",
+    "DOCUMENT",
+    "HTML",
+    "POLICY_DOC",
+    "LINK",
+  ] as const)(
     "appLessonTypeToPrisma(prismaLessonTypeToApp(%s)) === %s",
     (prismaType) => {
       expect(appLessonTypeToPrisma(prismaLessonTypeToApp(prismaType))).toBe(prismaType);
     }
   );
+
+  it("maps LINK → link both ways", () => {
+    expect(prismaLessonTypeToApp("LINK")).toBe("link");
+    expect(appLessonTypeToPrisma("link")).toBe("LINK");
+  });
 });

@@ -141,6 +141,7 @@ export default async function LessonPage({
   const lessonType = prismaLessonTypeToApp(lesson.type);
   const isQuiz = lessonType === "quiz";
   const isPolicyDoc = lessonType === "policy_doc";
+  const isLink = lessonType === "link";
   const isPrivileged = isPrivilegedUser;
 
   // ── Policy doc fetch ──────────────────────────────────────────────────────
@@ -387,6 +388,7 @@ export default async function LessonPage({
               type={lessonType}
               content={lesson.content}
               lessonId={lesson.id}
+              alreadyCompleted={isCurrentLessonCompleted}
             />
           )}
         </div>
@@ -405,7 +407,9 @@ export default async function LessonPage({
           courseTitle={course.title}
           hideMarkComplete={isQuiz}
           courseLocked={courseLocked}
-          requireScrollToComplete={isPolicyDoc && policyDocViewProps != null}
+          requireScrollToComplete={
+            (isPolicyDoc && policyDocViewProps != null) || isLink
+          }
           completeLabel={isPolicyDoc ? "Acknowledge" : undefined}
         />
       </main>
