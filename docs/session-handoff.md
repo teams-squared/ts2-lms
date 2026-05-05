@@ -6,171 +6,172 @@
 
 ## Last sync
 
-- **When:** 2026-05-01
+- **When:** 2026-05-05
 - **Branch:** `dev`
-- **HEAD:** `c2048a5` — `chore(email): revert sender default to lms-noreply@teamsquared.io`
+- **HEAD:** `bdca0a2` — `fix(policy-doc): make dwell-timer gate visible to learners`
 - **Working tree:** clean for handoff purposes. Two non-deliverable local
-  files present and intentionally ignored by the handoff:
+  files present and intentionally ignored:
   - `.claude/settings.local.json` (modified — local IDE prefs, not for commit)
-  - `scripts/check-akil-progress.ts` (untracked — local one-off dev script)
-- **Open PRs (`dev → main`):** none.
+  - `.claire/` (untracked — local-only directory)
+- **Open PRs (`dev → main`):** none. PR #28 (big release merge) merged
+  2026-05-01 and is live on prod. Five commits have landed on `dev`
+  since that merge — they are NOT yet in `main`/prod.
 
 ## What just shipped
 
-Last ten commits on `dev`, newest first. All have already merged to `main`
-and shipped to prod via Render unless flagged otherwise.
+Last six meaningful commits on `dev`:
 
-1. `c2048a5` `chore(email): revert sender default to lms-noreply@teamsquared.io`
-   — paid-tier Resend not wanted; sender stays on the apex
-   `@teamsquared.io` domain. PR #27.
-2. `101e9fc` `fix(admin/users delete): also reassign PolicyDocLesson.lastSyncedById`
-   — same RESTRICT-FK pattern as `Course.createdById`. Unblocked deletion
-   of demo admins who had synced policy docs. PR #26.
-3. `38bc2ae` `chore(scripts): handle Course/PolicyDocLesson RESTRICT FKs in cleanup`
-   — script-level fallback for the same RESTRICT issue.
-4. `d190148` `chore(scripts): TypeScript variant of delete-demo-users for non-psql users`
-   — ergonomic alternative to the SQL script for admins without `psql`.
-5. `02a554a` `chore(security/launch): remove demo seed accounts (PR B)`
-   — dropped seed.ts demo-user upserts from Render `startCommand`,
-   stubbed `prisma/seed.ts`, removed inline demo creds from `/login`,
-   added `scripts/delete-demo-users.{sql,ts}` for one-shot prod cleanup.
-   PR #25.
-6. `52ff175` `fix(security/launch): pre-launch hardening — race-safe completion, role gate, link rel`
-   — central pre-launch fix. Race-safe lesson-complete (create-then-
-   conditional-update pattern → no double XP / double email on rapid
-   click), course-completion enrollment race fix via conditional
-   `updateMany`, explicit role gate on `/admin/nodes`,
-   `rel="noopener noreferrer nofollow"` on outbound markdown links.
-   3 new race-detection tests. PR #24.
-7. `5947ff5` `fix(sidebar): app sidebar expansion no longer occluded by course sidebar`
-   — z-index bump on app shell sidebar.
-8. `6704fd3` `feat(admin/users): batch invite + course search in invite form`
-   — multi-recipient invite UI + course-tree filter input.
-9. `424b995` `fix(admin/emails): preview shows built-in default when body is blank`
-   — preview pane now mirrors the server fallback.
-10. `ecf7ad4` `feat(email-signature): confidentiality disclaimer fine-print block`
-    — signature gained an optional `disclaimer` field with a
-    "Use standard disclaimer" canned-text shortcut.
-
-(Audit-blocker findings tracked in PR #24's body if you need the
-provenance.)
+1. `bdca0a2` `fix(policy-doc): make dwell-timer gate visible to learners`
+   — operator-reported confusion: learners didn't know why Acknowledge
+   was disabled. Three fixes: LessonFooter button tooltip replaced stale
+   "Scroll to bottom" text with the real gate; timer banner headline now
+   "Acknowledge unlocks in m:ss"; attestation row says "Locked for m:ss
+   more — finish the required reading time above" when greyed.
+   ⚠️ NOT in prod yet.
+2. `2651670` `feat(iso-ack): in-app audit log + CSV export for ISO auditors`
+   — audit-evidence surface inside `/admin/emails` so auditors don't
+   depend on the email path. Reads from `LessonProgress` snapshots.
+   ⚠️ NOT in prod yet.
+3. `0c8bb82` `feat(iso-ack): make notification email disable-able via toggle`
+   — per-ack email was eating Resend free-tier quota. Adds
+   `IsoNotificationSettings.enabled` (default true). The migration
+   `20260504000000_add_iso_settings_enabled` ALSO disables the existing
+   prod singleton on apply, so the email stops the moment the deploy
+   lands. Admin re-enables explicitly via `/admin/emails`.
+   ⚠️ NOT in prod yet — email keeps firing in prod until the migration
+   is applied.
+4. `216f900` `fix(invite): also match rate_limit_exceeded by name in 429 retry`
+   — belt fix on top of #5 below: Resend SDK types `statusCode` as
+   `number | null`; also match on `error.name === "rate_limit_exceeded"`.
+5. `4387065` `fix(invite): prevent 429 rate-limit drops in batch invite email sends`
+   — root cause: Resend SDK v6 returns `{data, error}` without throwing.
+   Client now dispatches sequentially at 600 ms intervals; server
+   retries once on 429 after 1 100 ms sleep. (In prod via PR #28.)
+6. `c2048a5` `chore(email): revert sender default to lms-noreply@teamsquared.io`
+   — paid Resend tier not wanted yet; sender stays on apex domain.
+   PR #27. (In prod.)
 
 ## In-flight
 
-_None._ The working tree's modified `.claude/settings.local.json` and
-untracked `scripts/check-akil-progress.ts` are local-only cruft, not
-WIP. No `wip/*` branch is open.
+_None._ Working tree is clean.
 
 ## Pending external actions
 
-Things waiting on the operator (Akil) before / around the first
+Checkbox list — items waiting on the operator before / around the first
 employee onboarding launch.
 
+- [ ] **Open `dev → main` PR + merge** when ready to ship the five
+  post-#28 commits to prod (policy-doc dwell-timer UX fix, ISO-ack CSV
+  export, ISO-ack email toggle + migration, two invite 429 fixes — last
+  two were already in PR #28 so are already in main; the three feat/fix
+  commits dated 2026-05-04…05 are the new content). Do NOT open the PR
+  unless explicitly asked.
+
+- [ ] **Confirm Render deployed PR #28.** PR merged 2026-05-01. Check
+  the Render dashboard to confirm the deploy completed without errors.
+
 - [ ] **Confirm Prisma migrations are applied to prod.** The custom
-  `prisma/migrate.ts` script does NOT apply files in
-  `prisma/migrations/`; it's a hand-rolled idempotent SQL bootstrap
-  that lags the migration folder. Three recent migrations need to
-  exist as tables in prod:
+  `prisma/migrate.ts` does NOT auto-apply `prisma/migrations/` files.
+  Four migrations need to exist as tables/columns in prod:
   - `InviteEmailTemplate` (migration `20260428000000_add_invite_email_template`)
   - `EmailSignature` (migration `20260428100000_add_email_signature`)
   - `EmailSignature.disclaimer` column (migration `20260430000000_add_signature_disclaimer`)
+  - `IsoNotificationSettings.enabled` column (migration
+    `20260504000000_add_iso_settings_enabled`) — new, will not exist in
+    prod until the next `dev → main` deploy AND a manual apply.
 
-  Quick verify (against prod via `psql` or the Render Shell):
+  Quick verify (via `psql` or Render Shell):
   ```sql
   SELECT to_regclass('"InviteEmailTemplate"'), to_regclass('"EmailSignature"');
   SELECT column_name FROM information_schema.columns
    WHERE table_name = 'EmailSignature' AND column_name = 'disclaimer';
+  SELECT column_name FROM information_schema.columns
+   WHERE table_name = 'IsoNotificationSettings' AND column_name = 'enabled';
   ```
-  All three must return non-NULL. Until applied, the editor at
-  `/admin/emails` falls back to defaults silently (errors are caught;
-  saves no-op).
+  All four must return non-NULL. Until applied, the relevant admin UI
+  surfaces fall back to defaults silently.
 
-- [ ] **Confirm `EMAIL_FROM` on Render** is either unset (code default
-  kicks in: `Teams Squared LMS <lms-noreply@teamsquared.io>`) OR set to
-  exactly that value.
+- [ ] **Confirm `EMAIL_FROM` on Render** is either unset (code default:
+  `Teams Squared LMS <lms-noreply@teamsquared.io>`) OR set to exactly
+  that value.
 
-- [ ] **Confirm `CRON_SECRET` is set on Render.** It's wired in
-  `render.yaml` as `sync: false`, so the operator must populate it from
-  the dashboard. Without it, the deadline-reminder cron returns 500 on
-  every invocation (silent daily fail).
+- [ ] **Confirm `CRON_SECRET` is set on Render.** Wired in `render.yaml`
+  as `sync: false` — must be populated from the Render dashboard manually.
+  Without it, the deadline-reminder cron returns 500 on every invocation
+  (silent daily fail).
 
-- [ ] **Customize the invite email + signature at `/admin/emails`.**
-  Without an explicit save, the system falls back to the built-in
-  default body. Earlier in the session we drafted copy starting
-  `Hi {{firstName}},\n\nWe're glad to have you on board…` and a
-  signature for Akil Fernando · IT Systems & Cybersecurity Lead.
-  Both should be saved before the first invite goes out.
+- [ ] **Customize invite email + signature at `/admin/emails`.** Without
+  an explicit save, the system falls back to the built-in default body.
+  A draft was discussed: `Hi {{firstName}},\n\nWe're glad to have you on
+  board…` and a signature for Akil Fernando · IT Systems & Cybersecurity
+  Lead. Both should be saved before the first invite goes out.
 
-- [ ] **Send a test invite end-to-end.** Invite a personal Gmail (or
-  any address you control). Confirm: email arrives, subject + body +
-  signature reflect the saved template, logo renders, sign-in button
-  works, SSO flow completes, course assignments visible to the test
-  user. Then complete one non-policy lesson, take a quiz, acknowledge
-  a policy doc — verify progress persists, XP increments by 10 once
-  (not twice), no console errors.
+- [ ] **Send a test batch invite end-to-end.** Invite 3+ personal
+  addresses from `/admin/users`. Confirm: all emails arrive (no 429s in
+  Resend dashboard), subject + body + signature reflect the saved
+  template, sign-in button works, SSO flow completes, course assignments
+  visible. Then complete one non-policy lesson, take a quiz, acknowledge
+  a policy doc — verify XP increments by 10 once (not twice), ISO ack
+  audit row written (email may or may not send depending on toggle), no
+  console errors.
 
-- [ ] **Post-launch — npm vulns.** Three moderate-severity vulns are
-  outstanding (`uuid`, `postcss`, `@hono/node-server`). Fixes need
-  framework version bumps (Next, Prisma); plan a dedicated upgrade
-  cycle within 6–8 weeks of launch.
+- [ ] **Smoke-test the dwell-timer UX fix** once `bdca0a2` ships.
+  Open a policy-doc lesson as a non-admin; verify (a) timer banner reads
+  "Acknowledge unlocks in 5:59 — keep this tab open while you read",
+  (b) attestation checkbox is greyed and reads "Locked for m:ss more",
+  (c) Acknowledge button tooltip reads "Finish the required reading
+  time and tick the attestation checkbox to enable" (not "Scroll to the
+  bottom"). Origin: a real user complained they couldn't tell why the
+  button was disabled.
+
+- [ ] **Post-launch — npm vulns.** Two moderate-severity vulns called
+  out by GitHub on push (down from three at last sync — one resolved
+  upstream). Fixes require framework version bumps (Next, Prisma). Plan
+  a dedicated upgrade cycle within 6–8 weeks of launch.
 
 ## Open questions / decisions
 
-Items that came up but aren't blockers. Each line: the question, then
-what it's gated on.
-
 - **Switch `render.yaml` from custom `prisma/migrate.ts` to
   `prisma migrate deploy`.** Cleaner, would auto-apply migrations folder,
-  but switching the deploy migration mechanism right before launch is
-  risky if the prod schema is drifted from what `prisma migrate deploy`
-  expects. Gated on a non-launch deploy window where regression can be
-  observed.
+  but switching right before launch is risky if prod schema has drifted.
+  Gated on a non-launch deploy window where regression can be observed.
 
 - **Resend subdomain (`lms.teamsquared.io`) for sender reputation
-  isolation.** Argued for during the email-from work; declined for now
-  because Resend's subdomain verification is more comfortable on a paid
-  plan. Gated on Resend tier upgrade or a deliverability incident on
-  the apex domain.
+  isolation.** Declined for now (Resend subdomain verification is more
+  comfortable on a paid plan). Gated on Resend tier upgrade or a
+  deliverability incident on the apex domain.
 
-- **Server-side dwell enforcement for POLICY_DOC.** Currently the
-  6-minute dwell + attestation gate is client-side only — bypassable
-  via DevTools. Audit trail (version / eTag / hash) is server-side and
-  authoritative; client gate is UX. Gated on auditor pushback or
-  observed compliance incident.
+- **Server-side dwell enforcement for POLICY_DOC.** The 6-minute dwell
+  + attestation gate is client-side only — bypassable via DevTools. The
+  UX fix in `bdca0a2` is purely cosmetic; it does not change the threat
+  model. Audit trail (version / eTag / hash) is server-side and
+  authoritative. Gated on auditor pushback or compliance incident.
 
-- **Quiz double-submit Promise lock / idempotency token.** Theoretical
-  race in `quiz/attempt` if a learner double-clicks Submit within one
-  request round-trip. Client disables the button while submitting, so
-  the practical window is small. Gated on observed prod incident.
+- **Quiz double-submit idempotency token.** Theoretical race in
+  `quiz/attempt` if a learner double-clicks Submit within one round-trip.
+  Client disables the button while submitting (practical window is small).
+  Gated on observed prod incident.
 
-- **Email retry / dead-letter queue.** All email sends are
-  fire-and-forget today. Gated on first observed Resend outage that
-  causes a noticeable invite or ISO ack drop.
+- **Email retry / dead-letter queue.** All email sends are fire-and-forget
+  (with a single 429 retry now). Gated on first observed Resend outage
+  causing a noticeable invite or ISO ack drop.
 
 ## Pickup pointer
 
-The natural next move is **operational, not coding**: send a test
-invite to a personal address from `/admin/users`, walk through the
-flow end-to-end as the invited test user, and confirm the saved
-invite-email template + signature render correctly in the inbox.
-That's the first item that can break the launch.
+The natural next move is **operational**: the operator needs to ship the
+three 2026-05-04…05 commits to prod via a `dev → main` PR (only when
+explicitly asked), then apply migration `20260504000000_add_iso_settings_enabled`
+on Render so the ISO-ack email actually stops firing in prod. Until that
+happens, the toggle UI exists in code but the underlying column doesn't
+exist in prod and the email keeps sending on every acknowledgement.
 
-If anything in that smoke-test exposes a bug, fix it on a fresh
-feature branch off `dev`. If the smoke test passes cleanly, the
-remaining items in **Pending external actions** are operational
-(env vars, migrations) and need the operator's hands more than a
-session's.
-
-If you continue without operator input: the only material code task
-left is post-launch cleanup — the npm-vulns upgrade cycle (Next,
-Prisma, etc.). Do not start that without an explicit go-ahead; it's
-a multi-PR effort with regression risk.
+If you continue without operator input: there is no material code task
+pending. Do NOT start the npm-vulns upgrade cycle without an explicit
+go-ahead — multi-PR effort with regression risk.
 
 ---
 
 ## Where things live
-
-Quick orientation for a fresh session.
 
 | Area | File / dir |
 |---|---|
@@ -178,10 +179,14 @@ Quick orientation for a fresh session.
 | Auth (NextAuth + Entra ID) | `src/lib/auth.ts`, `src/lib/auth.config.ts` |
 | Outbound email + signature renderer | `src/lib/email.ts` |
 | Admin email surface (Invite / Signature / ISO ack tabs) | `src/app/admin/emails/page.tsx`, `src/components/admin/Email*Form.tsx`, `src/components/admin/EmailsTabs.tsx` |
-| Invite UI (single + batch) | `src/components/admin/InviteUserForm.tsx`, `src/components/admin/CourseNodeTree.tsx` |
-| Lesson complete API (race-safe) | `src/app/api/courses/[id]/modules/[moduleId]/lessons/[lessonId]/complete/route.ts` |
+| ISO notification settings (To/Cc + enabled toggle) | `src/app/api/admin/settings/iso-notifications/route.ts`, `src/components/admin/IsoNotificationSettingsForm.tsx` |
+| ISO ack audit log + CSV export | inside `/admin/emails` (ISO-ack tab) |
+| Invite UI (single + batch, sequential throttle) | `src/components/admin/InviteUserForm.tsx`, `src/components/admin/CourseNodeTree.tsx` |
+| Invite API (user create + enroll + email) | `src/app/api/admin/users/invite/route.ts` |
+| Lesson complete API (race-safe, ISO email gated on settings.enabled) | `src/app/api/courses/[id]/modules/[moduleId]/lessons/[lessonId]/complete/route.ts` |
 | Quiz attempt API (no answer-key leak) | `src/app/api/courses/[id]/modules/[moduleId]/lessons/[lessonId]/quiz/attempt/route.ts` |
-| Policy-doc viewer (PDF embed + dwell + attestation) | `src/components/courses/PolicyDocViewer.tsx`, `src/lib/policy-doc/sync.ts` |
+| Policy-doc viewer (PDF embed + dwell + attestation, explicit lock messaging) | `src/components/courses/PolicyDocViewer.tsx`, `src/lib/policy-doc/sync.ts` |
+| Lesson footer (Acknowledge button gating + tooltip) | `src/components/courses/LessonFooter.tsx` |
 | App shell sidebar (auto-collapsing rail) | `src/components/layout/Sidebar.tsx` |
 | Course sidebar (auto-collapsing rail on lesson pages) | `src/components/courses/CourseSidebar.tsx` |
 | Lesson viewer (text/video/document/html dispatch) | `src/components/courses/LessonViewer.tsx` |
@@ -200,7 +205,9 @@ Quick orientation for a fresh session.
   committed and pushed there. `main` is branch-protected; reach prod
   only via an explicit `dev → main` PR per `CLAUDE.md`.
 - The custom `prisma/migrate.ts` is hand-rolled idempotent SQL. New
-  migrations in `prisma/migrations/` need explicit application.
+  migrations in `prisma/migrations/` need explicit application to prod.
+- Resend SDK v6 returns `{data, error}` — it does NOT throw on failure.
+  Always destructure and check `error`; never assume `await resend.emails.send()` throws.
 - `react-markdown` v10 default behaviour escapes raw HTML and strips
   `javascript:` / `data:` / `vbscript:` URLs — don't add `rehype-raw`
   to admin-authored markdown surfaces.
@@ -211,3 +218,7 @@ Quick orientation for a fresh session.
 - The credentials provider is gated on `NODE_ENV !== "production"`.
   Demo seed users are gone. Local-dev bootstrap = SSO sign-in then
   SQL-promote per the file header in `prisma/seed.ts`.
+- The policy-doc dwell timer is client-side only (bypassable). Treat
+  the audit trail in `LessonProgress` (version + eTag + hash) as the
+  authoritative ack record; the dwell + attestation checkbox are UX,
+  not security.

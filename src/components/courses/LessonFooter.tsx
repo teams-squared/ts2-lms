@@ -241,7 +241,7 @@ export function LessonFooter({
                 data-testid="mark-complete-button"
                 title={
                   !scrollUnlocked
-                    ? "Scroll to the bottom of the document to enable"
+                    ? "Finish the required reading time and tick the attestation checkbox to enable"
                     : undefined
                 }
                 className="disabled:cursor-not-allowed"

@@ -76,6 +76,7 @@ describe("POST lesson-complete — ISO ack email hook", () => {
   it("does NOT send when toEmails is empty", async () => {
     mockPrisma.isoNotificationSettings.findUnique.mockResolvedValue({
       id: "singleton",
+      enabled: true,
       toEmails: [],
       ccEmails: ["someone@t.com"],
     });
@@ -84,9 +85,47 @@ describe("POST lesson-complete — ISO ack email hook", () => {
     expect(mockSendIsoAck).not.toHaveBeenCalled();
   });
 
-  it("sends with employee Cc'd when toEmails is configured", async () => {
+  it("does NOT send when enabled is false even if recipients are configured", async () => {
     mockPrisma.isoNotificationSettings.findUnique.mockResolvedValue({
       id: "singleton",
+      enabled: false,
+      toEmails: ["officer@t.com", "owner@t.com"],
+      ccEmails: ["audit@t.com"],
+    });
+    mockPrisma.user.findUnique.mockResolvedValue({
+      name: "Nadun",
+      email: "nadun@t.com",
+    });
+    const res = await POST(makeReq(), makeParams());
+    expect(res.status).toBe(200);
+    expect(mockSendIsoAck).not.toHaveBeenCalled();
+  });
+
+  it("still writes the audit snapshot to LessonProgress when email is disabled", async () => {
+    mockPrisma.isoNotificationSettings.findUnique.mockResolvedValue({
+      id: "singleton",
+      enabled: false,
+      toEmails: ["officer@t.com"],
+      ccEmails: [],
+    });
+    mockPrisma.user.findUnique.mockResolvedValue({
+      name: "Nadun",
+      email: "nadun@t.com",
+    });
+    await POST(makeReq(), makeParams());
+    // The create call carries the audit snapshot fields regardless of the
+    // email gate — disabling the email never disables the audit record.
+    expect(mockPrisma.lessonProgress.create).toHaveBeenCalledTimes(1);
+    const createArgs = mockPrisma.lessonProgress.create.mock.calls[0][0];
+    expect(createArgs.data.acknowledgedVersion).toBe("2.3.1");
+    expect(createArgs.data.acknowledgedETag).toBe("etag-abc");
+    expect(createArgs.data.acknowledgedHash).toBe("hash-deadbeef");
+  });
+
+  it("sends with employee Cc'd when enabled and toEmails is configured", async () => {
+    mockPrisma.isoNotificationSettings.findUnique.mockResolvedValue({
+      id: "singleton",
+      enabled: true,
       toEmails: ["officer@t.com", "owner@t.com"],
       ccEmails: ["audit@t.com"],
     });
@@ -115,6 +154,7 @@ describe("POST lesson-complete — ISO ack email hook", () => {
   it("does NOT duplicate the employee into Cc if they're already in the To list", async () => {
     mockPrisma.isoNotificationSettings.findUnique.mockResolvedValue({
       id: "singleton",
+      enabled: true,
       toEmails: ["nadun@t.com", "officer@t.com"],
       ccEmails: [],
     });
@@ -140,6 +180,7 @@ describe("POST lesson-complete — ISO ack email hook", () => {
     });
     mockPrisma.isoNotificationSettings.findUnique.mockResolvedValue({
       id: "singleton",
+      enabled: true,
       toEmails: ["officer@t.com"],
       ccEmails: [],
     });
@@ -151,6 +192,7 @@ describe("POST lesson-complete — ISO ack email hook", () => {
   it("still returns 200 if the email send throws (fire-and-forget)", async () => {
     mockPrisma.isoNotificationSettings.findUnique.mockResolvedValue({
       id: "singleton",
+      enabled: true,
       toEmails: ["officer@t.com"],
       ccEmails: [],
     });

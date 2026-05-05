@@ -6,6 +6,7 @@ import { requireRole } from "@/lib/roles";
 const SINGLETON_ID = "singleton";
 
 const PatchSchema = z.object({
+  enabled: z.boolean(),
   toEmails: z
     .array(z.string().trim().toLowerCase().email())
     .max(50, "Too many recipients"),
@@ -28,6 +29,9 @@ export async function GET() {
   });
 
   return NextResponse.json({
+    // Default `enabled` to false when no row exists yet — fresh installs
+    // shouldn't fire emails until the admin explicitly opts in.
+    enabled: settings?.enabled ?? false,
     toEmails: settings?.toEmails ?? [],
     ccEmails: settings?.ccEmails ?? [],
     updatedAt: settings?.updatedAt ?? null,
@@ -55,6 +59,7 @@ export async function PATCH(request: Request) {
     );
   }
 
+  const enabled = parsed.data.enabled;
   const toEmails = dedup(parsed.data.toEmails);
   const ccEmails = dedup(parsed.data.ccEmails);
 
@@ -62,11 +67,13 @@ export async function PATCH(request: Request) {
     where: { id: SINGLETON_ID },
     create: {
       id: SINGLETON_ID,
+      enabled,
       toEmails,
       ccEmails,
       updatedBy: auth.userId,
     },
     update: {
+      enabled,
       toEmails,
       ccEmails,
       updatedBy: auth.userId,
@@ -74,6 +81,7 @@ export async function PATCH(request: Request) {
   });
 
   return NextResponse.json({
+    enabled: updated.enabled,
     toEmails: updated.toEmails,
     ccEmails: updated.ccEmails,
     updatedAt: updated.updatedAt,

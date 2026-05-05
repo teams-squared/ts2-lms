@@ -5,6 +5,7 @@ import { IsoNotificationSettingsForm } from "@/components/admin/IsoNotificationS
 import { InviteEmailTemplateForm } from "@/components/admin/InviteEmailTemplateForm";
 import { EmailSignatureForm } from "@/components/admin/EmailSignatureForm";
 import { EmailsTabs, EmailsTabPanel } from "@/components/admin/EmailsTabs";
+import { IsoAckLog } from "@/components/admin/IsoAckLog";
 import { DEFAULT_INVITE_BODY, DEFAULT_SIGNATURE_DISCLAIMER } from "@/lib/email";
 
 export const dynamic = "force-dynamic";
@@ -89,17 +90,32 @@ export default async function AdminEmailsPage() {
           ISO acknowledgement notifications
         </h2>
         <p className="text-sm text-foreground-muted mb-4">
-          When an employee acknowledges an ISO policy-document lesson, send
-          an audit email to the addresses below. The acknowledging employee
-          is automatically Cc&apos;d as their personal receipt. Leave the To
-          list empty to disable the feature — acknowledgements still record
-          to the database either way.
+          When enabled and an employee acknowledges an ISO policy-document
+          lesson, an audit email is sent to the addresses below. The
+          acknowledging employee is automatically Cc&apos;d as their personal
+          receipt. The audit record itself is always written to the database
+          regardless of this toggle — see the ISO ack log tab to view or
+          export acknowledgements for auditors.
         </p>
         <IsoNotificationSettingsForm
+          initialEnabled={isoSettings?.enabled ?? false}
           initialTo={isoSettings?.toEmails ?? []}
           initialCc={isoSettings?.ccEmails ?? []}
           updatedAt={isoSettings?.updatedAt ?? null}
         />
+      </EmailsTabPanel>
+
+      <EmailsTabPanel tab="iso-log">
+        <h2 className="text-sm font-semibold text-foreground mb-1">
+          ISO acknowledgement log
+        </h2>
+        <p className="text-sm text-foreground-muted mb-4">
+          Every employee acknowledgement of an ISO policy-document lesson
+          is recorded here with the document version, audit hash, and
+          timestamp the employee attested to. Filter by date range and
+          download a CSV to hand to your ISO auditor.
+        </p>
+        <IsoAckLog />
       </EmailsTabPanel>
     </div>
   );

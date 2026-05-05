@@ -168,8 +168,11 @@ export async function POST(_request: Request, { params }: Params) {
     });
 
     // Audit-trail email to ISO Officer / ISO Owner. Recipients live in the
-    // IsoNotificationSettings singleton (configured via /admin/settings).
-    // No recipients = feature off; the ack itself still records to the DB.
+    // IsoNotificationSettings singleton (configured via /admin/emails).
+    // The email is gated on `enabled` AND non-empty toEmails — either makes
+    // it a no-op. The audit snapshot above is unconditional; disabling the
+    // email never disables the audit record. Auditors pull the audit data
+    // from /admin/emails (ISO ack log tab → CSV export).
     // The acknowledging employee is Cc'd as a personal receipt.
     try {
       const [settings, userData] = await Promise.all([
@@ -179,7 +182,7 @@ export async function POST(_request: Request, { params }: Params) {
           select: { name: true, email: true },
         }),
       ]);
-      if (settings && settings.toEmails.length > 0 && userData) {
+      if (settings && settings.enabled && settings.toEmails.length > 0 && userData) {
         // Cc admin-configured Cc list + the employee themselves (dedup; never
         // duplicate into Cc if they're already in To).
         const ccSet = new Set<string>(settings.ccEmails);
