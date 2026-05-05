@@ -207,10 +207,17 @@ model LessonProgress {
   // prove what they actually read in an ISO surveillance audit. Cleared
   // on re-sync when sourceVersion changes (forces re-acknowledgement of
   // the new version).
-  acknowledgedAt        DateTime?
-  acknowledgedVersion   String?
-  acknowledgedETag      String?
-  acknowledgedHash      String?
+  acknowledgedAt               DateTime?
+  acknowledgedVersion          String?
+  acknowledgedETag             String?
+  acknowledgedHash             String?
+  // Stage-2 ISO 27001 evidence hardening: snapshot the exact attestation
+  // wording the learner ticked, the focused-tab dwell time observed, and
+  // the SharePoint item id of the source DOCX. All nullable; legacy rows
+  // keep NULL and are treated as pre-evidence-hardening records.
+  acknowledgedAttestationText  String?
+  acknowledgedDwellSeconds     Int?
+  acknowledgedSharePointItemId String?
 
   user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
   lesson Lesson @relation(fields: [lessonId], references: [id], onDelete: Cascade)

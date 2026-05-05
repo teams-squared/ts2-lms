@@ -96,13 +96,21 @@ export function LessonFooter({
   const [scrollUnlocked, setScrollUnlocked] = useState(
     !requireScrollToComplete || initialCompleted,
   );
+  // Captured from the PolicyDocViewer unlock event. Forwarded to the
+  // complete-route POST so the server can snapshot it as audit evidence.
+  // null for non-policy lessons or pre-unlock — sent as-is and the server
+  // ignores it for non-POLICY_DOC types.
+  const [policyDwellSeconds, setPolicyDwellSeconds] = useState<number | null>(null);
 
   useEffect(() => {
     if (!requireScrollToComplete || scrollUnlocked) return;
     function handler(e: Event) {
-      const detail = (e as CustomEvent<{ lessonId?: string }>).detail;
+      const detail = (e as CustomEvent<{ lessonId?: string; dwellSeconds?: number }>).detail;
       if (detail?.lessonId === lessonId) {
         setScrollUnlocked(true);
+        if (typeof detail.dwellSeconds === "number") {
+          setPolicyDwellSeconds(detail.dwellSeconds);
+        }
       }
     }
     window.addEventListener("policy-doc-acknowledgeable", handler);
@@ -116,7 +124,16 @@ export function LessonFooter({
     // Optimistic: flip immediately, revert on failure
     setIsCompleted(true);
     try {
-      const res = await fetch(endpoint, { method: "POST" });
+      const body =
+        policyDwellSeconds != null
+          ? JSON.stringify({ dwellSeconds: policyDwellSeconds })
+          : undefined;
+      const res = await fetch(endpoint, {
+        method: "POST",
+        ...(body
+          ? { headers: { "Content-Type": "application/json" }, body }
+          : {}),
+      });
       if (!res.ok) throw new Error("Failed");
       const data = (await res.json()) as {
         courseComplete?: boolean;

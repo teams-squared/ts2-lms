@@ -18,6 +18,9 @@ const baseRow = {
   acknowledgedVersion: "2.3.1",
   acknowledgedETag: "etag-abc",
   acknowledgedHash: "hash-deadbeef",
+  acknowledgedAttestationText: "I have read and understood Quality Manual v2.3.1.",
+  acknowledgedDwellSeconds: 372,
+  acknowledgedSharePointItemId: "01ABCD",
   user: { name: "Nadun", email: "nadun@t.com" },
   lesson: {
     title: "Quality Manual",
@@ -78,7 +81,7 @@ describe("GET /api/admin/iso-acks/export", () => {
     const body = await res.text();
     const firstLine = body.split("\r\n")[0];
     expect(firstLine).toBe(
-      "acknowledgedAt,employeeName,employeeEmail,courseTitle,documentTitle,documentCode,documentVersion,auditHash,auditETag",
+      "acknowledgedAt,employeeName,employeeEmail,courseTitle,documentTitle,documentCode,documentVersion,auditHash,auditETag,attestationText,dwellSeconds,sourceItemId",
     );
   });
 
@@ -90,6 +93,10 @@ describe("GET /api/admin/iso-acks/export", () => {
     const body = await res.text();
     const lines = body.split("\r\n").filter(Boolean);
     expect(lines).toHaveLength(2); // header + 1
+    // The attestation text contains a comma after "understood"? It does not,
+    // but it does contain spaces — splitting on raw `,` is safe here because
+    // none of the test fixture cells contain commas. The CSV-quoting
+    // behaviour is exercised separately in the "escapes commas" test.
     const data = lines[1].split(",");
     expect(data[0]).toBe("2026-04-30T12:00:00.000Z");
     expect(data[1]).toBe("Nadun");
@@ -100,6 +107,9 @@ describe("GET /api/admin/iso-acks/export", () => {
     expect(data[6]).toBe("2.3.1");
     expect(data[7]).toBe("hash-deadbeef");
     expect(data[8]).toBe("etag-abc");
+    expect(data[9]).toBe("I have read and understood Quality Manual v2.3.1.");
+    expect(data[10]).toBe("372");
+    expect(data[11]).toBe("01ABCD");
   });
 
   it("escapes commas in column values", async () => {

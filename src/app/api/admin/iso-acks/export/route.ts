@@ -39,6 +39,9 @@ export async function GET(request: Request) {
       acknowledgedVersion: true,
       acknowledgedETag: true,
       acknowledgedHash: true,
+      acknowledgedAttestationText: true,
+      acknowledgedDwellSeconds: true,
+      acknowledgedSharePointItemId: true,
       user: { select: { name: true, email: true } },
       lesson: {
         select: {
@@ -66,6 +69,9 @@ export async function GET(request: Request) {
     "documentVersion",
     "auditHash",
     "auditETag",
+    "attestationText",
+    "dwellSeconds",
+    "sourceItemId",
   ];
 
   const lines: string[] = [header.map(csvCell).join(",")];
@@ -81,6 +87,9 @@ export async function GET(request: Request) {
         r.acknowledgedVersion ?? r.lesson.policyDoc?.sourceVersion ?? "",
         r.acknowledgedHash ?? "",
         r.acknowledgedETag ?? "",
+        r.acknowledgedAttestationText ?? "",
+        r.acknowledgedDwellSeconds != null ? String(r.acknowledgedDwellSeconds) : "",
+        r.acknowledgedSharePointItemId ?? "",
       ]
         .map(csvCell)
         .join(","),
