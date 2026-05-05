@@ -36,6 +36,7 @@ const policyDocLesson = {
     renderedHTMLHash: "hash-deadbeef",
     documentTitle: "Quality Manual",
     documentCode: "QM-001",
+    sharePointItemId: "01ABCD",
   },
 };
 
@@ -120,6 +121,12 @@ describe("POST lesson-complete — ISO ack email hook", () => {
     expect(createArgs.data.acknowledgedVersion).toBe("2.3.1");
     expect(createArgs.data.acknowledgedETag).toBe("etag-abc");
     expect(createArgs.data.acknowledgedHash).toBe("hash-deadbeef");
+    expect(createArgs.data.acknowledgedAttestationText).toBe(
+      "I have read and understood Quality Manual v2.3.1.",
+    );
+    expect(createArgs.data.acknowledgedSharePointItemId).toBe("01ABCD");
+    // No JSON body on the request → server stores NULL dwell.
+    expect(createArgs.data.acknowledgedDwellSeconds).toBeNull();
   });
 
   it("sends with employee Cc'd when enabled and toEmails is configured", async () => {

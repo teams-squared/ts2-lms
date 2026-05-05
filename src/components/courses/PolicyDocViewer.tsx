@@ -31,6 +31,7 @@
 import { useEffect, useRef, useState } from "react";
 import { ShieldCheck, ChevronDown, ChevronRight, AlertTriangle, CheckCircle2, Clock } from "lucide-react";
 import { LessonTitleHeader } from "./LessonTitleHeader";
+import { formatPolicyAttestation } from "@/lib/policy-doc/attestation";
 
 export interface PolicyDocViewProps {
   lessonId: string;
@@ -152,15 +153,23 @@ export function PolicyDocViewer(props: PolicyDocViewProps) {
   }, [dwellMs, alreadyCompleted]);
 
   // Fire the unlock event once dwell + attestation are both satisfied.
+  // The event detail carries the observed dwell seconds at unlock time so
+  // LessonFooter can forward it to the complete route as audit evidence
+  // ("reasonable opportunity to read" — ISO 27001 7.3 Awareness).
   const dwellDone = dwellMs >= DWELL_MS;
   const unlocked = alreadyCompleted || (dwellDone && attested);
   useEffect(() => {
     if (!unlocked || firedRef.current) return;
     firedRef.current = true;
     window.dispatchEvent(
-      new CustomEvent(POLICY_ACK_EVENT, { detail: { lessonId } }),
+      new CustomEvent(POLICY_ACK_EVENT, {
+        detail: {
+          lessonId,
+          dwellSeconds: Math.floor(dwellMs / 1000),
+        },
+      }),
     );
-  }, [unlocked, lessonId]);
+  }, [unlocked, lessonId, dwellMs]);
 
   const isStaleAck =
     lastAcknowledgement?.version != null &&
@@ -356,7 +365,13 @@ export function PolicyDocViewer(props: PolicyDocViewProps) {
               aria-describedby={`attest-desc-${lessonId}`}
             />
             <span className="text-sm">
-              <span className="font-medium text-foreground">
+              <span
+                className="font-medium text-foreground"
+                // Title shows the exact plain-text the audit snapshot
+                // captures, so admins can confirm the rendered statement
+                // and the stored evidence are identical.
+                title={formatPolicyAttestation(documentTitle, sourceVersion)}
+              >
                 I have read and understood{" "}
                 <span className="font-semibold">{documentTitle}</span> v{sourceVersion}.
               </span>

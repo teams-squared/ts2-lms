@@ -59,6 +59,9 @@ export async function GET(request: Request) {
         acknowledgedVersion: true,
         acknowledgedETag: true,
         acknowledgedHash: true,
+        acknowledgedAttestationText: true,
+        acknowledgedDwellSeconds: true,
+        acknowledgedSharePointItemId: true,
         user: { select: { id: true, name: true, email: true } },
         lesson: {
           select: {
@@ -97,6 +100,9 @@ export async function GET(request: Request) {
       r.acknowledgedVersion ?? r.lesson.policyDoc?.sourceVersion ?? null,
     auditHash: r.acknowledgedHash ?? null,
     auditETag: r.acknowledgedETag ?? null,
+    attestationText: r.acknowledgedAttestationText ?? null,
+    dwellSeconds: r.acknowledgedDwellSeconds ?? null,
+    sourceItemId: r.acknowledgedSharePointItemId ?? null,
   }));
 
   return NextResponse.json({ acks, total, page, pageSize });

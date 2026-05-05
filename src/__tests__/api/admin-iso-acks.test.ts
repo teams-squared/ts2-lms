@@ -17,6 +17,9 @@ const sampleRow = {
   acknowledgedVersion: "2.3.1",
   acknowledgedETag: "etag-abc",
   acknowledgedHash: "hash-deadbeef",
+  acknowledgedAttestationText: "I have read and understood Quality Manual v2.3.1.",
+  acknowledgedDwellSeconds: 372,
+  acknowledgedSharePointItemId: "01ABCD",
   user: { id: "u1", name: "Nadun", email: "nadun@t.com" },
   lesson: {
     id: "l1",
@@ -67,6 +70,9 @@ describe("GET /api/admin/iso-acks", () => {
       documentVersion: "2.3.1",
       auditHash: "hash-deadbeef",
       auditETag: "etag-abc",
+      attestationText: "I have read and understood Quality Manual v2.3.1.",
+      dwellSeconds: 372,
+      sourceItemId: "01ABCD",
     });
 
     const findArgs = mockPrisma.lessonProgress.findMany.mock.calls[0][0];

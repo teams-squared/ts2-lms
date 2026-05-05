@@ -5,11 +5,23 @@ import { awardXp } from "@/lib/xp";
 import { trackEvent } from "@/lib/posthog-server";
 import { sendCourseCompletionEmail, sendIsoAcknowledgementEmail } from "@/lib/email";
 import { computeCourseCompletionStats } from "@/lib/enrollments";
+import { formatPolicyAttestation } from "@/lib/policy-doc/attestation";
 
 type Params = { params: Promise<{ id: string; moduleId: string; lessonId: string }> };
 
+/** Floor + clamp the client-supplied dwell seconds. We accept any number
+ *  but cap at 24h; values outside [0, 86400] are coerced to null because
+ *  they're almost certainly tampering or a clock glitch and we'd rather
+ *  store nothing than store garbage in an audit field. */
+function clampDwellSeconds(raw: unknown): number | null {
+  if (typeof raw !== "number" || !Number.isFinite(raw)) return null;
+  const n = Math.floor(raw);
+  if (n < 0 || n > 86_400) return null;
+  return n;
+}
+
 /** POST .../lessons/[lessonId]/complete — mark a lesson complete for the current user (idempotent). */
-export async function POST(_request: Request, { params }: Params) {
+export async function POST(request: Request, { params }: Params) {
   const session = await auth();
   if (!session?.user?.id) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
@@ -37,6 +49,7 @@ export async function POST(_request: Request, { params }: Params) {
           renderedHTMLHash: true,
           documentTitle: true,
           documentCode: true,
+          sharePointItemId: true,
         },
       },
     },
@@ -88,10 +101,27 @@ export async function POST(_request: Request, { params }: Params) {
 
   const now = new Date();
 
+  // Optional JSON body — currently only carries `dwellSeconds` from the
+  // POLICY_DOC viewer. We tolerate empty / non-JSON bodies so non-policy
+  // lessons keep working with their plain `fetch(endpoint, {method:"POST"})`.
+  let bodyDwellSeconds: number | null = null;
+  if (lesson.type === "POLICY_DOC" && request.headers.get("content-type")?.includes("application/json")) {
+    try {
+      const parsed = (await request.json()) as { dwellSeconds?: unknown };
+      bodyDwellSeconds = clampDwellSeconds(parsed?.dwellSeconds);
+    } catch {
+      // Malformed body — ignore. Audit row gets NULL dwell which is fine
+      // (legacy / pre-evidence-hardening rendering).
+    }
+  }
+
   // For POLICY_DOC lessons, stamp the audit snapshot from the latest
   // PolicyDocLesson row. This is the auditor-visible proof of *which*
   // version the learner attested to reading. Pulled server-side so the
-  // client cannot lie about which version they saw.
+  // client cannot lie about which version they saw. Attestation text is
+  // produced via the shared `formatPolicyAttestation` util — same util
+  // PolicyDocViewer uses for display, so the snapshot equals what the
+  // learner saw on screen at ack time.
   const policyAuditFields =
     lesson.type === "POLICY_DOC" && lesson.policyDoc
       ? {
@@ -99,6 +129,12 @@ export async function POST(_request: Request, { params }: Params) {
           acknowledgedVersion: lesson.policyDoc.sourceVersion,
           acknowledgedETag: lesson.policyDoc.sourceETag,
           acknowledgedHash: lesson.policyDoc.renderedHTMLHash,
+          acknowledgedAttestationText: formatPolicyAttestation(
+            lesson.policyDoc.documentTitle,
+            lesson.policyDoc.sourceVersion,
+          ),
+          acknowledgedDwellSeconds: bodyDwellSeconds,
+          acknowledgedSharePointItemId: lesson.policyDoc.sharePointItemId,
         }
       : {};
 

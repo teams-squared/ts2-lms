@@ -13,6 +13,9 @@ interface AckRow {
   documentVersion: string | null;
   auditHash: string | null;
   auditETag: string | null;
+  attestationText: string | null;
+  dwellSeconds: number | null;
+  sourceItemId: string | null;
 }
 
 interface ListResponse {
@@ -245,6 +248,7 @@ export function IsoAckLog() {
               <th className="px-4 py-2 font-medium">Course</th>
               <th className="px-4 py-2 font-medium">Document</th>
               <th className="px-4 py-2 font-medium">Version</th>
+              <th className="px-4 py-2 font-medium">Dwell</th>
               <th className="px-4 py-2 font-medium">Audit hash</th>
             </tr>
           </thead>
@@ -252,50 +256,71 @@ export function IsoAckLog() {
             {!loading && data && data.acks.length === 0 && (
               <tr>
                 <td
-                  colSpan={6}
+                  colSpan={7}
                   className="px-4 py-6 text-center text-foreground-muted"
                 >
                   No acknowledgements match these filters.
                 </td>
               </tr>
             )}
-            {data?.acks.map((row) => (
-              <tr key={row.id} className="border-t border-border">
-                <td className="px-4 py-2 text-foreground whitespace-nowrap">
-                  {row.acknowledgedAt
-                    ? new Date(row.acknowledgedAt).toLocaleString()
-                    : "—"}
-                </td>
-                <td className="px-4 py-2 text-foreground">
-                  <div className="font-medium">
-                    {row.employee.name ?? row.employee.email}
-                  </div>
-                  {row.employee.name && (
-                    <div className="text-xs text-foreground-muted">
-                      {row.employee.email}
+            {data?.acks.map((row) => {
+              const attestTitle = [
+                row.attestationText,
+                row.sourceItemId ? `SharePoint item: ${row.sourceItemId}` : null,
+              ]
+                .filter(Boolean)
+                .join("\n");
+              return (
+                <tr key={row.id} className="border-t border-border">
+                  <td className="px-4 py-2 text-foreground whitespace-nowrap">
+                    {row.acknowledgedAt
+                      ? new Date(row.acknowledgedAt).toLocaleString()
+                      : "—"}
+                  </td>
+                  <td className="px-4 py-2 text-foreground">
+                    <div className="font-medium">
+                      {row.employee.name ?? row.employee.email}
                     </div>
-                  )}
-                </td>
-                <td className="px-4 py-2 text-foreground">{row.courseTitle}</td>
-                <td className="px-4 py-2 text-foreground">
-                  <div>{row.documentTitle}</div>
-                  {row.documentCode && (
-                    <div className="text-xs text-foreground-muted">
-                      {row.documentCode}
-                    </div>
-                  )}
-                </td>
-                <td className="px-4 py-2 text-foreground">
-                  {row.documentVersion ?? "—"}
-                </td>
-                <td
-                  className="px-4 py-2 text-foreground-muted font-mono text-xs max-w-[14rem] truncate"
-                  title={row.auditHash ?? ""}
-                >
-                  {row.auditHash ?? "—"}
-                </td>
-              </tr>
-            ))}
+                    {row.employee.name && (
+                      <div className="text-xs text-foreground-muted">
+                        {row.employee.email}
+                      </div>
+                    )}
+                  </td>
+                  <td className="px-4 py-2 text-foreground">{row.courseTitle}</td>
+                  <td
+                    className="px-4 py-2 text-foreground"
+                    title={attestTitle || undefined}
+                  >
+                    <div>{row.documentTitle}</div>
+                    {row.documentCode && (
+                      <div className="text-xs text-foreground-muted">
+                        {row.documentCode}
+                      </div>
+                    )}
+                    {row.attestationText && (
+                      <div className="text-xs text-foreground-muted italic mt-0.5 max-w-[20rem] truncate">
+                        “{row.attestationText}”
+                      </div>
+                    )}
+                  </td>
+                  <td className="px-4 py-2 text-foreground">
+                    {row.documentVersion ?? "—"}
+                  </td>
+                  <td className="px-4 py-2 text-foreground-muted whitespace-nowrap text-xs tabular-nums">
+                    {row.dwellSeconds != null
+                      ? `${Math.floor(row.dwellSeconds / 60)}m ${row.dwellSeconds % 60}s`
+                      : "—"}
+                  </td>
+                  <td
+                    className="px-4 py-2 text-foreground-muted font-mono text-xs max-w-[14rem] truncate"
+                    title={row.auditHash ?? ""}
+                  >
+                    {row.auditHash ?? "—"}
+                  </td>
+                </tr>
+              );
+            })}
           </tbody>
         </table>
       </div>

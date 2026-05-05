@@ -281,6 +281,9 @@ describe("POST .../lessons/[lessonId]/complete", () => {
         sourceVersion: "1.1.0",
         sourceETag: "etag-xyz",
         renderedHTMLHash: "hash-deadbeef",
+        documentTitle: "Quality Manual",
+        documentCode: "QM-001",
+        sharePointItemId: "01ABCD",
       },
     });
     mockPrisma.enrollment.findUnique.mockResolvedValue(baseEnrollment);
@@ -309,6 +312,11 @@ describe("POST .../lessons/[lessonId]/complete", () => {
     expect(createArgs.data.acknowledgedETag).toBe("etag-xyz");
     expect(createArgs.data.acknowledgedHash).toBe("hash-deadbeef");
     expect(createArgs.data.acknowledgedAt).toBeInstanceOf(Date);
+    expect(createArgs.data.acknowledgedAttestationText).toBe(
+      "I have read and understood Quality Manual v1.1.0.",
+    );
+    expect(createArgs.data.acknowledgedSharePointItemId).toBe("01ABCD");
+    expect(createArgs.data.acknowledgedDwellSeconds).toBeNull();
   });
 
   it("POLICY_DOC: returns 409 when the lesson has no PolicyDocLesson row yet", async () => {
