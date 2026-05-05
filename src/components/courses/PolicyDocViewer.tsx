@@ -289,17 +289,19 @@ export function PolicyDocViewer(props: PolicyDocViewProps) {
         )}
       </section>
 
-      {/* Reading-time timer — slim single-line bar with the rule explained
-          via the title attribute (tooltip). Saves ~80px of vertical space
-          vs the previous full-card banner so the PDF gets more lines. */}
+      {/* Reading-time timer — explicit framing so learners understand the
+          Acknowledge button is locked until the timer hits zero. Earlier
+          wording ("Reading time required") left users wondering why the
+          button stayed disabled. Now spells out the cause and consequence. */}
       {!alreadyCompleted && !dwellDone && (
         <div
-          className="mb-2 flex items-center gap-3 rounded-md border border-info/60 bg-info-subtle px-3 py-1.5"
-          title="The acknowledgement option unlocks once you've had the page open for 6 minutes (background tabs don't count)."
+          className="mb-2 flex items-center gap-3 rounded-md border border-info/60 bg-info-subtle px-3 py-2"
+          title="Background tabs don't count — keep this page visible while you read."
         >
           <Clock className="h-4 w-4 flex-shrink-0 text-info" aria-hidden="true" />
           <span className="text-xs font-medium text-info">
-            Reading time required
+            Acknowledge unlocks in <span className="font-mono font-semibold tabular-nums">{dwellMmSs}</span>
+            <span className="hidden text-info/80 sm:inline"> — keep this tab open while you read</span>
           </span>
           <div
             className="h-1.5 flex-1 overflow-hidden rounded-full bg-info/15"
@@ -314,12 +316,6 @@ export function PolicyDocViewer(props: PolicyDocViewProps) {
               style={{ width: `${dwellPct}%` }}
             />
           </div>
-          <span
-            className="shrink-0 font-mono text-sm font-semibold tabular-nums text-info"
-            aria-hidden="true"
-          >
-            {dwellMmSs}
-          </span>
         </div>
       )}
 
@@ -368,8 +364,14 @@ export function PolicyDocViewer(props: PolicyDocViewProps) {
                 id={`attest-desc-${lessonId}`}
                 className="mt-1 block text-xs text-foreground-muted"
               >
-                Your attestation, the version, and a content hash are stored
-                as audit evidence.
+                {!dwellDone ? (
+                  <>
+                    <span className="font-medium text-info">Locked for {dwellMmSs} more</span>
+                    {" — "}finish the required reading time above, then tick this box to enable Acknowledge.
+                  </>
+                ) : (
+                  <>Your attestation, the version, and a content hash are stored as audit evidence.</>
+                )}
               </span>
             </span>
           </label>
