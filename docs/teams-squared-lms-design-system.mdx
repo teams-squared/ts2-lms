@@ -775,6 +775,34 @@ Wrap the iframe in `rounded-lg border border-border overflow-hidden` with `borde
 - Native `<video controls>` is acceptable. When we move to a custom player, playhead + progress fill use `bg-primary`.
 - Keyboard controls: space = play/pause, arrows = seek, M = mute.
 
+### 8.13 UI copy & microcopy
+
+Rules for any string that ships to a learner, admin, or course manager — button labels, toasts, empty states, tooltips, modal bodies, email subjects, validation errors, attestation text, log captions, anything rendered to a real human inside the product.
+
+**No em-dashes (`—`) in user-facing text unless absolutely necessary.** Em-dashes read as machine-generated to most readers and clutter short UI copy. Almost every em-dash in a UI string can be rewritten as a period, comma, colon, or parenthetical with no loss of meaning. "Absolutely necessary" means the sentence genuinely cannot be reshaped without losing precision (rare in microcopy, occasionally legitimate in long-form admin help text). When in doubt, rewrite.
+
+| Avoid | Prefer |
+|---|---|
+| `Acknowledge unlocks in 5:59 — keep this tab open` | `Acknowledge unlocks in 5:59. Keep this tab open.` |
+| `Course completed — ask an admin to reset` | `Course completed. Ask an admin to reset.` |
+| `Saving — please wait` | `Saving…` |
+| `User not found — check the email and retry` | `User not found. Check the email and retry.` |
+
+This rule applies to **user-facing strings only**. Em-dashes remain fine in:
+- This design doc and other developer docs.
+- Code comments and JSDoc.
+- Commit messages and PR bodies.
+- `CLAUDE.md`, `AGENTS.md`, handoff docs.
+
+En-dashes (`–`) for numeric ranges (`Mon–Fri`, `Jan–Mar`) are fine. Hyphens (`-`) for compound modifiers (`server-side`, `non-admin`) are fine.
+
+**Other microcopy conventions** (assumed elsewhere, codified here for completeness):
+- Sentence case for buttons, headings, and labels — never Title Case. ("Mark complete", not "Mark Complete".)
+- No trailing periods on button labels or one-line empty states.
+- Numerals for any number meant to be scanned (`6 minutes`, `3 of 12`), spell out only when leading a sentence (`Six policies remain outstanding.`).
+- Times are 24-hour with a leading zero if displayed alone (`09:30`); relative ("2 days ago") in feeds.
+- Errors lead with the problem, not the apology. ("Couldn't send invite. Resend rate limit hit." NOT "Sorry, we ran into a problem trying to send your invite.")
+
 ---
 
 ## 9. Motion & interaction
