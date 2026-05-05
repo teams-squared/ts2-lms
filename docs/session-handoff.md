@@ -6,40 +6,50 @@
 
 ## Last sync
 
-- **When:** 2026-05-04
+- **When:** 2026-05-05
 - **Branch:** `dev`
-- **HEAD:** `216f900` — `fix(invite): also match rate_limit_exceeded by name in 429 retry`
+- **HEAD:** `bdca0a2` — `fix(policy-doc): make dwell-timer gate visible to learners`
 - **Working tree:** clean for handoff purposes. Two non-deliverable local
   files present and intentionally ignored:
   - `.claude/settings.local.json` (modified — local IDE prefs, not for commit)
   - `.claire/` (untracked — local-only directory)
 - **Open PRs (`dev → main`):** none. PR #28 (big release merge) merged
-  2026-05-01 and is live on prod.
+  2026-05-01 and is live on prod. Five commits have landed on `dev`
+  since that merge — they are NOT yet in `main`/prod.
 
 ## What just shipped
 
-Last six meaningful commits on `dev` (all in main / prod via PR #28):
+Last six meaningful commits on `dev`:
 
-1. `216f900` `fix(invite): also match rate_limit_exceeded by name in 429 retry`
-   — belt fix: Resend SDK types `statusCode` as `number | null`; also
-   match on `error.name === "rate_limit_exceeded"` so the server-side
-   retry fires even if `statusCode` is null.
-2. `4387065` `fix(invite): prevent 429 rate-limit drops in batch invite email sends`
-   — root cause: Resend SDK v6 returns `{data, error}` without throwing,
-   so 429s were silently ignored and reported as `emailSent: true`.
-   Client now dispatches sequentially at 600 ms intervals; server checks
-   the error object and retries once on 429 after 1 100 ms sleep.
-3. `2c4e7f6` `docs(handoff): add session-handoff.md + /prep convention`
-4. `c2048a5` `chore(email): revert sender default to lms-noreply@teamsquared.io`
-   — paid Resend tier not wanted yet; sender stays on apex domain. PR #27.
-5. `101e9fc` `fix(admin/users delete): also reassign PolicyDocLesson.lastSyncedById`
-   — RESTRICT-FK fix for deleting admin users who had synced policy docs.
-   PR #26.
-6. `02a554a` `chore(security/launch): remove demo seed accounts (PR B)` /
-   `52ff175` `fix(security/launch): pre-launch hardening` — race-safe
-   lesson complete, course-completion enrollment race fix, role gate on
-   `/admin/nodes`, `rel="noopener noreferrer nofollow"` on outbound links.
-   PR #24 / #25.
+1. `bdca0a2` `fix(policy-doc): make dwell-timer gate visible to learners`
+   — operator-reported confusion: learners didn't know why Acknowledge
+   was disabled. Three fixes: LessonFooter button tooltip replaced stale
+   "Scroll to bottom" text with the real gate; timer banner headline now
+   "Acknowledge unlocks in m:ss"; attestation row says "Locked for m:ss
+   more — finish the required reading time above" when greyed.
+   ⚠️ NOT in prod yet.
+2. `2651670` `feat(iso-ack): in-app audit log + CSV export for ISO auditors`
+   — audit-evidence surface inside `/admin/emails` so auditors don't
+   depend on the email path. Reads from `LessonProgress` snapshots.
+   ⚠️ NOT in prod yet.
+3. `0c8bb82` `feat(iso-ack): make notification email disable-able via toggle`
+   — per-ack email was eating Resend free-tier quota. Adds
+   `IsoNotificationSettings.enabled` (default true). The migration
+   `20260504000000_add_iso_settings_enabled` ALSO disables the existing
+   prod singleton on apply, so the email stops the moment the deploy
+   lands. Admin re-enables explicitly via `/admin/emails`.
+   ⚠️ NOT in prod yet — email keeps firing in prod until the migration
+   is applied.
+4. `216f900` `fix(invite): also match rate_limit_exceeded by name in 429 retry`
+   — belt fix on top of #5 below: Resend SDK types `statusCode` as
+   `number | null`; also match on `error.name === "rate_limit_exceeded"`.
+5. `4387065` `fix(invite): prevent 429 rate-limit drops in batch invite email sends`
+   — root cause: Resend SDK v6 returns `{data, error}` without throwing.
+   Client now dispatches sequentially at 600 ms intervals; server
+   retries once on 429 after 1 100 ms sleep. (In prod via PR #28.)
+6. `c2048a5` `chore(email): revert sender default to lms-noreply@teamsquared.io`
+   — paid Resend tier not wanted yet; sender stays on apex domain.
+   PR #27. (In prod.)
 
 ## In-flight
 
@@ -50,24 +60,36 @@ _None._ Working tree is clean.
 Checkbox list — items waiting on the operator before / around the first
 employee onboarding launch.
 
+- [ ] **Open `dev → main` PR + merge** when ready to ship the five
+  post-#28 commits to prod (policy-doc dwell-timer UX fix, ISO-ack CSV
+  export, ISO-ack email toggle + migration, two invite 429 fixes — last
+  two were already in PR #28 so are already in main; the three feat/fix
+  commits dated 2026-05-04…05 are the new content). Do NOT open the PR
+  unless explicitly asked.
+
 - [ ] **Confirm Render deployed PR #28.** PR merged 2026-05-01. Check
   the Render dashboard to confirm the deploy completed without errors.
 
 - [ ] **Confirm Prisma migrations are applied to prod.** The custom
   `prisma/migrate.ts` does NOT auto-apply `prisma/migrations/` files.
-  Three migrations need to exist as tables in prod:
+  Four migrations need to exist as tables/columns in prod:
   - `InviteEmailTemplate` (migration `20260428000000_add_invite_email_template`)
   - `EmailSignature` (migration `20260428100000_add_email_signature`)
   - `EmailSignature.disclaimer` column (migration `20260430000000_add_signature_disclaimer`)
+  - `IsoNotificationSettings.enabled` column (migration
+    `20260504000000_add_iso_settings_enabled`) — new, will not exist in
+    prod until the next `dev → main` deploy AND a manual apply.
 
   Quick verify (via `psql` or Render Shell):
   ```sql
   SELECT to_regclass('"InviteEmailTemplate"'), to_regclass('"EmailSignature"');
   SELECT column_name FROM information_schema.columns
    WHERE table_name = 'EmailSignature' AND column_name = 'disclaimer';
+  SELECT column_name FROM information_schema.columns
+   WHERE table_name = 'IsoNotificationSettings' AND column_name = 'enabled';
   ```
-  All three must return non-NULL. Until applied, the email editor at
-  `/admin/emails` falls back to defaults silently.
+  All four must return non-NULL. Until applied, the relevant admin UI
+  surfaces fall back to defaults silently.
 
 - [ ] **Confirm `EMAIL_FROM` on Render** is either unset (code default:
   `Teams Squared LMS <lms-noreply@teamsquared.io>`) OR set to exactly
@@ -90,12 +112,22 @@ employee onboarding launch.
   template, sign-in button works, SSO flow completes, course assignments
   visible. Then complete one non-policy lesson, take a quiz, acknowledge
   a policy doc — verify XP increments by 10 once (not twice), ISO ack
-  email fires, no console errors.
+  audit row written (email may or may not send depending on toggle), no
+  console errors.
 
-- [ ] **Post-launch — npm vulns.** Three moderate-severity vulns
-  outstanding (`uuid`, `postcss`, `@hono/node-server`). Fixes require
-  framework version bumps (Next, Prisma). Plan a dedicated upgrade cycle
-  within 6–8 weeks of launch.
+- [ ] **Smoke-test the dwell-timer UX fix** once `bdca0a2` ships.
+  Open a policy-doc lesson as a non-admin; verify (a) timer banner reads
+  "Acknowledge unlocks in 5:59 — keep this tab open while you read",
+  (b) attestation checkbox is greyed and reads "Locked for m:ss more",
+  (c) Acknowledge button tooltip reads "Finish the required reading
+  time and tick the attestation checkbox to enable" (not "Scroll to the
+  bottom"). Origin: a real user complained they couldn't tell why the
+  button was disabled.
+
+- [ ] **Post-launch — npm vulns.** Two moderate-severity vulns called
+  out by GitHub on push (down from three at last sync — one resolved
+  upstream). Fixes require framework version bumps (Next, Prisma). Plan
+  a dedicated upgrade cycle within 6–8 weeks of launch.
 
 ## Open questions / decisions
 
@@ -110,9 +142,10 @@ employee onboarding launch.
   deliverability incident on the apex domain.
 
 - **Server-side dwell enforcement for POLICY_DOC.** The 6-minute dwell
-  + attestation gate is client-side only — bypassable via DevTools. Audit
-  trail (version / eTag / hash) is server-side and authoritative. Gated
-  on auditor pushback or compliance incident.
+  + attestation gate is client-side only — bypassable via DevTools. The
+  UX fix in `bdca0a2` is purely cosmetic; it does not change the threat
+  model. Audit trail (version / eTag / hash) is server-side and
+  authoritative. Gated on auditor pushback or compliance incident.
 
 - **Quiz double-submit idempotency token.** Theoretical race in
   `quiz/attempt` if a learner double-clicks Submit within one round-trip.
@@ -125,19 +158,16 @@ employee onboarding launch.
 
 ## Pickup pointer
 
-The natural next move is **operational**: run the test batch invite
-(3+ recipients) from `/admin/users` against prod to verify the 429 fix
-works end-to-end. Watch the Resend dashboard — you should see all emails
-succeed with 200s, no 429s.
+The natural next move is **operational**: the operator needs to ship the
+three 2026-05-04…05 commits to prod via a `dev → main` PR (only when
+explicitly asked), then apply migration `20260504000000_add_iso_settings_enabled`
+on Render so the ISO-ack email actually stops firing in prod. Until that
+happens, the toggle UI exists in code but the underlying column doesn't
+exist in prod and the email keeps sending on every acknowledgement.
 
-If the smoke test passes, the remaining items in **Pending external
-actions** are operational (migrations, env vars, template customization)
-and need the operator's hands more than a session's.
-
-If you continue without operator input: the only material code task left
-is post-launch cleanup — the npm-vulns upgrade cycle (Next, Prisma, etc.).
-Do not start that without an explicit go-ahead; it's a multi-PR effort
-with regression risk.
+If you continue without operator input: there is no material code task
+pending. Do NOT start the npm-vulns upgrade cycle without an explicit
+go-ahead — multi-PR effort with regression risk.
 
 ---
 
@@ -149,17 +179,19 @@ with regression risk.
 | Auth (NextAuth + Entra ID) | `src/lib/auth.ts`, `src/lib/auth.config.ts` |
 | Outbound email + signature renderer | `src/lib/email.ts` |
 | Admin email surface (Invite / Signature / ISO ack tabs) | `src/app/admin/emails/page.tsx`, `src/components/admin/Email*Form.tsx`, `src/components/admin/EmailsTabs.tsx` |
+| ISO notification settings (To/Cc + enabled toggle) | `src/app/api/admin/settings/iso-notifications/route.ts`, `src/components/admin/IsoNotificationSettingsForm.tsx` |
+| ISO ack audit log + CSV export | inside `/admin/emails` (ISO-ack tab) |
 | Invite UI (single + batch, sequential throttle) | `src/components/admin/InviteUserForm.tsx`, `src/components/admin/CourseNodeTree.tsx` |
 | Invite API (user create + enroll + email) | `src/app/api/admin/users/invite/route.ts` |
-| Lesson complete API (race-safe) | `src/app/api/courses/[id]/modules/[moduleId]/lessons/[lessonId]/complete/route.ts` |
+| Lesson complete API (race-safe, ISO email gated on settings.enabled) | `src/app/api/courses/[id]/modules/[moduleId]/lessons/[lessonId]/complete/route.ts` |
 | Quiz attempt API (no answer-key leak) | `src/app/api/courses/[id]/modules/[moduleId]/lessons/[lessonId]/quiz/attempt/route.ts` |
-| Policy-doc viewer (PDF embed + dwell + attestation) | `src/components/courses/PolicyDocViewer.tsx`, `src/lib/policy-doc/sync.ts` |
+| Policy-doc viewer (PDF embed + dwell + attestation, explicit lock messaging) | `src/components/courses/PolicyDocViewer.tsx`, `src/lib/policy-doc/sync.ts` |
+| Lesson footer (Acknowledge button gating + tooltip) | `src/components/courses/LessonFooter.tsx` |
 | App shell sidebar (auto-collapsing rail) | `src/components/layout/Sidebar.tsx` |
 | Course sidebar (auto-collapsing rail on lesson pages) | `src/components/courses/CourseSidebar.tsx` |
 | Lesson viewer (text/video/document/html dispatch) | `src/components/courses/LessonViewer.tsx` |
 | Schema | `prisma/schema.prisma` |
 | **Migrations** (NOT auto-applied — see Pending) | `prisma/migrations/`, custom `prisma/migrate.ts` |
-| ISO notification settings (To/Cc recipients) | `src/app/api/admin/settings/iso-notifications/route.ts` |
 | Demo-user cleanup (one-shot) | `scripts/delete-demo-users.{sql,ts}` |
 | Render deploy config | `render.yaml` |
 | CI workflows | `.github/workflows/ci.yml`, `dependency-review.yml`, `deadline-reminders.yml` |
@@ -186,3 +218,7 @@ with regression risk.
 - The credentials provider is gated on `NODE_ENV !== "production"`.
   Demo seed users are gone. Local-dev bootstrap = SSO sign-in then
   SQL-promote per the file header in `prisma/seed.ts`.
+- The policy-doc dwell timer is client-side only (bypassable). Treat
+  the audit trail in `LessonProgress` (version + eTag + hash) as the
+  authoritative ack record; the dwell + attestation checkbox are UX,
+  not security.
