@@ -139,6 +139,13 @@ async function main() {
       'Enum "LessonType" should include value "LINK"',
     ),
   );
+  results.push(
+    await check(
+      "20260508000000_add_course_managers",
+      () => tableExists("_CourseManagers"),
+      'Join table "_CourseManagers" should exist',
+    ),
+  );
 
   // Print
   let pad = 0;
