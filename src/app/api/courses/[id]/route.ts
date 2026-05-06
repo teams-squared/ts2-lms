@@ -3,7 +3,8 @@ import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { prismaStatusToApp, appStatusToPrisma } from "@/lib/types";
 import { createNotificationsForCourse } from "@/lib/notifications";
-import type { CourseStatus } from "@/lib/types";
+import { canManageCourse } from "@/lib/courseAccess";
+import type { CourseStatus, Role } from "@/lib/types";
 
 type Params = { params: Promise<{ id: string }> };
 
@@ -59,12 +60,11 @@ export async function PATCH(request: Request, { params }: Params) {
     return NextResponse.json({ error: "Not found" }, { status: 404 });
   }
 
-  // Admin and course_manager can edit any course; others only if they created it.
-  if (
-    session.user.role !== "admin" &&
-    session.user.role !== "course_manager" &&
-    course.createdById !== session.user.id
-  ) {
+  // Admin manages all; course_manager only courses linked via CourseManagers;
+  // everyone else only their own creations.
+  const role = (session.user.role ?? "employee") as Role;
+  const isManager = await canManageCourse(session.user.id, role, id);
+  if (!isManager && course.createdById !== session.user.id) {
     return NextResponse.json({ error: "Forbidden" }, { status: 403 });
   }
 
@@ -122,20 +122,23 @@ export async function PATCH(request: Request, { params }: Params) {
   });
 }
 
-/** DELETE /api/courses/[id] — delete course (admin / course_manager). */
+/** DELETE /api/courses/[id] — delete course (admin / managing course_manager). */
 export async function DELETE(_request: Request, { params }: Params) {
   const session = await auth();
-  if (
-    !session ||
-    (session.user?.role !== "admin" && session.user?.role !== "course_manager")
-  ) {
-    return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+  if (!session?.user?.id) {
+    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
   const { id } = await params;
   const course = await prisma.course.findUnique({ where: { id } });
   if (!course) {
     return NextResponse.json({ error: "Not found" }, { status: 404 });
+  }
+
+  const role = (session.user.role ?? "employee") as Role;
+  const allowed = await canManageCourse(session.user.id, role, id);
+  if (!allowed) {
+    return NextResponse.json({ error: "Forbidden" }, { status: 403 });
   }
 
   await prisma.course.delete({ where: { id } });

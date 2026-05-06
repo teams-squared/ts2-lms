@@ -57,14 +57,11 @@ export default async function CourseEditPage({
         initialSubscriptions={subs.map((s) => s.email)}
       />
       <div className="mt-8">
-        <CourseDeleteZone
-          courseId={courseId}
-          courseTitle={data.course.title}
-          canDelete={
-            session.user!.role === "admin" ||
-            data.course.createdById === session.user!.id
-          }
-        />
+        {/* By the time we render, loadCourseEditData has already verified
+            canManageCourse — admin or a course_manager linked to this course
+            via the CourseManagers m2m. So the delete control is always
+            available here. */}
+        <CourseDeleteZone courseId={courseId} courseTitle={data.course.title} />
       </div>
     </div>
   );

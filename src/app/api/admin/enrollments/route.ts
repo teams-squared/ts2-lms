@@ -1,15 +1,22 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { requireRole } from "@/lib/roles";
+import { canManageCourse, listManagedCourseIds } from "@/lib/courseAccess";
 import { awardXp } from "@/lib/xp";
 import { trackEvent } from "@/lib/posthog-server";
 
-/** GET /api/admin/enrollments — list all enrollments (admin/manager only) */
+/** GET /api/admin/enrollments — list enrollments (scoped to managed courses for course_manager). */
 export async function GET() {
   const authResult = await requireRole("course_manager");
   if (authResult instanceof NextResponse) return authResult;
+  const { userId, role } = authResult;
+
+  const managedIds = await listManagedCourseIds(userId, role);
+  const where =
+    managedIds === null ? {} : { courseId: { in: managedIds } };
 
   const enrollments = await prisma.enrollment.findMany({
+    where,
     include: {
       user: { select: { id: true, name: true, email: true } },
       course: { select: { id: true, title: true } },
@@ -20,11 +27,11 @@ export async function GET() {
   return NextResponse.json(enrollments);
 }
 
-/** POST /api/admin/enrollments — enroll a user in a course (admin/manager only) */
+/** POST /api/admin/enrollments — enroll a user in a course (course_manager must manage it). */
 export async function POST(request: Request) {
   const authResult = await requireRole("course_manager");
   if (authResult instanceof NextResponse) return authResult;
-  const { userId: enrolledBy } = authResult;
+  const { userId: enrolledBy, role } = authResult;
 
   let body: { courseId?: string; userId?: string };
   try {
@@ -45,6 +52,15 @@ export async function POST(request: Request) {
   const course = await prisma.course.findUnique({ where: { id: courseId } });
   if (!course) {
     return NextResponse.json({ error: "Course not found" }, { status: 404 });
+  }
+
+  // Course managers may only enroll into courses they manage.
+  const allowed = await canManageCourse(enrolledBy, role, courseId);
+  if (!allowed) {
+    return NextResponse.json(
+      { error: "You can only enroll users in courses you manage" },
+      { status: 403 },
+    );
   }
 
   // Verify user exists

@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { requireRole } from "@/lib/roles";
+import { canManageCourse } from "@/lib/courseAccess";
 import { trackEvent } from "@/lib/posthog-server";
 
 type Params = { params: Promise<{ id: string }> };
@@ -12,8 +13,8 @@ type Params = { params: Promise<{ id: string }> };
  * prerequisites, email subscriptions) cascades automatically via FK constraints.
  *
  * Guards:
- *  - Must be ADMIN or COURSE_MANAGER.
- *  - COURSE_MANAGER may only delete courses they authored.
+ *  - Must be ADMIN or a COURSE_MANAGER linked to the course via the
+ *    CourseManagers m2m relation.
  */
 export async function DELETE(_request: Request, { params }: Params) {
   const authResult = await requireRole("course_manager");
@@ -24,16 +25,17 @@ export async function DELETE(_request: Request, { params }: Params) {
 
   const course = await prisma.course.findUnique({
     where: { id: courseId },
-    select: { id: true, title: true, createdById: true },
+    select: { id: true, title: true },
   });
 
   if (!course) {
     return NextResponse.json({ error: "Course not found" }, { status: 404 });
   }
 
-  if (role !== "admin" && course.createdById !== userId) {
+  const allowed = await canManageCourse(userId, role, courseId);
+  if (!allowed) {
     return NextResponse.json(
-      { error: "You can only delete courses you created" },
+      { error: "You can only delete courses you manage" },
       { status: 403 },
     );
   }

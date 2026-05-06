@@ -1,14 +1,20 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { requireRole } from "@/lib/roles";
+import { listManagedCourseIds } from "@/lib/courseAccess";
 import { prismaStatusToApp } from "@/lib/types";
 
-/** GET /api/admin/courses — all courses regardless of status (admin / course_manager). */
+/** GET /api/admin/courses — admin: all courses; course_manager: managed courses only. */
 export async function GET() {
   const authResult = await requireRole("course_manager");
   if (authResult instanceof NextResponse) return authResult;
+  const { userId, role } = authResult;
+
+  const managedIds = await listManagedCourseIds(userId, role);
+  const where = managedIds === null ? {} : { id: { in: managedIds } };
 
   const courses = await prisma.course.findMany({
+    where,
     include: {
       createdBy: { select: { name: true, email: true } },
       node: { select: { id: true, name: true } },

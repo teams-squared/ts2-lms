@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { requireRole } from "@/lib/roles";
+import { listManagedCourseIds } from "@/lib/courseAccess";
 import { awardXp } from "@/lib/xp";
 import { trackEvent } from "@/lib/posthog-server";
 import { createEnrollments } from "@/lib/enrollments";
@@ -9,7 +10,7 @@ import { createEnrollments } from "@/lib/enrollments";
 export async function POST(request: Request) {
   const authResult = await requireRole("course_manager");
   if (authResult instanceof NextResponse) return authResult;
-  const { userId: enrolledBy } = authResult;
+  const { userId: enrolledBy, role } = authResult;
 
   let body: { userId?: string; courseIds?: string[] };
   try {
@@ -24,6 +25,22 @@ export async function POST(request: Request) {
       { error: "userId and courseIds (non-empty array) are required" },
       { status: 400 },
     );
+  }
+
+  // Course managers may only enroll into courses they manage.
+  const managedIds = await listManagedCourseIds(enrolledBy, role);
+  if (managedIds !== null) {
+    const allowed = new Set(managedIds);
+    const unauthorized = courseIds.filter((cid) => !allowed.has(cid));
+    if (unauthorized.length > 0) {
+      return NextResponse.json(
+        {
+          error: "You can only enroll users in courses you manage",
+          unauthorizedCourseIds: unauthorized,
+        },
+        { status: 403 },
+      );
+    }
   }
 
   // Verify user exists

@@ -1,15 +1,39 @@
 import { prisma } from "@/lib/prisma";
+import { auth } from "@/lib/auth";
 import { computeDeadline } from "@/lib/deadlines";
+import { listManagedCourseIds } from "@/lib/courseAccess";
+import type { Role } from "@/lib/types";
 
 export const dynamic = "force-dynamic";
 
 export default async function AdminAnalyticsPage() {
+  const session = await auth();
+  const userId = session!.user!.id!;
+  const role = (session!.user!.role ?? "employee") as Role;
+
+  const managedIds = await listManagedCourseIds(userId, role);
+  // ADMIN: managedIds === null → no scope restriction.
+  // CM: array of course ids; both course-list and enrollment/attempt counts
+  // are filtered to those courses so analytics reflect only their domain.
+  const courseScopeWhere =
+    managedIds === null ? {} : { id: { in: managedIds } };
+  const enrollmentScopeWhere =
+    managedIds === null ? {} : { courseId: { in: managedIds } };
+  const attemptScopeWhere =
+    managedIds === null
+      ? {}
+      : { lesson: { module: { courseId: { in: managedIds } } } };
+
   const sevenDaysAgo = new Date();
   sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
 
   const [totalEnrollments, totalQuizAttempts, activeUsers7d] = await Promise.all([
-    prisma.enrollment.count(),
-    prisma.quizAttempt.count(),
+    prisma.enrollment.count({ where: enrollmentScopeWhere }),
+    prisma.quizAttempt.count({ where: attemptScopeWhere }),
+    // Active-users metric stays global — it counts learners with any activity,
+    // not activity within a specific course. CM analytics show how many
+    // learners across the company are active, even if not enrolled in their
+    // courses; this is the same denominator admins see.
     prisma.userStats.count({
       where: { lastActivityDate: { gte: sevenDaysAgo } },
     }),
@@ -17,7 +41,7 @@ export default async function AdminAnalyticsPage() {
 
   // Course metrics
   const courses = await prisma.course.findMany({
-    where: { status: "PUBLISHED" },
+    where: { status: "PUBLISHED", ...courseScopeWhere },
     select: {
       id: true,
       title: true,
@@ -127,8 +151,18 @@ export default async function AdminAnalyticsPage() {
     }
   }
 
-  // User leaderboard (top 20 by XP)
+  // User leaderboard (top 20 by XP). Scoped to learners enrolled in managed
+  // courses for course managers; global for admins.
+  const leaderboardUserWhere =
+    managedIds === null
+      ? undefined
+      : {
+          user: {
+            enrollments: { some: { courseId: { in: managedIds } } },
+          },
+        };
   const topUsers = await prisma.userStats.findMany({
+    where: leaderboardUserWhere,
     orderBy: { xp: "desc" },
     take: 20,
     include: {
