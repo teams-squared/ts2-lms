@@ -3,6 +3,7 @@ import { notFound, redirect } from "next/navigation";
 import Link from "next/link";
 import { CourseEditor } from "@/components/courses/CourseEditor";
 import { CourseDeleteZone } from "@/components/courses/CourseDeleteZone";
+import { CourseManagersPanel } from "@/components/admin/CourseManagersPanel";
 import { loadCourseEditData } from "@/lib/courseEditData";
 import { getNodeTree } from "@/lib/courseNodes";
 import { prisma } from "@/lib/prisma";
@@ -21,7 +22,8 @@ export default async function CourseEditPage({
   }
 
   const { id: courseId } = await params;
-  const [data, nodeTree, subs] = await Promise.all([
+  const isAdmin = session.user!.role === "admin";
+  const [data, nodeTree, subs, managerData] = await Promise.all([
     loadCourseEditData(courseId, session.user!.id!, session.user!.role as Role),
     getNodeTree(),
     prisma.courseEmailSubscription.findMany({
@@ -29,6 +31,24 @@ export default async function CourseEditPage({
       select: { email: true },
       orderBy: { createdAt: "asc" },
     }),
+    isAdmin
+      ? Promise.all([
+          prisma.course.findUnique({
+            where: { id: courseId },
+            select: {
+              managers: {
+                select: { id: true, name: true, email: true, role: true },
+                orderBy: { name: "asc" },
+              },
+            },
+          }),
+          prisma.user.findMany({
+            where: { role: { in: ["ADMIN", "COURSE_MANAGER"] } },
+            select: { id: true, name: true, email: true, role: true },
+            orderBy: { name: "asc" },
+          }),
+        ])
+      : Promise.resolve(null),
   ]);
   if (!data) notFound();
 
@@ -56,6 +76,25 @@ export default async function CourseEditPage({
         nodeTree={nodeTree}
         initialSubscriptions={subs.map((s) => s.email)}
       />
+      {isAdmin && managerData && managerData[0] && (
+        <div className="mt-8">
+          <CourseManagersPanel
+            courseId={courseId}
+            initialManagers={managerData[0].managers as Array<{
+              id: string;
+              name: string | null;
+              email: string;
+              role: "ADMIN" | "COURSE_MANAGER";
+            }>}
+            assignableUsers={managerData[1] as Array<{
+              id: string;
+              name: string | null;
+              email: string;
+              role: "ADMIN" | "COURSE_MANAGER";
+            }>}
+          />
+        </div>
+      )}
       <div className="mt-8">
         {/* By the time we render, loadCourseEditData has already verified
             canManageCourse — admin or a course_manager linked to this course
