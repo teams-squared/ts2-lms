@@ -8,6 +8,7 @@ import {
   Home,
   GraduationCap,
   Shield,
+  BookOpenCheck,
   PanelLeftClose,
   PanelLeftOpen,
 } from "lucide-react";
@@ -45,11 +46,24 @@ interface NavItem {
   manage?: boolean;
 }
 
-const NAV_ITEMS: NavItem[] = [
+const BASE_NAV_ITEMS: NavItem[] = [
   { href: "/", label: "Home", icon: Home },
   { href: "/courses", label: "Courses", icon: GraduationCap },
-  { href: "/admin", label: "Admin", icon: Shield, manage: true },
 ];
+
+const ADMIN_NAV_ITEM: NavItem = {
+  href: "/admin",
+  label: "Admin",
+  icon: Shield,
+  manage: true,
+};
+
+const COURSE_MANAGER_NAV_ITEM: NavItem = {
+  href: "/admin",
+  label: "Course Management",
+  icon: BookOpenCheck,
+  manage: true,
+};
 
 interface SidebarProps {
   className?: string;
@@ -87,10 +101,18 @@ export function Sidebar({ className }: SidebarProps) {
     }
   }, [pinned, mounted]);
 
-  const canManage =
-    session?.user?.role === "admin" || session?.user?.role === "course_manager";
+  const role = session?.user?.role;
+  const isAdmin = role === "admin";
+  const isCourseManager = role === "course_manager";
 
-  const visibleItems = NAV_ITEMS.filter((i) => !i.manage || canManage);
+  const visibleItems: NavItem[] = [
+    ...BASE_NAV_ITEMS,
+    ...(isAdmin
+      ? [ADMIN_NAV_ITEM]
+      : isCourseManager
+        ? [COURSE_MANAGER_NAV_ITEM]
+        : []),
+  ];
 
   // When `collapsible` is true (unpinned mode), labels and brand text are
   // hidden at the 64px rail and fade in only when the parent `aside.group`
