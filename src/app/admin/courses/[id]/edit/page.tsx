@@ -57,7 +57,14 @@ export default async function CourseEditPage({
         initialSubscriptions={subs.map((s) => s.email)}
       />
       <div className="mt-8">
-        <CourseDeleteZone courseId={courseId} courseTitle={data.course.title} />
+        <CourseDeleteZone
+          courseId={courseId}
+          courseTitle={data.course.title}
+          canDelete={
+            session.user!.role === "admin" ||
+            data.course.createdById === session.user!.id
+          }
+        />
       </div>
     </div>
   );

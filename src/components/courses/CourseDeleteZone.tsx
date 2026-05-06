@@ -8,9 +8,10 @@ import { useToast } from "@/components/ui/ToastProvider";
 interface CourseDeleteZoneProps {
   courseId: string;
   courseTitle: string;
+  canDelete: boolean;
 }
 
-export function CourseDeleteZone({ courseId, courseTitle }: CourseDeleteZoneProps) {
+export function CourseDeleteZone({ courseId, courseTitle, canDelete }: CourseDeleteZoneProps) {
   const router = useRouter();
   const { toast } = useToast();
 
@@ -20,6 +21,8 @@ export function CourseDeleteZone({ courseId, courseTitle }: CourseDeleteZoneProp
   const [error, setError] = useState<string | null>(null);
 
   const canConfirm = confirmText.trim() === courseTitle.trim();
+
+  if (!canDelete) return null;
 
   const handleDelete = async () => {
     if (!canConfirm || deleting) return;
