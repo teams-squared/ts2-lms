@@ -48,11 +48,18 @@ describe("GET /api/admin/enrollments", () => {
     expect(body[0].id).toBe("e1");
   });
 
-  it("returns enrollments list for course_manager", async () => {
-    mockAuth.mockResolvedValue(mockSession({ role: "course_manager" }));
+  it("returns enrollments list for course_manager scoped to managed courses", async () => {
+    mockAuth.mockResolvedValue(mockSession({ id: "cm-1", role: "course_manager" }));
+    // listManagedCourseIds queries course.findMany for managed scope.
+    mockPrisma.course.findMany.mockResolvedValue([{ id: "c1" }]);
     mockPrisma.enrollment.findMany.mockResolvedValue([]);
     const res = await GET();
     expect(res.status).toBe(200);
+    expect(mockPrisma.enrollment.findMany).toHaveBeenCalledWith(
+      expect.objectContaining({
+        where: { courseId: { in: ["c1"] } },
+      }),
+    );
   });
 });
 
