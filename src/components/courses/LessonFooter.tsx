@@ -147,7 +147,7 @@ export function LessonFooter({
       }
     } catch {
       setIsCompleted(false);
-      toast("Could not mark complete — try again", "error");
+      toast("Could not mark complete. Try again.", "error");
     } finally {
       setIsLoading(false);
     }
@@ -163,7 +163,7 @@ export function LessonFooter({
       router.refresh();
     } catch {
       setIsCompleted(true);
-      toast("Could not undo — try again", "error");
+      toast("Could not undo. Try again.", "error");
     } finally {
       setIsLoading(false);
     }
@@ -224,7 +224,7 @@ export function LessonFooter({
           {courseLocked ? (
             <span
               data-testid="course-locked-badge"
-              title="Course completed — ask an admin to reset progress to retake."
+              title="Course completed. Ask an admin to reset progress to retake."
               className={cn(
                 "inline-flex items-center gap-1.5 rounded-md bg-success-subtle px-3 py-2 text-sm font-medium text-success",
               )}

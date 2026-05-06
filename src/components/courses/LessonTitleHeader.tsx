@@ -1,4 +1,4 @@
-import { FileText, Film, HelpCircle, Monitor, ShieldCheck, Type } from "lucide-react";
+import { ExternalLink, FileText, Film, HelpCircle, Monitor, ShieldCheck, Type } from "lucide-react";
 import type { LessonType } from "@/lib/types";
 
 interface LessonTitleHeaderProps {
@@ -17,6 +17,7 @@ const TYPE_LABEL: Record<LessonType, string> = {
   quiz: "Quiz",
   html: "Interactive",
   policy_doc: "Policy document",
+  link: "External article",
 };
 
 const TYPE_ICON: Record<LessonType, React.ComponentType<{ className?: string }>> = {
@@ -26,6 +27,7 @@ const TYPE_ICON: Record<LessonType, React.ComponentType<{ className?: string }>>
   quiz: HelpCircle,
   html: Monitor,
   policy_doc: ShieldCheck,
+  link: ExternalLink,
 };
 
 /**

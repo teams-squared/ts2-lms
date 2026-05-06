@@ -13,6 +13,7 @@ vi.mock("@/components/icons", () => ({
   LayoutGridIcon: (props: Record<string, unknown>) => <svg data-testid="icon-html" {...props} />,
   ShieldIcon: (props: Record<string, unknown>) => <svg data-testid="icon-policy-doc" {...props} />,
   ClockIcon: (props: Record<string, unknown>) => <svg data-testid="icon-clock" {...props} />,
+  LinkIcon: (props: Record<string, unknown>) => <svg data-testid="icon-link" {...props} />,
 }));
 
 vi.mock("next/link", () => ({

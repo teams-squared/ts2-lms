@@ -26,6 +26,7 @@ model User {
   invitedBy      User?            @relation("UserInvites", fields: [invitedById], references: [id], onDelete: SetNull)
   invitedUsers   User[]           @relation("UserInvites")
   createdCourses      Course[]         @relation("CreatedCourses")
+  managedCourses      Course[]         @relation("CourseManagers")
   enrollments         Enrollment[]
   enrollmentsMade     Enrollment[]     @relation("EnrolledBy")
   lessonProgress      LessonProgress[]
@@ -69,6 +70,7 @@ model Course {
   createdById       String
   node              CourseNode?  @relation(fields: [nodeId], references: [id], onDelete: SetNull)
   createdBy         User         @relation("CreatedCourses", fields: [createdById], references: [id])
+  managers          User[]       @relation("CourseManagers")
   modules           Module[]
   enrollments       Enrollment[]
   prerequisites     CoursePrerequisite[] @relation("CoursePrereqs")
@@ -95,6 +97,7 @@ enum LessonType {
   DOCUMENT
   HTML
   POLICY_DOC
+  LINK
 }
 
 enum PolicyDocRenderMode {

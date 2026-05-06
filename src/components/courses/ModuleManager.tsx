@@ -9,6 +9,7 @@ import { ConfirmDialog } from "@/components/ui/ConfirmDialog";
 import { Button } from "@/components/ui/button";
 import type { LessonType } from "@/lib/types";
 import type { SharePointDocumentRef } from "@/lib/sharepoint/types";
+import { parseLinkContent, serializeLinkContent } from "@/lib/lesson-link";
 
 interface Lesson {
   id: string;
@@ -641,12 +642,13 @@ export function ModuleManager({
                               onChange={(e) => setNewLessonType(e.target.value as LessonType)}
                               className="rounded-lg border border-border bg-background text-sm px-3 py-2 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
                             >
-                              <option value="text">Text — written content</option>
-                              <option value="video">Video — SharePoint clip or URL</option>
-                              <option value="quiz">Quiz — graded questions</option>
-                              <option value="document">Document — SharePoint file</option>
-                              <option value="html">HTML — embedded page</option>
-                              <option value="policy_doc">Policy doc — ISO Word doc + acknowledgement</option>
+                              <option value="text">Text: written content</option>
+                              <option value="video">Video: SharePoint clip or URL</option>
+                              <option value="quiz">Quiz: graded questions</option>
+                              <option value="document">Document: SharePoint file</option>
+                              <option value="html">HTML: embedded page</option>
+                              <option value="policy_doc">Policy doc: ISO Word doc + acknowledgement</option>
+                              <option value="link">Link: external article</option>
                             </select>
                           </div>
                           <div className="flex items-center gap-2">
@@ -706,7 +708,7 @@ export function ModuleManager({
                 type="text"
                 value={newModuleTitle}
                 onChange={(e) => setNewModuleTitle(e.target.value)}
-                placeholder="e.g. Week 1 — Security basics"
+                placeholder="e.g. Week 1: Security basics"
                 className="flex-1 rounded-lg border border-border bg-card text-sm px-3 py-2 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
               />
               <Button
@@ -773,7 +775,7 @@ export function ModuleManager({
                 </select>
                 {editingLesson.type === "quiz" && (
                   <p className="text-xs text-foreground-subtle mt-1">
-                    Quiz type can&apos;t be changed — converting would orphan
+                    Quiz type can&apos;t be changed. Converting would orphan
                     the questions. Delete and recreate if you need a different
                     lesson type.
                   </p>
@@ -782,6 +784,11 @@ export function ModuleManager({
 
               {editType === "policy_doc" ? (
                 <PolicyDocLessonEditor lessonId={editingLesson.id} />
+              ) : editType === "link" ? (
+                <LinkLessonFields
+                  content={editContent}
+                  onChange={setEditContent}
+                />
               ) : editType === "document" || editType === "html" || (editType === "video" && videoSource === "sharepoint") ? (
                 <div>
                   <label className="block text-xs font-medium text-foreground-muted mb-1">
@@ -927,7 +934,7 @@ export function ModuleManager({
                   disabled={editSaving || discardingLesson}
                   title={
                     editingLesson.id === justCreatedLessonId
-                      ? "Close without changes — the lesson will stay in the module so you can fill it in later."
+                      ? "Close without changes. The lesson will stay in the module so you can fill it in later."
                       : undefined
                   }
                 >
@@ -1014,4 +1021,93 @@ export function ModuleManager({
       />
     </div>
   );
+}
+
+/** Edit-form panel for `LessonType.LINK` lessons. URL is required and
+ *  validated as `http(s)`; blurb is optional. Mirrors the shape of the
+ *  video / document edit panels. Updates flow through to the parent's
+ *  `editContent` state so the standard save handler picks them up. */
+function LinkLessonFields({
+  content,
+  onChange,
+}: {
+  content: string;
+  onChange: (next: string) => void;
+}) {
+  const parsed = parseLinkContent(content);
+  // We accept a free-text URL during editing (parseLinkContent rejects
+  // non-http(s) before render). Empty / partial values during typing are
+  // tolerated; the final save still goes through whatever the textarea
+  // reflects.
+  const draftUrl = parsed?.url ?? safeRawUrl(content);
+  const draftBlurb = parsed?.blurb ?? safeRawBlurb(content);
+
+  function update(nextUrl: string, nextBlurb: string) {
+    if (!nextUrl) {
+      onChange("");
+      return;
+    }
+    onChange(serializeLinkContent({ url: nextUrl, blurb: nextBlurb }));
+  }
+
+  return (
+    <div className="space-y-3">
+      <div>
+        <label
+          htmlFor="link-url"
+          className="block text-xs font-medium text-foreground-muted mb-1"
+        >
+          Article URL <span className="text-danger">*</span>
+        </label>
+        <input
+          id="link-url"
+          type="url"
+          inputMode="url"
+          value={draftUrl}
+          onChange={(e) => update(e.target.value.trim(), draftBlurb)}
+          placeholder="https://example.com/article"
+          className="w-full rounded-lg border border-border bg-surface text-sm px-3 py-2 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+        />
+      </div>
+      <div>
+        <label
+          htmlFor="link-blurb"
+          className="block text-xs font-medium text-foreground-muted mb-1"
+        >
+          Blurb <span className="text-foreground-muted">(optional)</span>
+        </label>
+        <textarea
+          id="link-blurb"
+          value={draftBlurb}
+          onChange={(e) => update(draftUrl, e.target.value)}
+          rows={2}
+          placeholder="One sentence describing why this is required reading."
+          className="w-full rounded-lg border border-border bg-surface text-sm px-3 py-2 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring resize-none"
+        />
+      </div>
+    </div>
+  );
+}
+
+/** Best-effort recovery of a partially-typed URL from `editContent`
+ *  while the user is still editing (parseLinkContent only accepts a
+ *  valid http(s) URL). */
+function safeRawUrl(raw: string): string {
+  if (!raw) return "";
+  try {
+    const obj = JSON.parse(raw) as { url?: unknown };
+    return typeof obj.url === "string" ? obj.url : "";
+  } catch {
+    return "";
+  }
+}
+
+function safeRawBlurb(raw: string): string {
+  if (!raw) return "";
+  try {
+    const obj = JSON.parse(raw) as { blurb?: unknown };
+    return typeof obj.blurb === "string" ? obj.blurb : "";
+  } catch {
+    return "";
+  }
 }

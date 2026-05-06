@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import Link from "next/link";
-import { ChevronDownIcon, ChevronRightIcon, CheckCircleIcon, DocumentTextIcon, VideoIcon, QuizIcon, PaperclipIcon, LayoutGridIcon, ClockIcon, ShieldIcon } from "@/components/icons";
+import { ChevronDownIcon, ChevronRightIcon, CheckCircleIcon, DocumentTextIcon, VideoIcon, QuizIcon, PaperclipIcon, LayoutGridIcon, ClockIcon, ShieldIcon, LinkIcon } from "@/components/icons";
 import type { LessonType } from "@/lib/types";
 import type { DeadlineInfo } from "@/lib/deadlines";
 import { formatDeadlineRelative } from "@/lib/deadlines";
@@ -28,6 +28,7 @@ const LESSON_TYPE_ICON: Record<LessonType, React.FC<{ className?: string }>> = {
   document: PaperclipIcon,
   html: LayoutGridIcon,
   policy_doc: ShieldIcon,
+  link: LinkIcon,
 };
 
 export function ModuleList({

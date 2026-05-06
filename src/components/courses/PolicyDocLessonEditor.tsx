@@ -93,11 +93,11 @@ export function PolicyDocLessonEditor({ lessonId }: { lessonId: string }) {
         }
         const data = (await res.json()) as SyncedResponse;
         if (data.status === "noop") {
-          setLastSyncMessage("Already up to date — SharePoint hasn't changed since last sync.");
+          setLastSyncMessage("Already up to date. SharePoint hasn't changed since last sync.");
         } else if (data.versionChanged) {
           const n = data.invalidatedAcknowledgements ?? 0;
           setLastSyncMessage(
-            `Synced. Version changed — ${n} learner acknowledgement${n === 1 ? "" : "s"} cleared; affected users will need to re-acknowledge.`,
+            `Synced. Version changed: ${n} learner acknowledgement${n === 1 ? "" : "s"} cleared. Affected users will need to re-acknowledge.`,
           );
         } else {
           setLastSyncMessage("Synced.");
@@ -240,7 +240,7 @@ export function PolicyDocLessonEditor({ lessonId }: { lessonId: string }) {
               </button>
             </div>
             <p className="text-xs text-foreground-subtle">
-              Works for any .docx in the tenant — copy a link from SharePoint&rsquo;s
+              Works for any .docx in the tenant. Copy a link from SharePoint&rsquo;s
               &ldquo;Copy link&rdquo; button or paste the file&rsquo;s URL from the address bar.
             </p>
           </div>

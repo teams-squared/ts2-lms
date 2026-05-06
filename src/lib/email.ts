@@ -490,7 +490,7 @@ export async function sendIsoAcknowledgementEmail({
     ? `${safeDoc} <span style="color: #8e8e93;">(${safeCode})</span> v${safeVersion}`
     : `${safeDoc} v${safeVersion}`;
 
-  const subject = `ISO ack: ${employeeName ?? employeeEmail} — ${documentTitle}${documentCode ? ` (${documentCode})` : ""} v${documentVersion}`;
+  const subject = `ISO ack: ${employeeName ?? employeeEmail}: ${documentTitle}${documentCode ? ` (${documentCode})` : ""} v${documentVersion}`;
 
   const html = `
     <div style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; max-width: 620px; margin: 0 auto; padding: 32px 0;">

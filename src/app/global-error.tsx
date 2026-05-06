@@ -10,7 +10,7 @@ export default function GlobalError({
   return (
     <html>
       <body>
-        <title>Something went wrong — Teams Squared LMS</title>
+        <title>Something went wrong | Teams Squared LMS</title>
         <div
           style={{
             minHeight: "100vh",

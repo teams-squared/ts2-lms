@@ -241,7 +241,7 @@ export function QuizViewer({
           </button>
           {courseLocked && (
             <p className="mt-2 text-center text-xs text-foreground-muted">
-              Course is completed — quiz attempts here are for review only and
+              Course is completed. Quiz attempts here are for review only and
               won&apos;t be recorded.
             </p>
           )}
@@ -345,7 +345,7 @@ export function QuizViewer({
           Course is already completed; this attempt was scored but not saved. */}
       {currentResult.locked && (
         <div className="rounded-lg border border-info/60 bg-info-subtle px-5 py-3 text-sm text-info">
-          Review mode — your answers aren&apos;t recorded. The course is already
+          Review mode: your answers aren&apos;t recorded. The course is already
           marked complete.
         </div>
       )}
@@ -370,7 +370,7 @@ export function QuizViewer({
             currentResult.passed ? "text-success" : "text-danger"
           }`}
         >
-          {currentResult.passed ? "Passed!" : "Not passed"} — {currentResult.score}/
+          {currentResult.passed ? "Passed!" : "Not passed"}: {currentResult.score}/
           {currentResult.totalQuestions} correct
         </p>
         <p className="mt-1 text-xs text-foreground-muted">

@@ -14,6 +14,7 @@ import {
   LayoutGridIcon,
   ClockIcon,
   ShieldIcon,
+  LinkIcon,
 } from "@/components/icons";
 import { PanelLeftClose, PanelLeftOpen } from "lucide-react";
 import type { LessonType } from "@/lib/types";
@@ -53,6 +54,7 @@ const LESSON_TYPE_ICON: Record<LessonType, React.FC<{ className?: string }>> = {
   document: PaperclipIcon,
   html: LayoutGridIcon,
   policy_doc: ShieldIcon,
+  link: LinkIcon,
 };
 
 export function CourseSidebar({

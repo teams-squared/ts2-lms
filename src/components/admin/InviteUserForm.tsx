@@ -298,7 +298,7 @@ export function InviteUserForm({
           <h3 className="text-sm font-semibold text-foreground">Invite users</h3>
           <p className="text-xs text-foreground-muted mt-0.5">
             Add one or more recipients. Role and courses are applied to all of
-            them — perfect for onboarding a cohort.
+            them, making it easy to onboard a cohort.
           </p>
         </div>
         <button
