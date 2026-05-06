@@ -6,109 +6,106 @@
 
 ## Last sync
 
-- **When:** 2026-05-06
+- **When:** 2026-05-06 (post-release)
 - **Branch:** `dev`
-- **HEAD:** `54c83b4` — `chore(scripts): add verify-prod-migrations.ts`
-- **Working tree:** clean for handoff purposes. Two non-deliverable
-  local files present and intentionally ignored:
+- **HEAD:** `44e6626` — `fix(tests): mock course.findMany for course_manager enrollment list`
+- **`main`:** `52fd3f9` — merge commit for PR #32 (`Course Manager scoping + admin handoff updates`). Render is deploying this.
+- **Working tree:** clean for handoff purposes. Only local-only cruft:
   - `.claude/settings.local.json` (modified — local IDE prefs)
   - `scripts/check-akil-progress.ts` (untracked — local one-off script)
-- **Open PRs (`dev → main`):** none.
+- **Open PRs (`dev → main`):** none. PR #32 merged at 2026-05-06 07:00 UTC.
 
 ## What just shipped
 
-Newest first. All on `dev`; not yet merged to `main` (no release this
-session).
+PR #32 just merged — full Course Manager scoping pass plus operator
+tooling. Newest commits on `dev`:
 
-1. `54c83b4` `chore(scripts): add verify-prod-migrations.ts`
+1. `44e6626` `fix(tests): mock course.findMany for course_manager enrollment list`
+   — admin-enrollments test was failing in CI because the new CM path
+   through `GET /api/admin/enrollments` calls `listManagedCourseIds`
+   which queries `course.findMany`. Mock added; suite back to 734/734.
+2. `f2041ed` `feat(admin/courses): ADMIN UI to assign managers to a course`
+   — Phase 3c. New `CourseManagersPanel` on the course edit page
+   (admin-only). Three new admin-only API routes:
+   `GET/POST /api/admin/courses/[id]/managers` and
+   `DELETE /api/admin/courses/[id]/managers/[userId]`.
+3. `5e3fefe` `feat(admin/courses): scope CM access to managed courses (API + pages)`
+   — Phase 3b. `canManageCourse` now actually queries the m2m relation;
+   ADMIN bypasses, CM must be linked. New `listManagedCourseIds(userId, role)`
+   helper (returns `null` for ADMIN as the "no scope filter" sentinel).
+   Twelve files touched: course list/edit/delete, enrollment list +
+   batch + delete, analytics, assignments. Module/lesson/quiz routes
+   already gate on `canManageCourse`, so they pick up the new
+   ownership semantics for free.
+4. `1538176` `feat(admin/courses): add CourseManagers m2m + backfill migration`
+   — Phase 3a. Adds `Course.managers` ↔ `User.managedCourses` implicit
+   m2m. Migration `20260508000000_add_course_managers` includes a
+   backfill that promotes each existing `Course.createdById` to a
+   manager iff that user has role ADMIN or COURSE_MANAGER.
+5. `510bef1` `docs(handoff): regenerate for 2026-05-06 session`
+6. `54c83b4` `chore(scripts): add verify-prod-migrations.ts`
    — TypeScript verifier that pings every migration in
-   `prisma/migrations/` against `$DATABASE_URL` (tables, columns, enum
-   values). Exit 1 on missing. Runs via `npx tsx`. Used this session
-   to confirm prod was up-to-date — found `LessonType.LINK` enum value
-   missing, applied it via `npx prisma db execute`, verified 8/8 PASS.
-2. `140a1c2` `fix(admin/courses): hide delete control on courses CM does not own`
-   — `CourseDeleteZone` now takes `canDelete`. Edit page passes
-   `role === "admin" || course.createdById === session.user.id`.
-   Mirrors the API guard at `src/app/api/admin/courses/[id]/route.ts:34`
-   in the UI so non-owner CMs do not see a button that 403s on click.
-3. `192ee9d` `feat(admin/cm): rename admin tab to "Course Management" for course managers`
-   — Sidebar entry + admin layout heading now role-conditional.
-   COURSE_MANAGER sees "Course Management" with `BookOpenCheck` icon
-   and "Manage courses, nodes, and enrollments" subheading. ADMIN
-   unchanged (still "Admin" / `Shield`). URL stays `/admin/*`.
-4. `19d2e1a` `docs(handoff): regenerate for 2026-05-04 session`
-   — Previous handoff snapshot.
-5. `d173a9e` `feat(lessons): add LINK lesson type for external articles`
-   — Adds `LessonType.LINK` (Postgres enum value) for "Open article" lessons.
-   Migration `20260507000000_add_lesson_type_link`.
-6. `d343a7f` `chore(copy): purge em-dashes from user-facing strings`
-7. `b7b1672` `docs(design): forbid em-dashes in user-facing copy`
-8. `8d71b57` `docs(handoff): regenerate after audit-evidence hardening commit`
+   `prisma/migrations/` against `$DATABASE_URL`. Used this session to
+   catch a missing `LessonType.LINK` enum and apply it via
+   `prisma db execute`.
+7. `140a1c2` `fix(admin/courses): hide delete control on courses CM does not own`
+   — Phase 2 (later superseded by Phase 3b — the `canDelete` prop was
+   removed in `5e3fefe`).
+8. `192ee9d` `feat(admin/cm): rename admin tab to "Course Management" for course managers`
+   — Phase 1. Sidebar entry + admin-layout heading swap to
+   "Course Management" with `BookOpenCheck` icon for CM. Admins
+   unchanged. URL stays `/admin/*`.
 
 ## In-flight
 
 _None._ Working tree only contains local-only cruft listed under
 "Last sync." No `wip/*` branch is open.
 
-A non-trivial multi-phase plan for **Phase 3 of the COURSE_MANAGER
-gating effort** (per-course ownership scoping via `CourseManagers`
-m2m + scoping API/pages + admin assign UI) lives at
-`C:\Users\AkilFernando\.claude\plans\why-auto-mode-unavailbale-jolly-glade.md`.
-Not started — handoff regen happened first per operator
-direction. See "Pickup pointer."
-
 ## Pending external actions
 
-Pre-launch operator items from the prior handoff have all cleared
-this session:
-
-- ✅ Migrations 8/8 applied to prod (verified by
-  `scripts/verify-prod-migrations.ts`). `LessonType.LINK` was the one
-  outstanding gap, applied via
-  `npx prisma db execute --file prisma/migrations/20260507000000_add_lesson_type_link/migration.sql`.
-- ✅ `EMAIL_FROM` confirmed correct on Render.
-- ✅ `CRON_SECRET` set on both Render env and GitHub repo secrets;
-  values verified to match. Cron lives at
-  `.github/workflows/deadline-reminders.yml` (03:30 UTC daily, hits
-  `https://learn.teamsquared.io/api/cron/deadline-reminders` with
-  Bearer auth) — **not** a Render Cron Job.
-- ✅ Invite email template + signature saved at `/admin/emails`.
-- ✅ End-to-end test invite walked end-to-end (email render, SSO,
-  course assignment, lesson complete, XP, policy ack).
-
-Currently open:
-
-- [ ] **Apply pending migrations going forward.** Custom
-  `prisma/migrate.ts` still does NOT auto-apply files in
-  `prisma/migrations/`. Re-run `scripts/verify-prod-migrations.ts`
-  after every new migration commit (it is the canonical check now).
-  Add a new check entry to the script for any newly-introduced
-  migration so future runs catch drift.
-- [ ] **Phase 3 of CM gating** (deferred during this session, plan
-  approved). Will introduce a new migration for the
-  `CourseManagers` m2m — operator must apply it manually after the
-  schema commit lands. See `Pickup pointer`.
+- [ ] **Apply the new CourseManagers migration to prod and verify.**
+  Render is now deploying `main` (= `52fd3f9`). The new code calls
+  `prisma.course.findMany({ where: { managers: { some: ... } } })` —
+  unless `_CourseManagers` exists in the prod DB, every page that hits
+  `canManageCourse` (anything under `/admin`) will 500. Apply
+  immediately:
+  ```powershell
+  $env:DATABASE_URL = "<external url from Render>"
+  npx prisma db execute --file prisma/migrations/20260508000000_add_course_managers/migration.sql
+  npx tsx scripts/verify-prod-migrations.ts
+  Remove-Item Env:DATABASE_URL
+  ```
+  Verifier should report 9 / 9 PASS, including `_CourseManagers`. As
+  of this handoff write, application status is **not yet confirmed**.
+- [ ] **Smoke-test post-migration.**
+  - Sign in as ADMIN: `/admin/courses/<id>/edit` shows the new
+    CourseManagers panel. Adding and removing a CM works. Sidebar
+    still reads "Admin", layout heading "Admin Dashboard".
+  - Promote a test user to `course_manager` via SQL. Sign in as that
+    user: sidebar reads "Course Management" with `BookOpenCheck` icon.
+  - As CM with no managed courses: `/admin/courses` empty;
+    `/admin/assignments` empty; `/admin/analytics` shows zeroed course
+    + leaderboard sections.
+  - As CM after ADMIN assigns Course X: `/admin/courses` lists X only;
+    direct GET `/admin/courses/<other>/edit` redirects / 404s.
+  - `POST /api/admin/enrollments` for a non-managed course → 403.
 - [ ] **Post-launch — npm vulns.** Three moderate-severity
-  (`uuid`, `postcss`, `@hono/node-server`). Fixes need framework
-  bumps (Next, Prisma). Plan a dedicated upgrade cycle 6-8 weeks
-  post-launch.
+  (`uuid`, `postcss`, `@hono/node-server`). Fixes need framework bumps
+  (Next, Prisma). Plan a dedicated upgrade cycle 6-8 weeks post-launch.
+  Dependabot is still flagging at least one moderate on default branch.
 
 ## Open questions / decisions
 
-Items raised but not blockers. Each line: question, gated on what.
-
 - **Switch `render.yaml` from custom `prisma/migrate.ts` to
   `prisma migrate deploy`.** Cleaner, would auto-apply migrations
-  folder. Risky right at launch if prod schema is drifted. Gated on a
-  non-launch deploy window where regression can be observed. Becomes
-  more attractive now that `verify-prod-migrations.ts` makes drift
-  detection cheap.
+  folder. Risky on a busy deploy window if prod schema is drifted.
+  Gated on a non-launch deploy window. More attractive now that
+  `verify-prod-migrations.ts` makes drift detection cheap.
 
 - **Resend subdomain (`lms.teamsquared.io`) for sender reputation
-  isolation.** Argued for during email-from work; declined for now
-  because Resend's subdomain verification is more comfortable on a
-  paid plan. Gated on Resend tier upgrade or a deliverability
-  incident on the apex domain.
+  isolation.** Declined for now — Resend's subdomain verification is
+  more comfortable on a paid plan. Gated on Resend tier upgrade or a
+  deliverability incident on the apex domain.
 
 - **Server-side dwell enforcement for POLICY_DOC.** Currently the
   6-minute dwell + attestation gate is client-side only; bypassable
@@ -128,42 +125,30 @@ Items raised but not blockers. Each line: question, gated on what.
 
 ## Pickup pointer
 
-Two reasonable next moves:
+The first item on the list is **migration application + smoke test**
+for the just-merged PR #32. Do that before anything else — Render's
+build is in progress and any 500s on `/admin/*` will be from the
+unapplied migration. Steps verbatim in "Pending external actions" #1.
 
-**A. Resume Phase 3 of the COURSE_MANAGER gating effort.** The plan
-is fully scoped at
-`C:\Users\AkilFernando\.claude\plans\why-auto-mode-unavailbale-jolly-glade.md`.
-Phases 1 and 2 are merged on `dev` (commits `192ee9d` and `140a1c2`).
-Phase 3 is three commits:
+After that, no in-flight feature work. Reasonable next moves:
 
-1. **3a — schema + migration.** Add `Course.managers User[]` m2m to
-   `prisma/schema.prisma` (relation name `CourseManagers`), generate
-   a new migration with backfill SQL that promotes each existing
-   `Course.createdById` to a manager when that user has role
-   `admin` or `course_manager`. Run `npx prisma generate` after.
-2. **3b — scope CM access.** Update `src/lib/courseAccess.ts`
-   (currently a role-only stub at `:3-8`) to query the `managers`
-   relation. Add `listManagedCourseIds(userId, role)` helper. Filter
-   `/admin/courses`, `/admin/courses/[id]/edit`,
-   `/admin/assignments`, `/admin/analytics`, and the matching
-   `/api/admin/courses` and `/api/admin/enrollments` routes by
-   managed scope for CMs. ADMIN bypasses (returns sentinel).
-3. **3c — ADMIN-only manager-assignment UI.** Add a Managers panel
-   on `/admin/courses/[id]/edit` (visible to ADMIN only). New API:
-   `POST/DELETE /api/admin/courses/[id]/managers` gated
-   `requireRole("admin")`.
+- **Backlog cleanup of CM scoping edge cases.** Module/lesson/quiz
+  sub-routes inherit ownership through `canManageCourse`, but the
+  user-facing learner pages (`canViewCourse`) now also flip to
+  ownership-aware behavior. Worth a careful pass to confirm a CM
+  who is NOT a manager of a course sees it as a learner (not a
+  privileged user) — i.e. enrollment + published-status apply. The
+  semantics are correct but exercise a CM-as-learner flow at least
+  once.
+- **Drop now-redundant `createdById` fallback in
+  `/api/courses/[id]` PATCH.** Currently it allows the creator to
+  edit even without management rights. Could be tightened to "must
+  be a manager"; gated on whether non-manager creators are still
+  expected to mutate their old courses.
+- **Render deploy switch (open question above).**
 
-After 3a, the new migration must be applied to prod via the same
-`npx prisma db execute --file ...` flow used this session, then
-`scripts/verify-prod-migrations.ts` updated with a new check entry.
-
-**B. Treat Phase 1+2 as ship-ready and pause coding.** Phase 1+2 are
-benign on their own — they only narrow CM authority. If the operator
-wants to soak them in production for a few days before touching the
-schema, this is fine. Resume Phase 3 in a later session.
-
-If you continue without operator input: **option A** is the natural
-next move; the plan file is fully briefed.
+If you continue without operator input: the next *correct* move is to
+verify the migration. Do not assume it has been applied.
 
 ---
 
@@ -176,18 +161,20 @@ Quick orientation for a fresh session.
 | Project conventions | `CLAUDE.md`, `AGENTS.md` |
 | Auth (NextAuth + Entra ID) | `src/lib/auth.ts`, `src/lib/auth.config.ts` |
 | Outbound email + signature renderer | `src/lib/email.ts` |
-| Admin email surface (Invite / Signature / ISO ack tabs) | `src/app/admin/emails/page.tsx`, `src/components/admin/Email*Form.tsx`, `src/components/admin/EmailsTabs.tsx` |
+| Admin email surface | `src/app/admin/emails/page.tsx`, `src/components/admin/Email*Form.tsx`, `src/components/admin/EmailsTabs.tsx` |
 | Admin section root + role gate | `src/app/admin/layout.tsx`, `src/components/admin/AdminTabs.tsx` |
 | Sidebar (role-conditional Course Management label) | `src/components/layout/Sidebar.tsx` |
-| Course access helper (role-only today; Phase 3 will scope) | `src/lib/courseAccess.ts`, `src/lib/courseEditData.ts` |
-| Course delete UI (gated on creator for CM) | `src/components/courses/CourseDeleteZone.tsx` |
-| Invite UI (single + batch) | `src/components/admin/InviteUserForm.tsx`, `src/components/admin/CourseNodeTree.tsx` |
+| Course access helpers (now ownership-aware) | `src/lib/courseAccess.ts`, `src/lib/courseEditData.ts` |
+| Course delete UI | `src/components/courses/CourseDeleteZone.tsx` |
+| Course managers panel (admin-only) | `src/components/admin/CourseManagersPanel.tsx` |
+| Course managers API | `src/app/api/admin/courses/[id]/managers/route.ts`, `src/app/api/admin/courses/[id]/managers/[userId]/route.ts` |
+| Invite UI | `src/components/admin/InviteUserForm.tsx`, `src/components/admin/CourseNodeTree.tsx` |
 | Lesson complete API (race-safe) | `src/app/api/courses/[id]/modules/[moduleId]/lessons/[lessonId]/complete/route.ts` |
 | Quiz attempt API | `src/app/api/courses/[id]/modules/[moduleId]/lessons/[lessonId]/quiz/attempt/route.ts` |
 | Policy-doc viewer | `src/components/courses/PolicyDocViewer.tsx`, `src/lib/policy-doc/sync.ts` |
-| Lesson viewer (text/video/document/html/link dispatch) | `src/components/courses/LessonViewer.tsx` |
+| Lesson viewer | `src/components/courses/LessonViewer.tsx` |
 | Schema | `prisma/schema.prisma` |
-| **Migrations** (NOT auto-applied — see Pending) | `prisma/migrations/`, custom `prisma/migrate.ts` |
+| **Migrations** (NOT auto-applied) | `prisma/migrations/`, custom `prisma/migrate.ts` |
 | Prod-migration verifier | `scripts/verify-prod-migrations.ts` |
 | Demo-user cleanup (one-shot) | `scripts/delete-demo-users.{sql,ts}` |
 | Render deploy config | `render.yaml` |
@@ -219,9 +206,8 @@ Quick orientation for a fresh session.
   SQL-promote per the file header in `prisma/seed.ts`.
 - Em-dashes are forbidden in user-facing copy (design system
   §8.13). Use commas or sentence breaks.
-- For COURSE_MANAGER role: sidebar reads "Course Management" with
-  `BookOpenCheck` icon; admin layout heading swaps to match. URL
-  stays `/admin/*`. Only ADMIN sees Users + Emails tabs (already
-  enforced via `AdminTabs.tsx` `adminOnly` flag + page-level
-  redirects). Course delete control hidden when CM is not the
-  creator.
+- COURSE_MANAGER ownership is the `CourseManagers` m2m on `Course`.
+  ADMIN bypasses; CM must be linked. New `listManagedCourseIds`
+  helper returns `null` for ADMIN (sentinel). Add new check entries
+  to `scripts/verify-prod-migrations.ts` for every new migration —
+  it is the canonical drift detector.
