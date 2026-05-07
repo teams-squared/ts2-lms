@@ -7,48 +7,42 @@
 
 ## Last sync
 
-- **When:** 2026-05-06 (post-release, post-CourseManagers-migration)
+- **When:** 2026-05-07
 - **Branch:** `dev`
-- **HEAD:** `c7193c2` — `docs: compress CLAUDE.md, AGENTS.md, and /prep into caveman style`
+- **HEAD:** `2187109` — `docs(handoff): regenerate in caveman style`
 - **`main`:** `52fd3f9` — merge of PR #32 (Course Manager scoping). Render serving this.
+- **`dev` ahead of `main`:** ~3 commits (handoff + caveman doc compression). No code delta affecting prod.
 - **Working tree:** clean for handoff. Local-only cruft only:
   - `.claude/settings.local.json` (modified — local IDE prefs)
   - `scripts/check-akil-progress.ts` (untracked — local one-off script)
-- **Open PRs (`dev → main`):** none. PR #32 merged 07:00 UTC.
+- **Open PRs (`dev → main`):** none.
 
 ## What just shipped
 
-Newest first. PR #32 merged earlier this session. Subsequent commits
-are post-release polish.
+Newest first. No new feature commits this session — only memory /
+infra setup that lives outside repo.
 
-1. `c7193c2` `docs: compress CLAUDE.md, AGENTS.md, and /prep into caveman style`
+1. `2187109` `docs(handoff): regenerate in caveman style`
+   — last `/prep` regen. Caveman default for handoff.
+2. `c7193c2` `docs: compress CLAUDE.md, AGENTS.md, and /prep into caveman style`
    — ~35% input-token cut on memory files future sessions read on
    cold start. `/prep` directive now writes handoff in caveman by
    default. Backups `*.original.md` gitignored.
-2. `ca04d00` `docs(handoff): regenerate post-PR-32 merge`
-   — handoff updated to flag CourseManagers migration as pending
-   prod application (subsequently applied — see below).
-3. `44e6626` `fix(tests): mock course.findMany for course_manager enrollment list`
+3. `ca04d00` `docs(handoff): regenerate post-PR-32 merge`
+4. `44e6626` `fix(tests): mock course.findMany for course_manager enrollment list`
    — admin-enrollments test mock updated for new `listManagedCourseIds`
    call. Suite back to 734 / 734.
-4. `f2041ed` `feat(admin/courses): ADMIN UI to assign managers to a course`
+5. `f2041ed` `feat(admin/courses): ADMIN UI to assign managers to a course`
    — Phase 3c. `CourseManagersPanel` on edit page (admin-only). Three
-   new admin-only API routes:
+   admin-only API routes:
    `GET/POST /api/admin/courses/[id]/managers` and
    `DELETE /api/admin/courses/[id]/managers/[userId]`.
-5. `5e3fefe` `feat(admin/courses): scope CM access to managed courses (API + pages)`
-   — Phase 3b. `canManageCourse` queries the m2m. ADMIN bypasses; CM
-   must be linked. `listManagedCourseIds` returns `null` for ADMIN
-   (sentinel). Twelve files: course list / edit / delete, enrollment
-   list + batch + delete, analytics, assignments. Module/lesson/quiz
-   sub-routes inherit ownership via `canManageCourse`.
-6. `1538176` `feat(admin/courses): add CourseManagers m2m + backfill migration`
-   — Phase 3a. Implicit Prisma m2m
-   `Course.managers` ↔ `User.managedCourses`. Migration
-   `20260508000000_add_course_managers` includes backfill: each
-   `Course.createdById` promoted to manager iff role is ADMIN or
-   COURSE_MANAGER.
-7. `510bef1` `docs(handoff): regenerate for 2026-05-06 session`
+6. `5e3fefe` `feat(admin/courses): scope CM access to managed courses (API + pages)`
+   — Phase 3b. `canManageCourse` queries m2m. ADMIN bypasses; CM
+   must be linked. `listManagedCourseIds` returns `null` for ADMIN.
+7. `1538176` `feat(admin/courses): add CourseManagers m2m + backfill migration`
+   — Phase 3a. Migration `20260508000000_add_course_managers`,
+   confirmed applied to prod via `verify-prod-migrations.ts`.
 8. `54c83b4` `chore(scripts): add verify-prod-migrations.ts`
 
 ## In-flight
@@ -58,10 +52,10 @@ No `wip/*` branch open.
 
 ## Pending external actions
 
-- [ ] **Smoke-test the live CourseManagers wiring on prod.** Migration
+- [ ] **Smoke-test live CourseManagers wiring on prod.** Migration
   `20260508000000_add_course_managers` confirmed applied via
-  `scripts/verify-prod-migrations.ts` (9 / 9 PASS). Render is
-  serving `main` = `52fd3f9`. Do this end-to-end pass:
+  `scripts/verify-prod-migrations.ts` (9 / 9 PASS). Render serving
+  `main` = `52fd3f9`. End-to-end pass:
   - Sign in as ADMIN: sidebar = "Admin", layout heading =
     "Admin Dashboard". `/admin/courses/<id>/edit` shows
     CourseManagers panel; add + remove a CM works.
@@ -112,16 +106,16 @@ No `wip/*` branch open.
   ISO-ack drop.
 
 - **Drop now-redundant `createdById` fallback in
-  `/api/courses/[id]` PATCH.** Currently lets the creator edit even
+  `/api/courses/[id]` PATCH.** Currently lets creator edit even
   without management rights. Could tighten to "must be a manager".
   Gated on whether non-manager creators are still expected to mutate
   their old courses.
 
 ## Pickup pointer
 
-Smoke-test (Pending #1) is the natural next move. Migration is live
-on prod, but no end-to-end verification ran in-session. Do that
-before any new feature work.
+Smoke-test (Pending #1) is natural next move. Migration live on prod,
+no end-to-end verification ran in-session. Do that before any new
+feature work.
 
 After smoke-test passes, no in-flight feature work. Reasonable next
 moves:
@@ -133,8 +127,8 @@ moves:
 - **Tighten `/api/courses/[id]` PATCH** per Open question above.
 - **Render deploy switch** per Open question above.
 
-If you continue without operator input: smoke-test first. Don't
-assume the migration deploy is bug-free without exercise.
+If continue without operator input: smoke-test first. Don't assume
+migration deploy bug-free without exercise.
 
 ---
 
@@ -178,7 +172,7 @@ assume the migration deploy is bug-free without exercise.
 - `react-markdown` v10 escapes raw HTML + strips `javascript:` /
   `data:` / `vbscript:` URLs. Don't add `rehype-raw` to
   admin-authored markdown.
-- `lessonProgress` create-then-conditional-update pattern in the
+- `lessonProgress` create-then-conditional-update pattern in
   lesson-complete route = reference for race-safe transitions.
 - Credentials provider gated on `NODE_ENV !== "production"`. Demo
   seed users gone. Local-dev = SSO sign-in then SQL-promote per
@@ -188,3 +182,9 @@ assume the migration deploy is bug-free without exercise.
   CM must be linked. `listManagedCourseIds` returns `null` for
   ADMIN. Add new check entries to `verify-prod-migrations.ts` for
   every new migration.
+- Render MCP connected to Teams Squared workspace
+  (`tea-d28ti5euk2gs73fppeng`). Strict allowlist: only `ts2-lms`
+  web service + `ts2-lms-db` postgres. Refuse calls targeting
+  other resources.
+- Commits go through `caveman:caveman-commit` skill — never
+  hand-write commit messages.
