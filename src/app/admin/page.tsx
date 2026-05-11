@@ -1,13 +1,8 @@
 import Link from "next/link";
-import { Suspense } from "react";
 import { prisma } from "@/lib/prisma";
 import { UserAvatar } from "@/components/ui/UserAvatar";
 import { CourseStatusBadge } from "@/components/courses/CourseStatusBadge";
 import { Button } from "@/components/ui/button";
-import {
-  CourseProgressSection,
-  CourseProgressSkeleton,
-} from "@/components/admin/CourseProgressSection";
 
 export const dynamic = "force-dynamic";
 
@@ -65,10 +60,6 @@ export default async function AdminPage() {
           </div>
         ))}
       </div>
-
-      <Suspense fallback={<CourseProgressSkeleton />}>
-        <CourseProgressSection />
-      </Suspense>
 
       {/* Recent activity */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
