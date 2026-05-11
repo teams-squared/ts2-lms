@@ -91,8 +91,13 @@ describe("POST /api/courses", () => {
     expect(body.status).toBe("draft");
   });
 
-  it("creates course for course_manager", async () => {
-    mockAuth.mockResolvedValue(mockSession({ role: "course_manager" }));
+  it("creates course for course_manager and self-connects them as a manager", async () => {
+    // Regression test: CMs must be added to the CourseManagers m2m on
+    // create, otherwise canManageCourse() returns false and they hit a
+    // 404 the moment they click "Edit" on their own new course.
+    mockAuth.mockResolvedValue(
+      mockSession({ id: "cm-1", role: "course_manager" }),
+    );
     mockPrisma.course.create.mockResolvedValue({
       id: "c2",
       title: "Manager Course",
@@ -110,6 +115,14 @@ describe("POST /api/courses", () => {
     });
     const res = await POST(req);
     expect(res.status).toBe(201);
+    // The create call must connect the creator into the managers relation.
+    expect(mockPrisma.course.create).toHaveBeenCalledWith(
+      expect.objectContaining({
+        data: expect.objectContaining({
+          managers: { connect: { id: "cm-1" } },
+        }),
+      }),
+    );
   });
 
   it("passes nodeId when creating course", async () => {
