@@ -3,152 +3,13 @@ import { Suspense } from "react";
 import { prisma } from "@/lib/prisma";
 import { UserAvatar } from "@/components/ui/UserAvatar";
 import { CourseStatusBadge } from "@/components/courses/CourseStatusBadge";
-import { AlertTriangleIcon } from "@/components/icons";
 import { Button } from "@/components/ui/button";
-import { computeDeadline } from "@/lib/deadlines";
+import {
+  CourseProgressSection,
+  CourseProgressSkeleton,
+} from "@/components/admin/CourseProgressSection";
 
 export const dynamic = "force-dynamic";
-
-async function OverdueSection() {
-  const lessonsWithDeadlines = await prisma.lesson.findMany({
-    where: { deadlineDays: { not: null } },
-    select: {
-      id: true,
-      title: true,
-      deadlineDays: true,
-      module: { select: { course: { select: { id: true, title: true } } } },
-    },
-  });
-
-  if (lessonsWithDeadlines.length === 0) return null;
-
-  const lessonIds = lessonsWithDeadlines.map((l) => l.id);
-  const courseIds = [...new Set(lessonsWithDeadlines.map((l) => l.module.course.id))];
-
-  const [enrollments, completedProgress] = await Promise.all([
-    prisma.enrollment.findMany({
-      where: { courseId: { in: courseIds } },
-      select: {
-        userId: true,
-        courseId: true,
-        enrolledAt: true,
-        user: { select: { name: true, email: true } },
-      },
-    }),
-    prisma.lessonProgress.findMany({
-      where: { lessonId: { in: lessonIds }, completedAt: { not: null } },
-      select: { userId: true, lessonId: true },
-    }),
-  ]);
-
-  const completedSet = new Set(
-    completedProgress.map((p) => `${p.userId}:${p.lessonId}`),
-  );
-
-  const enrollmentsByCourse = new Map<string, typeof enrollments>();
-  for (const e of enrollments) {
-    const arr = enrollmentsByCourse.get(e.courseId);
-    if (arr) arr.push(e);
-    else enrollmentsByCourse.set(e.courseId, [e]);
-  }
-
-  const now = new Date();
-  type OverdueItem = {
-    userName: string;
-    userEmail: string;
-    courseTitle: string;
-    lessonTitle: string;
-    dueDate: Date;
-    daysOverdue: number;
-  };
-  const overdueItems: OverdueItem[] = [];
-
-  for (const lesson of lessonsWithDeadlines) {
-    const courseId = lesson.module.course.id;
-    const courseEnrollments = enrollmentsByCourse.get(courseId) ?? [];
-    for (const enrollment of courseEnrollments) {
-      const key = `${enrollment.userId}:${lesson.id}`;
-      if (completedSet.has(key)) continue;
-      const deadline = computeDeadline(enrollment.enrolledAt, lesson.deadlineDays!);
-      if (deadline < now) {
-        const daysOverdue = Math.max(
-          1,
-          Math.floor((now.getTime() - deadline.getTime()) / (1000 * 60 * 60 * 24)),
-        );
-        overdueItems.push({
-          userName: enrollment.user.name || "Unnamed",
-          userEmail: enrollment.user.email,
-          courseTitle: lesson.module.course.title,
-          lessonTitle: lesson.title,
-          dueDate: deadline,
-          daysOverdue,
-        });
-      }
-    }
-  }
-
-  if (overdueItems.length === 0) return null;
-  overdueItems.sort((a, b) => b.daysOverdue - a.daysOverdue);
-
-  const overdueCount = overdueItems.length;
-
-  return (
-    <div className="mb-8 rounded-lg border border-danger/60 bg-danger-subtle shadow-sm overflow-hidden">
-      <div className="h-1 bg-danger" />
-      <div className="p-5 flex items-center gap-3">
-        <AlertTriangleIcon className="w-6 h-6 text-danger flex-shrink-0" />
-        <div>
-          <div className="text-2xl font-bold text-danger tabular-nums">
-            {overdueCount}
-          </div>
-          <div className="text-sm text-danger font-medium">
-            Overdue Lesson{overdueCount !== 1 ? "s" : ""}
-          </div>
-        </div>
-      </div>
-      <div className="overflow-x-auto">
-        <table className="w-full min-w-[40rem] text-sm">
-          <thead>
-            <tr className="border-t border-danger/20 text-left">
-              <th className="px-4 py-3 text-xs font-medium text-danger/80">User</th>
-              <th className="px-4 py-3 text-xs font-medium text-danger/80">Course</th>
-              <th className="px-4 py-3 text-xs font-medium text-danger/80">Lesson</th>
-              <th className="px-4 py-3 text-xs font-medium text-danger/80 text-right">Due Date</th>
-              <th className="px-4 py-3 text-xs font-medium text-danger/80 text-right">Days Overdue</th>
-            </tr>
-          </thead>
-          <tbody className="divide-y divide-danger/20">
-            {overdueItems.slice(0, 10).map((item, i) => (
-              <tr key={i}>
-                <td className="px-4 py-3">
-                  <p className="text-foreground font-medium">{item.userName}</p>
-                  <p className="text-xs text-foreground-muted">{item.userEmail}</p>
-                </td>
-                <td className="px-4 py-3 text-foreground">{item.courseTitle}</td>
-                <td className="px-4 py-3 text-foreground">{item.lessonTitle}</td>
-                <td className="px-4 py-3 text-right text-foreground-muted">
-                  {item.dueDate.toLocaleDateString()}
-                </td>
-                <td className="px-4 py-3 text-right">
-                  <span className="text-danger font-medium">{item.daysOverdue}d</span>
-                </td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
-      </div>
-    </div>
-  );
-}
-
-function OverdueSkeleton() {
-  return (
-    <div className="mb-8 rounded-lg border border-border bg-card shadow-sm overflow-hidden p-5 animate-pulse">
-      <div className="h-4 w-40 bg-border rounded mb-3" />
-      <div className="h-3 w-full bg-border rounded" />
-    </div>
-  );
-}
 
 export default async function AdminPage() {
   const [
@@ -205,9 +66,8 @@ export default async function AdminPage() {
         ))}
       </div>
 
-      {/* Overdue lessons — streamed independently so stats paint immediately */}
-      <Suspense fallback={<OverdueSkeleton />}>
-        <OverdueSection />
+      <Suspense fallback={<CourseProgressSkeleton />}>
+        <CourseProgressSection />
       </Suspense>
 
       {/* Recent activity */}
