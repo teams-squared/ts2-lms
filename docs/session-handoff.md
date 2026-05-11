@@ -7,24 +7,24 @@
 
 ## Last sync
 
-- **When:** 2026-05-07
+- **When:** 2026-05-11
 - **Branch:** `dev`
-- **HEAD:** `2187109` — `docs(handoff): regenerate in caveman style`
+- **HEAD:** `9a89a58` — `docs(handoff): regenerate for 2026-05-07`
 - **`main`:** `52fd3f9` — merge of PR #32 (Course Manager scoping). Render serving this.
-- **`dev` ahead of `main`:** ~3 commits (handoff + caveman doc compression). No code delta affecting prod.
+- **`dev` ahead of `main`:** 4 commits (handoff + caveman doc compression). No code delta affecting prod.
 - **Working tree:** clean for handoff. Local-only cruft only:
   - `.claude/settings.local.json` (modified — local IDE prefs)
-  - `scripts/check-akil-progress.ts` (untracked — local one-off script)
+  - `.claire/` (untracked — local-only directory)
 - **Open PRs (`dev → main`):** none.
 
 ## What just shipped
 
-Newest first. No new feature commits this session — only memory /
-infra setup that lives outside repo.
+Newest first. No new feature commits this session.
 
-1. `2187109` `docs(handoff): regenerate in caveman style`
-   — last `/prep` regen. Caveman default for handoff.
-2. `c7193c2` `docs: compress CLAUDE.md, AGENTS.md, and /prep into caveman style`
+1. `9a89a58` `docs(handoff): regenerate for 2026-05-07`
+   — previous /prep regen.
+2. `2187109` `docs(handoff): regenerate in caveman style`
+3. `c7193c2` `docs: compress CLAUDE.md, AGENTS.md, and /prep into caveman style`
    — ~35% input-token cut on memory files future sessions read on
    cold start. `/prep` directive now writes handoff in caveman by
    default. Backups `*.original.md` gitignored.
