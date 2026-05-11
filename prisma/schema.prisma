@@ -37,6 +37,8 @@ model User {
   clearances          UserClearance[]
   deadlineReminderLogs DeadlineReminderLog[]
   policyDocSyncs      PolicyDocLesson[]    @relation("PolicyDocSyncs")
+  manualRemindersReceived ManualReminderLog[] @relation("ManualReminderTarget")
+  manualRemindersSent     ManualReminderLog[] @relation("ManualReminderSender")
 }
 
 enum CourseStatus {
@@ -131,6 +133,7 @@ model Lesson {
   quizQuestions QuizQuestion[]
   quizAttempts  QuizAttempt[]
   deadlineReminderLogs DeadlineReminderLog[]
+  manualReminderLogs   ManualReminderLog[]
   policyDoc     PolicyDocLesson?
   createdAt     DateTime         @default(now())
   updatedAt     DateTime         @updatedAt
@@ -432,4 +435,21 @@ model DeadlineReminderLog {
   lesson Lesson @relation(fields: [lessonId], references: [id], onDelete: Cascade)
   @@unique([userId, lessonId, kind])
   @@index([lessonId])
+}
+
+/// Audit row for manual overdue reminders sent by course managers / admins
+/// from /admin/progress. Unlike DeadlineReminderLog (cron, dedupe-keyed),
+/// this table has no unique constraint — managers may re-send.
+model ManualReminderLog {
+  id        String   @id @default(cuid())
+  userId    String
+  lessonId  String
+  sentById  String?
+  sentAt    DateTime @default(now())
+  user   User   @relation("ManualReminderTarget", fields: [userId],   references: [id], onDelete: Cascade)
+  lesson Lesson @relation(fields: [lessonId], references: [id], onDelete: Cascade)
+  sentBy User?  @relation("ManualReminderSender", fields: [sentById], references: [id], onDelete: SetNull)
+
+  @@index([userId, lessonId])
+  @@index([sentById])
 }

@@ -146,6 +146,13 @@ async function main() {
       'Join table "_CourseManagers" should exist',
     ),
   );
+  results.push(
+    await check(
+      "20260512000000_add_manual_reminder_log",
+      () => tableExists("ManualReminderLog"),
+      'Table "ManualReminderLog" should exist',
+    ),
+  );
 
   // Print
   let pad = 0;

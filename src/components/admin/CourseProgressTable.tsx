@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useMemo, useState, type FormEvent } from "react";
 import { ProgressBar } from "@/components/app/ProgressBar";
 import { UserAvatar } from "@/components/ui/UserAvatar";
 import {
@@ -174,6 +174,7 @@ function CourseRow({
         <tr className="bg-surface-muted/40">
           <td colSpan={5} className="px-4 py-4">
             <ExpandedRows
+              courseId={segment.courseId}
               rows={segment.matchedRows}
               filteredBySearch={searchActive && !segment.courseMatch}
             />
@@ -185,9 +186,11 @@ function CourseRow({
 }
 
 function ExpandedRows({
+  courseId,
   rows,
   filteredBySearch,
 }: {
+  courseId: string;
   rows: StudentRow[];
   filteredBySearch: boolean;
 }) {
@@ -262,17 +265,24 @@ function ExpandedRows({
                   {row.overdueLessons.length === 0 ? (
                     <span className="text-xs text-foreground-subtle">—</span>
                   ) : (
-                    <details>
-                      <summary className="cursor-pointer list-none inline-flex items-center gap-1 rounded-full bg-danger-subtle px-2 py-0.5 text-xs font-medium text-danger">
-                        <AlertTriangleIcon className="w-3 h-3" />
-                        {row.overdueLessons.length} overdue
-                      </summary>
-                      <ul className="mt-2 ml-1 space-y-0.5 text-xs text-foreground-muted">
-                        {row.overdueLessons.map((title) => (
-                          <li key={title}>· {title}</li>
-                        ))}
-                      </ul>
-                    </details>
+                    <div className="space-y-2">
+                      <details>
+                        <summary className="cursor-pointer list-none inline-flex items-center gap-1 rounded-full bg-danger-subtle px-2 py-0.5 text-xs font-medium text-danger">
+                          <AlertTriangleIcon className="w-3 h-3" />
+                          {row.overdueLessons.length} overdue
+                        </summary>
+                        <ul className="mt-2 ml-1 space-y-0.5 text-xs text-foreground-muted">
+                          {row.overdueLessons.map((title) => (
+                            <li key={title}>· {title}</li>
+                          ))}
+                        </ul>
+                      </details>
+                      <RemindButton
+                        courseId={courseId}
+                        userId={row.userId}
+                        learnerName={row.name}
+                      />
+                    </div>
                   )}
                 </td>
               </tr>
@@ -281,5 +291,128 @@ function ExpandedRows({
         </table>
       </div>
     </div>
+  );
+}
+
+const NOTE_MAX = 500;
+
+function RemindButton({
+  courseId,
+  userId,
+  learnerName,
+}: {
+  courseId: string;
+  userId: string;
+  learnerName: string;
+}) {
+  const [open, setOpen] = useState(false);
+  const [note, setNote] = useState("");
+  const [sending, setSending] = useState(false);
+  const [status, setStatus] = useState<
+    | { kind: "idle" }
+    | { kind: "success"; at: Date; count: number }
+    | { kind: "error"; message: string }
+  >({ kind: "idle" });
+
+  async function submit(e: FormEvent) {
+    e.preventDefault();
+    if (sending) return;
+    setSending(true);
+    setStatus({ kind: "idle" });
+    try {
+      const res = await fetch(`/api/admin/courses/${courseId}/reminders`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          userId,
+          note: note.trim() || undefined,
+        }),
+      });
+      const data = (await res.json().catch(() => ({}))) as {
+        error?: string;
+        lessonCount?: number;
+      };
+      if (!res.ok) {
+        setStatus({
+          kind: "error",
+          message: data.error ?? `Failed (${res.status})`,
+        });
+      } else {
+        setStatus({
+          kind: "success",
+          at: new Date(),
+          count: data.lessonCount ?? 0,
+        });
+        setOpen(false);
+        setNote("");
+      }
+    } catch (err) {
+      setStatus({
+        kind: "error",
+        message: err instanceof Error ? err.message : "Network error",
+      });
+    } finally {
+      setSending(false);
+    }
+  }
+
+  if (!open) {
+    return (
+      <div className="flex items-center gap-2 flex-wrap">
+        <button
+          type="button"
+          onClick={() => setOpen(true)}
+          className="text-xs font-medium text-primary hover:underline focus:outline-none focus:ring-2 focus:ring-ring rounded-sm px-1"
+        >
+          Send reminder
+        </button>
+        {status.kind === "success" && (
+          <span className="text-xs text-success">
+            Sent {status.count} lesson{status.count === 1 ? "" : "s"}
+          </span>
+        )}
+        {status.kind === "error" && (
+          <span className="text-xs text-danger">{status.message}</span>
+        )}
+      </div>
+    );
+  }
+
+  return (
+    <form onSubmit={submit} className="space-y-2">
+      <textarea
+        value={note}
+        onChange={(e) => setNote(e.target.value.slice(0, NOTE_MAX))}
+        placeholder={`Optional note to ${learnerName}…`}
+        rows={3}
+        className="w-full text-xs rounded-md border border-border bg-surface px-2 py-1.5 text-foreground placeholder:text-foreground-subtle focus:outline-none focus:ring-2 focus:ring-ring focus:border-ring"
+      />
+      <div className="flex items-center gap-2">
+        <button
+          type="submit"
+          disabled={sending}
+          className="text-xs font-medium rounded-md bg-primary text-primary-foreground px-2.5 py-1 hover:opacity-90 disabled:opacity-50 focus:outline-none focus:ring-2 focus:ring-ring"
+        >
+          {sending ? "Sending…" : "Send"}
+        </button>
+        <button
+          type="button"
+          onClick={() => {
+            setOpen(false);
+            setNote("");
+          }}
+          disabled={sending}
+          className="text-xs font-medium rounded-md border border-border text-foreground-muted px-2.5 py-1 hover:bg-surface-muted disabled:opacity-50 focus:outline-none focus:ring-2 focus:ring-ring"
+        >
+          Cancel
+        </button>
+        <span className="text-xs text-foreground-subtle ml-auto tabular-nums">
+          {note.length}/{NOTE_MAX}
+        </span>
+      </div>
+      {status.kind === "error" && (
+        <p className="text-xs text-danger">{status.message}</p>
+      )}
+    </form>
   );
 }

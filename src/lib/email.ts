@@ -525,6 +525,89 @@ export async function sendIsoAcknowledgementEmail({
   });
 }
 
+/**
+ * Send a manual overdue-lesson reminder email composed by an admin or
+ * course manager from /admin/progress. Lists every overdue lesson for
+ * the student in the given course in one mail; optional manager note
+ * is rendered as a quoted block.
+ *
+ * No-ops gracefully if RESEND_API_KEY is not configured.
+ */
+export async function sendManualOverdueReminderEmail({
+  to,
+  learnerName,
+  courseTitle,
+  lessonTitles,
+  senderName,
+  courseUrl,
+  note,
+}: {
+  to: string;
+  learnerName: string | null;
+  courseTitle: string;
+  lessonTitles: string[];
+  senderName: string;
+  courseUrl: string;
+  note?: string;
+}): Promise<void> {
+  if (!resend || !to || lessonTitles.length === 0) {
+    if (!resend) {
+      console.info("[email] Resend not configured — skipping manual reminder");
+    }
+    return;
+  }
+
+  const greeting = learnerName ? `Hi ${escapeHtml(learnerName)},` : "Hi there,";
+  const safeCourse = escapeHtml(courseTitle);
+  const safeSender = escapeHtml(senderName);
+  const lessonItems = lessonTitles
+    .map((t) => `<li style="margin: 6px 0;">${escapeHtml(t)}</li>`)
+    .join("");
+
+  const subject =
+    lessonTitles.length === 1
+      ? `Reminder: overdue lesson in "${courseTitle}"`
+      : `Reminder: ${lessonTitles.length} overdue lessons in "${courseTitle}"`;
+
+  const noteBlock = note
+    ? `
+      <blockquote style="margin: 16px 0; padding: 12px 16px; border-left: 3px solid #dc2626; background: #fef2f2; color: #4a4a5a; font-size: 14px; line-height: 1.55; white-space: pre-wrap;">
+        ${escapeHtml(note)}
+      </blockquote>
+    `
+    : "";
+
+  const html = `
+    <div style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; max-width: 560px; margin: 0 auto; padding: 32px 0;">
+      <h2 style="color: #dc2626; margin-bottom: 16px;">Overdue Lessons</h2>
+      <p style="color: #4a4a5a; font-size: 15px; line-height: 1.6;">${greeting}</p>
+      <p style="color: #4a4a5a; font-size: 15px; line-height: 1.6;">
+        <strong>${safeSender}</strong> has flagged the following overdue
+        lesson${lessonTitles.length === 1 ? "" : "s"} in
+        <strong>&ldquo;${safeCourse}&rdquo;</strong>:
+      </p>
+      <ul style="color: #4a4a5a; font-size: 15px; line-height: 1.6; padding-left: 20px;">
+        ${lessonItems}
+      </ul>
+      ${noteBlock}
+      <p style="margin: 28px 0;">
+        <a
+          href="${courseUrl}"
+          style="display: inline-block; background: #4f46e5; color: #ffffff; text-decoration: none; padding: 12px 22px; border-radius: 8px; font-weight: 600; font-size: 15px;"
+        >
+          Open Course
+        </a>
+      </p>
+      <hr style="border: none; border-top: 1px solid #e5e5ea; margin: 24px 0;" />
+      <p style="color: #8e8e93; font-size: 12px;">
+        You are receiving this because your course manager sent a manual reminder via Teams Squared LMS.
+      </p>
+    </div>
+  `;
+
+  await resend.emails.send({ from: FROM, to, subject, html });
+}
+
 function escapeHtml(input: string): string {
   return input
     .replace(/&/g, "&amp;")
