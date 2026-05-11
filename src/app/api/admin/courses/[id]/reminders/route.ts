@@ -9,13 +9,13 @@ const NOTE_MAX = 500;
 
 export async function POST(
   request: Request,
-  { params }: { params: Promise<{ courseId: string }> },
+  { params }: { params: Promise<{ id: string }> },
 ) {
   const authResult = await requireRole("course_manager");
   if (authResult instanceof NextResponse) return authResult;
   const { userId: callerId, role } = authResult;
 
-  const { courseId } = await params;
+  const { id: courseId } = await params;
 
   const allowed = await canManageCourse(callerId, role, courseId);
   if (!allowed) {
