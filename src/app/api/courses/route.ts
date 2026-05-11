@@ -125,6 +125,11 @@ export async function POST(request: Request) {
       status: appStatusToPrisma(status),
       createdById: session.user.id,
       nodeId: body.nodeId?.trim() || null,
+      // Auto-link the creator as a manager so they can immediately edit
+      // their own course. canManageCourse() checks the CourseManagers m2m,
+      // not createdById, so without this a CM who creates a course gets a
+      // 404 the moment they click "Edit".
+      managers: { connect: { id: session.user.id } },
     },
     include: { createdBy: { select: { name: true, email: true } } },
   });
