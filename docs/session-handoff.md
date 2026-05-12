@@ -9,166 +9,71 @@
 
 - **When:** 2026-05-12
 - **Branch:** `dev`
-- **HEAD:** `6df6090` — `chore(scripts): add backfill-course-managers.sql for post-migration CM fix`
-- **`main`:** `52fd3f9` — merge of PR #32 (Course Manager scoping). Render serving this.
-- **`dev` ahead of `main`:** 10 commits. Substantive: per-course progress section, dedicated `/admin/progress` tab, manual overdue reminders, route-param hotfix, CM-creator auto-link fix, backfill SQL.
-- **Working tree:** clean. Local-only cruft only:
-  - `.claire/` (untracked — local-only directory)
-- **Open PRs (`dev → main`):** none.
+- **HEAD:** `223a66a` — `docs(handoff): regenerate for 2026-05-12 session`
+- **`main`:** `1bc0e6e` — merge of PR #37 (CM auto-link fix + backfill script). Render serving this.
+- **`dev` ahead of `main`:** 1 commit (handoff doc only). No code delta.
+- **Working tree:** clean. Only `.claire/` untracked (local-only).
+- **Open PRs:** none.
 
 ## What just shipped
 
-Newest first.
+Newest first. All in `main` via PR #37 except handoff doc.
 
-1. `6df6090` `chore(scripts): add backfill-course-managers.sql for post-migration CM fix`
-   — idempotent SQL to link CMs as managers of courses they created
-   between the 20260508 migration and the auto-connect fix below.
-2. `4825473` `fix(courses): auto-link creator into CourseManagers m2m on create`
-   — CM-created courses now get `managers: { connect: creatorId }`
-   in `course.create`. Was 404'ing on Edit because
-   `canManageCourse()` checks m2m only, no `createdById` fallback,
-   and migration backfill only covered pre-existing rows. Regression
-   test asserts connect payload present for `course_manager` session.
-3. `4d62224` `fix(api): rename reminders route param to [id]`
-   — Hotfix. `/api/admin/courses/[id]/*` already existed; adding
-   `[courseId]/reminders` crashed Next.js at runtime ("cannot use
-   different slug names for same dynamic path"). Prod was 500'ing on
-   every request post-deploy.
-4. `048cc0d` `feat(admin/progress): manual overdue reminders by managers`
-   — Inline "Send reminder" on `/admin/progress` expanded student
-   rows. One consolidated email per `(student, course)` listing all
-   overdue lessons + optional 500-char note. New `ManualReminderLog`
-   table (separate from cron's `DeadlineReminderLog` so re-sends
-   aren't dedupe-blocked; managers self-police). `POST
-   /api/admin/courses/[id]/reminders` gated by
-   `canManageCourse(callerId, role, courseId)`. New
-   `sendManualOverdueReminderEmail()` in `src/lib/email.ts`.
-   `verify-prod-migrations.ts` gets `ManualReminderLog` check.
-5. `c04f583` `feat(admin/progress): dedicated tab w/ searchable course table`
-   — Per-course progress moved off `/admin` home to new
-   `/admin/progress` tab. Master table of courses with
-   enrolled/completed/overdue counts; row click expands inline to
-   show student progress. Search filters by course title + student
-   name/email; matches auto-expand.
-6. `78fb5c2` `feat(admin): per-course student progress section`
-   — Replaced flat top-10 overdue table with one card per course
-   showing enrolled students, % complete, overdue lessons. ADMIN
-   sees all; CM sees managed only via `listManagedCourseIds`. Sort:
-   overdue-desc then percent-asc (struggling students first).
+1. `223a66a` `docs(handoff): regenerate for 2026-05-12 session` — handoff doc only.
+2. `6df6090` `chore(scripts): add backfill-course-managers.sql` — idempotent SQL links CM-created courses into `_CourseManagers`. Run confirmed on prod this session.
+3. `4825473` `fix(courses): auto-link creator into CourseManagers m2m on create` — CM-created courses now get `managers: { connect: { id: creatorId } }` in `course.create`. Fixes 404 on Edit for new courses. Regression test added.
+4. `4d62224` `fix(api): rename reminders route param to [id]` — hotfix. `[courseId]` slug collided with `[id]` in same dir → Next.js 500 on every request post-deploy. Merged via PR #37.
+5. `048cc0d` `feat(admin/progress): manual overdue reminders by managers` — "Send reminder" on `/admin/progress` student rows. Consolidated overdue email per `(student, course)` + optional note. `ManualReminderLog` model. `POST /api/admin/courses/[id]/reminders` gated by `canManageCourse`. Migration `20260512000000_add_manual_reminder_log`.
+6. `c04f583` `feat(admin/progress): dedicated tab w/ searchable course table` — `/admin/progress` page. Course table with enrolled/completed/overdue counts; click row expands inline student list.
+7. `78fb5c2` `feat(admin): per-course student progress section` — per-course student cards on admin. ADMIN sees all; CM sees managed only via `listManagedCourseIds`.
 
 ## In-flight
 
-_None._ Working tree clean except untracked `.claire/`. No `wip/*`
-branch open.
+_None._ Tree clean. No `wip/*` branch open.
 
 ## Pending external actions
 
-- [ ] **Apply migration `20260512000000_add_manual_reminder_log` to
-  prod.** Adds `ManualReminderLog` table for manager-triggered
-  overdue nudges. Not auto-applied — custom `prisma/migrate.ts` is
-  hand-rolled. Run `scripts/verify-prod-migrations.ts` first (drift
-  detection, table now in check list), then
-  `npx prisma db execute --file prisma/migrations/20260512000000_add_manual_reminder_log/migration.sql`.
+- [ ] **Apply migration `20260512000000_add_manual_reminder_log` to prod.**
+  `ManualReminderLog` table not yet confirmed on prod. Without it, "Send reminder" on `/admin/progress` throws 500.
 
-- [ ] **Run `scripts/backfill-course-managers.sql` on prod.** Links
-  any CM-created courses from the gap window (between 20260508
-  migration and `4825473` auto-connect fix) into `_CourseManagers`.
-  Idempotent — safe to re-run. Without it, those creators can't
-  edit their own courses (404 on Edit).
+  ```sh
+  npx prisma db execute --file prisma/migrations/20260512000000_add_manual_reminder_log/migration.sql
+  ```
 
-- [ ] **Confirm `4d62224` hotfix landed on prod.** Commit body says
-  prod was returning 500 on every request post-deploy from the
-  `[id]` / `[courseId]` slug collision. `main` is still at
-  `52fd3f9` (pre-hotfix); hotfix lives on `dev`. Either ship `dev
-  → main` PR or confirm hotfix already deployed via separate path.
-  **Highest priority — prod may still be 500'ing.**
+  Verify all migrations current:
+  ```sh
+  DATABASE_URL="<prod url>" npx tsx scripts/verify-prod-migrations.ts
+  # expect all PASS
+  ```
 
-- [ ] **Smoke-test live CourseManagers wiring on prod** (carried
-  from prior handoff). Migration `20260508000000_add_course_managers`
-  confirmed applied via `scripts/verify-prod-migrations.ts` (9 / 9
-  PASS at last check). End-to-end pass:
-  - Sign in as ADMIN: sidebar = "Admin", layout heading =
-    "Admin Dashboard". `/admin/courses/<id>/edit` shows
-    CourseManagers panel; add + remove a CM works.
-  - SQL-promote test user to `course_manager`. Sign in: sidebar =
-    "Course Management" with `BookOpenCheck` icon.
-  - As CM with no managed courses: `/admin/courses` empty,
-    `/admin/assignments` empty, `/admin/analytics` zeroed.
-  - As CM after ADMIN assigns Course X: `/admin/courses` lists X
-    only; direct GET `/admin/courses/<other>/edit` redirects / 404s.
-  - `POST /api/admin/enrollments` to non-managed course → 403.
-  - **New:** CM creates a course → Edit button works (no 404).
-  - **New:** CM expands a student row on `/admin/progress` → "Send
-    reminder" composes + sends consolidated overdue email.
-  - Learner SSO unchanged: sign-in, complete lesson, take quiz,
-    ack policy doc.
+- [ ] **Smoke-test `/admin/progress` on prod after migration applied.**
+  - Sign in as ADMIN: see all courses in progress table, counts correct.
+  - Sign in as CM: see managed courses only.
+  - Expand student row → overdue lessons listed → "Send reminder" fires email.
+  - Check Resend dashboard: consolidated overdue email received.
 
-- [ ] **Post-launch — npm vulns.** Three moderate-severity
-  (`uuid`, `postcss`, `@hono/node-server`). Fixes need framework
-  bumps (Next, Prisma). Dedicated upgrade cycle 6–8 weeks
-  post-launch. Dependabot still flagging at least one moderate on
-  default branch.
+- [ ] **Smoke-test CM course-create fix on prod.**
+  CM creates course → Edit button works (no 404). Confirmed backfill ran (user executed `backfill-course-managers.sql` this session).
+
+- [ ] **Post-launch — npm vulns.** Dependabot flagging 2 high + 4 moderate + 1 low on default branch. Fixes need Next/Prisma version bumps. Dedicated upgrade cycle 6–8 weeks post-launch.
 
 ## Open questions / decisions
 
-- **Switch `render.yaml` from custom `prisma/migrate.ts` to
-  `prisma migrate deploy`.** Cleaner, would auto-apply migrations
-  folder. Gated on non-launch deploy window. More attractive now
-  `verify-prod-migrations.ts` makes drift detection cheap.
-
-- **Resend subdomain (`lms.teamsquared.io`) for sender reputation
-  isolation.** Declined for now — verification more comfortable on
-  paid plan. Gated on Resend tier upgrade or deliverability incident
-  on apex.
-
-- **Server-side dwell enforcement for POLICY_DOC.** 6-minute dwell
-  + attestation gate is client-side; bypassable via DevTools. Audit
-  trail (version / eTag / hash / attestation text / dwell seconds /
-  SP itemId) server-side and authoritative. Gated on auditor
-  pushback or compliance incident.
-
-- **Quiz double-submit Promise lock / idempotency token.**
-  Theoretical race in `quiz/attempt` on double-click. Client
-  disables Submit while in-flight; window small. Gated on observed
-  prod incident.
-
-- **Email retry / dead-letter queue.** All sends fire-and-forget,
-  including new `ManualReminderLog` flow. Gated on first observed
-  Resend outage causing noticeable invite / ISO-ack / reminder drop.
-
-- **Drop now-redundant `createdById` fallback in
-  `/api/courses/[id]` PATCH.** Lets creator edit even without
-  management rights. Could tighten to "must be a manager". Less
-  urgent now `4825473` ensures creators are auto-linked. Gated on
-  whether non-manager legacy creators expected to mutate old courses.
-
-- **Manual-reminder cooldown / abuse guard.** `ManualReminderLog`
-  has no dedupe constraint by design (managers self-police). If
-  reminder spam becomes a thing, add soft cooldown (e.g. 24h per
-  `(student, course)`) before send. Gated on user complaint.
+- **Switch `render.yaml` from custom `prisma/migrate.ts` to `prisma migrate deploy`.** Auto-applies migrations folder. Gated on non-launch deploy window.
+- **Resend subdomain (`lms.teamsquared.io`) for sender isolation.** Gated on paid plan or deliverability incident.
+- **Server-side dwell enforcement for POLICY_DOC.** Client-side gate bypassable via DevTools. Gated on auditor pushback.
+- **Quiz double-submit idempotency token.** Gated on observed prod incident.
+- **Email retry / dead-letter queue.** All sends fire-and-forget. Gated on first Resend outage.
+- **Drop `createdById` fallback in `/api/courses/[id]` PATCH.** Less urgent now creators auto-linked. Gated on whether legacy non-manager creators expected to mutate old courses.
+- **Manual-reminder cooldown / abuse guard.** `ManualReminderLog` has no dedupe by design. Gated on user complaint.
 
 ## Pickup pointer
 
-**`4d62224` hotfix verification is the natural next move.** Commit
-body says prod was 500'ing on every request. `main` still pre-hotfix.
-Either confirm hotfix already deployed (out-of-band) or open `dev →
-main` PR to ship it. **Do this first** — everything else assumes
-prod is up.
+Natural next move: apply `20260512000000_add_manual_reminder_log` migration to prod, then smoke-test `/admin/progress` (reminder send flow). Migration is blocking — "Send reminder" 500s without it.
 
-Once prod is verified up:
-
-1. Apply migration `20260512000000_add_manual_reminder_log` + run
-   `scripts/backfill-course-managers.sql` on prod (Pending #1 + #2).
-2. Smoke-test (Pending #4) — covers both old CM scoping + new
-   manager-reminder flow.
-
-After that, no in-flight feature work. Reasonable next moves:
-
-- **Tighten `/api/courses/[id]` PATCH** per Open question.
-- **Render deploy switch** per Open question.
-
-If continuing without operator input: verify prod-up first. Do not
-assume hotfix landed.
+After that: no active feature work. Options:
+- Npm vulns upgrade cycle (need explicit go-ahead — multi-PR, regression risk).
+- Tighten `/api/courses/[id]` PATCH `createdById` fallback (small, low-risk).
 
 ---
 
@@ -178,62 +83,32 @@ assume hotfix landed.
 |---|---|
 | Project conventions | `CLAUDE.md`, `AGENTS.md` |
 | Auth (NextAuth + Entra ID) | `src/lib/auth.ts`, `src/lib/auth.config.ts` |
-| Outbound email + signature renderer | `src/lib/email.ts` |
-| Admin email surface | `src/app/admin/emails/page.tsx`, `src/components/admin/Email*Form.tsx`, `src/components/admin/EmailsTabs.tsx` |
-| Admin section root + role gate | `src/app/admin/layout.tsx`, `src/components/admin/AdminTabs.tsx` |
-| Sidebar (role-conditional Course Management label) | `src/components/layout/Sidebar.tsx` |
-| Course access helpers (ownership-aware) | `src/lib/courseAccess.ts`, `src/lib/courseEditData.ts` |
-| Course delete UI | `src/components/courses/CourseDeleteZone.tsx` |
-| Course managers panel (admin-only) | `src/components/admin/CourseManagersPanel.tsx` |
-| Course managers API | `src/app/api/admin/courses/[id]/managers/route.ts`, `src/app/api/admin/courses/[id]/managers/[userId]/route.ts` |
-| Per-course progress tab | `src/app/admin/progress/page.tsx`, `src/components/admin/ProgressCoursesTable.tsx` |
-| Manual reminders API | `src/app/api/admin/courses/[id]/reminders/route.ts` |
-| Manual reminder email render | `sendManualOverdueReminderEmail()` in `src/lib/email.ts` |
-| Invite UI | `src/components/admin/InviteUserForm.tsx`, `src/components/admin/CourseNodeTree.tsx` |
+| Course access + CM scoping | `src/lib/courseAccess.ts` |
+| Outbound email | `src/lib/email.ts` |
+| Admin email surface | `src/app/admin/emails/page.tsx`, `src/components/admin/Email*Form.tsx` |
+| ISO compliance (ack log + coverage) | `src/app/admin/iso/page.tsx`, `src/components/admin/IsoAckLog.tsx` |
+| ISO ack API | `src/app/api/admin/iso-acks/route.ts`, `.../export/route.ts` |
+| Admin progress view | `src/app/admin/progress/page.tsx`, `src/components/admin/CourseProgressTable.tsx` |
+| Manual reminder API | `src/app/api/admin/courses/[id]/reminders/route.ts` |
+| Course progress helpers | `src/lib/courseProgress.ts` |
+| Course managers panel + API | `src/components/admin/CourseManagersPanel.tsx`, `src/app/api/admin/courses/[id]/managers/` |
+| Invite UI + API | `src/components/admin/InviteUserForm.tsx`, `src/app/api/admin/users/invite/route.ts` |
 | Lesson complete API (race-safe) | `src/app/api/courses/[id]/modules/[moduleId]/lessons/[lessonId]/complete/route.ts` |
-| Quiz attempt API | `src/app/api/courses/[id]/modules/[moduleId]/lessons/[lessonId]/quiz/attempt/route.ts` |
 | Policy-doc viewer | `src/components/courses/PolicyDocViewer.tsx`, `src/lib/policy-doc/sync.ts` |
 | Lesson viewer | `src/components/courses/LessonViewer.tsx` |
 | Schema | `prisma/schema.prisma` |
-| **Migrations** (NOT auto-applied) | `prisma/migrations/`, custom `prisma/migrate.ts` |
-| Prod-migration verifier | `scripts/verify-prod-migrations.ts` |
-| CM backfill SQL | `scripts/backfill-course-managers.sql` |
-| Demo-user cleanup (one-shot) | `scripts/delete-demo-users.{sql,ts}` |
+| **Migrations** (NOT auto-applied) | `prisma/migrations/`, `scripts/verify-prod-migrations.ts` |
+| One-shot scripts | `scripts/backfill-course-managers.sql`, `scripts/delete-demo-users.{sql,ts}` |
 | Render deploy config | `render.yaml` |
-| GitHub Actions cron (deadline reminders) | `.github/workflows/deadline-reminders.yml` |
-| Other CI workflows | `.github/workflows/ci.yml`, `dependency-review.yml` |
+| GitHub Actions cron | `.github/workflows/deadline-reminders.yml` |
 | Tests (vitest) | `src/__tests__/` |
-| E2E (Playwright, NOT in CI) | `e2e/` |
-| Design system reference | `docs/teams-squared-lms-design-system.mdx` |
+| E2E (Playwright, not in CI) | `e2e/` |
+| Design system | `docs/teams-squared-lms-design-system.mdx` |
 
 ## Reminders
 
-- `prisma/migrate.ts` = hand-rolled idempotent SQL. New migrations
-  in `prisma/migrations/` need explicit application — use
-  `scripts/verify-prod-migrations.ts` for drift detection, then
-  `npx prisma db execute --file <path>` (no `--schema` / `--url`
-  flags on current Prisma version).
-- `react-markdown` v10 escapes raw HTML + strips `javascript:` /
-  `data:` / `vbscript:` URLs. Don't add `rehype-raw` to
-  admin-authored markdown.
-- `lessonProgress` create-then-conditional-update pattern in
-  lesson-complete route = reference for race-safe transitions.
-- Credentials provider gated on `NODE_ENV !== "production"`. Demo
-  seed users gone. Local-dev = SSO sign-in then SQL-promote per
-  `prisma/seed.ts` header.
-- Em-dashes forbidden in user-facing copy (design system §8.13).
-- COURSE_MANAGER ownership = `CourseManagers` m2m. ADMIN bypasses;
-  CM must be linked. `listManagedCourseIds` returns `null` for
-  ADMIN. New courses auto-connect creator into m2m via
-  `course.create`. Add new check entries to
-  `verify-prod-migrations.ts` for every new migration.
-- Next.js: sibling dynamic segments under same path MUST use same
-  slug name. `[id]` and `[courseId]` as siblings = runtime crash.
-- `ManualReminderLog` is separate from cron's `DeadlineReminderLog`
-  on purpose — no dedupe constraint, managers self-police.
-- Render MCP connected to Teams Squared workspace
-  (`tea-d28ti5euk2gs73fppeng`). Strict allowlist: only `ts2-lms`
-  web service + `ts2-lms-db` postgres. Refuse calls targeting
-  other resources.
-- Commits go through `caveman:caveman-commit` skill — never
-  hand-write commit messages.
+- `canManageCourse(userId, role, courseId)` = single gate for course-edit authority. ADMIN bypasses m2m; CM must be in `Course.managers`. `listManagedCourseIds` returns `null` for ADMIN (sentinel = no scope filter).
+- `course.create` now connects creator into `managers` — no more orphan courses.
+- `prisma/migrate.ts` = hand-rolled idempotent SQL. New migrations in `prisma/migrations/` apply manually. Use `scripts/verify-prod-migrations.ts` for drift detection.
+- Resend SDK v6 returns `{data, error}` — never throws. Always destructure + check `error`.
+- No em-dashes in user-facing copy (design-system §8.13). Code comments exempt.
