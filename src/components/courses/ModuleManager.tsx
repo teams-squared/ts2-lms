@@ -100,6 +100,10 @@ export function ModuleManager({
   const [pickerTarget, setPickerTarget] = useState<"edit" | null>(null);
   const [videoSource, setVideoSource] = useState<"sharepoint" | "url">("sharepoint");
 
+  const [editingModuleId, setEditingModuleId] = useState<string | null>(null);
+  const [editingModuleTitle, setEditingModuleTitle] = useState("");
+  const [savingModuleTitle, setSavingModuleTitle] = useState(false);
+
   const [deletingModuleId, setDeletingModuleId] = useState<string | null>(null);
   const [deletingLessonId, setDeletingLessonId] = useState<string | null>(null);
   const [pendingDeleteModule, setPendingDeleteModule] = useState<Module | null>(null);
@@ -148,6 +152,49 @@ export function ModuleManager({
       /* retry */
     } finally {
       setAddingModule(false);
+    }
+  };
+
+  const startRenameModule = (mod: Module) => {
+    setEditingModuleId(mod.id);
+    setEditingModuleTitle(mod.title);
+  };
+
+  const cancelRenameModule = () => {
+    setEditingModuleId(null);
+    setEditingModuleTitle("");
+  };
+
+  const handleRenameModule = async () => {
+    if (!editingModuleId) return;
+    const title = editingModuleTitle.trim();
+    if (!title) return;
+    const target = modules.find((m) => m.id === editingModuleId);
+    if (target && target.title === title) {
+      cancelRenameModule();
+      return;
+    }
+    setSavingModuleTitle(true);
+    try {
+      const updated = await apiFetch<Module>(
+        `/api/courses/${courseId}/modules/${editingModuleId}`,
+        {
+          method: "PATCH",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ title }),
+        },
+      );
+      setModules(
+        modules.map((m) =>
+          m.id === editingModuleId ? { ...m, title: updated.title } : m,
+        ),
+      );
+      cancelRenameModule();
+      router.refresh();
+    } catch {
+      /* keep input open for retry */
+    } finally {
+      setSavingModuleTitle(false);
     }
   };
 
@@ -459,14 +506,69 @@ export function ModuleManager({
                 {/* Module header */}
                 <div
                   className="flex items-center gap-2 px-4 py-3 cursor-pointer hover:bg-surface-muted transition-colors"
-                  onClick={() => toggleModule(module.id)}
+                  onClick={() => {
+                    if (editingModuleId === module.id) return;
+                    toggleModule(module.id);
+                  }}
                 >
                   <span className="text-foreground-subtle text-xs">
                     {expandedModules.has(module.id) ? "▼" : "▶"}
                   </span>
-                  <p className="text-sm font-medium text-foreground flex-1">
-                    {module.order}. {module.title}
-                  </p>
+                  {editingModuleId === module.id ? (
+                    <div
+                      className="flex-1 flex items-center gap-2"
+                      onClick={(e) => e.stopPropagation()}
+                    >
+                      <span className="text-sm font-medium text-foreground">
+                        {module.order}.
+                      </span>
+                      <input
+                        type="text"
+                        value={editingModuleTitle}
+                        onChange={(e) => setEditingModuleTitle(e.target.value)}
+                        onKeyDown={(e) => {
+                          if (e.key === "Enter") {
+                            e.preventDefault();
+                            void handleRenameModule();
+                          } else if (e.key === "Escape") {
+                            e.preventDefault();
+                            cancelRenameModule();
+                          }
+                        }}
+                        autoFocus
+                        disabled={savingModuleTitle}
+                        className="flex-1 rounded border border-border bg-background px-2 py-1 text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-primary"
+                        aria-label={`Module ${module.order} title`}
+                      />
+                      <Button
+                        size="xs"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          void handleRenameModule();
+                        }}
+                        disabled={
+                          savingModuleTitle || !editingModuleTitle.trim()
+                        }
+                      >
+                        {savingModuleTitle ? "Saving…" : "Save"}
+                      </Button>
+                      <Button
+                        size="xs"
+                        variant="ghost"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          cancelRenameModule();
+                        }}
+                        disabled={savingModuleTitle}
+                      >
+                        Cancel
+                      </Button>
+                    </div>
+                  ) : (
+                    <p className="text-sm font-medium text-foreground flex-1">
+                      {module.order}. {module.title}
+                    </p>
+                  )}
                   <span className="text-xs text-foreground-subtle">
                     {module.lessons.length} lesson{module.lessons.length !== 1 ? "s" : ""}
                   </span>
@@ -499,6 +601,20 @@ export function ModuleManager({
                     </button>
                   </div>
 
+                  {editingModuleId !== module.id && (
+                    <Button
+                      variant="ghost"
+                      size="xs"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        startRenameModule(module);
+                      }}
+                      className="ml-2"
+                      aria-label={`Rename module ${module.title}`}
+                    >
+                      Rename
+                    </Button>
+                  )}
                   <Button
                     variant="destructive"
                     size="xs"
@@ -506,7 +622,10 @@ export function ModuleManager({
                       e.stopPropagation();
                       setPendingDeleteModule(module);
                     }}
-                    disabled={deletingModuleId === module.id}
+                    disabled={
+                      deletingModuleId === module.id ||
+                      editingModuleId === module.id
+                    }
                     className="ml-2"
                     aria-label={`Delete module ${module.title}`}
                   >
