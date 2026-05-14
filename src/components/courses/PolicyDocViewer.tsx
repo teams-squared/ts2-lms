@@ -88,6 +88,24 @@ export const POLICY_ACK_EVENT = "policy-doc-acknowledgeable";
 /** Minimum focused-tab dwell before the attestation checkbox is accepted. */
 const DWELL_MS = 6 * 60 * 1000;
 
+/** Per-lesson sessionStorage key. Persists dwell progress across same-tab
+ *  navigation away/back so learners don't lose progress on an accidental
+ *  route change. Cleared on full unlock and not synced across tabs. */
+const dwellStorageKey = (lessonId: string) => `policy-doc-dwell:${lessonId}`;
+
+function readPersistedDwell(lessonId: string): number {
+  if (typeof window === "undefined") return 0;
+  try {
+    const raw = window.sessionStorage.getItem(dwellStorageKey(lessonId));
+    if (!raw) return 0;
+    const ms = Number.parseInt(raw, 10);
+    if (!Number.isFinite(ms) || ms < 0) return 0;
+    return Math.min(DWELL_MS, ms);
+  } catch {
+    return 0;
+  }
+}
+
 export function PolicyDocViewer(props: PolicyDocViewProps) {
   const {
     lessonId,
@@ -118,7 +136,30 @@ export function PolicyDocViewer(props: PolicyDocViewProps) {
   // Dwell: accumulated ms of focused-tab time. We tick a 100ms interval
   // only while document.visibilityState === "visible", so background tabs
   // don't count.
-  const [dwellMs, setDwellMs] = useState(alreadyCompleted ? DWELL_MS : 0);
+  const [dwellMs, setDwellMs] = useState(() =>
+    alreadyCompleted ? DWELL_MS : readPersistedDwell(lessonId),
+  );
+
+  // Persist dwell to sessionStorage so a same-tab nav-away/back doesn't reset
+  // the 6-minute timer. Cleared once fully completed since alreadyCompleted
+  // will short-circuit the timer on next mount anyway.
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    if (alreadyCompleted) return;
+    try {
+      if (dwellMs >= DWELL_MS) {
+        window.sessionStorage.removeItem(dwellStorageKey(lessonId));
+      } else if (dwellMs > 0) {
+        window.sessionStorage.setItem(
+          dwellStorageKey(lessonId),
+          String(dwellMs),
+        );
+      }
+    } catch {
+      /* sessionStorage unavailable (e.g. Safari private mode) — silent fallback */
+    }
+  }, [dwellMs, lessonId, alreadyCompleted]);
+
   const [attested, setAttested] = useState(false);
   const firedRef = useRef(false);
 
