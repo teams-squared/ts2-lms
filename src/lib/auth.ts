@@ -12,30 +12,42 @@ if (!process.env.AUTH_SECRET) {
   process.env.AUTH_SECRET = "dev-only-secret-change-in-production";
 }
 
+// Password / email login is opt-in via env flag so prod (where every user
+// signs in through Entra SSO) carries zero password-auth attack surface:
+// no /api/auth/callback/credentials, no bcrypt path, no enumeration risk.
+// Staging and local dev set ALLOW_PASSWORD_LOGIN=true so devs + the
+// Playwright e2e suite can sign in without an Entra tenant.
+export const PASSWORD_LOGIN_ENABLED =
+  process.env.ALLOW_PASSWORD_LOGIN === "true";
+
 export const { handlers, signIn, signOut, auth } = NextAuth({
   ...authConfig,
   providers: [
     ...authConfig.providers,
-    Credentials({
-      name: "Email & Password",
-      credentials: {
-        email: { label: "Email", type: "email" },
-        password: { label: "Password", type: "password" },
-      },
-      async authorize(credentials) {
-        const email = credentials?.email as string;
-        const password = credentials?.password as string;
-        if (!email || !password) return null;
+    ...(PASSWORD_LOGIN_ENABLED
+      ? [
+          Credentials({
+            name: "Email & Password",
+            credentials: {
+              email: { label: "Email", type: "email" },
+              password: { label: "Password", type: "password" },
+            },
+            async authorize(credentials) {
+              const email = credentials?.email as string;
+              const password = credentials?.password as string;
+              if (!email || !password) return null;
 
-        const user = await prisma.user.findUnique({ where: { email } });
-        if (!user || !user.passwordHash) return null;
+              const user = await prisma.user.findUnique({ where: { email } });
+              if (!user || !user.passwordHash) return null;
 
-        const valid = await bcrypt.compare(password, user.passwordHash);
-        if (!valid) return null;
+              const valid = await bcrypt.compare(password, user.passwordHash);
+              if (!valid) return null;
 
-        return { id: user.id, email: user.email, name: user.name };
-      },
-    }),
+              return { id: user.id, email: user.email, name: user.name };
+            },
+          }),
+        ]
+      : []),
   ],
   callbacks: {
     ...authConfig.callbacks,

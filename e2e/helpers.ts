@@ -20,6 +20,11 @@ export async function login(page: Page, email: string, password: string) {
  * hashed passwords. NEVER seed credential-login users against a
  * shared/prod database.
  *
+ * The Credentials provider used by `login()` above is only registered
+ * when ALLOW_PASSWORD_LOGIN=true on the target server. Prod omits the
+ * flag (and these tests cannot run against prod). Set the flag in your
+ * local `.env` and on staging.
+ *
  * If the e2e suite ever moves into CI, replace this block with
  * fixture-style per-run setup/teardown that targets a disposable DB.
  */

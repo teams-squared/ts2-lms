@@ -15,22 +15,37 @@ describe("LoginForm", () => {
     vi.clearAllMocks();
   });
 
-  it("shows only Microsoft button in production with Microsoft provider", () => {
-    render(<LoginForm hasMicrosoftProvider={true} isProduction={true} />);
+  it("shows only Microsoft button when Credentials provider is disabled (prod default)", () => {
+    render(
+      <LoginForm
+        hasMicrosoftProvider={true}
+        hasCredentialsProvider={false}
+      />,
+    );
     expect(screen.getByText("Sign in with Microsoft")).toBeInTheDocument();
     expect(screen.queryByLabelText("Email")).not.toBeInTheDocument();
     expect(screen.queryByLabelText("Password")).not.toBeInTheDocument();
   });
 
-  it("shows credential form only when no Microsoft provider in dev", () => {
-    render(<LoginForm hasMicrosoftProvider={false} isProduction={false} />);
+  it("shows credential form only when no Microsoft provider but Credentials enabled", () => {
+    render(
+      <LoginForm
+        hasMicrosoftProvider={false}
+        hasCredentialsProvider={true}
+      />,
+    );
     expect(screen.queryByText("Sign in with Microsoft")).not.toBeInTheDocument();
     expect(screen.getByLabelText("Email")).toBeInTheDocument();
     expect(screen.getByLabelText("Password")).toBeInTheDocument();
   });
 
-  it("shows both with divider when dev + Microsoft", () => {
-    render(<LoginForm hasMicrosoftProvider={true} isProduction={false} />);
+  it("shows both with divider when Microsoft + Credentials both enabled", () => {
+    render(
+      <LoginForm
+        hasMicrosoftProvider={true}
+        hasCredentialsProvider={true}
+      />,
+    );
     expect(screen.getByText("Sign in with Microsoft")).toBeInTheDocument();
     expect(screen.getByLabelText("Email")).toBeInTheDocument();
     expect(screen.getByText("or sign in with email")).toBeInTheDocument();
@@ -40,7 +55,12 @@ describe("LoginForm", () => {
     mockSignIn.mockResolvedValue({ error: null, url: "/" });
     const user = userEvent.setup();
 
-    render(<LoginForm hasMicrosoftProvider={false} isProduction={false} />);
+    render(
+      <LoginForm
+        hasMicrosoftProvider={false}
+        hasCredentialsProvider={true}
+      />,
+    );
 
     await user.type(screen.getByLabelText("Email"), "test@test.com");
     await user.type(screen.getByLabelText("Password"), "password123");
@@ -58,7 +78,12 @@ describe("LoginForm", () => {
     mockSignIn.mockResolvedValue({ error: "CredentialsSignin" });
     const user = userEvent.setup();
 
-    render(<LoginForm hasMicrosoftProvider={false} isProduction={false} />);
+    render(
+      <LoginForm
+        hasMicrosoftProvider={false}
+        hasCredentialsProvider={true}
+      />,
+    );
 
     await user.type(screen.getByLabelText("Email"), "bad@test.com");
     await user.type(screen.getByLabelText("Password"), "wrong");
@@ -72,7 +97,12 @@ describe("LoginForm", () => {
     mockSignIn.mockReturnValue(new Promise(() => {}));
     const user = userEvent.setup();
 
-    render(<LoginForm hasMicrosoftProvider={false} isProduction={false} />);
+    render(
+      <LoginForm
+        hasMicrosoftProvider={false}
+        hasCredentialsProvider={true}
+      />,
+    );
 
     await user.type(screen.getByLabelText("Email"), "test@test.com");
     await user.type(screen.getByLabelText("Password"), "pass");
