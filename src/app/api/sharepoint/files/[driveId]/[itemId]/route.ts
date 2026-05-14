@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { requireAuth } from "@/lib/roles";
 import { getDriveItemContent, getDriveItemMetadata } from "@/lib/sharepoint/graph-client";
 import { getCachedFile, setCachedFile } from "@/lib/sharepoint/cache";
+import { isAllowlistedSharePointItem } from "@/lib/sharepoint/allowlist";
 
 type Params = { params: Promise<{ driveId: string; itemId: string }> };
 
@@ -21,6 +22,14 @@ export async function GET(request: Request, { params }: Params) {
   if (authResult instanceof NextResponse) return authResult;
 
   const { driveId, itemId } = await params;
+
+  // Allowlist guard: only proxy items that have been deliberately linked to
+  // an LMS lesson. Without this any authenticated user could fetch any
+  // SharePoint file from the tenant by guessing drive / item IDs.
+  if (!(await isAllowlistedSharePointItem(driveId, itemId))) {
+    return NextResponse.json({ error: "Not found" }, { status: 404 });
+  }
+
   const url = new URL(request.url);
   const formatParam = url.searchParams.get("format");
   const format = formatParam === "pdf" ? "pdf" : undefined;

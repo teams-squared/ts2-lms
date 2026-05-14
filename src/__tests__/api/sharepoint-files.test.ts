@@ -18,12 +18,20 @@ vi.mock("@/lib/sharepoint/cache", () => ({
   setCachedFile: mockSetCachedFile,
 }));
 
+const mockIsAllowlistedSharePointItem = vi.fn();
+vi.mock("@/lib/sharepoint/allowlist", () => ({
+  isAllowlistedSharePointItem: mockIsAllowlistedSharePointItem,
+}));
+
 const params = (driveId: string, itemId: string) => ({
   params: Promise.resolve({ driveId, itemId }),
 });
 
 beforeEach(() => {
   vi.clearAllMocks();
+  // Default: every requested item is allowlisted. Individual tests can flip
+  // this to assert the deny path.
+  mockIsAllowlistedSharePointItem.mockResolvedValue(true);
 });
 
 async function importGET() {
@@ -89,6 +97,20 @@ describe("GET /api/sharepoint/files/[driveId]/[itemId]", () => {
     expect(res.status).toBe(404);
     const body = await res.json();
     expect(body.error).toBe("File not found");
+  });
+
+  it("returns 404 when the requested item is not allowlisted by any lesson", async () => {
+    mockAuth.mockResolvedValueOnce(mockSession({ role: "employee" }));
+    mockIsAllowlistedSharePointItem.mockResolvedValueOnce(false);
+    const GET = await importGET();
+    const res = await GET(
+      new Request("http://localhost/api/sharepoint/files/d-rogue/i-rogue"),
+      params("d-rogue", "i-rogue"),
+    );
+    expect(res.status).toBe(404);
+    // Allowlist check must run before any Graph call.
+    expect(mockGetCachedFile).not.toHaveBeenCalled();
+    expect(mockGetDriveItemMetadata).not.toHaveBeenCalled();
   });
 
   it("fetches from Graph on cache miss and caches result", async () => {

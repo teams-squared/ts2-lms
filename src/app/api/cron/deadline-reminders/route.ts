@@ -1,7 +1,18 @@
 import { NextResponse } from "next/server";
+import { timingSafeEqual } from "node:crypto";
 import { prisma } from "@/lib/prisma";
 import { computeDueReminders } from "@/lib/deadline-reminders";
 import { sendDeadlineReminderEmail } from "@/lib/email";
+
+/** Constant-time bearer-token comparison. Falls back to false on length
+ *  mismatch (timingSafeEqual throws when buffer lengths differ, which is
+ *  itself a side channel). */
+function constantTimeEqual(a: string, b: string): boolean {
+  const aBuf = Buffer.from(a);
+  const bBuf = Buffer.from(b);
+  if (aBuf.length !== bBuf.length) return false;
+  return timingSafeEqual(aBuf, bBuf);
+}
 
 export const dynamic = "force-dynamic";
 
@@ -29,7 +40,10 @@ export async function GET(req: Request): Promise<NextResponse> {
   }
 
   const authHeader = req.headers.get("authorization") ?? "";
-  if (!authHeader.startsWith("Bearer ") || authHeader.slice(7) !== cronSecret) {
+  if (
+    !authHeader.startsWith("Bearer ") ||
+    !constantTimeEqual(authHeader.slice(7), cronSecret)
+  ) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
