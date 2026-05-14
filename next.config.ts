@@ -41,6 +41,12 @@ const nextConfig: NextConfig = {
     // Thumbnails are user-provided external URLs — allow any HTTPS host
     remotePatterns: [{ protocol: "https", hostname: "**" }],
   },
+  experimental: {
+    // Opt into React's <ViewTransition> integration so we can wire shared-element
+    // morphs (course card → course detail, lesson outline → lesson hero) once
+    // the React export stabilises. No-op on unsupported browsers.
+    viewTransition: true,
+  },
 };
 
 export default nextConfig;

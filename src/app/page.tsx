@@ -9,6 +9,7 @@ import { WelcomeBar } from "@/components/dashboard/WelcomeBar";
 import { NextStepBanner } from "@/components/dashboard/NextStepBanner";
 import { DeadlineAlerts } from "@/components/dashboard/DeadlineAlerts";
 import { CourseProgressList } from "@/components/dashboard/CourseProgressList";
+import { RevealOnView } from "@/components/ui/RevealOnView";
 
 export const dynamic = "force-dynamic";
 
@@ -200,38 +201,44 @@ export default async function HomePage() {
 
       <div className="max-w-4xl mx-auto px-4 sm:px-6 py-4 space-y-6">
         {nextStepCourse && (
-          <NextStepBanner
-            courseTitle={nextStepCourse.course.title}
-            lessonTitle={nextStepCourse.firstIncompleteLessonTitle}
-            completedLessons={nextStepCourse.completedLessons}
-            totalLessons={nextStepCourse.totalLessons}
-            percentComplete={nextStepCourse.percentComplete}
-            continueUrl={nextStepCourse.continueUrl}
-            isOverdue={nextStepIsOverdue}
-          />
+          <RevealOnView delay={0}>
+            <NextStepBanner
+              courseTitle={nextStepCourse.course.title}
+              lessonTitle={nextStepCourse.firstIncompleteLessonTitle}
+              completedLessons={nextStepCourse.completedLessons}
+              totalLessons={nextStepCourse.totalLessons}
+              percentComplete={nextStepCourse.percentComplete}
+              continueUrl={nextStepCourse.continueUrl}
+              isOverdue={nextStepIsOverdue}
+            />
+          </RevealOnView>
         )}
 
-        <DeadlineAlerts deadlines={deadlineItems} />
+        <RevealOnView delay={60}>
+          <DeadlineAlerts deadlines={deadlineItems} />
+        </RevealOnView>
 
-        <CourseProgressList
-          courses={[
-            // In-progress first (sorted by percentComplete DESC), then completed
-            ...sortedInProgressCourses,
-            ...completedCourses,
-          ].map((c) => ({
-            courseId: c.course.id,
-            courseTitle: c.course.title,
-            category: c.course.category,
-            completedLessons: c.completedLessons,
-            totalLessons: c.totalLessons,
-            percentComplete: c.percentComplete,
-            continueUrl: c.continueUrl,
-            isComplete: c.isComplete,
-          }))}
-          completedCount={completedCourses.length}
-          hasEnrollments={enrichedEnrollments.length > 0}
-          userRole={userRole}
-        />
+        <RevealOnView delay={120}>
+          <CourseProgressList
+            courses={[
+              // In-progress first (sorted by percentComplete DESC), then completed
+              ...sortedInProgressCourses,
+              ...completedCourses,
+            ].map((c) => ({
+              courseId: c.course.id,
+              courseTitle: c.course.title,
+              category: c.course.category,
+              completedLessons: c.completedLessons,
+              totalLessons: c.totalLessons,
+              percentComplete: c.percentComplete,
+              continueUrl: c.continueUrl,
+              isComplete: c.isComplete,
+            }))}
+            completedCount={completedCourses.length}
+            hasEnrollments={enrichedEnrollments.length > 0}
+            userRole={userRole}
+          />
+        </RevealOnView>
       </div>
     </div>
   );
