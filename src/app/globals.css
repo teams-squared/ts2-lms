@@ -558,14 +558,15 @@ html.ambient-paused .surface-breathe {
 }
 .hover-lift:hover {
   /* Visible 2px ring built from the resting 1px border PLUS a 1px outset
-   * box-shadow ring just outside it, both in --border-strong so they read
-   * as one continuous 2px edge. Outset (positive direction) so it doesn't
-   * collide with the card's overflow:hidden — the negative-offset outline
-   * approach we tried first got clipped by the clip-box. Composes with
+   * box-shadow ring just outside it, both in a brand-tinted colour so the
+   * hover affordance reads as intentional rather than a near-invisible
+   * neutral. Uses --primary at 45% via color-mix so it auto-resolves per
+   * theme (deeper purple in light, brighter purple in dark). Outset shadow
+   * direction sidesteps the card's overflow:hidden clip. Composes with
    * --shadow-card-md for the lift. No layout shift. */
-  border-color: var(--border-strong);
+  border-color: color-mix(in oklch, var(--primary) 45%, transparent);
   box-shadow:
-    0 0 0 1px var(--border-strong),
+    0 0 0 1px color-mix(in oklch, var(--primary) 45%, transparent),
     var(--shadow-card-md);
 }
 @media (prefers-reduced-motion: no-preference) {
