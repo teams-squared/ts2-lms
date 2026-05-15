@@ -23,13 +23,15 @@ export async function sendCourseCompletionEmail(
 ) {
   if (!resend || to.length === 0) return;
 
+  const safeName = escapeHtml(employeeName);
+  const safeCourse = escapeHtml(courseTitle);
   const subject = `${employeeName} completed "${courseTitle}"`;
   const html = `
     <div style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; max-width: 560px; margin: 0 auto; padding: 32px 0;">
       <h2 style="color: #1a1a2e; margin-bottom: 16px;">Course Completed</h2>
       <p style="color: #4a4a5a; font-size: 15px; line-height: 1.6;">
-        <strong>${employeeName}</strong> has completed the course
-        <strong>&ldquo;${courseTitle}&rdquo;</strong>.
+        <strong>${safeName}</strong> has completed the course
+        <strong>&ldquo;${safeCourse}&rdquo;</strong>.
       </p>
       <hr style="border: none; border-top: 1px solid #e5e5ea; margin: 24px 0;" />
       <p style="color: #8e8e93; font-size: 12px;">

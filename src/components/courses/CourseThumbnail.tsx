@@ -48,15 +48,20 @@ export function CourseThumbnail({
         // object-contain + padding keeps SVG illustrations (and any image with
         // a transparent/white background) inside the tinted frame rather than
         // filling edge-to-edge and washing out the bg-primary-subtle container.
+        // Inner scale on parent hover (`group-hover`) reads as forward motion
+        // without disturbing the card's outer geometry. Reduced-motion safe.
         <Image
           src={src}
           alt=""
           fill
           sizes={sizes}
-          className={cn("object-contain p-6", locked && "grayscale")}
+          className={cn(
+            "object-contain p-6 transition-transform duration-slow ease-out-expo motion-safe:group-hover:scale-[1.03]",
+            locked && "grayscale",
+          )}
         />
       ) : (
-        <div className="absolute inset-0 flex items-center justify-center">
+        <div className="absolute inset-0 flex items-center justify-center transition-transform duration-slow ease-out-expo motion-safe:group-hover:scale-[1.06]">
           <GraduationCap
             className="h-10 w-10 text-primary-subtle-foreground"
             aria-hidden="true"

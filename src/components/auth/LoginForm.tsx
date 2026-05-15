@@ -12,10 +12,10 @@ import { Alert, AlertDescription } from "@/components/ui/alert";
 
 export default function LoginForm({
   hasMicrosoftProvider,
-  isProduction,
+  hasCredentialsProvider,
 }: {
   hasMicrosoftProvider: boolean;
-  isProduction: boolean;
+  hasCredentialsProvider: boolean;
 }) {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -68,7 +68,7 @@ export default function LoginForm({
             Sign in with Microsoft
           </Button>
 
-          {!isProduction && (
+          {hasCredentialsProvider && (
             <div className="relative">
               <div className="absolute inset-0 flex items-center">
                 <div className="w-full border-t border-border" />
@@ -83,8 +83,8 @@ export default function LoginForm({
         </>
       )}
 
-      {/* Credentials form — dev only */}
-      {!isProduction && (
+      {/* Credentials form — only when ALLOW_PASSWORD_LOGIN=true */}
+      {hasCredentialsProvider && (
         <form onSubmit={handleCredentialLogin} className="space-y-4">
           {error && (
             <Alert variant="destructive">

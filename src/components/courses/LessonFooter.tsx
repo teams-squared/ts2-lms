@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { CheckCircleIcon, ChevronLeftIcon, ChevronRightIcon } from "@/components/icons";
 import { Spinner } from "@/components/ui/Spinner";
 import { useToast } from "@/components/ui/ToastProvider";
@@ -101,6 +101,49 @@ export function LessonFooter({
   // null for non-policy lessons or pre-unlock — sent as-is and the server
   // ignores it for non-POLICY_DOC types.
   const [policyDwellSeconds, setPolicyDwellSeconds] = useState<number | null>(null);
+  // 0–100 scroll depth through the lesson body. Drives a faint secondary
+  // fill on the progress bar so the player feels like it's moving forward
+  // even before completion. Resets per lesson via the lessonId dependency.
+  const [scrollDepth, setScrollDepth] = useState(0);
+  // Transient flag set when `isCompleted` flips false → true. Triggers a
+  // one-shot affirmation pulse on the progress bar fill; auto-clears so it
+  // doesn't re-fire on subsequent renders.
+  const [justCompleted, setJustCompleted] = useState(false);
+  const prevCompleted = useRef(initialCompleted);
+  useEffect(() => {
+    if (!prevCompleted.current && isCompleted) {
+      setJustCompleted(true);
+      const t = window.setTimeout(() => setJustCompleted(false), 700);
+      return () => window.clearTimeout(t);
+    }
+    prevCompleted.current = isCompleted;
+  }, [isCompleted]);
+
+  useEffect(() => {
+    setScrollDepth(0);
+    if (typeof window === "undefined") return;
+    let raf = 0;
+    function onScroll() {
+      if (raf) return;
+      raf = window.requestAnimationFrame(() => {
+        raf = 0;
+        const doc = document.documentElement;
+        const max = doc.scrollHeight - window.innerHeight;
+        if (max <= 0) {
+          setScrollDepth(0);
+          return;
+        }
+        const pct = Math.min(100, Math.max(0, (window.scrollY / max) * 100));
+        setScrollDepth(pct);
+      });
+    }
+    window.addEventListener("scroll", onScroll, { passive: true });
+    onScroll();
+    return () => {
+      window.removeEventListener("scroll", onScroll);
+      if (raf) window.cancelAnimationFrame(raf);
+    };
+  }, [lessonId]);
 
   useEffect(() => {
     if (!requireScrollToComplete || scrollUnlocked) return;
@@ -212,8 +255,21 @@ export function LessonFooter({
             aria-valuemin={0}
             aria-valuemax={100}
           >
+            {/* Faint secondary fill — tracks scroll depth through the current lesson.
+                Drops back to 0 on each new lesson. Decorative; no aria. Only renders
+                ahead of the completion fill so a fully-completed bar isn't dulled. */}
             <div
-              className="h-full rounded-full bg-primary transition-[width] duration-[400ms] ease-out"
+              aria-hidden="true"
+              className="absolute inset-y-0 left-0 rounded-full bg-primary/25 transition-[width] duration-instant ease-out"
+              style={{
+                width: `${Math.max(scrollDepth, percentComplete)}%`,
+              }}
+            />
+            <div
+              className={cn(
+                "relative h-full rounded-full bg-primary transition-[width] duration-[400ms] ease-out",
+                justCompleted && "animate-progress-affirm",
+              )}
               style={{ width: `${percentComplete}%` }}
             />
           </div>

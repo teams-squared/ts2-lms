@@ -1,4 +1,5 @@
 import { calculateLevel } from "@/lib/levels";
+import { AnimatedNumber } from "@/components/ui/AnimatedNumber";
 
 interface WelcomeBarProps {
   firstName: string;
@@ -73,7 +74,7 @@ export function WelcomeBar({ firstName, xp, streak }: WelcomeBarProps) {
             </h1>
             <div className="mt-2 flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-foreground-muted">
               <span className="inline-flex items-center gap-1.5">
-                <span className="font-semibold tabular-nums text-foreground">{currentXp}</span>
+                <AnimatedNumber value={currentXp} className="font-semibold text-foreground" />
                 <span className="text-foreground-subtle">/</span>
                 <span className="tabular-nums">{nextLevelXp} XP</span>
               </span>

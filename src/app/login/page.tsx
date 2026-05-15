@@ -12,7 +12,12 @@ export default function LoginPage() {
     process.env.AZURE_AD_CLIENT_SECRET &&
     process.env.AZURE_AD_TENANT_ID
   );
-  const isProduction = process.env.NODE_ENV === "production";
+  // Password form is only shown when the server-side Credentials provider
+  // is also registered (gated by ALLOW_PASSWORD_LOGIN). Production omits
+  // the flag, so the form vanishes from the UI and the underlying
+  // /api/auth/callback/credentials endpoint is not mounted either.
+  const hasCredentialsProvider =
+    process.env.ALLOW_PASSWORD_LOGIN === "true";
 
   return (
     <div className="bg-brand-gradient flex min-h-screen items-center justify-center px-4 py-12">
@@ -40,11 +45,11 @@ export default function LoginPage() {
             >
               <LoginForm
                 hasMicrosoftProvider={hasMicrosoftProvider}
-                isProduction={isProduction}
+                hasCredentialsProvider={hasCredentialsProvider}
               />
             </Suspense>
 
-            {!hasMicrosoftProvider && !isProduction && (
+            {!hasMicrosoftProvider && hasCredentialsProvider && (
               <div className="mt-5 rounded-md border border-border bg-info-subtle p-4 text-xs leading-relaxed text-info">
                 <strong className="font-semibold">Local dev sign-in</strong>
                 <p className="mt-1">
