@@ -50,7 +50,7 @@ _None._ Working tree clean. No `wip/*` branch open.
   npx prisma db execute --file prisma/migrations/20260512000000_add_manual_reminder_log/migration.sql
   ```
 
-- [ ] **Triage Dependabot vulns.** Push to `dev` reports `41 vulnerabilities (20 high, 16 moderate, 5 low)` on default branch. Up from 33 a few days ago. Likely a transitive bump. Investigate at `https://github.com/teams-squared/ts2-lms/security/dependabot` before next prod release.
+- [ ] **Triage Dependabot vulns.** Post-PR-#39 push to `dev` reports `15 vulnerabilities (6 high, 8 moderate, 1 low)` on default branch — Next.js bump in `5a93463` closed ~26 since the previous 41-count. Six high remain. Investigate at `https://github.com/teams-squared/ts2-lms/security/dependabot` before next prod release.
 
 ## Open questions / decisions
 
