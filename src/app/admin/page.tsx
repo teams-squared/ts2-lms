@@ -45,17 +45,22 @@ export default async function AdminPage() {
 
   return (
     <div>
-      {/* Stats — RevealOnView stagger lets cards arrive in cascade, AnimatedNumber tweens the count-up. */}
+      {/* Stats — RevealOnView stagger lets cards arrive in cascade, AnimatedNumber tweens the count-up.
+          Cards stretch to a uniform row height (h-full on both wrapper and card) and labels reserve
+          two lines of space (min-h-[2lh]) so a wrapping label (e.g. "Course Managers") doesn't
+          make one card taller than its row siblings. */}
       <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-4 mb-8">
         {stats.map(({ value, label }, i) => (
-          <RevealOnView key={label} delay={i * 40}>
-            <div className="rounded-lg border border-border bg-surface shadow-sm hover-lift overflow-hidden">
+          <RevealOnView key={label} delay={i * 40} className="h-full">
+            <div className="h-full flex flex-col rounded-lg border border-border-strong bg-surface shadow-sm hover-lift overflow-hidden">
               <div className="h-1 bg-primary" />
-              <div className="p-5">
+              <div className="p-5 flex-1 flex flex-col">
                 <div className="text-2xl font-bold text-primary mb-1">
                   <AnimatedNumber value={value} />
                 </div>
-                <div className="text-sm text-foreground-muted font-medium">{label}</div>
+                <div className="text-sm text-foreground-muted font-medium min-h-[2lh] leading-tight">
+                  {label}
+                </div>
               </div>
             </div>
           </RevealOnView>
