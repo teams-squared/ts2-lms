@@ -552,18 +552,19 @@ html.ambient-paused .surface-breathe {
  * ──────────────────────────────────────────────────────────────────────── */
 .hover-lift {
   position: relative;
-  transition-property: background-color, border-color, box-shadow, color, transform;
+  transition-property: background-color, border-color, box-shadow, color, transform, outline-color;
   transition-duration: var(--duration-fast);
   transition-timing-function: var(--ease-out-expo);
 }
 .hover-lift:hover {
-  border-color: var(--border-strong);
-  /* 1px inset shadow stacked on the 1px border reads as a 2px outline on
-   * hover, without the layout shift that a real border-width bump would
-   * cause. Follows the rounded corner; composes with the card-md shadow. */
-  box-shadow:
-    inset 0 0 0 1px var(--border-strong),
-    var(--shadow-card-md);
+  /* 2px outline offset -1px so it overlaps the resting 1px border and
+   * extends 1px outward — net visible: a clean 2px ring in the strong
+   * border colour. No inset/regular combo. Follows the rounded corner
+   * natively (modern browsers respect border-radius for outline). No
+   * layout shift since outline doesn't take space. */
+  outline: 2px solid var(--border-strong);
+  outline-offset: -1px;
+  box-shadow: var(--shadow-card-md);
 }
 @media (prefers-reduced-motion: no-preference) {
   .hover-lift:hover {
