@@ -919,6 +919,62 @@ Verify by toggling **System Settings → Accessibility → Reduce motion** on ma
 - Motion longer than 400ms for UI feedback (hover, click, focus). The 600ms `--duration-affirm` is the carve-out for terminal-state celebrations only.
 - Hardcoded durations or easing curves in component CSS. Bind to a token from §9.1 — if no token fits, the answer is to add a token, not to write a magic number.
 
+### 9.8 Submit-state buttons (`<FormButton>`)
+
+Every form submit in the app routes through `<FormButton>` (`src/components/ui/FormButton.tsx`). Bespoke `<button type="submit" disabled={saving}>{saving ? "Saving…" : "Save"}</button>` patterns should migrate onto this primitive as you touch them.
+
+States:
+
+- **idle** — renders the button label.
+- **pending** — renders an inline `Loader2` spinner + the `pendingLabel` prop (defaults to children + "…"). `disabled` is forced true; `aria-busy="true"` is set.
+- **success** — renders an inline `Check` icon + the `successLabel` prop (defaults to children). Held for `successHoldMs` (default 1200ms) then reverts to idle.
+
+```tsx
+<FormButton type="submit" loading={isPending} success={justSaved} pendingLabel="Saving…">
+  Save signature
+</FormButton>
+```
+
+Loading detection: inside a `<form>` the button reads React 19's `useFormStatus()` automatically. Outside a form (fetch-based submits), pass `loading={isPending}` explicitly.
+
+The `success` prop is **edge-triggered** — set it `true` once after the mutation resolves and the button manages the hold + revert. Consumer does not need to clear it.
+
+> **Mandate:** new form-submission UI must use `<FormButton>` for the primary action. The success affirmation closes the loop the operator started; without it, the only feedback is a toast that may auto-dismiss before they look back at the form.
+
+### 9.9 Mutation pulse on rows / cards (`useMutationPulse`)
+
+When the user mutates a row in a list (role change, status flip, enrollment toggle), the just-mutated row briefly highlights so they don't lose track of which row updated. This is the canonical "your action landed" affordance on dense surfaces where a toast alone doesn't anchor the change visually.
+
+```tsx
+const { pulse, pulseClass } = useMutationPulse();
+async function onRoleChange(userId: string, role: Role) {
+  await updateUserRole(userId, role);
+  pulse(userId);
+}
+return (
+  <tr className={cn("hover:bg-surface-muted", pulseClass(user.id))}>...</tr>
+);
+```
+
+Implementation: `pulse(id)` adds the `surface-pulse` class for 1100ms (one `--duration-affirm` cycle + decay), then removes it. Backed by the `surfacePulse` keyframe in `globals.css` — accent-tinted background fade in, fade out, eased with `--ease-out-expo`.
+
+**Budget:** one row pulsing at a time on a given table is the norm. Mass-mutation flows (bulk delete, bulk reassign) should pulse only the most-recently-changed row, not all of them — a wall of pulses reads as confusion, not feedback.
+
+### 9.10 List morph on filter / sort (`useListMorph`)
+
+Result-set reorder (filter, sort, search) should cross-fade rather than snap. `useListMorph` wraps `document.startViewTransition` so the browser captures pre-state, runs the state update, captures post-state, and animates the difference.
+
+```tsx
+const morph = useListMorph();
+const onFilterChange = (next: Filter) => {
+  morph(() => setFilter(next));
+};
+```
+
+Falls through to the callback directly on SSR, on browsers without `startViewTransition` (Firefox today), and when `prefers-reduced-motion: reduce` is set — so callers can use it unconditionally.
+
+> **Mandate:** any state update that reorders or filters a visible list passes through `useListMorph`. Direct `setState` snaps; the morph reads as careful even when the result set is small.
+
 ---
 
 ## 10. Accessibility (non-negotiable)
@@ -1197,3 +1253,15 @@ Course cards use `--duration-fast` (150ms) on the outer `.hover-lift` and `--dur
 ### Tweening numbers must use `tabular-nums`
 
 `<AnimatedNumber>` wraps its output in `tabular-nums` because proportional digits shift width as the value ticks (the `1` is narrower than the `0`), causing the number's right edge to jitter. Any new numeric tween primitive must include the same — and the parent layout must not horizontally center the number (centering re-introduces the jitter even with `tabular-nums`, since the bounding box still wobbles).
+
+### `.surface-pulse` animates `background-color`, which is not strictly compositor-only
+
+The mutation-pulse class fades a background colour rather than animating a compositor property. This is acceptable at admin-table volumes (one row pulsing at a time, ≤50 rows in viewport) — the browser handles a single background-colour fade without dropping frames. If a perf trace ever flags it (likely under bulk-mutation flows or low-end Android), the fallback is a positioned `::after` overlay animating `opacity` instead. Don't switch preemptively; switch when traced.
+
+### `useListMorph` is client-only — needs a `"use client"` boundary
+
+`document.startViewTransition` is a browser API. Server Components can't call `useListMorph`. Wrap the consumer in a client component (every existing consumer is already `"use client"`). If you find yourself wanting list-morph behaviour on a Server Component, lift the morph-relevant state into a client child rather than trying to call the hook server-side.
+
+### `<FormButton>` success is edge-triggered, not level
+
+Setting `success={true}` once kicks the affirmation. Setting it `true` again on the next render (without a transition through `false`) does not re-kick — the button latches on the rising edge. Consumer code should treat `success` as a transient signal: flip it true after the mutation resolves, don't bother flipping it back. If your code accidentally renders `success={true}` permanently after the first success, every subsequent render through-the-component is a no-op (the button stays in its post-hold idle state). If you need to re-affirm the same success state, flip through `false` first.
