@@ -3,6 +3,8 @@ import { prisma } from "@/lib/prisma";
 import { UserAvatar } from "@/components/ui/UserAvatar";
 import { CourseStatusBadge } from "@/components/courses/CourseStatusBadge";
 import { Button } from "@/components/ui/button";
+import { AnimatedNumber } from "@/components/ui/AnimatedNumber";
+import { RevealOnView } from "@/components/ui/RevealOnView";
 
 export const dynamic = "force-dynamic";
 
@@ -43,21 +45,20 @@ export default async function AdminPage() {
 
   return (
     <div>
-      {/* Stats */}
+      {/* Stats — RevealOnView stagger lets cards arrive in cascade, AnimatedNumber tweens the count-up. */}
       <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-4 mb-8">
-        {stats.map(({ value, label }) => (
-          <div
-            key={label}
-            className="rounded-lg border border-border bg-surface shadow-sm hover-lift overflow-hidden"
-          >
-            <div className="h-1 bg-primary" />
-            <div className="p-5">
-              <div className="text-2xl font-bold text-primary tabular-nums mb-1">
-                {value}
+        {stats.map(({ value, label }, i) => (
+          <RevealOnView key={label} delay={i * 40}>
+            <div className="rounded-lg border border-border bg-surface shadow-sm hover-lift overflow-hidden">
+              <div className="h-1 bg-primary" />
+              <div className="p-5">
+                <div className="text-2xl font-bold text-primary mb-1">
+                  <AnimatedNumber value={value} />
+                </div>
+                <div className="text-sm text-foreground-muted font-medium">{label}</div>
               </div>
-              <div className="text-sm text-foreground-muted font-medium">{label}</div>
             </div>
-          </div>
+          </RevealOnView>
         ))}
       </div>
 

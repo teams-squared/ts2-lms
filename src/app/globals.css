@@ -369,6 +369,21 @@ body {
 }
 .animate-float { animation: float 2.4s ease-in-out infinite; display: inline-block; }
 
+/* Mutation pulse — applied transiently by useMutationPulse() to rows / cards
+ * after a successful mutation. One affirm cycle (~1.1s) of accent-tinted
+ * background fade. Used sparingly (one row at a time); if perf trace flags
+ * the background-color animation, switch to a positioned ::after opacity
+ * overlay. See design-system §9.10 and §17 fallback note.
+ */
+@keyframes surfacePulse {
+  0%   { background-color: oklch(0.42 0.28 285 / 0); }
+  18%  { background-color: oklch(0.42 0.28 285 / 0.18); }
+  100% { background-color: oklch(0.42 0.28 285 / 0); }
+}
+.surface-pulse {
+  animation: surfacePulse 1100ms var(--ease-out-expo) forwards;
+}
+
 /* Progress-bar fill affirmation — runs once on transition into completion */
 @keyframes progressAffirm {
   0%   { transform: scaleY(1);    box-shadow: 0 0 0 0 oklch(0.42 0.28 285 / 0.45); }
@@ -409,7 +424,8 @@ body {
   .animate-gradient-drift,
   .animate-pulse,
   .animate-spin,
-  .animate-bounce { animation: none !important; }
+  .animate-bounce,
+  .surface-pulse { animation: none !important; }
   *, *::before, *::after {
     animation: none !important;
     transition-duration: 0.01ms !important;
