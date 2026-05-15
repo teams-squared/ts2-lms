@@ -384,6 +384,57 @@ body {
   animation: surfacePulse 1100ms var(--ease-out-expo) forwards;
 }
 
+/* Soft brand-tinted focus halo (Stage B ambient layer). Layers OUTSIDE
+ * the canonical 2px focus-visible ring (§10.1) — does not replace it.
+ * Wider, lower-alpha box-shadow that reads as "this surface is alive"
+ * rather than a sharp keyboard-affordance ring.
+ *
+ * Two consumer patterns:
+ *   1. Apply `.focus-glow` directly to a focusable element (input, button).
+ *   2. Apply `.focus-glow-within` to a container so the glow appears
+ *      when a child receives keyboard focus (`:has(:focus-visible)`).
+ */
+.focus-glow {
+  transition: box-shadow var(--duration-fast) var(--ease-out-expo);
+}
+.focus-glow:focus-visible {
+  box-shadow: 0 0 0 4px oklch(0.42 0.28 285 / 0.12);
+}
+.focus-glow-within {
+  transition: box-shadow var(--duration-fast) var(--ease-out-expo);
+}
+.focus-glow-within:has(:focus-visible) {
+  box-shadow:
+    var(--shadow-card-sm),
+    0 0 0 4px oklch(0.42 0.28 285 / 0.12);
+}
+@media (prefers-reduced-motion: reduce) {
+  .focus-glow, .focus-glow-within { transition: none; }
+}
+
+/* Ambient surface breathing — applied sparingly to hero/dashboard
+ * surfaces that should feel "alive when idle." Compositor-only
+ * (opacity), and paused by html.ambient-paused when the tab is hidden
+ * via useDocumentVisible(). One breathing surface per page max — see
+ * design-system §9.12.
+ */
+@keyframes surfaceBreathe {
+  0%, 100% { opacity: 0.92; }
+  50%      { opacity: 1; }
+}
+.surface-breathe {
+  animation: surfaceBreathe var(--duration-ambient-breathe) var(--ease-in-out-quart) infinite;
+}
+
+/* Ambient-paused gating — toggled on <html> by RootLayout's
+ * useDocumentVisible() effect. Pauses every ambient loop so a
+ * background tab doesn't burn CPU on motion no one can see.
+ */
+html.ambient-paused .animate-gradient-drift,
+html.ambient-paused .surface-breathe {
+  animation-play-state: paused;
+}
+
 /* Progress-bar fill affirmation — runs once on transition into completion */
 @keyframes progressAffirm {
   0%   { transform: scaleY(1);    box-shadow: 0 0 0 0 oklch(0.42 0.28 285 / 0.45); }
@@ -425,7 +476,8 @@ body {
   .animate-pulse,
   .animate-spin,
   .animate-bounce,
-  .surface-pulse { animation: none !important; }
+  .surface-pulse,
+  .surface-breathe { animation: none !important; }
   *, *::before, *::after {
     animation: none !important;
     transition-duration: 0.01ms !important;

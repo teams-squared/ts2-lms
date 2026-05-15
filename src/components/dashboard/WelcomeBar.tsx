@@ -62,6 +62,17 @@ export function WelcomeBar({ firstName, xp, streak }: WelcomeBarProps) {
   return (
     <div className="max-w-4xl mx-auto px-4 sm:px-6 pt-6 pb-2">
       <div className="relative rounded-lg border border-border bg-surface-muted p-6 sm:p-8 overflow-hidden">
+        {/* Ambient breathe overlay (§9.12) — single soft accent-tinted wash
+            that gently breathes over --duration-ambient-breathe. Paused by
+            html.ambient-paused when the tab is hidden. */}
+        <div
+          aria-hidden="true"
+          className="surface-breathe absolute inset-0 pointer-events-none"
+          style={{
+            background:
+              "radial-gradient(60% 90% at 0% 50%, oklch(0.42 0.28 285 / 0.08), transparent 70%)",
+          }}
+        />
         <div className="relative flex items-center gap-4 sm:gap-5">
           <LevelAvatar level={level} />
 

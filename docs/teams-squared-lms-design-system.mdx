@@ -914,10 +914,12 @@ Verify by toggling **System Settings → Accessibility → Reduce motion** on ma
 
 - Parallax scroll effects (continuous scroll-position coupling — `<RevealOnView>` is one-shot and disconnects, which is the carve-out).
 - Scroll-triggered animations on primary content (text reflow, layout shifts).
-- Auto-playing decorative animations that loop indefinitely on the primary content area — ambient motion is reserved for backgrounds and skeleton states (see §9.1 ambient tokens).
+- Auto-playing decorative animations that loop indefinitely on the primary content area — ambient motion is reserved for hero / background surfaces under the §9.12 budget (see carve-out below).
 - Bouncy/elastic easing on recurring transitions (`--ease-out-back` is one-shot affirmations only — see §9.1 mandate).
 - Motion longer than 400ms for UI feedback (hover, click, focus). The 600ms `--duration-affirm` is the carve-out for terminal-state celebrations only.
 - Hardcoded durations or easing curves in component CSS. Bind to a token from §9.1 — if no token fits, the answer is to add a token, not to write a magic number.
+
+**Ambient carve-out:** the "auto-playing decorative animations" rule has one carefully-scoped exception. A single ambient-breathing or gradient-drifting overlay on a hero surface (dashboard WelcomeBar, login hero, etc.) is permitted under the §9.12 budget — compositor-only, visibility-paused, one element per page max. Anything broader violates the rule.
 
 ### 9.8 Submit-state buttons (`<FormButton>`)
 
@@ -974,6 +976,47 @@ const onFilterChange = (next: Filter) => {
 Falls through to the callback directly on SSR, on browsers without `startViewTransition` (Firefox today), and when `prefers-reduced-motion: reduce` is set — so callers can use it unconditionally.
 
 > **Mandate:** any state update that reorders or filters a visible list passes through `useListMorph`. Direct `setState` snaps; the morph reads as careful even when the result set is small.
+
+### 9.11 Focus glow (ambient layer)
+
+Adds a wide, low-alpha brand-tinted halo OUTSIDE the canonical 2px `focus-visible:ring-2` (§10.1). Reads as "this surface is alive" rather than the sharp keyboard ring — both layers coexist, the ring is mandatory and remains the keyboard-affordance signal.
+
+Two consumer patterns:
+
+- `.focus-glow` — apply directly to a focusable element. The element receives the halo on `:focus-visible`. Already applied to `<Input>` (`src/components/ui/input.tsx`).
+- `.focus-glow-within` — apply to a container so the halo appears when a descendant receives keyboard focus, via `:has(:focus-visible)`. Use on cards that wrap inputs or focusable controls.
+
+```html
+<input class="focus-glow ..." />
+<div class="focus-glow-within ..."><input ... /></div>
+```
+
+Transitions the box-shadow over `--duration-fast` with `--ease-out-expo`. Reduced-motion users see the halo without the transition fade.
+
+### 9.12 Ambient motion budget
+
+Ambient motion is the quiet "alive when idle" layer — gradient drift, surface breathing, focus glow. The rules below keep it from accumulating into noise.
+
+**Per-page budget:**
+
+- **One** breathing-overlay surface (`.surface-breathe`) per page maximum. Dashboard uses WelcomeBar; login uses the brand-gradient hero; admin index uses the AnimatedNumber + stagger combo instead (no breath).
+- **One** gradient-drift surface (`.animate-gradient-drift`) per page maximum. Login uses the brand gradient.
+- Focus glow (`.focus-glow`, `.focus-glow-within`) has no per-page limit — it's input-anchored, only one element is focused at a time.
+
+**Compositor-only properties only:**
+
+- Permitted: `opacity`, `transform`, `filter` (sparingly), `background-position` (gradient drift).
+- Forbidden in ambient classes: animating `background-color`, `width`, `height`, `border-color`. Those belong to Stage A pulse / hover patterns, not Stage B ambient.
+
+**Visibility gating:** `<AmbientMotionGate>` toggles `html.ambient-paused` based on `useDocumentVisible()`. When the tab is hidden, every `.animate-gradient-drift` and `.surface-breathe` pauses via `animation-play-state: paused`. Saves CPU and battery on background tabs. Any new ambient animation **must** be covered by the `html.ambient-paused` selector in `globals.css` (extend the existing rule).
+
+**Sources:**
+
+- `.surface-breathe` keyframe: opacity 0.92 ↔ 1.0 over `--duration-ambient-breathe` (8s) with `--ease-in-out-quart`.
+- `.animate-gradient-drift` keyframe: `background-position` 0% ↔ 100% over `--duration-ambient-drift` (28s).
+- `.focus-glow*` keyframes: none — these are static `box-shadow` rules with a transition on focus state change, not loops.
+
+> **Mandate:** before adding a new ambient class, count what's already breathing on the same page. If you can't justify why a second ambient surface earns its place over the existing one, you don't need it.
 
 ---
 
