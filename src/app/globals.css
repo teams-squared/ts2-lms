@@ -558,7 +558,12 @@ html.ambient-paused .surface-breathe {
 }
 .hover-lift:hover {
   border-color: var(--border-strong);
-  box-shadow: var(--shadow-card-md);
+  /* 1px inset shadow stacked on the 1px border reads as a 2px outline on
+   * hover, without the layout shift that a real border-width bump would
+   * cause. Follows the rounded corner; composes with the card-md shadow. */
+  box-shadow:
+    inset 0 0 0 1px var(--border-strong),
+    var(--shadow-card-md);
 }
 @media (prefers-reduced-motion: no-preference) {
   .hover-lift:hover {
