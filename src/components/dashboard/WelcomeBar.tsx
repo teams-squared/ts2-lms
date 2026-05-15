@@ -80,8 +80,21 @@ export function WelcomeBar({ firstName, xp, streak }: WelcomeBarProps) {
             <p className="text-xs font-medium uppercase tracking-wider text-foreground-muted">
               {greeting}
             </p>
-            <h1 className="font-display text-xl sm:text-2xl font-bold text-foreground tracking-tight truncate">
-              {subline}
+            <h1 className="font-display text-xl sm:text-2xl font-bold tracking-tight truncate">
+              {/* Personality signature (§9.13) — gradient-clipped welcome
+                  wordmark drifts over --duration-ambient-drift. Anchored to
+                  the hero, paired with the surface-breathe overlay above so
+                  the two ambient signals share one breathing place. */}
+              <span
+                className="motion-safe:animate-gradient-drift bg-clip-text text-transparent"
+                style={{
+                  backgroundImage:
+                    "linear-gradient(90deg, oklch(0.42 0.28 285) 0%, oklch(0.55 0.24 295) 50%, oklch(0.42 0.28 285) 100%)",
+                  backgroundSize: "200% 100%",
+                }}
+              >
+                {subline}
+              </span>
             </h1>
             <div className="mt-2 flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-foreground-muted">
               <span className="inline-flex items-center gap-1.5">
