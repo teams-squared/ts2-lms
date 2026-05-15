@@ -1018,6 +1018,22 @@ Ambient motion is the quiet "alive when idle" layer — gradient drift, surface 
 
 > **Mandate:** before adding a new ambient class, count what's already breathing on the same page. If you can't justify why a second ambient surface earns its place over the existing one, you don't need it.
 
+### 9.13 Personality signatures
+
+The handful of moments where the product earns a recognisable voice. Each signature is anchored to a specific moment of user accomplishment or first impression. Adding new signature moments requires a real product reason — not a "wouldn't this be cool" reason.
+
+**Welcome wordmark (dashboard hero).** The greeting subline in `<WelcomeBar>` renders as a slow gradient drift via `background-clip: text` + `--duration-ambient-drift` (28s). Lives inside the §9.12 budget (the WelcomeBar hero already hosts the breathing overlay; the wordmark is the foreground accent within the same hero, not a second ambient surface). Reduced motion shows the static gradient end-state.
+
+**Lesson-complete moment (LessonCompleteButton + footer).** The footer progress-bar `progressAffirm` pulse (already shipped) plus a `motion-safe:animate-scale-in` on the `CheckCircleIcon` when the button transitions to its completed state. The button changes shape *and* the icon arrives — two cooperating signals that say "your action landed."
+
+**Achievement unlock (AchievementCard).** Unlocked cards play `motion-safe:animate-scale-in` on their icon at mount, consuming the `scaleIn` keyframe with `--ease-out-back` (already paid for in `globals.css`, previously unused). Locked cards stay flat. The mounted-arrival behaviour means the profile achievements grid feels like trophies appearing rather than a static gallery.
+
+**Course-complete celebration (CourseCompletionModal).** Stat tiles tween via `<AnimatedNumber>` so the lessons / XP / days numbers count up rather than appearing fixed. Confetti and pulse-glow already in place. The cumulative effect — confetti + count-up + pulse — is the single biggest celebration moment in the app; reserve confetti for course completion only.
+
+**Course-card → detail shared-element morph (DEFERRED).** Planned for Stage C; the App Router's client-side navigation needs deeper integration with `document.startViewTransition` than CSS `@view-transition { navigation: auto; }` alone provides. Re-evaluate once React's `<ViewTransition>` export stabilises (the `experimental.viewTransition` flag in `next.config.ts` is already set; a future commit can adopt it without further code changes).
+
+> **Mandate:** new personality signatures require a written product justification ("this moment matters because…"). Without one, default to the §9.8–§9.12 floors — those are enough.
+
 ---
 
 ## 10. Accessibility (non-negotiable)
