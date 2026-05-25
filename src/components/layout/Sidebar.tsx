@@ -9,6 +9,7 @@ import {
   GraduationCap,
   Shield,
   BookOpenCheck,
+  FileText,
   PanelLeftClose,
   PanelLeftOpen,
 } from "lucide-react";
@@ -49,6 +50,7 @@ interface NavItem {
 const BASE_NAV_ITEMS: NavItem[] = [
   { href: "/", label: "Home", icon: Home },
   { href: "/courses", label: "Courses", icon: GraduationCap },
+  { href: "/iso-docs", label: "ISO Docs", icon: FileText },
 ];
 
 const ADMIN_NAV_ITEM: NavItem = {

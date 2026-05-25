@@ -2,6 +2,7 @@ import { redirect } from "next/navigation";
 import { auth } from "@/lib/auth";
 import { IsoAckLog } from "@/components/admin/IsoAckLog";
 import { IsoCoverage } from "@/components/admin/IsoCoverage";
+import { IsoLibraryManager } from "@/components/admin/IsoLibraryManager";
 import { IsoTabs, IsoTabPanel } from "@/components/admin/IsoTabs";
 
 export const dynamic = "force-dynamic";
@@ -57,6 +58,22 @@ export default async function AdminIsoPage() {
           re-ack the new one.
         </p>
         <IsoCoverage />
+      </IsoTabPanel>
+
+      <IsoTabPanel tab="library">
+        <h2 className="text-sm font-semibold text-foreground mb-1">
+          ISO Docs library
+        </h2>
+        <p className="text-sm text-foreground-muted mb-4">
+          Curate which policy-doc lessons appear in the company-wide{" "}
+          <span className="font-medium">ISO Docs</span> reference section
+          (visible to every logged-in user). Removing an entry here does
+          not delete the underlying course lesson — it only hides it from
+          the library. Acknowledgement evidence still flows through the
+          course path; library views are logged but do not count as ISO
+          acks.
+        </p>
+        <IsoLibraryManager />
       </IsoTabPanel>
     </div>
   );

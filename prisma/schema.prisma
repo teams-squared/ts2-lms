@@ -39,6 +39,8 @@ model User {
   policyDocSyncs      PolicyDocLesson[]    @relation("PolicyDocSyncs")
   manualRemindersReceived ManualReminderLog[] @relation("ManualReminderTarget")
   manualRemindersSent     ManualReminderLog[] @relation("ManualReminderSender")
+  isoLibraryAdds      IsoLibraryEntry[]    @relation("IsoLibraryAdds")
+  isoLibraryViews     IsoLibraryView[]
 }
 
 enum CourseStatus {
@@ -182,7 +184,42 @@ model PolicyDocLesson {
   createdAt           DateTime            @default(now())
   updatedAt           DateTime            @updatedAt
 
+  libraryEntry        IsoLibraryEntry?
+
   @@index([documentCode])
+}
+
+/// Curated reference library — admin picks PolicyDocLessons to expose at
+/// /iso-docs for any logged-in user. View-only; ack evidence flows through
+/// the course path, not here.
+model IsoLibraryEntry {
+  id                String          @id @default(cuid())
+  policyDocLessonId String          @unique
+  policyDocLesson   PolicyDocLesson @relation(fields: [policyDocLessonId], references: [id], onDelete: Cascade)
+  sortOrder         Int             @default(0)
+  addedById         String
+  addedBy           User            @relation("IsoLibraryAdds", fields: [addedById], references: [id], onDelete: Restrict)
+  createdAt         DateTime        @default(now())
+  updatedAt         DateTime        @updatedAt
+
+  views             IsoLibraryView[]
+
+  @@index([sortOrder])
+}
+
+/// Audit row — one per /iso-docs open. Best-effort, fire-and-forget from
+/// the viewer. Not used for ack evidence — see LessonProgress for that.
+model IsoLibraryView {
+  id            String          @id @default(cuid())
+  entryId       String
+  entry         IsoLibraryEntry @relation(fields: [entryId], references: [id], onDelete: Cascade)
+  userId        String
+  user          User            @relation(fields: [userId], references: [id], onDelete: Cascade)
+  viewedAt      DateTime        @default(now())
+  sourceVersion String?
+
+  @@index([entryId, viewedAt])
+  @@index([userId, viewedAt])
 }
 
 model Enrollment {
