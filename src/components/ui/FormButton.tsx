@@ -60,6 +60,9 @@ export function FormButton({
     prevSuccessRef.current = !!success;
     if (!success || !wasFalse) return;
 
+    // Legitimate prop-watching: success transitions false→true once per
+    // submit cycle. The pulse-and-clear pattern needs to setState here.
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     setInternalSuccess(true);
     if (timerRef.current) window.clearTimeout(timerRef.current);
     timerRef.current = window.setTimeout(() => {

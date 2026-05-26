@@ -169,7 +169,7 @@ export function PolicyDocViewer(props: PolicyDocViewProps) {
     } catch {
       /* sessionStorage unavailable (e.g. Safari private mode) — silent fallback */
     }
-  }, [dwellMs, lessonId, alreadyCompleted]);
+  }, [dwellMs, lessonId, alreadyCompleted, ackRequired]);
 
   const [attested, setAttested] = useState(false);
   const firedRef = useRef(false);
