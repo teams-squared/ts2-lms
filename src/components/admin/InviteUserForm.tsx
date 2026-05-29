@@ -9,6 +9,7 @@ import { FormButton } from "@/components/ui/FormButton";
 import type { NodeWithChildren } from "@/lib/courseNodes";
 import type { Role } from "@/lib/types";
 import { DEFAULT_INVITE_DOMAIN, normalizeInviteEmail } from "@/lib/inviteEmail";
+import type { DirectoryLookup } from "@/lib/entra/graph";
 
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
@@ -499,28 +500,62 @@ function RecipientRow({
   onResend,
 }: RecipientRowProps) {
   const isSent = status?.kind === "sent";
+
+  // Advisory Entra-directory check. `null` = nothing to show (idle, invalid,
+  // or Graph couldn't tell us). Never blocks the send.
+  const [directory, setDirectory] = useState<DirectoryLookup | "checking" | null>(
+    null,
+  );
+
+  const checkDirectory = async (email: string) => {
+    if (!EMAIL_RE.test(email)) {
+      setDirectory(null);
+      return;
+    }
+    setDirectory("checking");
+    try {
+      const res = await fetch(
+        `/api/admin/users/lookup?email=${encodeURIComponent(email)}`,
+      );
+      if (!res.ok) {
+        setDirectory(null);
+        return;
+      }
+      setDirectory((await res.json()) as DirectoryLookup);
+    } catch {
+      // Network error — stay silent, this is advisory only.
+      setDirectory(null);
+    }
+  };
+
   return (
     <div className="flex items-start gap-2">
       <div className="grid sm:grid-cols-[1fr_1fr] gap-2 flex-1">
-        <input
-          type="email"
-          value={recipient.email}
-          onChange={(e) => onChange({ email: e.target.value })}
-          // Fill in the org domain on blur so a bare username (`akil`) becomes
-          // `akil@teamsquared.io` in place. Addresses with a domain are left
-          // alone. Skip when the field has no "@"-less content to complete.
-          onBlur={(e) => {
-            const raw = e.target.value.trim();
-            if (raw && !raw.includes("@")) {
-              onChange({ email: normalizeInviteEmail(raw) });
-            }
-          }}
-          placeholder={index === 0 ? "newhire or newhire@teamsquared.io" : "name or name@teamsquared.io"}
-          aria-label={`Email for recipient ${index + 1}`}
-          className="px-3 py-2 rounded-lg border border-border bg-surface text-sm text-foreground placeholder-foreground-subtle focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring transition-all disabled:opacity-50"
-          disabled={disabled || isSent}
-          required={index === 0}
-        />
+        <div>
+          <input
+            type="email"
+            value={recipient.email}
+            onChange={(e) => {
+              onChange({ email: e.target.value });
+              // Editing invalidates any prior directory result.
+              setDirectory(null);
+            }}
+            // On blur: fill in the org domain for a bare username (`akil` ->
+            // `akil@teamsquared.io`; full addresses left alone), then run the
+            // advisory directory check against the resolved address.
+            onBlur={(e) => {
+              const resolved = normalizeInviteEmail(e.target.value);
+              if (resolved !== recipient.email) onChange({ email: resolved });
+              void checkDirectory(resolved);
+            }}
+            placeholder={index === 0 ? "newhire or newhire@teamsquared.io" : "name or name@teamsquared.io"}
+            aria-label={`Email for recipient ${index + 1}`}
+            className="w-full px-3 py-2 rounded-lg border border-border bg-surface text-sm text-foreground placeholder-foreground-subtle focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring transition-all disabled:opacity-50"
+            disabled={disabled || isSent}
+            required={index === 0}
+          />
+          <DirectoryHint directory={directory} />
+        </div>
         <input
           type="text"
           value={recipient.name}
@@ -558,6 +593,40 @@ function RecipientRow({
         )}
       </div>
     </div>
+  );
+}
+
+/** Inline advisory note under the email field about Entra-directory presence.
+ *  Renders nothing when we can't tell (unconfigured / no permission / error) —
+ *  the directory check never blocks a send. */
+function DirectoryHint({
+  directory,
+}: {
+  directory: DirectoryLookup | "checking" | null;
+}) {
+  if (directory === null) return null;
+  if (directory === "checking")
+    return (
+      <p className="mt-1 text-xs text-foreground-subtle">Checking directory…</p>
+    );
+  if (directory.status === "unknown") return null;
+  if (directory.status === "not_found")
+    return (
+      <p className="mt-1 text-xs text-warning">
+        Not found in directory — you can still send.
+      </p>
+    );
+  // found
+  if (!directory.accountEnabled)
+    return (
+      <p className="mt-1 text-xs text-warning">
+        In directory, but the account is disabled.
+      </p>
+    );
+  return (
+    <p className="mt-1 text-xs text-success">
+      In directory{directory.displayName ? ` · ${directory.displayName}` : ""}.
+    </p>
   );
 }
 

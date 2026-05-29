@@ -16,6 +16,12 @@ import { InviteUserForm } from "@/components/admin/InviteUserForm";
 const fetchSpy = vi.fn();
 beforeEach(() => {
   fetchSpy.mockReset();
+  // Default: the advisory directory lookup fired on email blur resolves to
+  // "unknown" (no badge). Individual tests override for invite POSTs.
+  fetchSpy.mockResolvedValue({
+    ok: true,
+    json: async () => ({ status: "unknown" }),
+  });
   // @ts-expect-error happy-dom
   global.fetch = fetchSpy;
 });
