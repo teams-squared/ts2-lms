@@ -12,6 +12,7 @@ import {
 } from "@/components/icons";
 import { useListMorph } from "@/hooks/useListMorph";
 import type { CourseSegment, StudentRow } from "@/lib/courseProgress";
+import { ADMIN_LIST_SCROLL, ADMIN_LIST_THEAD } from "@/components/admin/listScroll";
 
 interface Props {
   segments: CourseSegment[];
@@ -86,9 +87,9 @@ export function CourseProgressTable({ segments }: Props) {
         </div>
       ) : (
         <div className="rounded-lg border border-border bg-surface shadow-sm overflow-hidden">
-          <div className="overflow-x-auto">
+          <div className={ADMIN_LIST_SCROLL}>
             <table className="w-full min-w-[40rem] text-sm">
-              <thead>
+              <thead className={ADMIN_LIST_THEAD}>
                 <tr className="text-left bg-surface-muted border-b border-border">
                   <th className="px-4 py-2 text-xs font-medium text-foreground-muted w-8" />
                   <th className="px-4 py-2 text-xs font-medium text-foreground-muted">
