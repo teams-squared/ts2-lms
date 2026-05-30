@@ -8,6 +8,7 @@ import type { NodeWithChildren } from "@/lib/courseNodes";
 import { InviteUserForm } from "@/components/admin/InviteUserForm";
 import { Button } from "@/components/ui/button";
 import { useListMorph } from "@/hooks/useListMorph";
+import { ADMIN_LIST_SCROLL, ADMIN_LIST_THEAD } from "@/components/admin/listScroll";
 
 interface User {
   id: string;
@@ -126,10 +127,10 @@ export function UserList({ users, nodeTree, inviterRole }: UserListProps) {
           : `${filtered.length} of ${users.length} users`}
       </p>
 
-      {/* Table */}
-      <div className="rounded-lg border border-border bg-card shadow-sm overflow-x-auto">
+      {/* Table — scrolls internally so the page itself stays put */}
+      <div className={`${ADMIN_LIST_SCROLL} rounded-lg border border-border bg-card shadow-sm`}>
         <table className="w-full text-sm min-w-[560px]">
-          <thead>
+          <thead className={ADMIN_LIST_THEAD}>
             <tr className="bg-surface-muted text-left">
               <th className="px-5 py-3 font-medium text-foreground-muted">User</th>
               <th className="px-5 py-3 font-medium text-foreground-muted">Role</th>

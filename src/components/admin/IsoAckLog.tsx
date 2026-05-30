@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
+import { ADMIN_LIST_SCROLL, ADMIN_LIST_THEAD } from "@/components/admin/listScroll";
 
 interface AckRow {
   id: string;
@@ -238,10 +239,10 @@ export function IsoAckLog() {
         </div>
       )}
 
-      {/* Table */}
-      <div className="overflow-x-auto rounded-lg border border-border">
+      {/* Table — scrolls internally so the page itself stays put */}
+      <div className={`${ADMIN_LIST_SCROLL} rounded-lg border border-border`}>
         <table className="w-full text-sm">
-          <thead className="bg-surface-muted text-left">
+          <thead className={`${ADMIN_LIST_THEAD} bg-surface-muted text-left`}>
             <tr className="text-xs uppercase tracking-wide text-foreground-muted">
               <th className="px-4 py-2 font-medium">Acknowledged</th>
               <th className="px-4 py-2 font-medium">Employee</th>
