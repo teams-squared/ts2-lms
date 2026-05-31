@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useSyncExternalStore } from "react";
 
 /**
  * Greeting + rotating subline, computed from the *browser's* local clock.
@@ -10,10 +10,14 @@ import { useEffect, useState } from "react";
  * at 10am (04:30 UTC) was told they were "Burning the midnight oil". Time-of-day
  * copy must reflect the viewer's local time, which only the client knows.
  *
- * SSR renders the server's best guess (passed as initial*), then this island
- * recomputes on mount and corrects if they differ. suppressHydrationWarning
- * keeps React quiet about the expected text divergence.
+ * SSR renders the server's best guess (passed as initial*); once mounted, the
+ * client recomputes from the local clock and corrects if they differ.
+ * useSyncExternalStore gives a stable server snapshot (false) that matches the
+ * first client render, so hydration is clean; suppressHydrationWarning covers
+ * the post-mount text swap.
  */
+
+const emptySubscribe = () => () => {};
 
 function timeBasedGreeting(hour: number): string {
   if (hour < 5) return "Burning the midnight oil";
@@ -52,14 +56,20 @@ export function WelcomeGreeting({
   initialGreeting,
   initialSubline,
 }: WelcomeGreetingProps) {
-  const [greeting, setGreeting] = useState(initialGreeting);
-  const [sub, setSub] = useState(initialSubline);
+  // false during SSR and the first client render, true after mount.
+  const mounted = useSyncExternalStore(
+    emptySubscribe,
+    () => true,
+    () => false,
+  );
 
-  useEffect(() => {
+  let greeting = initialGreeting;
+  let sub = initialSubline;
+  if (mounted) {
     const now = new Date();
-    setGreeting(timeBasedGreeting(now.getHours()));
-    setSub(subline(firstName, now));
-  }, [firstName]);
+    greeting = timeBasedGreeting(now.getHours());
+    sub = subline(firstName, now);
+  }
 
   return (
     <>
