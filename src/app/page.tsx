@@ -234,6 +234,7 @@ export default async function HomePage() {
               percentComplete: c.percentComplete,
               continueUrl: c.continueUrl,
               isComplete: c.isComplete,
+              nextLessonTitle: c.isComplete ? undefined : c.firstIncompleteLessonTitle,
             }))}
             completedCount={completedCourses.length}
             hasEnrollments={enrichedEnrollments.length > 0}
