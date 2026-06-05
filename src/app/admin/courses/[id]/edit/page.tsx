@@ -23,13 +23,18 @@ export default async function CourseEditPage({
 
   const { id: courseId } = await params;
   const isAdmin = session.user!.role === "admin";
-  const [data, nodeTree, subs, managerData] = await Promise.all([
+  const [data, nodeTree, subs, sectors, requirementRows, managerData] = await Promise.all([
     loadCourseEditData(courseId, session.user!.id!, session.user!.role as Role),
     getNodeTree(),
     prisma.courseEmailSubscription.findMany({
       where: { courseId },
       select: { email: true },
       orderBy: { createdAt: "asc" },
+    }),
+    prisma.sector.findMany({ orderBy: { label: "asc" }, select: { id: true, label: true } }),
+    prisma.resourceClearanceRequirement.findMany({
+      where: { courseId },
+      select: { sectorId: true, tier: true, sector: { select: { label: true } } },
     }),
     isAdmin
       ? Promise.all([
@@ -75,6 +80,12 @@ export default async function CourseEditPage({
         initialNodeId={data.nodeId}
         nodeTree={nodeTree}
         initialSubscriptions={subs.map((s) => s.email)}
+        sectors={sectors}
+        initialRequirements={requirementRows.map((r) => ({
+          sectorId: r.sectorId,
+          sectorLabel: r.sector.label,
+          tier: r.tier,
+        }))}
       />
       {isAdmin && managerData && managerData[0] && (
         <div className="mt-8">

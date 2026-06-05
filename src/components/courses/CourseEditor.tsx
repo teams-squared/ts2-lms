@@ -4,6 +4,10 @@ import { useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { NodeTreeSelect } from "./NodeTreeSelect";
+import {
+  ClearanceRequirementEditor,
+  type ClearanceRequirementRow,
+} from "./ClearanceRequirementEditor";
 import { ConfirmDialog } from "@/components/ui/ConfirmDialog";
 import type { NodeTreeItem } from "./NodeTreeSelect";
 import type { CourseStatus } from "@/lib/types";
@@ -16,6 +20,10 @@ interface CourseEditorProps {
   initialNodeId: string | null;
   nodeTree: NodeTreeItem[];
   initialSubscriptions?: string[];
+  /** All sectors available to require. */
+  sectors?: { id: string; label: string }[];
+  /** Existing clearance requirements on this course. */
+  initialRequirements?: ClearanceRequirementRow[];
 }
 
 async function apiFetch<T>(url: string, options?: RequestInit): Promise<T> {
@@ -37,6 +45,8 @@ export function CourseEditor({
   initialNodeId,
   nodeTree,
   initialSubscriptions = [],
+  sectors = [],
+  initialRequirements = [],
 }: CourseEditorProps) {
   const router = useRouter();
 
@@ -55,6 +65,51 @@ export function CourseEditor({
   const [addingSub, setAddingSub] = useState(false);
   const [removingSub, setRemovingSub] = useState<string | null>(null);
   const [pendingRemoveSub, setPendingRemoveSub] = useState<string | null>(null);
+
+  // Clearance requirements
+  const [requirements, setRequirements] = useState<ClearanceRequirementRow[]>(initialRequirements);
+  const [reqError, setReqError] = useState<string | null>(null);
+  const [reqBusy, setReqBusy] = useState(false);
+
+  const handleAddRequirement = async (sectorId: string, tier: number) => {
+    setReqError(null);
+    setReqBusy(true);
+    try {
+      const row = await apiFetch<ClearanceRequirementRow>(
+        `/api/courses/${courseId}/clearance-requirements`,
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ sectorId, tier }),
+        },
+      );
+      setRequirements((prev) => [
+        ...prev.filter((r) => r.sectorId !== row.sectorId),
+        row,
+      ]);
+    } catch (err) {
+      setReqError(err instanceof Error ? err.message : "Failed to add requirement");
+      throw err;
+    } finally {
+      setReqBusy(false);
+    }
+  };
+
+  const handleRemoveRequirement = async (sectorId: string) => {
+    setReqError(null);
+    setReqBusy(true);
+    try {
+      await apiFetch(
+        `/api/courses/${courseId}/clearance-requirements?sectorId=${encodeURIComponent(sectorId)}`,
+        { method: "DELETE" },
+      );
+      setRequirements((prev) => prev.filter((r) => r.sectorId !== sectorId));
+    } catch (err) {
+      setReqError(err instanceof Error ? err.message : "Failed to remove requirement");
+    } finally {
+      setReqBusy(false);
+    }
+  };
 
   const handleSaveCourse = async () => {
     if (!title.trim()) {
@@ -191,6 +246,22 @@ export function CourseEditor({
             {courseSaving ? "Saving…" : "Save course"}
           </button>
         </div>
+      </section>
+
+      {/* Clearance requirements */}
+      <section className="rounded-lg border border-border bg-card p-6">
+        <h2 className="text-sm font-semibold text-foreground mb-1">
+          Clearance requirements
+        </h2>
+        <ClearanceRequirementEditor
+          requirements={requirements}
+          sectors={sectors}
+          onAdd={handleAddRequirement}
+          onRemove={handleRemoveRequirement}
+          busy={reqBusy}
+          error={reqError}
+          note="Restrict enrollment to cleared users. A learner needs to satisfy ANY one requirement (admins bypass). Lower tier = more protected (0 = most restricted). No requirement = open to everyone."
+        />
       </section>
 
       {/* Modules & Lessons — now managed on a dedicated page */}
