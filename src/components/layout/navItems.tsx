@@ -26,10 +26,15 @@ export const BASE_NAV_ITEMS: NavItem[] = [
   { href: "/", label: "Home", icon: Home },
   { href: "/courses", label: "Courses", icon: GraduationCap },
   { href: "/policies", label: "Policies", icon: ShieldCheck },
-  // Shown to all members; the page is clearance-gated and empty-states for
-  // anyone without a matching clearance (e.g. contractors). No data leaks.
-  { href: "/internal-docs", label: "Internal docs", icon: FolderLock },
 ];
+
+/** Internal-only — shown when the user is an internal member (admin or holds
+ *  a clearance). The /internal-docs route gate enforces this server-side. */
+export const INTERNAL_DOCS_NAV_ITEM: NavItem = {
+  href: "/internal-docs",
+  label: "Internal docs",
+  icon: FolderLock,
+};
 
 export const ADMIN_NAV_ITEM: NavItem = {
   href: "/admin",
@@ -45,10 +50,12 @@ export const COURSE_MANAGER_NAV_ITEM: NavItem = {
   manage: true,
 };
 
-/** Nav items visible to the given role (admins/CMs get a management entry). */
-export function getVisibleNavItems(role?: Role): NavItem[] {
+/** Nav items visible to the given role (admins/CMs get a management entry).
+ *  `internal` adds the internal-docs entry for internal members. */
+export function getVisibleNavItems(role?: Role, internal?: boolean): NavItem[] {
   return [
     ...BASE_NAV_ITEMS,
+    ...(internal ? [INTERNAL_DOCS_NAV_ITEM] : []),
     ...(role === "admin"
       ? [ADMIN_NAV_ITEM]
       : role === "course_manager"

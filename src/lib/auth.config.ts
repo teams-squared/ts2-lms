@@ -13,6 +13,10 @@ declare module "next-auth" {
       email?: string | null;
       image?: string | null;
       role: Role;
+      /** True when the user is an internal member (admin or holds >= 1
+       *  clearance). Drives internal-docs nav visibility. Computed at login;
+       *  the /internal-docs route gate re-checks live. */
+      internal?: boolean;
     };
   }
 }
@@ -22,6 +26,7 @@ declare module "next-auth" {
     id?: string;
     role?: Role;
     picture?: string | null;
+    internal?: boolean;
   }
 }
 
@@ -50,6 +55,7 @@ export const authConfig: NextAuthConfig = {
         session.user.id = (token.id as string) || token.sub || "";
         session.user.role = (token.role as Role) || "employee";
         session.user.image = (token.picture as string) || null;
+        session.user.internal = Boolean(token.internal);
       }
       return session;
     },

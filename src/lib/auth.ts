@@ -92,6 +92,13 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
           token.id = dbUser.id;
           token.role = prismaRoleToApp(dbUser.role);
           token.picture = dbUser.avatar ?? null;
+          // Internal = admin or holds >= 1 clearance. Drives internal-docs nav
+          // visibility; the route gate re-checks live so a fresh grant isn't
+          // locked out before the next login.
+          const clearanceCount = await prisma.userClearance.count({
+            where: { userId: dbUser.id },
+          });
+          token.internal = dbUser.role === "ADMIN" || clearanceCount > 0;
         } catch (err) {
           console.error("[auth] jwt callback DB error:", err);
           token.role = "employee";

@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { redirect } from "next/navigation";
+import { notFound, redirect } from "next/navigation";
 import { FileText, FolderLock, Plus } from "lucide-react";
 import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
@@ -21,6 +21,11 @@ export default async function InternalDocsPage() {
   const userId = session.user.id;
   const role = session.user.role as Role;
 
+  // Authoritative gate (live): only internal members reach the library at all.
+  // Contractors / clearance-less users get a 404 — not even an empty shell.
+  const isInternal = role === "admin" || (await hasAnyClearance(userId));
+  if (!isInternal) notFound();
+
   const docs = await prisma.internalDoc.findMany({
     orderBy: [{ sortOrder: "asc" }, { createdAt: "desc" }],
     select: {
@@ -40,8 +45,9 @@ export default async function InternalDocsPage() {
   );
   const visible = docs.filter((d) => accessible.has(d.id));
 
-  // "New document" is available to anyone holding a clearance (or admin).
-  const canAuthor = role === "admin" || (await hasAnyClearance(userId));
+  // "New document" is available to any internal member (same condition as
+  // the route gate above).
+  const canAuthor = isInternal;
 
   // Group by category; uncategorised last.
   const groups = new Map<string, typeof visible>();
