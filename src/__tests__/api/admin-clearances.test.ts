@@ -32,13 +32,16 @@ describe("GET /api/admin/users/[userId]/clearances", () => {
     expect(res.status).toBe(401);
   });
 
-  it("returns list of clearances for admin", async () => {
-    mockAuth.mockResolvedValue(
-      mockSession({ id: "admin-id", role: "admin" }),
-    );
+  it("returns the user's sector grants for admin", async () => {
+    mockAuth.mockResolvedValue(mockSession({ id: "admin-id", role: "admin" }));
     const grantedAt = new Date();
     mockPrisma.userClearance.findMany.mockResolvedValue([
-      { id: "uc1", clearance: "secret", userId: "u1", grantedAt },
+      {
+        sectorId: "sec-cyber",
+        tier: 1,
+        grantedAt,
+        sector: { key: "cybersecurity", label: "Cybersecurity" },
+      },
     ]);
 
     const res = await GET(new Request("http://localhost"), {
@@ -48,8 +51,9 @@ describe("GET /api/admin/users/[userId]/clearances", () => {
 
     const body = await res.json();
     expect(body).toHaveLength(1);
-    expect(body[0].id).toBe("uc1");
-    expect(body[0].clearance).toBe("secret");
+    expect(body[0].sectorId).toBe("sec-cyber");
+    expect(body[0].tier).toBe(1);
+    expect(body[0].sector.label).toBe("Cybersecurity");
   });
 });
 
@@ -64,107 +68,90 @@ describe("POST /api/admin/users/[userId]/clearances", () => {
     );
     const req = new Request("http://localhost", {
       method: "POST",
-      body: JSON.stringify({ clearance: "secret" }),
+      body: JSON.stringify({ sectorId: "sec-cyber", tier: 1 }),
       headers: { "Content-Type": "application/json" },
     });
-    const res = await POST(req, {
-      params: Promise.resolve({ userId: "u1" }),
-    });
+    const res = await POST(req, { params: Promise.resolve({ userId: "u1" }) });
     expect(res.status).toBe(403);
   });
 
-  it("returns 400 when clearance is missing", async () => {
-    mockAuth.mockResolvedValue(
-      mockSession({ id: "admin-id", role: "admin" }),
-    );
+  it("returns 400 when sectorId is missing", async () => {
+    mockAuth.mockResolvedValue(mockSession({ id: "admin-id", role: "admin" }));
     const req = new Request("http://localhost", {
       method: "POST",
-      body: JSON.stringify({}),
+      body: JSON.stringify({ tier: 1 }),
       headers: { "Content-Type": "application/json" },
     });
-    const res = await POST(req, {
-      params: Promise.resolve({ userId: "u1" }),
+    const res = await POST(req, { params: Promise.resolve({ userId: "u1" }) });
+    expect(res.status).toBe(400);
+  });
+
+  it("returns 400 when tier is negative or non-integer", async () => {
+    mockAuth.mockResolvedValue(mockSession({ id: "admin-id", role: "admin" }));
+    const req = new Request("http://localhost", {
+      method: "POST",
+      body: JSON.stringify({ sectorId: "sec-cyber", tier: -1 }),
+      headers: { "Content-Type": "application/json" },
     });
+    const res = await POST(req, { params: Promise.resolve({ userId: "u1" }) });
     expect(res.status).toBe(400);
   });
 
   it("returns 404 when user not found", async () => {
-    mockAuth.mockResolvedValue(
-      mockSession({ id: "admin-id", role: "admin" }),
-    );
+    mockAuth.mockResolvedValue(mockSession({ id: "admin-id", role: "admin" }));
     mockPrisma.user.findUnique.mockResolvedValue(null);
+    mockPrisma.sector.findUnique.mockResolvedValue({ id: "sec-cyber" });
 
     const req = new Request("http://localhost", {
       method: "POST",
-      body: JSON.stringify({ clearance: "secret" }),
+      body: JSON.stringify({ sectorId: "sec-cyber", tier: 1 }),
       headers: { "Content-Type": "application/json" },
     });
-    const res = await POST(req, {
-      params: Promise.resolve({ userId: "u1" }),
-    });
+    const res = await POST(req, { params: Promise.resolve({ userId: "u1" }) });
     expect(res.status).toBe(404);
   });
 
-  it("creates clearance via upsert and returns 201", async () => {
-    mockAuth.mockResolvedValue(
-      mockSession({ id: "admin-id", role: "admin" }),
-    );
-    mockPrisma.user.findUnique.mockResolvedValue({
-      id: "u1",
-      name: "User One",
+  it("returns 404 when sector not found", async () => {
+    mockAuth.mockResolvedValue(mockSession({ id: "admin-id", role: "admin" }));
+    mockPrisma.user.findUnique.mockResolvedValue({ id: "u1" });
+    mockPrisma.sector.findUnique.mockResolvedValue(null);
+
+    const req = new Request("http://localhost", {
+      method: "POST",
+      body: JSON.stringify({ sectorId: "sec-missing", tier: 1 }),
+      headers: { "Content-Type": "application/json" },
     });
+    const res = await POST(req, { params: Promise.resolve({ userId: "u1" }) });
+    expect(res.status).toBe(404);
+  });
+
+  it("upserts the grant and returns 201", async () => {
+    mockAuth.mockResolvedValue(mockSession({ id: "admin-id", role: "admin" }));
+    mockPrisma.user.findUnique.mockResolvedValue({ id: "u1" });
+    mockPrisma.sector.findUnique.mockResolvedValue({ id: "sec-cyber" });
     mockPrisma.userClearance.upsert.mockResolvedValue({
-      id: "uc-new",
-      userId: "u1",
-      clearance: "secret",
+      sectorId: "sec-cyber",
+      tier: 2,
       grantedAt: new Date(),
+      sector: { key: "cybersecurity", label: "Cybersecurity" },
     });
 
     const req = new Request("http://localhost", {
       method: "POST",
-      body: JSON.stringify({ clearance: "secret" }),
+      body: JSON.stringify({ sectorId: "sec-cyber", tier: 2 }),
       headers: { "Content-Type": "application/json" },
     });
-    const res = await POST(req, {
-      params: Promise.resolve({ userId: "u1" }),
-    });
+    const res = await POST(req, { params: Promise.resolve({ userId: "u1" }) });
     expect(res.status).toBe(201);
 
     const body = await res.json();
-    expect(body.id).toBe("uc-new");
-    expect(body.clearance).toBe("secret");
-  });
-
-  it("normalizes clearance to trimmed lowercase", async () => {
-    mockAuth.mockResolvedValue(
-      mockSession({ id: "admin-id", role: "admin" }),
-    );
-    mockPrisma.user.findUnique.mockResolvedValue({
-      id: "u1",
-      name: "User One",
-    });
-    mockPrisma.userClearance.upsert.mockResolvedValue({
-      id: "uc-new",
-      userId: "u1",
-      clearance: "secret",
-      grantedAt: new Date(),
-    });
-
-    const req = new Request("http://localhost", {
-      method: "POST",
-      body: JSON.stringify({ clearance: "  SECRET  " }),
-      headers: { "Content-Type": "application/json" },
-    });
-    const res = await POST(req, {
-      params: Promise.resolve({ userId: "u1" }),
-    });
-    expect(res.status).toBe(201);
-
+    expect(body.sectorId).toBe("sec-cyber");
+    expect(body.tier).toBe(2);
     expect(mockPrisma.userClearance.upsert).toHaveBeenCalledWith(
       expect.objectContaining({
-        where: { userId_clearance: { userId: "u1", clearance: "secret" } },
-        create: { userId: "u1", clearance: "secret" },
-        update: {},
+        where: { userId_sectorId: { userId: "u1", sectorId: "sec-cyber" } },
+        create: { userId: "u1", sectorId: "sec-cyber", tier: 2 },
+        update: { tier: 2 },
       }),
     );
   });

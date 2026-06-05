@@ -1,10 +1,41 @@
 import { prisma } from "@/lib/prisma";
 import type { Role } from "@/lib/types";
+import {
+  satisfiesClearance,
+  describeRequirements,
+  loadUserTiers,
+  type ClearanceRequirement,
+  type UserTierMap,
+} from "@/lib/clearance";
 
 export interface EligibilityResult {
   eligible: boolean;
   missingPrerequisites: { id: string; title: string }[];
-  missingClearance: string | null;
+  /** True when the course carries clearance requirements the user fails. */
+  clearanceLocked: boolean;
+  /** Human-readable summary of the requirement(s), e.g.
+   *  "Cybersecurity tier ≤2 or Finance tier ≤1". Null when not locked. */
+  clearanceHint: string | null;
+}
+
+/** Shape of the clearance-requirement rows we select for hints. */
+type ReqWithLabel = { sectorId: string; tier: number; sector: { label: string } };
+
+const clearanceRequirementSelect = {
+  select: { sectorId: true, tier: true, sector: { select: { label: true } } },
+} as const;
+
+function evalClearance(
+  reqs: ReqWithLabel[],
+  tiers: UserTierMap,
+): { locked: boolean; hint: string | null } {
+  const plain: ClearanceRequirement[] = reqs.map((r) => ({
+    sectorId: r.sectorId,
+    tier: r.tier,
+  }));
+  // Courses default OPEN when they carry no requirements (emptyDefault = true).
+  const locked = !satisfiesClearance(plain, tiers, true);
+  return { locked, hint: locked ? describeRequirements(reqs) : null };
 }
 
 /**
@@ -17,13 +48,13 @@ export async function checkCourseEligibility(
   courseId: string,
 ): Promise<EligibilityResult> {
   if (role === "admin") {
-    return { eligible: true, missingPrerequisites: [], missingClearance: null };
+    return { eligible: true, missingPrerequisites: [], clearanceLocked: false, clearanceHint: null };
   }
 
   const course = await prisma.course.findUnique({
     where: { id: courseId },
     select: {
-      requiredClearance: true,
+      clearanceRequirements: clearanceRequirementSelect,
       prerequisites: {
         select: {
           prerequisite: {
@@ -35,24 +66,16 @@ export async function checkCourseEligibility(
   });
 
   if (!course) {
-    return { eligible: false, missingPrerequisites: [], missingClearance: null };
+    return { eligible: false, missingPrerequisites: [], clearanceLocked: false, clearanceHint: null };
   }
 
-  // Check clearance requirement
-  let missingClearance: string | null = null;
-  if (course.requiredClearance) {
-    const clearance = await prisma.userClearance.findUnique({
-      where: {
-        userId_clearance: {
-          userId,
-          clearance: course.requiredClearance,
-        },
-      },
-    });
-    if (!clearance) {
-      missingClearance = course.requiredClearance;
-    }
-  }
+  // Clearance — ANY-satisfies across the course's requirements.
+  const tiers =
+    course.clearanceRequirements.length > 0 ? await loadUserTiers(userId) : new Map<string, number>();
+  const { locked: clearanceLocked, hint: clearanceHint } = evalClearance(
+    course.clearanceRequirements,
+    tiers,
+  );
 
   // Check prerequisite completion
   const missingPrerequisites: { id: string; title: string }[] = [];
@@ -67,9 +90,10 @@ export async function checkCourseEligibility(
   }
 
   return {
-    eligible: missingClearance === null && missingPrerequisites.length === 0,
+    eligible: !clearanceLocked && missingPrerequisites.length === 0,
     missingPrerequisites,
-    missingClearance,
+    clearanceLocked,
+    clearanceHint,
   };
 }
 
@@ -116,7 +140,7 @@ export async function checkCourseEligibilityBatch(
 
   if (role === "admin") {
     for (const id of courseIds) {
-      out.set(id, { eligible: true, missingPrerequisites: [], missingClearance: null });
+      out.set(id, { eligible: true, missingPrerequisites: [], clearanceLocked: false, clearanceHint: null });
     }
     return out;
   }
@@ -125,7 +149,7 @@ export async function checkCourseEligibilityBatch(
     where: { id: { in: courseIds } },
     select: {
       id: true,
-      requiredClearance: true,
+      clearanceRequirements: clearanceRequirementSelect,
       prerequisites: {
         select: { prerequisite: { select: { id: true, title: true } } },
       },
@@ -139,20 +163,15 @@ export async function checkCourseEligibilityBatch(
     ),
   ];
 
-  // Single-query fetch of all clearances user has + all prereq lessons + all completion records
-  const [userClearances, prereqLessons, completed] = await Promise.all([
-    prisma.userClearance.findMany({
-      where: { userId },
-      select: { clearance: true },
-    }),
+  // Single-query fetch of all clearances user has + all prereq lessons
+  const [tiers, prereqLessons] = await Promise.all([
+    loadUserTiers(userId),
     prereqCourseIds.length > 0
       ? prisma.lesson.findMany({
           where: { module: { courseId: { in: prereqCourseIds } } },
           select: { id: true, module: { select: { courseId: true } } },
         })
       : Promise.resolve([] as { id: string; module: { courseId: string } }[]),
-    // Placeholder — resolved after lessonIds known
-    Promise.resolve(null as unknown as Array<{ lessonId: string }>),
   ]);
 
   const lessonsByPrereq = new Map<string, string[]>();
@@ -173,21 +192,19 @@ export async function checkCourseEligibilityBatch(
           select: { lessonId: true },
         })
       : [];
-  void completed;
   const completedSet = new Set(completedRecords.map((r) => r.lessonId));
-  const clearanceSet = new Set(userClearances.map((c) => c.clearance));
 
   for (const courseId of courseIds) {
     const course = courses.find((c) => c.id === courseId);
     if (!course) {
-      out.set(courseId, { eligible: false, missingPrerequisites: [], missingClearance: null });
+      out.set(courseId, { eligible: false, missingPrerequisites: [], clearanceLocked: false, clearanceHint: null });
       continue;
     }
 
-    let missingClearance: string | null = null;
-    if (course.requiredClearance && !clearanceSet.has(course.requiredClearance)) {
-      missingClearance = course.requiredClearance;
-    }
+    const { locked: clearanceLocked, hint: clearanceHint } = evalClearance(
+      course.clearanceRequirements,
+      tiers,
+    );
 
     const missingPrerequisites: { id: string; title: string }[] = [];
     for (const { prerequisite } of course.prerequisites) {
@@ -202,9 +219,10 @@ export async function checkCourseEligibilityBatch(
     }
 
     out.set(courseId, {
-      eligible: missingClearance === null && missingPrerequisites.length === 0,
+      eligible: !clearanceLocked && missingPrerequisites.length === 0,
       missingPrerequisites,
-      missingClearance,
+      clearanceLocked,
+      clearanceHint,
     });
   }
 

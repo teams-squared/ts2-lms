@@ -7,10 +7,15 @@ const { checkCourseEligibilityBatch } = await import(
   "@/lib/course-eligibility"
 );
 
+// Clearance-requirement row shape as selected by the batch helper.
+const req = (sectorId: string, tier: number, label = sectorId) => ({
+  sectorId,
+  tier,
+  sector: { label },
+});
+
 beforeEach(() => {
-  // Use resetAllMocks (not clearAllMocks) so queued mockResolvedValueOnce
-  // values from a prior test don't leak into the next. resetAllMocks clears
-  // BOTH state and the implementation queue.
+  // resetAllMocks clears both state and queued mockResolvedValueOnce values.
   vi.resetAllMocks();
 });
 
@@ -44,19 +49,20 @@ describe("checkCourseEligibilityBatch", () => {
     const entry = result.get("c-missing");
     expect(entry?.eligible).toBe(false);
     expect(entry?.missingPrerequisites).toEqual([]);
-    expect(entry?.missingClearance).toBeNull();
+    expect(entry?.clearanceLocked).toBe(false);
+    expect(entry?.clearanceHint).toBeNull();
   });
 
-  it("flags missing clearance and not the prereq when only clearance is unmet", async () => {
+  it("locks on clearance (and not prereq) when only clearance is unmet", async () => {
     mockPrisma.course.findMany.mockResolvedValueOnce([
       {
         id: "c-1",
-        requiredClearance: "SECRET",
+        clearanceRequirements: [req("cyber", 1, "Cybersecurity")],
         prerequisites: [],
       },
     ]);
     mockPrisma.userClearance.findMany.mockResolvedValueOnce([
-      { clearance: "PUBLIC" },
+      { sectorId: "cyber", tier: 3 }, // too high → locked
     ]);
     mockPrisma.lesson.findMany.mockResolvedValueOnce([]);
 
@@ -64,17 +70,22 @@ describe("checkCourseEligibilityBatch", () => {
 
     expect(result.get("c-1")).toEqual({
       eligible: false,
-      missingClearance: "SECRET",
       missingPrerequisites: [],
+      clearanceLocked: true,
+      clearanceHint: "Cybersecurity tier ≤1",
     });
   });
 
-  it("flags eligible when user holds the required clearance", async () => {
+  it("eligible when user holds a sufficient tier", async () => {
     mockPrisma.course.findMany.mockResolvedValueOnce([
-      { id: "c-1", requiredClearance: "SECRET", prerequisites: [] },
+      {
+        id: "c-1",
+        clearanceRequirements: [req("cyber", 2, "Cybersecurity")],
+        prerequisites: [],
+      },
     ]);
     mockPrisma.userClearance.findMany.mockResolvedValueOnce([
-      { clearance: "SECRET" },
+      { sectorId: "cyber", tier: 1 }, // 1 <= 2 → ok
     ]);
     mockPrisma.lesson.findMany.mockResolvedValueOnce([]);
 
@@ -86,14 +97,13 @@ describe("checkCourseEligibilityBatch", () => {
     mockPrisma.course.findMany.mockResolvedValueOnce([
       {
         id: "c-1",
-        requiredClearance: null,
+        clearanceRequirements: [],
         prerequisites: [
           { prerequisite: { id: "pre-empty", title: "Empty pre" } },
         ],
       },
     ]);
     mockPrisma.userClearance.findMany.mockResolvedValueOnce([]);
-    // No lessons exist for the prereq course — treat as not completed.
     mockPrisma.lesson.findMany.mockResolvedValueOnce([]);
 
     const result = await checkCourseEligibilityBatch("u1", "employee", ["c-1"]);
@@ -109,7 +119,7 @@ describe("checkCourseEligibilityBatch", () => {
     mockPrisma.course.findMany.mockResolvedValueOnce([
       {
         id: "c-1",
-        requiredClearance: null,
+        clearanceRequirements: [],
         prerequisites: [{ prerequisite: { id: "pre-A", title: "Pre A" } }],
       },
     ]);
@@ -134,7 +144,7 @@ describe("checkCourseEligibilityBatch", () => {
     mockPrisma.course.findMany.mockResolvedValueOnce([
       {
         id: "c-1",
-        requiredClearance: null,
+        clearanceRequirements: [],
         prerequisites: [{ prerequisite: { id: "pre-A", title: "Pre A" } }],
       },
     ]);
@@ -153,16 +163,15 @@ describe("checkCourseEligibilityBatch", () => {
   });
 
   it("dedupes prerequisite course ids across the batch", async () => {
-    // Two courses share the same prerequisite — should only fetch its lessons once.
     mockPrisma.course.findMany.mockResolvedValueOnce([
       {
         id: "c-1",
-        requiredClearance: null,
+        clearanceRequirements: [],
         prerequisites: [{ prerequisite: { id: "pre-shared", title: "Shared" } }],
       },
       {
         id: "c-2",
-        requiredClearance: null,
+        clearanceRequirements: [],
         prerequisites: [{ prerequisite: { id: "pre-shared", title: "Shared" } }],
       },
     ]);
@@ -181,21 +190,18 @@ describe("checkCourseEligibilityBatch", () => {
 
     expect(result.get("c-1")?.eligible).toBe(true);
     expect(result.get("c-2")?.eligible).toBe(true);
-    // lesson.findMany should be invoked once with the deduped list.
     const lessonArgs = mockPrisma.lesson.findMany.mock.calls[0][0];
     expect(lessonArgs.where.module.courseId.in).toEqual(["pre-shared"]);
   });
 
   it("skips lesson and progress queries when no course has prerequisites", async () => {
     mockPrisma.course.findMany.mockResolvedValueOnce([
-      { id: "c-1", requiredClearance: null, prerequisites: [] },
+      { id: "c-1", clearanceRequirements: [], prerequisites: [] },
     ]);
     mockPrisma.userClearance.findMany.mockResolvedValueOnce([]);
 
     await checkCourseEligibilityBatch("u1", "employee", ["c-1"]);
 
-    // No prereq course IDs → the `prereqCourseIds.length > 0` branch falls to
-    // the empty-Promise fallback, so lesson.findMany should not be called.
     expect(mockPrisma.lesson.findMany).not.toHaveBeenCalled();
     expect(mockPrisma.lessonProgress.findMany).not.toHaveBeenCalled();
   });

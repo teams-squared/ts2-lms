@@ -186,8 +186,12 @@ export default async function CourseCatalogPage({
         if (elig?.missingPrerequisites.length) {
           parts.push(`Complete: ${elig.missingPrerequisites.map((p) => p.title).join(", ")}`);
         }
-        if (elig?.missingClearance) {
-          parts.push(`Requires ${elig.missingClearance.toUpperCase()} clearance`);
+        if (elig?.clearanceLocked) {
+          parts.push(
+            elig.clearanceHint
+              ? `Requires clearance: ${elig.clearanceHint}`
+              : "Requires additional clearance",
+          );
         }
         eligibilityMap.set(c.id, { locked: true, lockReason: parts.join(". ") });
       } else {

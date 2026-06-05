@@ -25,8 +25,11 @@ const baseProps = {
   userEmail: "alice@example.com",
   userName: "Alice",
   initialRole: "employee" as const,
-  initialClearances: [] as string[],
-  availableClearances: ["SECRET", "TOP_SECRET"],
+  initialGrants: [] as { sectorId: string; sectorLabel: string; tier: number }[],
+  sectors: [
+    { id: "sec-cyber", label: "Cybersecurity" },
+    { id: "sec-finance", label: "Finance" },
+  ],
   enrollmentCount: 2,
   authoredCourseCount: 0,
   sessionUserId: "admin-1",
@@ -113,16 +116,16 @@ describe("UserDetailManager — clearances card", () => {
     wrap(
       <UserDetailManager
         {...baseProps}
-        initialClearances={["SECRET"]}
+        initialGrants={[{ sectorId: "sec-cyber", sectorLabel: "Cybersecurity", tier: 1 }]}
       />,
     );
-    expect(screen.getAllByText("SECRET").length).toBeGreaterThan(0);
+    expect(screen.getByText(/Cybersecurity · tier 1/)).toBeInTheDocument();
     expect(
-      screen.getByLabelText("Revoke SECRET clearance"),
+      screen.getByLabelText("Revoke Cybersecurity clearance"),
     ).toBeInTheDocument();
   });
 
-  it("disables Grant when no clearance is selected", () => {
+  it("disables Grant when no sector is selected", () => {
     wrap(<UserDetailManager {...baseProps} />);
     expect(
       screen.getByLabelText("Grant clearance").hasAttribute("disabled"),
@@ -132,8 +135,8 @@ describe("UserDetailManager — clearances card", () => {
   it("POSTs to /clearances when Grant is clicked with a selection", async () => {
     fetchSpy.mockResolvedValueOnce({ ok: true } as Response);
     wrap(<UserDetailManager {...baseProps} />);
-    fireEvent.change(screen.getByLabelText("Select clearance to grant"), {
-      target: { value: "SECRET" },
+    fireEvent.change(screen.getByLabelText("Select sector to grant"), {
+      target: { value: "sec-cyber" },
     });
     fireEvent.click(screen.getByLabelText("Grant clearance"));
     expect(fetchSpy).toHaveBeenCalledWith(

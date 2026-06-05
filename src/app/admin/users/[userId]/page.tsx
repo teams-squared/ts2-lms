@@ -33,16 +33,20 @@ export default async function AdminUserDetailPage({
 
   if (!user) notFound();
 
-  const [userClearances, distinctClearances, enrollmentCount, authoredCount, overdueList, enrollments] =
+  const [userClearances, sectors, enrollmentCount, authoredCount, overdueList, enrollments] =
     await Promise.all([
       prisma.userClearance.findMany({
         where: { userId },
         orderBy: { grantedAt: "asc" },
+        select: {
+          sectorId: true,
+          tier: true,
+          sector: { select: { label: true } },
+        },
       }),
-      prisma.course.findMany({
-        where: { requiredClearance: { not: null } },
-        select: { requiredClearance: true },
-        distinct: ["requiredClearance"],
+      prisma.sector.findMany({
+        orderBy: { label: "asc" },
+        select: { id: true, label: true },
       }),
       prisma.enrollment.count({ where: { userId } }),
       prisma.course.count({ where: { createdById: userId } }),
@@ -96,9 +100,11 @@ export default async function AdminUserDetailPage({
     };
   });
 
-  const availableClearances = distinctClearances
-    .map((c) => c.requiredClearance!)
-    .filter((cl) => !userClearances.some((uc) => uc.clearance === cl));
+  const initialGrants = userClearances.map((uc) => ({
+    sectorId: uc.sectorId,
+    sectorLabel: uc.sector.label,
+    tier: uc.tier,
+  }));
 
   const sessionUserId = session.user!.id!;
 
@@ -121,8 +127,8 @@ export default async function AdminUserDetailPage({
         userEmail={user.email}
         userName={user.name}
         initialRole={prismaRoleToApp(user.role)}
-        initialClearances={userClearances.map((uc) => uc.clearance)}
-        availableClearances={availableClearances}
+        initialGrants={initialGrants}
+        sectors={sectors}
         enrollmentCount={enrollmentCount}
         authoredCourseCount={authoredCount}
         sessionUserId={sessionUserId}
