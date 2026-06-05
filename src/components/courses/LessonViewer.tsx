@@ -94,6 +94,9 @@ interface LessonViewerProps {
   /** Used by LINK lessons to suppress the "Opening unlocks Mark complete"
    *  hint on re-visit of an already-completed lesson. */
   alreadyCompleted?: boolean;
+  /** Override the SharePoint-video proxy URL. Defaults to the course lesson
+   *  endpoint; the internal-docs viewer passes its own clearance-gated proxy. */
+  videoSrc?: string;
 }
 
 function PdfViewer({ proxyUrl, fileName }: { proxyUrl: string; fileName: string }) {
@@ -200,6 +203,7 @@ export function LessonViewer({
   content,
   lessonId,
   alreadyCompleted = false,
+  videoSrc,
 }: LessonViewerProps) {
   if (type === "link") {
     return (
@@ -308,10 +312,10 @@ export function LessonViewer({
     return (
       <div>
         <LessonTitleHeader title={title} type="video" />
-        {videoRef && lessonId ? (
+        {videoRef && (videoSrc || lessonId) ? (
           <div className="aspect-video overflow-hidden rounded-lg bg-black">
             <video
-              src={`/api/lessons/${lessonId}/video`}
+              src={videoSrc ?? `/api/lessons/${lessonId}/video`}
               controls
               preload="metadata"
               className="h-full w-full"

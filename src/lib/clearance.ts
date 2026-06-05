@@ -118,6 +118,34 @@ export async function hasAnyClearance(userId: string): Promise<boolean> {
 }
 
 /**
+ * Sectors a user may stamp as a requirement when authoring, plus the minimum
+ * tier they may set per sector (their own held tier — they can require their
+ * tier or any less-protected/higher-numbered tier). Admins get every sector and
+ * no minimum constraint.
+ */
+export async function loadAuthorSectorOptions(
+  userId: string,
+  role: Role,
+): Promise<{ sectors: { id: string; label: string }[]; minTierBySector?: Record<string, number> }> {
+  if (role === "admin") {
+    const all = await prisma.sector.findMany({
+      orderBy: { label: "asc" },
+      select: { id: true, label: true },
+    });
+    return { sectors: all };
+  }
+  const grants = await prisma.userClearance.findMany({
+    where: { userId },
+    select: { tier: true, sector: { select: { id: true, label: true } } },
+    orderBy: { sector: { label: "asc" } },
+  });
+  return {
+    sectors: grants.map((g) => ({ id: g.sector.id, label: g.sector.label })),
+    minTierBySector: Object.fromEntries(grants.map((g) => [g.sector.id, g.tier])),
+  };
+}
+
+/**
  * Human-readable summary of a resource's requirements, e.g.
  * "Cybersecurity tier ≤2 or Finance tier ≤1". Used for course lock hints.
  */

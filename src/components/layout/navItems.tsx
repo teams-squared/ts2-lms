@@ -5,6 +5,7 @@ import {
   Shield,
   ShieldCheck,
   BookOpenCheck,
+  FolderLock,
 } from "lucide-react";
 import type { Role } from "@/lib/types";
 
@@ -25,6 +26,9 @@ export const BASE_NAV_ITEMS: NavItem[] = [
   { href: "/", label: "Home", icon: Home },
   { href: "/courses", label: "Courses", icon: GraduationCap },
   { href: "/policies", label: "Policies", icon: ShieldCheck },
+  // Shown to all members; the page is clearance-gated and empty-states for
+  // anyone without a matching clearance (e.g. contractors). No data leaks.
+  { href: "/internal-docs", label: "Internal docs", icon: FolderLock },
 ];
 
 export const ADMIN_NAV_ITEM: NavItem = {
