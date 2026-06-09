@@ -5,6 +5,7 @@ import {
   Shield,
   ShieldCheck,
   BookOpenCheck,
+  FolderLock,
 } from "lucide-react";
 import type { Role } from "@/lib/types";
 
@@ -27,6 +28,14 @@ export const BASE_NAV_ITEMS: NavItem[] = [
   { href: "/policies", label: "Policies", icon: ShieldCheck },
 ];
 
+/** Internal-only — shown when the user is an internal member (admin or holds
+ *  a clearance). The /internal-docs route gate enforces this server-side. */
+export const INTERNAL_DOCS_NAV_ITEM: NavItem = {
+  href: "/internal-docs",
+  label: "Internal docs",
+  icon: FolderLock,
+};
+
 export const ADMIN_NAV_ITEM: NavItem = {
   href: "/admin",
   label: "Admin",
@@ -41,10 +50,12 @@ export const COURSE_MANAGER_NAV_ITEM: NavItem = {
   manage: true,
 };
 
-/** Nav items visible to the given role (admins/CMs get a management entry). */
-export function getVisibleNavItems(role?: Role): NavItem[] {
+/** Nav items visible to the given role (admins/CMs get a management entry).
+ *  `internal` adds the internal-docs entry for internal members. */
+export function getVisibleNavItems(role?: Role, internal?: boolean): NavItem[] {
   return [
     ...BASE_NAV_ITEMS,
+    ...(internal ? [INTERNAL_DOCS_NAV_ITEM] : []),
     ...(role === "admin"
       ? [ADMIN_NAV_ITEM]
       : role === "course_manager"

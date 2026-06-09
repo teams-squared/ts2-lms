@@ -68,7 +68,7 @@ export function Sidebar({ className }: SidebarProps) {
     }
   }, [pinned, mounted]);
 
-  const visibleItems = getVisibleNavItems(session?.user?.role);
+  const visibleItems = getVisibleNavItems(session?.user?.role, session?.user?.internal);
 
   // When `collapsible` is true (unpinned mode), labels and brand text are
   // hidden at the 64px rail and fade in only when the parent `aside.group`

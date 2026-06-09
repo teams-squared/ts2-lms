@@ -66,10 +66,10 @@ export async function GET(request: Request) {
             `Complete prerequisites: ${elig.missingPrerequisites.map((p) => p.title).join(", ")}`,
           );
         }
-        if (elig.missingClearance) {
-          parts.push(
-            `Requires ${elig.missingClearance} clearance`,
-          );
+        if (elig.clearanceLocked && elig.clearanceHint) {
+          parts.push(`Requires clearance: ${elig.clearanceHint}`);
+        } else if (elig.clearanceLocked) {
+          parts.push("Requires additional clearance");
         }
         lockReason = parts.join(". ");
       }

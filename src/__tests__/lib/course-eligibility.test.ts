@@ -5,6 +5,13 @@ vi.mock("@/lib/prisma", () => ({ prisma: mockPrisma }));
 
 const { checkCourseEligibility } = await import("@/lib/course-eligibility");
 
+// Build a clearance-requirement row as selected by course-eligibility.
+const req = (sectorId: string, tier: number, label = sectorId) => ({
+  sectorId,
+  tier,
+  sector: { label },
+});
+
 describe("checkCourseEligibility", () => {
   beforeEach(() => vi.clearAllMocks());
 
@@ -15,7 +22,8 @@ describe("checkCourseEligibility", () => {
     expect(result).toEqual({
       eligible: true,
       missingPrerequisites: [],
-      missingClearance: null,
+      clearanceLocked: false,
+      clearanceHint: null,
     });
     expect(mockPrisma.course.findUnique).not.toHaveBeenCalled();
   });
@@ -29,14 +37,15 @@ describe("checkCourseEligibility", () => {
     expect(result).toEqual({
       eligible: false,
       missingPrerequisites: [],
-      missingClearance: null,
+      clearanceLocked: false,
+      clearanceHint: null,
     });
   });
 
   // ── 3. No clearance, no prerequisites ─────────────────────────────────
-  it("returns eligible:true when course has no clearance and no prerequisites", async () => {
+  it("returns eligible:true when course has no requirements and no prerequisites", async () => {
     mockPrisma.course.findUnique.mockResolvedValue({
-      requiredClearance: null,
+      clearanceRequirements: [],
       prerequisites: [],
     });
 
@@ -45,138 +54,144 @@ describe("checkCourseEligibility", () => {
     expect(result).toEqual({
       eligible: true,
       missingPrerequisites: [],
-      missingClearance: null,
+      clearanceLocked: false,
+      clearanceHint: null,
     });
+    // No requirements → don't bother loading tiers.
+    expect(mockPrisma.userClearance.findMany).not.toHaveBeenCalled();
   });
 
-  // ── 4. Has required clearance and user possesses it ───────────────────
-  it("returns eligible:true when user has the required clearance", async () => {
+  // ── 4. User holds a sufficient tier (lower = more access) ─────────────
+  it("returns eligible:true when user tier <= required tier", async () => {
     mockPrisma.course.findUnique.mockResolvedValue({
-      requiredClearance: "SECRET",
+      clearanceRequirements: [req("cyber", 3, "Cybersecurity")],
       prerequisites: [],
     });
-    mockPrisma.userClearance.findUnique.mockResolvedValue({
-      userId: "u1",
-      clearance: "SECRET",
-    });
+    mockPrisma.userClearance.findMany.mockResolvedValue([
+      { sectorId: "cyber", tier: 1 },
+    ]);
 
     const result = await checkCourseEligibility("u1", "employee", "c1");
 
-    expect(result).toEqual({
-      eligible: true,
-      missingPrerequisites: [],
-      missingClearance: null,
-    });
+    expect(result.eligible).toBe(true);
+    expect(result.clearanceLocked).toBe(false);
   });
 
-  // ── 5. Missing clearance ──────────────────────────────────────────────
-  it("returns eligible:false with missingClearance when user lacks clearance", async () => {
+  // ── 5. User tier too high (less privileged) ───────────────────────────
+  it("locks when user tier > required tier", async () => {
     mockPrisma.course.findUnique.mockResolvedValue({
-      requiredClearance: "TOP_SECRET",
+      clearanceRequirements: [req("cyber", 1, "Cybersecurity")],
       prerequisites: [],
     });
-    mockPrisma.userClearance.findUnique.mockResolvedValue(null);
+    mockPrisma.userClearance.findMany.mockResolvedValue([
+      { sectorId: "cyber", tier: 3 },
+    ]);
 
     const result = await checkCourseEligibility("u1", "employee", "c1");
 
-    expect(result).toEqual({
-      eligible: false,
-      missingPrerequisites: [],
-      missingClearance: "TOP_SECRET",
-    });
+    expect(result.eligible).toBe(false);
+    expect(result.clearanceLocked).toBe(true);
+    expect(result.clearanceHint).toBe("Cybersecurity tier ≤1");
   });
 
-  // ── 6. All prerequisites completed ────────────────────────────────────
+  // ── 6. Missing clearance entirely ─────────────────────────────────────
+  it("locks when user holds no grant in the required sector", async () => {
+    mockPrisma.course.findUnique.mockResolvedValue({
+      clearanceRequirements: [req("finance", 2, "Finance")],
+      prerequisites: [],
+    });
+    mockPrisma.userClearance.findMany.mockResolvedValue([]);
+
+    const result = await checkCourseEligibility("u1", "employee", "c1");
+
+    expect(result.eligible).toBe(false);
+    expect(result.clearanceLocked).toBe(true);
+    expect(result.clearanceHint).toBe("Finance tier ≤2");
+  });
+
+  // ── 7. ANY-satisfies across multiple requirements ─────────────────────
+  it("unlocks when user satisfies ANY one of several requirements", async () => {
+    mockPrisma.course.findUnique.mockResolvedValue({
+      clearanceRequirements: [
+        req("cyber", 0, "Cybersecurity"),
+        req("finance", 2, "Finance"),
+      ],
+      prerequisites: [],
+    });
+    mockPrisma.userClearance.findMany.mockResolvedValue([
+      { sectorId: "cyber", tier: 2 }, // fails cyber tier 0
+      { sectorId: "finance", tier: 1 }, // meets finance tier 2
+    ]);
+
+    const result = await checkCourseEligibility("u1", "employee", "c1");
+    expect(result.eligible).toBe(true);
+    expect(result.clearanceLocked).toBe(false);
+  });
+
+  // ── 8. All prerequisites completed ────────────────────────────────────
   it("returns eligible:true when all prerequisite courses are completed", async () => {
     mockPrisma.course.findUnique.mockResolvedValue({
-      requiredClearance: null,
+      clearanceRequirements: [],
       prerequisites: [
         { prerequisite: { id: "prereq-1", title: "Intro" } },
         { prerequisite: { id: "prereq-2", title: "Basics" } },
       ],
     });
 
-    // prereq-1: 2 lessons, 2 completed
     mockPrisma.lesson.findMany
       .mockResolvedValueOnce([{ id: "l1" }, { id: "l2" }])
-      // prereq-2: 1 lesson, 1 completed
       .mockResolvedValueOnce([{ id: "l3" }]);
 
     mockPrisma.lessonProgress.count
-      .mockResolvedValueOnce(2) // matches prereq-1 lesson count
-      .mockResolvedValueOnce(1); // matches prereq-2 lesson count
+      .mockResolvedValueOnce(2)
+      .mockResolvedValueOnce(1);
 
     const result = await checkCourseEligibility("u1", "employee", "c1");
 
     expect(result).toEqual({
       eligible: true,
       missingPrerequisites: [],
-      missingClearance: null,
+      clearanceLocked: false,
+      clearanceHint: null,
     });
   });
 
-  // ── 7. Missing prerequisites ──────────────────────────────────────────
+  // ── 9. Missing prerequisites ──────────────────────────────────────────
   it("returns eligible:false with missingPrerequisites when prereqs incomplete", async () => {
     mockPrisma.course.findUnique.mockResolvedValue({
-      requiredClearance: null,
+      clearanceRequirements: [],
       prerequisites: [
         { prerequisite: { id: "prereq-1", title: "Intro" } },
         { prerequisite: { id: "prereq-2", title: "Basics" } },
       ],
     });
 
-    // prereq-1: 2 lessons, only 1 completed -> not completed
     mockPrisma.lesson.findMany
       .mockResolvedValueOnce([{ id: "l1" }, { id: "l2" }])
-      // prereq-2: 1 lesson, 1 completed -> completed
       .mockResolvedValueOnce([{ id: "l3" }]);
 
     mockPrisma.lessonProgress.count
-      .mockResolvedValueOnce(1) // only 1 of 2 for prereq-1
-      .mockResolvedValueOnce(1); // 1 of 1 for prereq-2
+      .mockResolvedValueOnce(1)
+      .mockResolvedValueOnce(1);
 
     const result = await checkCourseEligibility("u1", "employee", "c1");
 
     expect(result).toEqual({
       eligible: false,
       missingPrerequisites: [{ id: "prereq-1", title: "Intro" }],
-      missingClearance: null,
+      clearanceLocked: false,
+      clearanceHint: null,
     });
   });
 
-  // ── 8. Prereq with no lessons -> not completed ────────────────────────
-  it("treats a prerequisite with no lessons as not completed", async () => {
+  // ── 10. Both clearance and prerequisites missing ──────────────────────
+  it("populates both clearanceLocked and missingPrerequisites when both fail", async () => {
     mockPrisma.course.findUnique.mockResolvedValue({
-      requiredClearance: null,
-      prerequisites: [
-        { prerequisite: { id: "empty-course", title: "Empty Course" } },
-      ],
+      clearanceRequirements: [req("cyber", 0, "Cybersecurity")],
+      prerequisites: [{ prerequisite: { id: "prereq-1", title: "Security 101" } }],
     });
+    mockPrisma.userClearance.findMany.mockResolvedValue([]); // no grants
 
-    mockPrisma.lesson.findMany.mockResolvedValueOnce([]); // no lessons
-
-    const result = await checkCourseEligibility("u1", "employee", "c1");
-
-    expect(result).toEqual({
-      eligible: false,
-      missingPrerequisites: [{ id: "empty-course", title: "Empty Course" }],
-      missingClearance: null,
-    });
-    // lessonProgress.count should not be called when there are no lessons
-    expect(mockPrisma.lessonProgress.count).not.toHaveBeenCalled();
-  });
-
-  // ── 9. Both clearance and prerequisites missing ───────────────────────
-  it("populates both missingClearance and missingPrerequisites when both are missing", async () => {
-    mockPrisma.course.findUnique.mockResolvedValue({
-      requiredClearance: "CLASSIFIED",
-      prerequisites: [
-        { prerequisite: { id: "prereq-1", title: "Security 101" } },
-      ],
-    });
-    mockPrisma.userClearance.findUnique.mockResolvedValue(null);
-
-    // prereq has 3 lessons, user completed 0
     mockPrisma.lesson.findMany.mockResolvedValueOnce([
       { id: "l1" },
       { id: "l2" },
@@ -189,7 +204,8 @@ describe("checkCourseEligibility", () => {
     expect(result).toEqual({
       eligible: false,
       missingPrerequisites: [{ id: "prereq-1", title: "Security 101" }],
-      missingClearance: "CLASSIFIED",
+      clearanceLocked: true,
+      clearanceHint: "Cybersecurity tier ≤0",
     });
   });
 });

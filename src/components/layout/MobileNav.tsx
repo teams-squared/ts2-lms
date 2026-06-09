@@ -29,7 +29,7 @@ export function MobileNav() {
   const { data: session } = useSession();
   const [open, setOpen] = React.useState(false);
 
-  const items = getVisibleNavItems(session?.user?.role);
+  const items = getVisibleNavItems(session?.user?.role, session?.user?.internal);
 
   // Close the drawer whenever the route changes (tapping a link navigates).
   React.useEffect(() => {

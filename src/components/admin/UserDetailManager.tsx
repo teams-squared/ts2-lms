@@ -21,8 +21,10 @@ interface UserDetailManagerProps {
   userEmail: string;
   userName: string | null;
   initialRole: Role;
-  initialClearances: string[];
-  availableClearances: string[];
+  /** Sector grants the user already holds (one tier per sector). */
+  initialGrants: { sectorId: string; sectorLabel: string; tier: number }[];
+  /** All sectors available to grant. */
+  sectors: { id: string; label: string }[];
   /** Count of enrollments this user has — shown in the remove-user confirm dialog. */
   enrollmentCount: number;
   /** Count of courses this user has authored — will be reassigned on remove. */
@@ -44,8 +46,8 @@ export function UserDetailManager({
   userEmail,
   userName,
   initialRole,
-  initialClearances,
-  availableClearances: initialAvailableClearances,
+  initialGrants,
+  sectors,
   enrollmentCount,
   authoredCourseCount,
   sessionUserId,
@@ -60,13 +62,13 @@ export function UserDetailManager({
   const [roleError, setRoleError] = useState<string | null>(null);
   const [roleSuccess, setRoleSuccess] = useState(false);
 
-  // Clearances
-  const [clearances, setClearances] = useState<string[]>(initialClearances);
-  const [availClearances, setAvailClearances] = useState<string[]>(initialAvailableClearances);
-  const [selectedClearance, setSelectedClearance] = useState("");
+  // Clearances (sector + tier). One tier per sector.
+  const [grants, setGrants] = useState(initialGrants);
+  const [selectedSector, setSelectedSector] = useState("");
+  const [tierInput, setTierInput] = useState("0");
   const [grantingClearance, setGrantingClearance] = useState(false);
-  const [revokingClearance, setRevokingClearance] = useState<string | null>(null);
-  const [pendingRevoke, setPendingRevoke] = useState<string | null>(null);
+  const [revokingSector, setRevokingSector] = useState<string | null>(null);
+  const [pendingRevoke, setPendingRevoke] = useState<{ sectorId: string; sectorLabel: string } | null>(null);
   const [clearanceError, setClearanceError] = useState<string | null>(null);
 
   // Reset enrollment progress
@@ -144,23 +146,33 @@ export function UserDetailManager({
   };
 
   const handleGrantClearance = async () => {
-    if (!selectedClearance) return;
+    if (!selectedSector) return;
+    const tier = Number(tierInput);
+    if (!Number.isInteger(tier) || tier < 0) {
+      setClearanceError("Tier must be a non-negative integer (0 = most restricted)");
+      return;
+    }
     setGrantingClearance(true);
     setClearanceError(null);
     try {
       const res = await fetch(`/api/admin/users/${userId}/clearances`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ clearance: selectedClearance }),
+        body: JSON.stringify({ sectorId: selectedSector, tier }),
       });
       if (!res.ok) {
         const data = (await res.json()) as { error?: string };
         setClearanceError(data.error ?? "Failed to grant clearance");
         return;
       }
-      setClearances((prev) => [...prev, selectedClearance]);
-      setAvailClearances((prev) => prev.filter((c) => c !== selectedClearance));
-      setSelectedClearance("");
+      const sectorLabel = sectors.find((s) => s.id === selectedSector)?.label ?? selectedSector;
+      // Upsert into local state — one tier per sector.
+      setGrants((prev) => {
+        const next = prev.filter((g) => g.sectorId !== selectedSector);
+        return [...next, { sectorId: selectedSector, sectorLabel, tier }];
+      });
+      setSelectedSector("");
+      setTierInput("0");
       router.refresh();
     } catch {
       setClearanceError("An unexpected error occurred");
@@ -171,11 +183,11 @@ export function UserDetailManager({
 
   const handleRevokeClearance = async () => {
     if (!pendingRevoke) return;
-    const clearance = pendingRevoke;
-    setRevokingClearance(clearance);
+    const { sectorId } = pendingRevoke;
+    setRevokingSector(sectorId);
     setClearanceError(null);
     try {
-      const res = await fetch(`/api/admin/users/${userId}/clearances/${encodeURIComponent(clearance)}`, {
+      const res = await fetch(`/api/admin/users/${userId}/clearances/${encodeURIComponent(sectorId)}`, {
         method: "DELETE",
       });
       if (!res.ok) {
@@ -183,13 +195,12 @@ export function UserDetailManager({
         setClearanceError(data.error ?? "Failed to revoke clearance");
         return;
       }
-      setClearances((prev) => prev.filter((c) => c !== clearance));
-      setAvailClearances((prev) => [...prev, clearance].sort());
+      setGrants((prev) => prev.filter((g) => g.sectorId !== sectorId));
       router.refresh();
     } catch {
       setClearanceError("An unexpected error occurred");
     } finally {
-      setRevokingClearance(null);
+      setRevokingSector(null);
       setPendingRevoke(null);
     }
   };
@@ -253,59 +264,94 @@ export function UserDetailManager({
         )}
       </div>
 
-      {/* Clearances */}
+      {/* Clearances (sector + tier) */}
       <div className="rounded-lg border border-border bg-card p-6">
-        <h3 className="text-sm font-semibold text-foreground mb-4">
+        <h3 className="text-sm font-semibold text-foreground mb-1">
           Clearances
         </h3>
+        <p className="text-xs text-foreground-muted mb-4">
+          Grant a tier per sector. <span className="font-medium">Lower tier = more access</span> —
+          tier 0 is the most restricted. Holding a tier grants that tier and every
+          higher-numbered (less protected) tier in the same sector.
+        </p>
 
-        <div className="flex flex-col sm:flex-row sm:items-center gap-2 mb-4">
-          <select
-            value={selectedClearance}
-            onChange={(e) => setSelectedClearance(e.target.value)}
-            aria-label="Select clearance to grant"
-            className="w-full sm:flex-1 px-3 py-2 rounded-lg border border-border bg-surface text-sm text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
-          >
-            <option value="">Select a clearance…</option>
-            {availClearances.map((c) => (
-              <option key={c} value={c}>
-                {c}
-              </option>
-            ))}
-          </select>
-          <button
-            onClick={handleGrantClearance}
-            disabled={!selectedClearance || grantingClearance}
-            aria-label="Grant clearance"
-            className="rounded-lg bg-primary hover:bg-primary-hover disabled:opacity-50 text-primary-foreground text-sm font-medium px-4 py-2 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background"
-          >
-            {grantingClearance ? "Granting…" : "Grant"}
-          </button>
-        </div>
+        {sectors.length === 0 ? (
+          <p className="mb-4 text-sm text-foreground-subtle italic">
+            No sectors defined yet. Create sectors under{" "}
+            <a href="/admin/clearance" className="text-primary hover:underline">
+              Clearance
+            </a>{" "}
+            first.
+          </p>
+        ) : (
+          <div className="flex flex-col gap-2 mb-4 sm:flex-row sm:flex-wrap sm:items-end">
+            <div className="flex-1 min-w-[180px]">
+              <label htmlFor="grant-sector" className="block text-xs font-medium text-foreground-muted mb-1">
+                Sector
+              </label>
+              <select
+                id="grant-sector"
+                value={selectedSector}
+                onChange={(e) => setSelectedSector(e.target.value)}
+                aria-label="Select sector to grant"
+                className="w-full px-3 py-2 rounded-lg border border-border bg-surface text-sm text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+              >
+                <option value="">Select a sector…</option>
+                {sectors.map((s) => (
+                  <option key={s.id} value={s.id}>
+                    {s.label}
+                  </option>
+                ))}
+              </select>
+            </div>
+            <div className="w-full sm:w-24">
+              <label htmlFor="grant-tier" className="block text-xs font-medium text-foreground-muted mb-1">
+                Tier
+              </label>
+              <input
+                id="grant-tier"
+                type="number"
+                min={0}
+                value={tierInput}
+                onChange={(e) => setTierInput(e.target.value)}
+                aria-label="Clearance tier"
+                className="w-full px-3 py-2 rounded-lg border border-border bg-surface text-sm text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+              />
+            </div>
+            <button
+              onClick={handleGrantClearance}
+              disabled={!selectedSector || grantingClearance}
+              aria-label="Grant clearance"
+              className="rounded-lg bg-primary hover:bg-primary-hover disabled:opacity-50 text-primary-foreground text-sm font-medium px-4 py-2 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background"
+            >
+              {grantingClearance ? "Granting…" : "Grant"}
+            </button>
+          </div>
+        )}
 
         {clearanceError && (
           <p className="mb-3 text-sm text-danger">{clearanceError}</p>
         )}
 
-        {clearances.length === 0 ? (
+        {grants.length === 0 ? (
           <p className="text-sm text-foreground-subtle italic">
             No clearances granted.
           </p>
         ) : (
           <div className="flex flex-wrap gap-2">
-            {clearances.map((clearance) => (
+            {grants.map((g) => (
               <span
-                key={clearance}
+                key={g.sectorId}
                 className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-medium bg-primary-subtle text-primary border border-primary/20"
               >
-                {clearance}
+                {g.sectorLabel} · tier {g.tier}
                 <button
-                  onClick={() => setPendingRevoke(clearance)}
-                  disabled={revokingClearance === clearance}
-                  aria-label={`Revoke ${clearance} clearance`}
+                  onClick={() => setPendingRevoke({ sectorId: g.sectorId, sectorLabel: g.sectorLabel })}
+                  disabled={revokingSector === g.sectorId}
+                  aria-label={`Revoke ${g.sectorLabel} clearance`}
                   className="ml-0.5 text-primary/70 hover:text-danger disabled:opacity-50 transition-colors"
                 >
-                  {revokingClearance === clearance ? "…" : "×"}
+                  {revokingSector === g.sectorId ? "…" : "×"}
                 </button>
               </span>
             ))}
@@ -503,14 +549,14 @@ export function UserDetailManager({
           pendingRevoke ? (
             <>
               Revoke the{" "}
-              <span className="font-medium text-foreground">{pendingRevoke}</span>{" "}
-              clearance from this user? They will lose access to courses that require it.
+              <span className="font-medium text-foreground">{pendingRevoke.sectorLabel}</span>{" "}
+              clearance from this user? They will lose access to courses and documents that require it.
             </>
           ) : null
         }
         confirmLabel="Revoke"
         onConfirm={handleRevokeClearance}
-        loading={revokingClearance !== null}
+        loading={revokingSector !== null}
       />
     </div>
   );

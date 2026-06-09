@@ -13,35 +13,37 @@ enum Role {
 }
 
 model User {
-  id             String           @id @default(cuid())
-  email          String           @unique
-  name           String?
-  passwordHash   String?
-  role           Role             @default(EMPLOYEE)
-  avatar         String?
-  createdAt      DateTime         @default(now())
-  updatedAt      DateTime         @updatedAt
-  invitedAt      DateTime?
-  invitedById    String?
-  invitedBy      User?            @relation("UserInvites", fields: [invitedById], references: [id], onDelete: SetNull)
-  invitedUsers   User[]           @relation("UserInvites")
-  createdCourses      Course[]         @relation("CreatedCourses")
-  managedCourses      Course[]         @relation("CourseManagers")
-  enrollments         Enrollment[]
-  enrollmentsMade     Enrollment[]     @relation("EnrolledBy")
-  lessonProgress      LessonProgress[]
-  quizAttempts        QuizAttempt[]
-  notifications       Notification[]
-  achievements        UserAchievement[]
-  stats               UserStats?
-  clearances          UserClearance[]
-  deadlineReminderLogs DeadlineReminderLog[]
-  policyDocSyncs      PolicyDocLesson[]    @relation("PolicyDocSyncs")
-  publicIsoDocSyncs   PublicIsoDoc[]       @relation("PublicIsoDocSyncs")
-  publicIsoDocsPublished PublicIsoDoc[]    @relation("PublicIsoDocsPublished")
-  manualRemindersReceived ManualReminderLog[] @relation("ManualReminderTarget")
-  manualRemindersSent     ManualReminderLog[] @relation("ManualReminderSender")
-  isoLibraryViews     IsoLibraryView[]
+  id                      String                @id @default(cuid())
+  email                   String                @unique
+  name                    String?
+  passwordHash            String?
+  role                    Role                  @default(EMPLOYEE)
+  avatar                  String?
+  createdAt               DateTime              @default(now())
+  updatedAt               DateTime              @updatedAt
+  invitedAt               DateTime?
+  invitedById             String?
+  invitedBy               User?                 @relation("UserInvites", fields: [invitedById], references: [id], onDelete: SetNull)
+  invitedUsers            User[]                @relation("UserInvites")
+  createdCourses          Course[]              @relation("CreatedCourses")
+  managedCourses          Course[]              @relation("CourseManagers")
+  enrollments             Enrollment[]
+  enrollmentsMade         Enrollment[]          @relation("EnrolledBy")
+  lessonProgress          LessonProgress[]
+  quizAttempts            QuizAttempt[]
+  notifications           Notification[]
+  achievements            UserAchievement[]
+  stats                   UserStats?
+  clearances              UserClearance[]
+  deadlineReminderLogs    DeadlineReminderLog[]
+  policyDocSyncs          PolicyDocLesson[]     @relation("PolicyDocSyncs")
+  publicIsoDocSyncs       PublicIsoDoc[]        @relation("PublicIsoDocSyncs")
+  publicIsoDocsPublished  PublicIsoDoc[]        @relation("PublicIsoDocsPublished")
+  manualRemindersReceived ManualReminderLog[]   @relation("ManualReminderTarget")
+  manualRemindersSent     ManualReminderLog[]   @relation("ManualReminderSender")
+  isoLibraryViews         IsoLibraryView[]
+  internalDocsAuthored    InternalDoc[]         @relation("InternalDocsAuthored")
+  internalDocViews        InternalDocView[]
 }
 
 enum CourseStatus {
@@ -64,30 +66,30 @@ model CourseNode {
 }
 
 model Course {
-  id                String       @id @default(cuid())
-  title             String
-  description       String?
-  thumbnail         String?
-  status            CourseStatus @default(DRAFT)
-  category          String?
-  requiredClearance String?
-  nodeId            String?
-  createdById       String
-  node              CourseNode?  @relation(fields: [nodeId], references: [id], onDelete: SetNull)
-  createdBy         User         @relation("CreatedCourses", fields: [createdById], references: [id])
-  managers          User[]       @relation("CourseManagers")
-  modules           Module[]
-  enrollments       Enrollment[]
-  prerequisites     CoursePrerequisite[] @relation("CoursePrereqs")
-  prerequisiteOf    CoursePrerequisite[] @relation("PrereqOf")
-  emailSubscriptions CourseEmailSubscription[]
-  createdAt         DateTime     @default(now())
-  updatedAt         DateTime     @updatedAt
+  id                    String                         @id @default(cuid())
+  title                 String
+  description           String?
+  thumbnail             String?
+  status                CourseStatus                   @default(DRAFT)
+  category              String?
+  nodeId                String?
+  createdById           String
+  node                  CourseNode?                    @relation(fields: [nodeId], references: [id], onDelete: SetNull)
+  createdBy             User                           @relation("CreatedCourses", fields: [createdById], references: [id])
+  managers              User[]                         @relation("CourseManagers")
+  modules               Module[]
+  enrollments           Enrollment[]
+  prerequisites         CoursePrerequisite[]           @relation("CoursePrereqs")
+  prerequisiteOf        CoursePrerequisite[]           @relation("PrereqOf")
+  clearanceRequirements ResourceClearanceRequirement[]
+  emailSubscriptions    CourseEmailSubscription[]
+  createdAt             DateTime                       @default(now())
+  updatedAt             DateTime                       @updatedAt
 }
 
 model CourseEmailSubscription {
   id        String   @id @default(cuid())
-  courseId   String
+  courseId  String
   email     String
   createdAt DateTime @default(now())
   course    Course   @relation(fields: [courseId], references: [id], onDelete: Cascade)
@@ -114,7 +116,7 @@ model Module {
   id        String   @id @default(cuid())
   title     String
   order     Int
-  courseId   String
+  courseId  String
   course    Course   @relation(fields: [courseId], references: [id], onDelete: Cascade)
   lessons   Lesson[]
   createdAt DateTime @default(now())
@@ -124,22 +126,22 @@ model Module {
 }
 
 model Lesson {
-  id            String           @id @default(cuid())
-  title         String
-  type          LessonType       @default(TEXT)
-  content       String?
-  order         Int
-  deadlineDays  Int?
-  moduleId      String
-  module        Module           @relation(fields: [moduleId], references: [id], onDelete: Cascade)
-  progress      LessonProgress[]
-  quizQuestions QuizQuestion[]
-  quizAttempts  QuizAttempt[]
+  id                   String                @id @default(cuid())
+  title                String
+  type                 LessonType            @default(TEXT)
+  content              String?
+  order                Int
+  deadlineDays         Int?
+  moduleId             String
+  module               Module                @relation(fields: [moduleId], references: [id], onDelete: Cascade)
+  progress             LessonProgress[]
+  quizQuestions        QuizQuestion[]
+  quizAttempts         QuizAttempt[]
   deadlineReminderLogs DeadlineReminderLog[]
   manualReminderLogs   ManualReminderLog[]
-  policyDoc     PolicyDocLesson?
-  createdAt     DateTime         @default(now())
-  updatedAt     DateTime         @updatedAt
+  policyDoc            PolicyDocLesson?
+  createdAt            DateTime              @default(now())
+  updatedAt            DateTime              @updatedAt
 
   @@unique([moduleId, order])
   @@index([deadlineDays])
@@ -151,39 +153,39 @@ model Lesson {
 /// `LessonProgress.acknowledgedAt` values for this lesson are cleared so
 /// employees must re-acknowledge the new version.
 model PolicyDocLesson {
-  id                  String              @id @default(cuid())
-  lessonId            String              @unique
-  lesson              Lesson              @relation(fields: [lessonId], references: [id], onDelete: Cascade)
+  id       String @id @default(cuid())
+  lessonId String @unique
+  lesson   Lesson @relation(fields: [lessonId], references: [id], onDelete: Cascade)
 
   // Source pointer (SharePoint)
-  sharePointDriveId   String
-  sharePointItemId    String
-  sharePointWebUrl    String
+  sharePointDriveId String
+  sharePointItemId  String
+  sharePointWebUrl  String
 
   // Snapshot from last sync
-  documentTitle       String
-  documentCode        String?
-  sourceVersion       String
-  sourceETag          String
-  sourceLastModified  DateTime
-  approver            String?
-  approvedOn          DateTime?
-  lastReviewedOn      DateTime?
-  reviewHistory       Json
-  revisionHistory     Json
+  documentTitle      String
+  documentCode       String?
+  sourceVersion      String
+  sourceETag         String
+  sourceLastModified DateTime
+  approver           String?
+  approvedOn         DateTime?
+  lastReviewedOn     DateTime?
+  reviewHistory      Json
+  revisionHistory    Json
 
   // Rendered output
-  renderMode          PolicyDocRenderMode @default(PARSED)
-  renderedHTML        String              @db.Text
-  renderedHTMLHash    String
+  renderMode       PolicyDocRenderMode @default(PARSED)
+  renderedHTML     String              @db.Text
+  renderedHTMLHash String
 
   // Sync bookkeeping
-  lastSyncedAt        DateTime
-  lastSyncedById      String
-  lastSyncedBy        User                @relation("PolicyDocSyncs", fields: [lastSyncedById], references: [id], onDelete: Restrict)
+  lastSyncedAt   DateTime
+  lastSyncedById String
+  lastSyncedBy   User     @relation("PolicyDocSyncs", fields: [lastSyncedById], references: [id], onDelete: Restrict)
 
-  createdAt           DateTime            @default(now())
-  updatedAt           DateTime            @updatedAt
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
   @@index([documentCode])
 }
@@ -193,44 +195,44 @@ model PolicyDocLesson {
 /// logged-in LMS user regardless of enrollment. No acknowledgement
 /// pipeline; this is read-reference, not compliance evidence.
 model PublicIsoDoc {
-  id                  String   @id @default(cuid())
+  id String @id @default(cuid())
 
   // Source pointer (SharePoint)
-  sharePointDriveId   String
-  sharePointItemId    String
-  sharePointWebUrl    String
+  sharePointDriveId String
+  sharePointItemId  String
+  sharePointWebUrl  String
 
   // Snapshot from last sync — same parser output as PolicyDocLesson, minus
   // renderedHTML/Hash (no audit snapshot since there's no ack obligation).
-  documentTitle       String
-  documentCode        String?
-  sourceVersion       String
-  sourceETag          String
-  sourceLastModified  DateTime
-  approver            String?
-  approvedOn          DateTime?
-  lastReviewedOn      DateTime?
-  reviewHistory       Json
-  revisionHistory     Json
+  documentTitle      String
+  documentCode       String?
+  sourceVersion      String
+  sourceETag         String
+  sourceLastModified DateTime
+  approver           String?
+  approvedOn         DateTime?
+  lastReviewedOn     DateTime?
+  reviewHistory      Json
+  revisionHistory    Json
 
   // Display
-  sortOrder           Int      @default(0)
-  isHidden            Boolean  @default(false)
+  sortOrder Int     @default(0)
+  isHidden  Boolean @default(false)
 
   // Provenance
-  publishedAt         DateTime @default(now())
-  publishedById       String
-  publishedBy         User     @relation("PublicIsoDocsPublished", fields: [publishedById], references: [id], onDelete: Restrict)
+  publishedAt   DateTime @default(now())
+  publishedById String
+  publishedBy   User     @relation("PublicIsoDocsPublished", fields: [publishedById], references: [id], onDelete: Restrict)
 
   // Sync bookkeeping
-  lastSyncedAt        DateTime
-  lastSyncedById      String
-  lastSyncedBy        User     @relation("PublicIsoDocSyncs", fields: [lastSyncedById], references: [id], onDelete: Restrict)
+  lastSyncedAt   DateTime
+  lastSyncedById String
+  lastSyncedBy   User     @relation("PublicIsoDocSyncs", fields: [lastSyncedById], references: [id], onDelete: Restrict)
 
-  createdAt           DateTime @default(now())
-  updatedAt           DateTime @updatedAt
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
-  views               IsoLibraryView[]
+  views IsoLibraryView[]
 
   @@unique([sharePointDriveId, sharePointItemId])
   @@index([sortOrder])
@@ -241,13 +243,13 @@ model PublicIsoDoc {
 /// from the viewer route. Not used for ack evidence — see LessonProgress
 /// for that. Gives admins visibility into which public docs get read.
 model IsoLibraryView {
-  id              String       @id @default(cuid())
-  publicIsoDocId  String
-  publicIsoDoc    PublicIsoDoc @relation(fields: [publicIsoDocId], references: [id], onDelete: Cascade)
-  userId          String
-  user            User         @relation(fields: [userId], references: [id], onDelete: Cascade)
-  viewedAt        DateTime     @default(now())
-  sourceVersion   String?
+  id             String       @id @default(cuid())
+  publicIsoDocId String
+  publicIsoDoc   PublicIsoDoc @relation(fields: [publicIsoDocId], references: [id], onDelete: Cascade)
+  userId         String
+  user           User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+  viewedAt       DateTime     @default(now())
+  sourceVersion  String?
 
   @@index([publicIsoDocId, viewedAt])
   @@index([userId, viewedAt])
@@ -256,7 +258,7 @@ model IsoLibraryView {
 model Enrollment {
   id           String    @id @default(cuid())
   userId       String
-  courseId      String
+  courseId     String
   enrolledById String?
   enrolledAt   DateTime  @default(now())
   completedAt  DateTime?
@@ -340,13 +342,13 @@ model QuizOption {
 }
 
 model QuizAttempt {
-  id             String       @id @default(cuid())
+  id             String   @id @default(cuid())
   userId         String
   lessonId       String
   score          Int
   totalQuestions Int
   passed         Boolean
-  createdAt      DateTime     @default(now())
+  createdAt      DateTime @default(now())
 
   user    User         @relation(fields: [userId], references: [id], onDelete: Cascade)
   lesson  Lesson       @relation(fields: [lessonId], references: [id], onDelete: Cascade)
@@ -357,7 +359,7 @@ model QuizAttempt {
 }
 
 model QuizAnswer {
-  id               String       @id @default(cuid())
+  id               String @id @default(cuid())
   attemptId        String
   questionId       String
   selectedOptionId String
@@ -367,15 +369,14 @@ model QuizAnswer {
   selectedOption QuizOption   @relation(fields: [selectedOptionId], references: [id], onDelete: Cascade)
 }
 
-
 model Notification {
-  id        String    @id @default(cuid())
+  id        String   @id @default(cuid())
   userId    String
   type      String
   message   String
-  read      Boolean   @default(false)
+  read      Boolean  @default(false)
   courseId  String?
-  createdAt DateTime  @default(now())
+  createdAt DateTime @default(now())
 
   user User @relation(fields: [userId], references: [id], onDelete: Cascade)
 
@@ -396,10 +397,10 @@ model Achievement {
 }
 
 model UserAchievement {
-  id            String      @id @default(cuid())
+  id            String   @id @default(cuid())
   userId        String
   achievementId String
-  unlockedAt    DateTime    @default(now())
+  unlockedAt    DateTime @default(now())
 
   user        User        @relation(fields: [userId], references: [id], onDelete: Cascade)
   achievement Achievement @relation(fields: [achievementId], references: [id], onDelete: Cascade)
@@ -408,12 +409,12 @@ model UserAchievement {
 }
 
 model UserStats {
-  id               String   @id @default(cuid())
-  userId           String   @unique
-  xp               Int      @default(0)
-  streak           Int      @default(0)
+  id               String    @id @default(cuid())
+  userId           String    @unique
+  xp               Int       @default(0)
+  streak           Int       @default(0)
   lastActivityDate DateTime?
-  updatedAt        DateTime @updatedAt
+  updatedAt        DateTime  @updatedAt
 
   user User @relation(fields: [userId], references: [id], onDelete: Cascade)
 
@@ -421,20 +422,107 @@ model UserStats {
   @@index([xp(sort: Desc)])
 }
 
+/// A compartment users and resources are classified against. Managed list
+/// (admins curate via /admin/clearance) — NOT free text. Replaces the dead
+/// free-text clearance v1.
+model Sector {
+  id          String  @id @default(cuid())
+  key         String  @unique // slug, e.g. "cybersecurity"
+  label       String // display, e.g. "Cybersecurity"
+  description String?
+
+  grants       UserClearance[]
+  requirements ResourceClearanceRequirement[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+/// A user's clearance in one sector. `tier` is an open-ended non-negative
+/// integer where LOWER = MORE protected (0 = most restricted). A user holds
+/// at most one tier per sector; the tier they hold grants access to that tier
+/// and every less-protected (higher-numbered) tier in the same sector.
 model UserClearance {
   id        String   @id @default(cuid())
   userId    String
-  clearance String
+  sectorId  String
+  tier      Int // >= 0; lower = more protected; 0 = most restricted
   grantedAt DateTime @default(now())
 
-  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+  sector Sector @relation(fields: [sectorId], references: [id], onDelete: Cascade)
 
-  @@unique([userId, clearance])
+  @@unique([userId, sectorId]) // at most one tier per sector
+  @@index([sectorId])
+}
+
+/// A sector+tier requirement attached to exactly one resource (a Course OR an
+/// InternalDoc — enforced by a CHECK in the migration). A resource may carry
+/// several rows; read access is ANY-satisfies (the viewer needs to satisfy any
+/// one of them). `tier` is the threshold T_req: a user satisfies it if they
+/// hold a grant in this sector with tier <= T_req.
+model ResourceClearanceRequirement {
+  id            String  @id @default(cuid())
+  sectorId      String
+  tier          Int
+  courseId      String?
+  internalDocId String?
+
+  sector      Sector       @relation(fields: [sectorId], references: [id], onDelete: Restrict)
+  course      Course?      @relation(fields: [courseId], references: [id], onDelete: Cascade)
+  internalDoc InternalDoc? @relation(fields: [internalDocId], references: [id], onDelete: Cascade)
+
+  @@unique([courseId, sectorId])
+  @@unique([internalDocId, sectorId])
+  @@index([courseId])
+  @@index([internalDocId])
+  @@index([sectorId])
+}
+
+/// A standalone internal-documentation entry. Reuses the Lesson content model
+/// (`type` + `content` follow the same conventions as Lesson) and is rendered
+/// by the shared LessonViewer. Gated entirely by clearance: must carry >= 1
+/// ResourceClearanceRequirement or it is unreachable by non-admins (the read
+/// path uses emptyDefault=false and the write path rejects zero-requirement
+/// docs). Authoring is clearance-driven, not admin-only.
+model InternalDoc {
+  id          String     @id @default(cuid())
+  title       String
+  type        LessonType @default(TEXT)
+  content     String?
+  category    String? // optional free-text folder / grouping
+  sortOrder   Int        @default(0)
+  createdById String
+  updatedById String?
+
+  createdBy User @relation("InternalDocsAuthored", fields: [createdById], references: [id], onDelete: Restrict)
+
+  clearanceRequirements ResourceClearanceRequirement[]
+  views                 InternalDocView[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([sortOrder])
+}
+
+/// Best-effort read audit — one row per /internal-docs/[id] open. Mirrors
+/// IsoLibraryView; fire-and-forget from the viewer route.
+model InternalDocView {
+  id            String      @id @default(cuid())
+  internalDocId String
+  internalDoc   InternalDoc @relation(fields: [internalDocId], references: [id], onDelete: Cascade)
+  userId        String
+  user          User        @relation(fields: [userId], references: [id], onDelete: Cascade)
+  viewedAt      DateTime    @default(now())
+
+  @@index([internalDocId, viewedAt])
+  @@index([userId, viewedAt])
 }
 
 model CoursePrerequisite {
-  courseId        String
-  prerequisiteId  String
+  courseId       String
+  prerequisiteId String
 
   course       Course @relation("CoursePrereqs", fields: [courseId], references: [id], onDelete: Cascade)
   prerequisite Course @relation("PrereqOf", fields: [prerequisiteId], references: [id], onDelete: Cascade)
@@ -497,10 +585,11 @@ model DeadlineReminderLog {
   id       String   @id @default(cuid())
   userId   String
   lessonId String
-  kind     String   // "due_soon_1" | "due_today" | "overdue_1"
+  kind     String // "due_soon_1" | "due_today" | "overdue_1"
   sentAt   DateTime @default(now())
-  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
-  lesson Lesson @relation(fields: [lessonId], references: [id], onDelete: Cascade)
+  user     User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  lesson   Lesson   @relation(fields: [lessonId], references: [id], onDelete: Cascade)
+
   @@unique([userId, lessonId, kind])
   @@index([lessonId])
 }
@@ -509,14 +598,14 @@ model DeadlineReminderLog {
 /// from /admin/progress. Unlike DeadlineReminderLog (cron, dedupe-keyed),
 /// this table has no unique constraint — managers may re-send.
 model ManualReminderLog {
-  id        String   @id @default(cuid())
-  userId    String
-  lessonId  String
-  sentById  String?
-  sentAt    DateTime @default(now())
-  user   User   @relation("ManualReminderTarget", fields: [userId],   references: [id], onDelete: Cascade)
-  lesson Lesson @relation(fields: [lessonId], references: [id], onDelete: Cascade)
-  sentBy User?  @relation("ManualReminderSender", fields: [sentById], references: [id], onDelete: SetNull)
+  id       String   @id @default(cuid())
+  userId   String
+  lessonId String
+  sentById String?
+  sentAt   DateTime @default(now())
+  user     User     @relation("ManualReminderTarget", fields: [userId], references: [id], onDelete: Cascade)
+  lesson   Lesson   @relation(fields: [lessonId], references: [id], onDelete: Cascade)
+  sentBy   User?    @relation("ManualReminderSender", fields: [sentById], references: [id], onDelete: SetNull)
 
   @@index([userId, lessonId])
   @@index([sentById])

@@ -2,15 +2,16 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { SharePointFilePicker } from "./SharePointFilePicker";
 import { QuizBuilder } from "./QuizBuilder";
 import { PolicyDocLessonEditor } from "./PolicyDocLessonEditor";
+import {
+  LessonContentEditor,
+  type LessonContentType,
+} from "./LessonContentEditor";
 import { ConfirmDialog } from "@/components/ui/ConfirmDialog";
 import { Button } from "@/components/ui/button";
 import { DragHandle, SortableItem, SortableList } from "@/components/ui/Sortable";
 import type { LessonType } from "@/lib/types";
-import type { SharePointDocumentRef } from "@/lib/sharepoint/types";
-import { parseLinkContent, serializeLinkContent } from "@/lib/lesson-link";
 
 interface Lesson {
   id: string;
@@ -97,9 +98,6 @@ export function ModuleManager({
   const [editError, setEditError] = useState<string | null>(null);
   const [editSaving, setEditSaving] = useState(false);
 
-  const [pickerOpen, setPickerOpen] = useState(false);
-  const [pickerTarget, setPickerTarget] = useState<"edit" | null>(null);
-  const [videoSource, setVideoSource] = useState<"sharepoint" | "url">("sharepoint");
 
   const [editingModuleId, setEditingModuleId] = useState<string | null>(null);
   const [editingModuleTitle, setEditingModuleTitle] = useState("");
@@ -334,17 +332,6 @@ export function ModuleManager({
     setEditContent(lesson.content ?? "");
     setEditDeadlineDays(lesson.deadlineDays);
     setEditError(null);
-
-    if (lesson.type === "video" && lesson.content) {
-      try {
-        const parsed = JSON.parse(lesson.content);
-        setVideoSource(parsed?.driveId && parsed?.itemId ? "sharepoint" : "url");
-      } catch {
-        setVideoSource("url");
-      }
-    } else {
-      setVideoSource("sharepoint");
-    }
   };
 
   const handleSaveLesson = async () => {
@@ -430,13 +417,6 @@ export function ModuleManager({
     }
   };
 
-  const handlePickerSelect = (ref: SharePointDocumentRef) => {
-    if (pickerTarget === "edit") {
-      setEditContent(JSON.stringify(ref));
-    }
-    setPickerOpen(false);
-    setPickerTarget(null);
-  };
 
   // ─── Render ──────────────────────────────────────────────────────────────────
 
@@ -855,112 +835,13 @@ export function ModuleManager({
 
               {editType === "policy_doc" ? (
                 <PolicyDocLessonEditor lessonId={editingLesson.id} />
-              ) : editType === "link" ? (
-                <LinkLessonFields
+              ) : editType === "quiz" ? null : (
+                <LessonContentEditor
+                  type={editType as LessonContentType}
                   content={editContent}
                   onChange={setEditContent}
                 />
-              ) : editType === "document" || editType === "html" || (editType === "video" && videoSource === "sharepoint") ? (
-                <div>
-                  <label className="block text-xs font-medium text-foreground-muted mb-1">
-                    {editType === "video"
-                      ? "SharePoint video"
-                      : editType === "html"
-                        ? "HTML file"
-                        : "Document"}
-                  </label>
-                  {editType === "video" && (
-                    <div className="mb-2 flex flex-col sm:flex-row gap-1 sm:gap-0 sm:inline-flex rounded-lg border border-border p-0.5 text-xs">
-                      <button
-                        type="button"
-                        onClick={() => setVideoSource("sharepoint")}
-                        className={`px-3 py-1 rounded-md transition-colors ${videoSource === "sharepoint" ? "bg-primary text-white" : "text-foreground-muted"}`}
-                      >
-                        SharePoint
-                      </button>
-                      <button
-                        type="button"
-                        onClick={() => {
-                          setVideoSource("url");
-                          setEditContent("");
-                        }}
-                        className={`px-3 py-1 rounded-md transition-colors ${(videoSource as string) === "url" ? "bg-primary text-white" : "text-foreground-muted"}`}
-                      >
-                        External URL
-                      </button>
-                    </div>
-                  )}
-                  {editContent ? (
-                    <div className="flex items-center gap-2">
-                      <span className="text-sm text-foreground flex-1 truncate">
-                        {(() => {
-                          try {
-                            return (JSON.parse(editContent) as { fileName?: string }).fileName ?? "Selected file";
-                          } catch {
-                            return "Selected file";
-                          }
-                        })()}
-                      </span>
-                      <Button
-                        type="button"
-                        variant="secondary"
-                        size="xs"
-                        onClick={() => {
-                          setPickerTarget("edit");
-                          setPickerOpen(true);
-                        }}
-                      >
-                        Change
-                      </Button>
-                    </div>
-                  ) : (
-                    <button
-                      type="button"
-                      onClick={() => {
-                        setPickerTarget("edit");
-                        setPickerOpen(true);
-                      }}
-                      className="rounded-lg border border-dashed border-border px-4 py-3 text-sm text-primary w-full text-center hover:bg-primary-subtle transition-colors"
-                    >
-                      Browse SharePoint…
-                    </button>
-                  )}
-                </div>
-              ) : editType !== "quiz" ? (
-                <div>
-                  <label className="block text-xs font-medium text-foreground-muted mb-1">
-                    {editType === "video" ? "Video URL" : "Content (Markdown)"}
-                  </label>
-                  {editType === "video" && (
-                    <div className="mb-2 inline-flex rounded-lg border border-border p-0.5 text-xs">
-                      <button
-                        type="button"
-                        onClick={() => {
-                          setVideoSource("sharepoint");
-                          setEditContent("");
-                        }}
-                        className={`px-3 py-1 rounded-md transition-colors ${(videoSource as string) === "sharepoint" ? "bg-primary text-white" : "text-foreground-muted"}`}
-                      >
-                        SharePoint
-                      </button>
-                      <button
-                        type="button"
-                        onClick={() => setVideoSource("url")}
-                        className={`px-3 py-1 rounded-md transition-colors ${videoSource === "url" ? "bg-primary text-white" : "text-foreground-muted"}`}
-                      >
-                        External URL
-                      </button>
-                    </div>
-                  )}
-                  <textarea
-                    value={editContent}
-                    onChange={(e) => setEditContent(e.target.value)}
-                    rows={editType === "text" ? 6 : 2}
-                    className="w-full rounded-lg border border-border bg-surface text-sm px-3 py-2 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring resize-none"
-                    placeholder={editType === "video" ? "https://www.youtube.com/embed/..." : "Markdown content…"}
-                  />
-                </div>
-              ) : null}
+              )}
 
               {/* Deadline */}
               <div>
@@ -1026,27 +907,6 @@ export function ModuleManager({
         </div>
       )}
 
-      {/* SharePoint File Picker */}
-      <SharePointFilePicker
-        isOpen={pickerOpen}
-        onClose={() => setPickerOpen(false)}
-        onSelect={handlePickerSelect}
-        mimeTypeFilter={
-          editType === "video"
-            ? (m) => m.startsWith("video/")
-            : editType === "html"
-              ? (m) => m === "text/html" || m.startsWith("text/html")
-              : undefined
-        }
-        filterLabel={
-          editType === "video"
-            ? "video files"
-            : editType === "html"
-              ? "HTML files"
-              : undefined
-        }
-      />
-
       <ConfirmDialog
         open={pendingDeleteModule !== null}
         onOpenChange={(open) => !open && setPendingDeleteModule(null)}
@@ -1092,93 +952,4 @@ export function ModuleManager({
       />
     </div>
   );
-}
-
-/** Edit-form panel for `LessonType.LINK` lessons. URL is required and
- *  validated as `http(s)`; blurb is optional. Mirrors the shape of the
- *  video / document edit panels. Updates flow through to the parent's
- *  `editContent` state so the standard save handler picks them up. */
-function LinkLessonFields({
-  content,
-  onChange,
-}: {
-  content: string;
-  onChange: (next: string) => void;
-}) {
-  const parsed = parseLinkContent(content);
-  // We accept a free-text URL during editing (parseLinkContent rejects
-  // non-http(s) before render). Empty / partial values during typing are
-  // tolerated; the final save still goes through whatever the textarea
-  // reflects.
-  const draftUrl = parsed?.url ?? safeRawUrl(content);
-  const draftBlurb = parsed?.blurb ?? safeRawBlurb(content);
-
-  function update(nextUrl: string, nextBlurb: string) {
-    if (!nextUrl) {
-      onChange("");
-      return;
-    }
-    onChange(serializeLinkContent({ url: nextUrl, blurb: nextBlurb }));
-  }
-
-  return (
-    <div className="space-y-3">
-      <div>
-        <label
-          htmlFor="link-url"
-          className="block text-xs font-medium text-foreground-muted mb-1"
-        >
-          Article URL <span className="text-danger">*</span>
-        </label>
-        <input
-          id="link-url"
-          type="url"
-          inputMode="url"
-          value={draftUrl}
-          onChange={(e) => update(e.target.value.trim(), draftBlurb)}
-          placeholder="https://example.com/article"
-          className="w-full rounded-lg border border-border bg-surface text-sm px-3 py-2 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
-        />
-      </div>
-      <div>
-        <label
-          htmlFor="link-blurb"
-          className="block text-xs font-medium text-foreground-muted mb-1"
-        >
-          Blurb <span className="text-foreground-muted">(optional)</span>
-        </label>
-        <textarea
-          id="link-blurb"
-          value={draftBlurb}
-          onChange={(e) => update(draftUrl, e.target.value)}
-          rows={2}
-          placeholder="One sentence describing why this is required reading."
-          className="w-full rounded-lg border border-border bg-surface text-sm px-3 py-2 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring resize-none"
-        />
-      </div>
-    </div>
-  );
-}
-
-/** Best-effort recovery of a partially-typed URL from `editContent`
- *  while the user is still editing (parseLinkContent only accepts a
- *  valid http(s) URL). */
-function safeRawUrl(raw: string): string {
-  if (!raw) return "";
-  try {
-    const obj = JSON.parse(raw) as { url?: unknown };
-    return typeof obj.url === "string" ? obj.url : "";
-  } catch {
-    return "";
-  }
-}
-
-function safeRawBlurb(raw: string): string {
-  if (!raw) return "";
-  try {
-    const obj = JSON.parse(raw) as { blurb?: unknown };
-    return typeof obj.blurb === "string" ? obj.blurb : "";
-  } catch {
-    return "";
-  }
 }
