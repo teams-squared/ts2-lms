@@ -5,15 +5,19 @@ import dynamic from "next/dynamic";
 import type { Components } from "react-markdown";
 import { Spinner } from "@/components/ui/Spinner";
 
-// react-markdown is ~50 KB and only needed for TEXT lessons. Load on demand.
-const ReactMarkdown = dynamic(() => import("react-markdown"), {
-  ssr: false,
-  loading: () => (
-    <div className="flex items-center justify-center py-8">
-      <Spinner size="md" />
-    </div>
-  ),
-});
+// react-markdown + remark-gfm are only needed for TEXT lessons. Load on
+// demand via a wrapper that bundles both into one lazy chunk.
+const MarkdownContent = dynamic(
+  () => import("@/components/courses/MarkdownContent").then((m) => m.MarkdownContent),
+  {
+    ssr: false,
+    loading: () => (
+      <div className="flex items-center justify-center py-8">
+        <Spinner size="md" />
+      </div>
+    ),
+  },
+);
 import type { LessonType } from "@/lib/types";
 import type { SharePointDocumentRef } from "@/lib/sharepoint/types";
 import { toEmbedUrl } from "@/lib/video-embed";
@@ -353,7 +357,7 @@ export function LessonViewer({
       />
       {content ? (
         <div className="max-w-none">
-          <ReactMarkdown components={mdComponents}>{stripLeadingTitle(content, title)}</ReactMarkdown>
+          <MarkdownContent components={mdComponents}>{stripLeadingTitle(content, title)}</MarkdownContent>
         </div>
       ) : (
         <p className="text-sm text-foreground-muted">
