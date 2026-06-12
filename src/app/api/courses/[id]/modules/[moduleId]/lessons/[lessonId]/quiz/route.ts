@@ -1,6 +1,8 @@
 import { NextResponse } from "next/server";
 import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
+import { canViewLesson } from "@/lib/courseAccess";
+import type { Role } from "@/lib/types";
 
 type Params = { params: Promise<{ id: string; moduleId: string; lessonId: string }> };
 
@@ -22,6 +24,13 @@ export async function GET(_request: Request, { params }: Params) {
   });
 
   if (!lesson || lesson.moduleId !== moduleId || lesson.module.courseId !== courseId) {
+    return NextResponse.json({ error: "Lesson not found" }, { status: 404 });
+  }
+
+  // Read access: enrolled learners + managing managers / admins only.
+  // Without this any authenticated user could harvest quiz questions from
+  // courses they have no right to access.
+  if (!(await canViewLesson(userId, session.user.role as Role, courseId))) {
     return NextResponse.json({ error: "Lesson not found" }, { status: 404 });
   }
 

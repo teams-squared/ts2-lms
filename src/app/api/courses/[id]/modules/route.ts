@@ -2,7 +2,7 @@ import { NextResponse } from "next/server";
 import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { prismaLessonTypeToApp } from "@/lib/types";
-import { canManageCourse } from "@/lib/courseAccess";
+import { canManageCourse, canViewCourse } from "@/lib/courseAccess";
 import type { Role } from "@/lib/types";
 
 type Params = { params: Promise<{ id: string }> };
@@ -10,11 +10,29 @@ type Params = { params: Promise<{ id: string }> };
 /** GET /api/courses/[id]/modules — list modules with lessons. */
 export async function GET(_request: Request, { params }: Params) {
   const session = await auth();
-  if (!session?.user?.email) {
+  if (!session?.user?.id) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
   const { id } = await params;
+
+  // Don't expose draft / unpublished course structure to learners. Published
+  // courses are listable by any authenticated user; non-published only by a
+  // managing manager / admin.
+  const course = await prisma.course.findUnique({
+    where: { id },
+    select: { status: true },
+  });
+  if (!course) {
+    return NextResponse.json({ error: "Not found" }, { status: 404 });
+  }
+  if (
+    course.status !== "PUBLISHED" &&
+    !(await canViewCourse(session.user.id, session.user.role as Role, id))
+  ) {
+    return NextResponse.json({ error: "Not found" }, { status: 404 });
+  }
+
   const modules = await prisma.module.findMany({
     where: { courseId: id },
     include: {

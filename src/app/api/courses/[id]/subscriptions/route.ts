@@ -1,18 +1,24 @@
 import { NextResponse } from "next/server";
 import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
+import { canManageCourse } from "@/lib/courseAccess";
+import type { Role } from "@/lib/types";
 
 type Params = { params: Promise<{ id: string }> };
 
-/** Verify caller is admin or course_manager. */
-async function authorize(_courseId: string) {
+/** Verify the caller may manage THIS course (admin or its course_manager).
+ *  Role alone is insufficient — a course_manager may only touch courses they
+ *  manage, else any manager could edit any course's subscriber list (IDOR). */
+async function authorize(courseId: string) {
   const session = await auth();
-  if (!session?.user?.email) return null;
+  if (!session?.user?.id) return null;
 
-  const { role } = session.user;
-  if (role === "admin" || role === "course_manager") return session;
-
-  return null;
+  const allowed = await canManageCourse(
+    session.user.id,
+    session.user.role as Role,
+    courseId,
+  );
+  return allowed ? session : null;
 }
 
 /** GET /api/courses/[id]/subscriptions — list subscribed emails. */

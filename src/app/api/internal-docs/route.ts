@@ -1,11 +1,67 @@
 import { NextResponse } from "next/server";
 import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
-import { canAuthorForRequirements, loadUserTiers } from "@/lib/clearance";
-import { appLessonTypeToPrisma, type LessonType, type Role } from "@/lib/types";
+import {
+  canAuthorForRequirements,
+  filterAccessibleDocIds,
+  loadUserTiers,
+} from "@/lib/clearance";
+import {
+  appLessonTypeToPrisma,
+  prismaLessonTypeToApp,
+  type LessonType,
+  type Role,
+} from "@/lib/types";
 
 /** Content types an internal doc may use (excludes quiz + policy_doc). */
 const ALLOWED_TYPES: LessonType[] = ["text", "document", "html", "video", "link"];
+
+/**
+ * GET /api/internal-docs — list docs the caller is cleared to read.
+ * Internal docs DENY by default (emptyDefault=false), so a doc with no
+ * requirement is never returned to a non-admin. Admins see everything.
+ */
+export async function GET() {
+  const session = await auth();
+  if (!session?.user?.id) {
+    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  }
+  const userId = session.user.id;
+  const role = session.user.role as Role;
+
+  const docs = await prisma.internalDoc.findMany({
+    select: {
+      id: true,
+      title: true,
+      type: true,
+      category: true,
+      createdAt: true,
+      updatedAt: true,
+      clearanceRequirements: { select: { sectorId: true, tier: true } },
+    },
+    orderBy: { updatedAt: "desc" },
+  });
+
+  const accessibleIds = await filterAccessibleDocIds(
+    userId,
+    role,
+    docs.map((d) => ({ id: d.id, reqs: d.clearanceRequirements })),
+    false,
+  );
+
+  const visible = docs
+    .filter((d) => accessibleIds.has(d.id))
+    .map((d) => ({
+      id: d.id,
+      title: d.title,
+      type: prismaLessonTypeToApp(d.type),
+      category: d.category,
+      createdAt: d.createdAt,
+      updatedAt: d.updatedAt,
+    }));
+
+  return NextResponse.json(visible);
+}
 
 export interface RequirementInput {
   sectorId: string;

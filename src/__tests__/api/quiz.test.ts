@@ -154,4 +154,18 @@ describe("GET .../lessons/[lessonId]/quiz", () => {
     const body = await res.json();
     expect(body.passingScore).toBe(70);
   });
+
+  // Kept last: this stubs enrollment.findUnique -> null, and vi.clearAllMocks()
+  // only clears calls (not implementations), so the stub would leak into any
+  // test that ran after it.
+  it("returns 404 when an employee is not enrolled (no question harvest)", async () => {
+    mockAuth.mockResolvedValue(mockSession({ role: "employee" }));
+    mockPrisma.lesson.findUnique.mockResolvedValue(mockLesson);
+    mockPrisma.enrollment.findUnique.mockResolvedValue(null);
+
+    const res = await GET(makeRequest(), makeParams("c1", "m1", "l1"));
+    expect(res.status).toBe(404);
+    // Questions must never be fetched for an unauthorized viewer.
+    expect(mockPrisma.quizQuestion.findMany).not.toHaveBeenCalled();
+  });
 });

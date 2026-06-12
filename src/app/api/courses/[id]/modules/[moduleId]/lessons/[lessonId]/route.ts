@@ -2,7 +2,7 @@ import { NextResponse } from "next/server";
 import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { prismaLessonTypeToApp, appLessonTypeToPrisma } from "@/lib/types";
-import { canManageCourse } from "@/lib/courseAccess";
+import { canManageCourse, canViewLesson } from "@/lib/courseAccess";
 import type { LessonType, Role } from "@/lib/types";
 
 type Params = {
@@ -12,17 +12,24 @@ type Params = {
 /** GET /api/courses/[id]/modules/[moduleId]/lessons/[lessonId] — lesson detail. */
 export async function GET(_request: Request, { params }: Params) {
   const session = await auth();
-  if (!session?.user?.email) {
+  if (!session?.user?.id) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
-  const { lessonId } = await params;
+  const { id: courseId, moduleId, lessonId } = await params;
   const lesson = await prisma.lesson.findUnique({
     where: { id: lessonId },
     include: { module: { select: { courseId: true } } },
   });
 
-  if (!lesson) {
+  // Validate the lesson actually lives under the course/module in the path,
+  // then enforce read access (enrolled, or managing manager / admin). A bare
+  // auth() check here would leak clearance-locked & draft lesson content.
+  if (!lesson || lesson.moduleId !== moduleId || lesson.module.courseId !== courseId) {
+    return NextResponse.json({ error: "Not found" }, { status: 404 });
+  }
+
+  if (!(await canViewLesson(session.user.id, session.user.role as Role, courseId))) {
     return NextResponse.json({ error: "Not found" }, { status: 404 });
   }
 
