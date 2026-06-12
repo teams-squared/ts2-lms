@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { auth } from "@/lib/auth";
+import { requireRole } from "@/lib/roles";
 import { assertConfigured, getSharePointConfig } from "@/lib/sharepoint/config";
 import { getSiteId, listDriveItems } from "@/lib/sharepoint/graph-client";
 import { getCachedMetadata, setCachedMetadata } from "@/lib/sharepoint/cache";
@@ -8,14 +8,8 @@ import type { DriveItem } from "@/lib/sharepoint/graph-client";
 
 /** GET /api/sharepoint/browse — browse SharePoint folder contents. */
 export async function GET(request: Request) {
-  const session = await auth();
-  if (!session?.user?.id) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-  }
-
-  if (session.user.role !== "admin" && session.user.role !== "course_manager") {
-    return NextResponse.json({ error: "Forbidden" }, { status: 403 });
-  }
+  const authResult = await requireRole("course_manager");
+  if (authResult instanceof NextResponse) return authResult;
 
   try {
     assertConfigured();

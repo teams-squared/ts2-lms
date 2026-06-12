@@ -21,6 +21,7 @@ describe("GET /api/courses/[id]/modules", () => {
 
   it("returns modules with lessons for authenticated user", async () => {
     mockAuth.mockResolvedValue(mockSession());
+    mockPrisma.course.findUnique.mockResolvedValue({ status: "PUBLISHED" });
     mockPrisma.module.findMany.mockResolvedValue([
       {
         id: "m1",
@@ -38,6 +39,16 @@ describe("GET /api/courses/[id]/modules", () => {
     const body = await res.json();
     expect(body).toHaveLength(1);
     expect(body[0].lessons[0].type).toBe("text");
+  });
+
+  it("returns 404 on a draft course for a non-managing learner", async () => {
+    mockAuth.mockResolvedValue(mockSession({ role: "employee" }));
+    mockPrisma.course.findUnique.mockResolvedValue({ status: "DRAFT" });
+    const req = new Request("http://localhost/api/courses/c1/modules");
+    const res = await GET(req, makeParams("c1"));
+    expect(res.status).toBe(404);
+    // Draft structure must not be enumerated.
+    expect(mockPrisma.module.findMany).not.toHaveBeenCalled();
   });
 });
 

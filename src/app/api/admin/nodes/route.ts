@@ -12,9 +12,9 @@ export async function GET() {
   return NextResponse.json(tree);
 }
 
-/** POST /api/admin/nodes — create a node */
+/** POST /api/admin/nodes — create a node (global taxonomy → admin only) */
 export async function POST(request: Request) {
-  const authResult = await requireRole("course_manager");
+  const authResult = await requireRole("admin");
   if (authResult instanceof NextResponse) return authResult;
 
   let body: { name?: string; parentId?: string | null; description?: string };

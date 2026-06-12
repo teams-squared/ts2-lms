@@ -5,7 +5,7 @@ Run these checks against `learn.teamsquared.io` using Claude in Chrome MCP tools
 ## Login Page (`/login`)
 
 - [ ] Page loads without console errors
-- [ ] Logo and "Welcome back" heading visible
+- [ ] Logo and "Welcome" heading visible
 - [ ] "Sign in to access your learning platform" subtext visible
 - [ ] Microsoft sign-in button present (blue, with MS logo)
 - [ ] Email/password form present (in non-production only — credentials provider is gated to NODE_ENV !== "production")

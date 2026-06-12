@@ -168,6 +168,34 @@ export async function POST(request: Request, { params }: Params) {
     });
   }
 
+  // Privileged preview (admin / course_manager not enrolled): score and
+  // return, but never write QuizAttempt / QuizAnswer / LessonProgress or
+  // award XP. Otherwise a manager "previewing" a quiz pollutes their own
+  // progress + leaderboard against a course they aren't taking.
+  if (!enrollment) {
+    trackEvent(userId, "quiz_completed", {
+      courseId,
+      lessonId,
+      score: correctCount,
+      totalQuestions,
+      percentage,
+      passed,
+      preview: true,
+    });
+    return NextResponse.json({
+      score: correctCount,
+      totalQuestions,
+      percentage,
+      passed,
+      passingScore,
+      xpAwarded: 0,
+      newAchievements: [],
+      courseComplete: false,
+      courseStats: null,
+      preview: true,
+    });
+  }
+
   // Save the attempt
   const attempt = await prisma.quizAttempt.create({
     data: {

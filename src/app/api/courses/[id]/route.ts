@@ -61,10 +61,15 @@ export async function PATCH(request: Request, { params }: Params) {
   }
 
   // Admin manages all; course_manager only courses linked via CourseManagers;
-  // everyone else only their own creations.
+  // a privileged creator may still edit their own creation. The role gate on
+  // the creator fallback matters: without it a user demoted to `employee`
+  // would retain edit rights on any course they created while privileged.
   const role = (session.user.role ?? "employee") as Role;
   const isManager = await canManageCourse(session.user.id, role, id);
-  if (!isManager && course.createdById !== session.user.id) {
+  const isPrivilegedCreator =
+    course.createdById === session.user.id &&
+    (role === "admin" || role === "course_manager");
+  if (!isManager && !isPrivilegedCreator) {
     return NextResponse.json({ error: "Forbidden" }, { status: 403 });
   }
 

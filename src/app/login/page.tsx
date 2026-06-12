@@ -29,7 +29,7 @@ export default function LoginPage() {
             <div className="mb-6 flex flex-col items-center">
               <Logo size={36} showText />
               <h1 className="mt-4 font-display text-lg font-semibold tracking-tight text-foreground">
-                Welcome back
+                Welcome
               </h1>
               <p className="mt-1 text-sm text-foreground-muted">
                 Sign in to access your learning platform

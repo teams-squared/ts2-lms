@@ -87,6 +87,8 @@ describe("POST /api/admin/nodes", () => {
 
     const res = await POST(makeReq({ name: "Law Courses" }));
     expect(res.status).toBe(201);
+    // Node creation mutates global taxonomy → must demand admin, not manager.
+    expect(mockRequireRole).toHaveBeenCalledWith("admin");
     const body = await res.json();
     expect(body.name).toBe("Law Courses");
     expect(mockPrisma.courseNode.create).toHaveBeenCalledWith(

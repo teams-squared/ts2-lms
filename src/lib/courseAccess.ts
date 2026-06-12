@@ -37,6 +37,26 @@ export async function canViewCourse(
 }
 
 /**
+ * True if the user may READ a lesson's content / quiz inside a course.
+ * Admins and managing course_managers always may; everyone else must be
+ * enrolled. Clearance is enforced upstream at enrollment time, so an enrolled
+ * user is by definition cleared — this is the single gate every lesson-read
+ * endpoint (detail, quiz, video) should call instead of a bare `auth()`.
+ */
+export async function canViewLesson(
+  userId: string,
+  role: Role,
+  courseId: string,
+): Promise<boolean> {
+  if (await canManageCourse(userId, role, courseId)) return true;
+  const enrollment = await prisma.enrollment.findUnique({
+    where: { userId_courseId: { userId, courseId } },
+    select: { id: true },
+  });
+  return enrollment !== null;
+}
+
+/**
  * Returns the set of course IDs the caller can manage.
  *
  *  - admin            → null  (sentinel meaning "all courses, no filter")
