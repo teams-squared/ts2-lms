@@ -11,6 +11,7 @@ import { NextStepBanner } from "@/components/dashboard/NextStepBanner";
 import { DeadlineAlerts } from "@/components/dashboard/DeadlineAlerts";
 import { CourseProgressList } from "@/components/dashboard/CourseProgressList";
 import { RevealOnView } from "@/components/ui/RevealOnView";
+import { OnboardingModal } from "@/components/onboarding/OnboardingModal";
 
 export const dynamic = "force-dynamic";
 
@@ -57,7 +58,7 @@ export default async function HomePage() {
   // The `include` clause returns all scalar fields by default, including `completedAt`
   // which is the source of truth for whether the learner has ever finished the course
   // (set once, never reset on lesson uncomplete).
-  const [enrollments, userStats] = await Promise.all([
+  const [enrollments, userStats, userRecord] = await Promise.all([
     prisma.enrollment.findMany({
       where: { userId },
       include: {
@@ -82,6 +83,7 @@ export default async function HomePage() {
       orderBy: { enrolledAt: "desc" },
     }),
     prisma.userStats.findUnique({ where: { userId } }),
+    prisma.user.findUnique({ where: { id: userId }, select: { onboardedAt: true } }),
   ]);
 
   // Compute per-enrollment progress in a single batch query
@@ -194,6 +196,8 @@ export default async function HomePage() {
 
   return (
     <div>
+      <OnboardingModal needsOnboarding={!userRecord?.onboardedAt} />
+
       <WelcomeBar
         firstName={firstName}
         xp={userStats?.xp ?? 0}
