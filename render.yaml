@@ -8,7 +8,7 @@ services:
   - type: web
     name: ts2-lms
     runtime: node
-    plan: pro
+    plan: starter
     buildCommand: npm install && npx prisma generate && npm run build
     # Demo users (admin@teamssquared.com etc.) used to be seeded here on
     # every deploy via `npx tsx prisma/seed.ts`. Removed: those accounts
