@@ -14,7 +14,14 @@ services:
     # every deploy via `npx tsx prisma/seed.ts`. Removed: those accounts
     # were a backdoor risk and prod doesn't need test data. Real admins
     # are invited via /admin/users like everyone else.
-    startCommand: npx tsx prisma/migrate.ts && npm start
+    #
+    # Schema migrations: prod applies COMMITTED migration files via
+    # `prisma migrate deploy`. Any schema.prisma change MUST ship a matching
+    # prisma/migrations/<timestamp>_<name>/migration.sql, or the column won't
+    # exist in prod even though the generated client queries it. The custom
+    # idempotent prisma/migrate.ts script is only used by the separate
+    # ts2-lms-staging service (branch dev) — not prod.
+    startCommand: npx prisma migrate deploy && npm start
     envVars:
       - key: NODE_ENV
         value: production
