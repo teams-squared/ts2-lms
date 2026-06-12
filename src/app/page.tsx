@@ -11,6 +11,7 @@ import { NextStepBanner } from "@/components/dashboard/NextStepBanner";
 import { DeadlineAlerts } from "@/components/dashboard/DeadlineAlerts";
 import { CourseProgressList } from "@/components/dashboard/CourseProgressList";
 import { RevealOnView } from "@/components/ui/RevealOnView";
+import { OnboardingModal } from "@/components/onboarding/OnboardingModal";
 
 export const dynamic = "force-dynamic";
 
@@ -83,6 +84,21 @@ export default async function HomePage() {
     }),
     prisma.userStats.findUnique({ where: { userId } }),
   ]);
+
+  // First-login onboarding flag. Isolated from the critical dashboard query +
+  // wrapped defensively: a non-onboarding failure here (e.g. a pending
+  // migration on a fresh deploy) must never take down the whole dashboard —
+  // worst case we just don't show the modal.
+  let needsOnboarding = false;
+  try {
+    const userRecord = await prisma.user.findUnique({
+      where: { id: userId },
+      select: { onboardedAt: true },
+    });
+    needsOnboarding = !userRecord?.onboardedAt;
+  } catch {
+    needsOnboarding = false;
+  }
 
   // Compute per-enrollment progress in a single batch query
   const allEnrolledLessonIds = enrollments.flatMap((e) =>
@@ -194,6 +210,8 @@ export default async function HomePage() {
 
   return (
     <div>
+      <OnboardingModal needsOnboarding={needsOnboarding} />
+
       <WelcomeBar
         firstName={firstName}
         xp={userStats?.xp ?? 0}

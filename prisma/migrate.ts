@@ -390,6 +390,12 @@ async function main() {
     ALTER TABLE "Enrollment" ADD COLUMN IF NOT EXISTS "completedAt" TIMESTAMP(3);
   `);
 
+  // Add onboardedAt to User — null means the first-login onboarding modal
+  // hasn't been seen yet (idempotent)
+  await client.query(`
+    ALTER TABLE "User" ADD COLUMN IF NOT EXISTS "onboardedAt" TIMESTAMP(3);
+  `);
+
   // Commit the transaction opened on line 142 (BEGIN after the Role enum
   // restructure). Without this, client.end() closes the connection with an
   // open transaction and Postgres rolls back EVERY statement after the BEGIN
