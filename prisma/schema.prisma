@@ -21,6 +21,7 @@ model User {
   avatar                  String?
   createdAt               DateTime              @default(now())
   updatedAt               DateTime              @updatedAt
+  onboardedAt             DateTime?
   invitedAt               DateTime?
   invitedById             String?
   invitedBy               User?                 @relation("UserInvites", fields: [invitedById], references: [id], onDelete: SetNull)
