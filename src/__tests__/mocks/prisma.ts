@@ -226,4 +226,10 @@ export const mockPrisma = {
     groupBy: vi.fn().mockResolvedValue([]),
     count: vi.fn().mockResolvedValue(0),
   },
+  auditLog: {
+    findMany: vi.fn().mockResolvedValue([]),
+    create: vi.fn().mockResolvedValue({}),
+    deleteMany: vi.fn().mockResolvedValue({ count: 0 }),
+    count: vi.fn().mockResolvedValue(0),
+  },
 };

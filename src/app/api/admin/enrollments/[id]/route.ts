@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { requireRole } from "@/lib/roles";
 import { canManageCourse } from "@/lib/courseAccess";
+import { writeAuditLog } from "@/lib/audit";
 
 type Params = { params: Promise<{ id: string }> };
 
@@ -29,6 +30,15 @@ export async function DELETE(_request: Request, { params }: Params) {
   }
 
   await prisma.enrollment.delete({ where: { id } });
+
+  await writeAuditLog({
+    action: "enrollment.deleted",
+    actorId: userId,
+    actorEmail: authResult.session?.user?.email,
+    targetType: "enrollment",
+    targetId: id,
+    metadata: { enrolledUserId: enrollment.userId, courseId: enrollment.courseId },
+  });
 
   return NextResponse.json({ deleted: true });
 }

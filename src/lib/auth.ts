@@ -4,6 +4,7 @@ import bcrypt from "bcryptjs";
 import { authConfig } from "./auth.config";
 import { prisma } from "./prisma";
 import { prismaRoleToApp } from "./types";
+import { writeAuditLog } from "./audit";
 
 if (!process.env.AUTH_SECRET) {
   if (process.env.NODE_ENV === "production") {
@@ -38,10 +39,28 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
               if (!email || !password) return null;
 
               const user = await prisma.user.findUnique({ where: { email } });
-              if (!user || !user.passwordHash) return null;
+              if (!user || !user.passwordHash) {
+                await writeAuditLog({
+                  action: "session.login_failed",
+                  actorEmail: email,
+                  targetType: "session",
+                  metadata: { provider: "credentials", reason: "no_user_or_password" },
+                });
+                return null;
+              }
 
               const valid = await bcrypt.compare(password, user.passwordHash);
-              if (!valid) return null;
+              if (!valid) {
+                await writeAuditLog({
+                  action: "session.login_failed",
+                  actorId: user.id,
+                  actorEmail: user.email,
+                  targetType: "session",
+                  targetId: user.id,
+                  metadata: { provider: "credentials", reason: "bad_password" },
+                });
+                return null;
+              }
 
               return { id: user.id, email: user.email, name: user.name };
             },
@@ -99,6 +118,16 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
             where: { userId: dbUser.id },
           });
           token.internal = dbUser.role === "ADMIN" || clearanceCount > 0;
+          // Audit successful sign-in. This block runs only on initial login
+          // (NextAuth passes `user` once), not on every token refresh.
+          await writeAuditLog({
+            action: "session.login",
+            actorId: dbUser.id,
+            actorEmail: user.email,
+            targetType: "session",
+            targetId: dbUser.id,
+            metadata: { provider: account?.provider ?? "credentials" },
+          });
         } catch (err) {
           console.error("[auth] jwt callback DB error:", err);
           token.role = "employee";

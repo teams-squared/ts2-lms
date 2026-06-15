@@ -30,6 +30,16 @@ declare module "next-auth" {
   }
 }
 
+// Session lifetime (ISO 27001 A.8.5 — secure authentication). JWT sessions are
+// sliding: each request inside the window past `updateAge` re-issues the token
+// and extends expiry, so `maxAge` acts as an idle timeout. Default 8h forces a
+// fresh sign-in roughly once per working day; override via SESSION_MAX_AGE_SECONDS.
+const SESSION_MAX_AGE_SECONDS = (() => {
+  const raw = Number(process.env.SESSION_MAX_AGE_SECONDS);
+  return Number.isInteger(raw) && raw > 0 ? raw : 8 * 60 * 60;
+})();
+const SESSION_UPDATE_AGE_SECONDS = 15 * 60; // re-issue token at most every 15 min
+
 const providers: NextAuthConfig["providers"] = [];
 
 if (
@@ -48,7 +58,12 @@ if (
 
 export const authConfig: NextAuthConfig = {
   providers,
-  session: { strategy: "jwt" },
+  session: {
+    strategy: "jwt",
+    maxAge: SESSION_MAX_AGE_SECONDS,
+    updateAge: SESSION_UPDATE_AGE_SECONDS,
+  },
+  jwt: { maxAge: SESSION_MAX_AGE_SECONDS },
   callbacks: {
     async session({ session, token }) {
       if (session.user) {

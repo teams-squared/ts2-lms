@@ -45,6 +45,7 @@ model User {
   isoLibraryViews         IsoLibraryView[]
   internalDocsAuthored    InternalDoc[]         @relation("InternalDocsAuthored")
   internalDocViews        InternalDocView[]
+  auditLogs               AuditLog[]            @relation("AuditLogActor")
 }
 
 enum CourseStatus {
@@ -610,4 +611,35 @@ model ManualReminderLog {
 
   @@index([userId, lessonId])
   @@index([sentById])
+}
+
+/// Centralised security audit trail (ISO 27001 A.8.15 / A.5.28 evidence).
+/// One row per sensitive action: login, role change, user delete, clearance
+/// grant/revoke, enrollment create/delete. Written best-effort from each
+/// mutation route via writeAuditLog() in src/lib/audit.ts.
+///
+/// Tamper / retention design:
+///  - `actorId` is SetNull (NOT cascade) so deleting the actor never erases
+///    their audit history — the row survives with actorId NULL.
+///  - `actorEmail` snapshots the actor's email at write time so the trail
+///    stays human-readable even after the actor row is gone.
+///  - `targetId` is a plain string (no FK): targets are frequently deleted
+///    (that IS the audited event) and the log must outlive them.
+///  - rows are append-only; no route updates or deletes AuditLog.
+model AuditLog {
+  id         String   @id @default(cuid())
+  action     String // e.g. "user.role_changed", "clearance.granted"
+  actorId    String? // who performed it; NULL = system/cron or deleted actor
+  actorEmail String? // denormalised snapshot — survives actor deletion
+  targetType String? // "user" | "course" | "enrollment" | "clearance" | "session"
+  targetId   String? // id of the affected entity (no FK — targets get deleted)
+  metadata   Json? // action-specific detail (old/new role, sector, tier, ...)
+  createdAt  DateTime @default(now())
+
+  actor User? @relation("AuditLogActor", fields: [actorId], references: [id], onDelete: SetNull)
+
+  @@index([action, createdAt])
+  @@index([actorId, createdAt])
+  @@index([targetType, targetId])
+  @@index([createdAt])
 }
