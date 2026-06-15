@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { requireRole } from "@/lib/roles";
+import { writeAuditLog } from "@/lib/audit";
 
 type Params = { params: Promise<{ userId: string; sectorId: string }> };
 
@@ -21,6 +22,15 @@ export async function DELETE(_request: Request, { params }: Params) {
 
   await prisma.userClearance.delete({
     where: { userId_sectorId: { userId, sectorId } },
+  });
+
+  await writeAuditLog({
+    action: "clearance.revoked",
+    actorId: authResult.userId,
+    actorEmail: authResult.session?.user?.email,
+    targetType: "user",
+    targetId: userId,
+    metadata: { sectorId, revokedTier: existing.tier },
   });
 
   return NextResponse.json({ deleted: true });

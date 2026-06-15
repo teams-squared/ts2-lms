@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { requireRole } from "@/lib/roles";
+import { writeAuditLog } from "@/lib/audit";
 
 type Params = { params: Promise<{ userId: string }> };
 
@@ -70,6 +71,15 @@ export async function POST(request: Request, { params }: Params) {
       grantedAt: true,
       sector: { select: { key: true, label: true } },
     },
+  });
+
+  await writeAuditLog({
+    action: "clearance.granted",
+    actorId: authResult.userId,
+    actorEmail: authResult.session?.user?.email,
+    targetType: "user",
+    targetId: userId,
+    metadata: { sectorId, sectorKey: record.sector.key, tier },
   });
 
   return NextResponse.json(record, { status: 201 });

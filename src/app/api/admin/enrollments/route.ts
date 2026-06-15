@@ -4,6 +4,7 @@ import { requireRole } from "@/lib/roles";
 import { canManageCourse, listManagedCourseIds } from "@/lib/courseAccess";
 import { awardXp } from "@/lib/xp";
 import { trackEvent } from "@/lib/posthog-server";
+import { writeAuditLog } from "@/lib/audit";
 
 /** GET /api/admin/enrollments — list enrollments (scoped to managed courses for course_manager). */
 export async function GET() {
@@ -101,6 +102,15 @@ export async function POST(request: Request) {
   // Award XP and track event
   const { newAchievements } = await awardXp(userId, 5);
   trackEvent(userId, "course_enrolled", { courseId, enrolledBy });
+
+  await writeAuditLog({
+    action: "enrollment.created",
+    actorId: enrolledBy,
+    actorEmail: authResult.session?.user?.email,
+    targetType: "enrollment",
+    targetId: enrollment.id,
+    metadata: { enrolledUserId: userId, courseId, courseTitle: course.title },
+  });
 
   return NextResponse.json(
     {

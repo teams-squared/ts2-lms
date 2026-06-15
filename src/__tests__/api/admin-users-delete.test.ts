@@ -29,6 +29,7 @@ function makeMockTx() {
     course: { updateMany: vi.fn().mockResolvedValue({ count: 0 }) },
     policyDocLesson: { updateMany: vi.fn().mockResolvedValue({ count: 0 }) },
     user: { delete: vi.fn().mockResolvedValue({}) },
+    auditLog: { create: vi.fn().mockResolvedValue({}) },
   };
 }
 

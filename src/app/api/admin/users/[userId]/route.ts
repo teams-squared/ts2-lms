@@ -3,6 +3,7 @@ import { prisma } from "@/lib/prisma";
 import { requireRole } from "@/lib/roles";
 import { prismaRoleToApp } from "@/lib/types";
 import { trackEvent } from "@/lib/posthog-server";
+import { writeAuditLog } from "@/lib/audit";
 
 type Params = { params: Promise<{ userId: string }> };
 
@@ -106,6 +107,25 @@ export async function DELETE(_request: Request, { params }: Params) {
       data: { lastSyncedById: deletingAdminId },
     });
     await tx.user.delete({ where: { id: userId } });
+    // Audit inside the transaction so the trail commits atomically with the
+    // delete — the actor (deleting admin) survives, the target row does not.
+    await writeAuditLog(
+      {
+        action: "user.deleted",
+        actorId: deletingAdminId,
+        actorEmail: authResult.session?.user?.email,
+        targetType: "user",
+        targetId: userId,
+        metadata: {
+          targetEmail: target.email,
+          targetRole: target.role,
+          reassignedCourseCount: authoredCount,
+          reassignedPolicyDocSyncCount: policyDocSyncCount,
+          enrollmentCount,
+        },
+      },
+      tx,
+    );
   });
 
   trackEvent(deletingAdminId, "user_removed", {

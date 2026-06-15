@@ -1,0 +1,47 @@
+name: Prune audit logs
+
+on:
+  schedule:
+    # 04:00 UTC every Sunday = 09:30 IST. Retention pruning is not time-
+    # sensitive; weekly keeps the table trimmed without daily churn.
+    - cron: "0 4 * * 0"
+  workflow_dispatch:
+    inputs:
+      dryRun:
+        description: "Dry run (count rows past retention, don't delete)"
+        type: boolean
+        default: false
+
+jobs:
+  prune-audit-logs:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Hit prune-audit-logs endpoint
+        env:
+          CRON_SECRET: ${{ secrets.CRON_SECRET }}
+          APP_URL: https://learn.teamsquared.io
+          DRY_RUN: ${{ inputs.dryRun }}
+        run: |
+          set -euo pipefail
+          if [ -z "${CRON_SECRET:-}" ]; then
+            echo "::error::CRON_SECRET repo secret is not set"
+            exit 1
+          fi
+          URL="$APP_URL/api/cron/prune-audit-logs"
+          if [ "${DRY_RUN:-false}" = "true" ]; then
+            URL="$URL?dryRun=1"
+          fi
+          echo "Calling $URL"
+          HTTP_CODE=$(curl -sS -o response.json -w "%{http_code}" \
+            -H "Authorization: Bearer $CRON_SECRET" \
+            --max-time 120 \
+            "$URL")
+          echo "HTTP $HTTP_CODE"
+          echo "--- Response ---"
+          cat response.json
+          echo
+          if [ "$HTTP_CODE" != "200" ]; then
+            echo "::error::Non-200 response from prune-audit-logs endpoint"
+            exit 1
+          fi
