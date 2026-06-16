@@ -2,7 +2,7 @@ import { NextResponse } from "next/server";
 import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { canViewLesson } from "@/lib/courseAccess";
-import { loadSanitizedQuestions, getStudentState } from "@/lib/assessment";
+import { getVariantCount, getStudentState } from "@/lib/assessment";
 import type { Role } from "@/lib/types";
 
 type Params = { params: Promise<{ id: string; moduleId: string; lessonId: string }> };
@@ -13,8 +13,8 @@ type Params = { params: Promise<{ id: string; moduleId: string; lessonId: string
  * Response:
  *   200 {
  *     config: { timeLimitMinutes: number, passThreshold: number } | null,
- *     questions: SanitizedAssessmentQuestion[],
- *     state: AssessmentStudentState,
+ *     variantCount: number,
+ *     state: AssessmentStudentState,   // in_progress carries the assigned variant's questions
  *   }
  *   401 { error: "Unauthorized" }
  *   403 { error: "Forbidden" }
@@ -53,25 +53,19 @@ export async function GET(_request: Request, { params }: Params) {
     select: { timeLimitMinutes: true, passThreshold: true },
   });
 
-  if (!assessmentConfig) {
-    return NextResponse.json({
-      config: null,
-      questions: [],
-      state: { phase: "startable" },
-    });
-  }
-
-  const [questions, state] = await Promise.all([
-    loadSanitizedQuestions(lessonId),
+  const [variantCount, state] = await Promise.all([
+    getVariantCount(lessonId),
     getStudentState(userId, lessonId),
   ]);
 
   return NextResponse.json({
-    config: {
-      timeLimitMinutes: assessmentConfig.timeLimitMinutes,
-      passThreshold: assessmentConfig.passThreshold,
-    },
-    questions,
+    config: assessmentConfig
+      ? {
+          timeLimitMinutes: assessmentConfig.timeLimitMinutes,
+          passThreshold: assessmentConfig.passThreshold,
+        }
+      : null,
+    variantCount,
     state,
   });
 }

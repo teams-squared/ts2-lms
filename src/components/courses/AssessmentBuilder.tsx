@@ -2,9 +2,12 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { Pencil } from "lucide-react";
+import { Pencil, ChevronDown, ChevronRight } from "lucide-react";
 import { ConfirmDialog } from "@/components/ui/ConfirmDialog";
 import { DragHandle, SortableItem, SortableList } from "@/components/ui/Sortable";
+import { useToast } from "@/components/ui/ToastProvider";
+
+// ── Types ─────────────────────────────────────────────────────────────────────
 
 interface AssessmentOption {
   id: string;
@@ -22,17 +25,24 @@ interface AssessmentQuestion {
   options: AssessmentOption[];
 }
 
+interface AssessmentVariant {
+  id: string;
+  label: string;
+  order: number;
+  questions: AssessmentQuestion[];
+}
+
 interface AssessmentConfig {
   timeLimitMinutes: number;
   passThreshold: number;
 }
 
-interface AssessmentBuilderProps {
+export interface AssessmentBuilderProps {
   courseId: string;
   moduleId: string;
   lessonId: string;
   initialConfig: AssessmentConfig | null;
-  initialQuestions: AssessmentQuestion[];
+  initialVariants: AssessmentVariant[];
 }
 
 interface NewOption {
@@ -40,69 +50,34 @@ interface NewOption {
   isCorrect: boolean;
 }
 
+// ── Constants ─────────────────────────────────────────────────────────────────
+
 const EMPTY_MC_OPTIONS: NewOption[] = [
   { text: "", isCorrect: false },
   { text: "", isCorrect: false },
 ];
 
-export function AssessmentBuilder({
-  courseId,
-  moduleId,
-  lessonId,
-  initialConfig,
-  initialQuestions,
-}: AssessmentBuilderProps) {
+// ── Per-variant question editor ───────────────────────────────────────────────
+
+interface VariantQuestionEditorProps {
+  variant: AssessmentVariant;
+  variantQuestionsBase: string;
+  onQuestionsChange: (variantId: string, questions: AssessmentQuestion[]) => void;
+}
+
+function VariantQuestionEditor({
+  variant,
+  variantQuestionsBase,
+  onQuestionsChange,
+}: VariantQuestionEditorProps) {
   const router = useRouter();
-  const apiBase = `/api/courses/${courseId}/modules/${moduleId}/lessons/${lessonId}/assessment`;
-  const questionsBase = `${apiBase}/questions`;
+  const { toast } = useToast();
 
-  const [questions, setQuestions] = useState<AssessmentQuestion[]>(initialQuestions);
+  const questions = variant.questions;
+  const setQuestions = (next: AssessmentQuestion[]) =>
+    onQuestionsChange(variant.id, next);
 
-  // ── Config ────────────────────────────────────────────────────────────────────
-  const [config, setConfig] = useState<AssessmentConfig | null>(initialConfig);
-  const [editingConfig, setEditingConfig] = useState(false);
-  const [configDraft, setConfigDraft] = useState<AssessmentConfig>(
-    initialConfig ?? { timeLimitMinutes: 60, passThreshold: 50 },
-  );
-  const [savingConfig, setSavingConfig] = useState(false);
-  const [configError, setConfigError] = useState<string | null>(null);
-
-  const totalMarks = questions.reduce((s, q) => s + q.maxMarks, 0);
-
-  const handleSaveConfig = async () => {
-    setConfigError(null);
-    if (configDraft.timeLimitMinutes < 1) {
-      setConfigError("Time limit must be at least 1 minute");
-      return;
-    }
-    if (configDraft.passThreshold < 0) {
-      setConfigError("Pass threshold cannot be negative");
-      return;
-    }
-    setSavingConfig(true);
-    try {
-      const res = await fetch(`${apiBase}/config`, {
-        method: "PATCH",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          timeLimitMinutes: Math.round(configDraft.timeLimitMinutes),
-          passThreshold: Math.round(configDraft.passThreshold),
-        }),
-      });
-      if (res.ok) {
-        setConfig({ ...configDraft });
-        setEditingConfig(false);
-        router.refresh();
-      } else {
-        const data = (await res.json()) as { error?: string };
-        setConfigError(data.error ?? "Failed to save config");
-      }
-    } finally {
-      setSavingConfig(false);
-    }
-  };
-
-  // ── Add question form ─────────────────────────────────────────────────────────
+  // ── Add question form ─────────────────────────────────────────────────────
   const [showForm, setShowForm] = useState(false);
   const [newType, setNewType] = useState<"MULTIPLE_CHOICE" | "FREE_TEXT">("MULTIPLE_CHOICE");
   const [newText, setNewText] = useState("");
@@ -130,8 +105,8 @@ export function AssessmentBuilder({
 
     if (!newText.trim()) { setAddError("Question text is required"); return; }
     if (newMaxMarks < 1) { setAddError("Max marks must be at least 1"); return; }
-
     if (newType === "MULTIPLE_CHOICE") {
+      if (newOptions.length < 2 || newOptions.length > 6) { setAddError("Multiple choice requires 2–6 options"); return; }
       if (newOptions.some((o) => !o.text.trim())) { setAddError("All options must have text"); return; }
       if (!newOptions.some((o) => o.isCorrect)) { setAddError("Mark one option as correct"); return; }
     }
@@ -143,7 +118,7 @@ export function AssessmentBuilder({
           ? { text: newText.trim(), questionType: newType, maxMarks: newMaxMarks, options: newOptions }
           : { text: newText.trim(), questionType: newType, maxMarks: newMaxMarks };
 
-      const res = await fetch(questionsBase, {
+      const res = await fetch(variantQuestionsBase, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(body),
@@ -167,19 +142,22 @@ export function AssessmentBuilder({
     }
   };
 
-  // ── Delete ────────────────────────────────────────────────────────────────────
+  // ── Delete question ────────────────────────────────────────────────────────
   const [deletingId, setDeletingId] = useState<string | null>(null);
   const [pendingDelete, setPendingDelete] = useState<AssessmentQuestion | null>(null);
 
-  const handleDelete = async () => {
+  const handleDeleteQuestion = async () => {
     if (!pendingDelete) return;
     const questionId = pendingDelete.id;
     setDeletingId(questionId);
     try {
-      const res = await fetch(`${questionsBase}/${questionId}`, { method: "DELETE" });
+      const res = await fetch(`${variantQuestionsBase}/${questionId}`, { method: "DELETE" });
       if (res.ok) {
         setQuestions(questions.filter((q) => q.id !== questionId));
         router.refresh();
+      } else {
+        const data = (await res.json()) as { error?: string };
+        toast(data.error ?? "Failed to delete question", "error");
       }
     } finally {
       setDeletingId(null);
@@ -187,7 +165,7 @@ export function AssessmentBuilder({
     }
   };
 
-  // ── Inline edit ───────────────────────────────────────────────────────────────
+  // ── Inline edit ────────────────────────────────────────────────────────────
   const [editingId, setEditingId] = useState<string | null>(null);
   const [editText, setEditText] = useState("");
   const [editMaxMarks, setEditMaxMarks] = useState(1);
@@ -239,7 +217,7 @@ export function AssessmentBuilder({
           ? { text: editText.trim(), maxMarks: editMaxMarks, options: editOptions.map((o) => ({ id: o.id, text: o.text.trim(), isCorrect: o.isCorrect })) }
           : { text: editText.trim(), maxMarks: editMaxMarks };
 
-      const res = await fetch(`${questionsBase}/${questionId}`, {
+      const res = await fetch(`${variantQuestionsBase}/${questionId}`, {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(body),
@@ -260,7 +238,7 @@ export function AssessmentBuilder({
     }
   };
 
-  // ── Reorder ───────────────────────────────────────────────────────────────────
+  // ── Reorder questions ──────────────────────────────────────────────────────
   const [reordering, setReordering] = useState(false);
 
   const handleReorder = async (next: AssessmentQuestion[]) => {
@@ -268,7 +246,7 @@ export function AssessmentBuilder({
     setQuestions(next);
     setReordering(true);
     try {
-      const res = await fetch(`${questionsBase}/reorder`, {
+      const res = await fetch(`${variantQuestionsBase}/reorder`, {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ orderedIds: next.map((q) => q.id) }),
@@ -287,96 +265,12 @@ export function AssessmentBuilder({
     }
   };
 
-  // ── Render ────────────────────────────────────────────────────────────────────
+  // ── Render ─────────────────────────────────────────────────────────────────
   return (
-    <div className="mt-8 border-t border-border pt-8">
-      <div className="mb-4 flex items-center justify-between">
-        <div>
-          <h2 className="font-display text-base font-semibold text-foreground">
-            Assessment Builder
-          </h2>
-
-          {/* Config display / edit */}
-          {editingConfig ? (
-            <div className="mt-2 space-y-2">
-              <div className="flex flex-wrap items-center gap-3">
-                <label className="flex items-center gap-1.5 text-xs text-foreground-muted">
-                  Time limit (min):
-                  <input
-                    type="number"
-                    min={1}
-                    value={configDraft.timeLimitMinutes}
-                    onChange={(e) => setConfigDraft((c) => ({ ...c, timeLimitMinutes: Number(e.target.value) }))}
-                    className="w-16 rounded border border-border bg-surface px-2 py-0.5 text-sm text-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
-                  />
-                </label>
-                <label className="flex items-center gap-1.5 text-xs text-foreground-muted">
-                  Pass threshold (marks):
-                  <input
-                    type="number"
-                    min={0}
-                    value={configDraft.passThreshold}
-                    onChange={(e) => setConfigDraft((c) => ({ ...c, passThreshold: Number(e.target.value) }))}
-                    className="w-16 rounded border border-border bg-surface px-2 py-0.5 text-sm text-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
-                  />
-                </label>
-                <span className="text-xs text-foreground-subtle">
-                  (total available: {totalMarks} marks)
-                </span>
-              </div>
-              {configError && <p className="text-xs text-danger">{configError}</p>}
-              <div className="flex gap-2">
-                <button
-                  onClick={() => void handleSaveConfig()}
-                  disabled={savingConfig}
-                  className="text-xs text-primary hover:underline disabled:opacity-50"
-                >
-                  {savingConfig ? "Saving…" : "Save config"}
-                </button>
-                <button
-                  onClick={() => { setEditingConfig(false); setConfigDraft(config ?? { timeLimitMinutes: 60, passThreshold: 50 }); }}
-                  className="text-xs text-foreground-muted hover:underline"
-                >
-                  Cancel
-                </button>
-              </div>
-            </div>
-          ) : (
-            <button
-              onClick={() => {
-                setConfigDraft(config ?? { timeLimitMinutes: 60, passThreshold: 50 });
-                setEditingConfig(true);
-              }}
-              aria-label="Edit assessment config"
-              className="mt-0.5 inline-flex items-center gap-1 text-xs text-foreground-muted transition-colors hover:text-primary"
-            >
-              {config ? (
-                <span>
-                  {config.timeLimitMinutes} min · pass threshold: {config.passThreshold} marks
-                  {totalMarks > 0 && (
-                    <span className="text-foreground-subtle"> / {totalMarks} available</span>
-                  )}
-                </span>
-              ) : (
-                <span className="text-warning">Not configured — click to set up</span>
-              )}
-              <Pencil className="h-3 w-3" aria-hidden="true" />
-            </button>
-          )}
-        </div>
-        {!showForm && (
-          <button
-            onClick={() => setShowForm(true)}
-            className="rounded-md bg-primary px-3 py-1.5 text-sm font-medium text-primary-foreground transition-colors hover:bg-primary-hover"
-          >
-            Add question
-          </button>
-        )}
-      </div>
-
+    <div className="mt-3">
       {questions.length === 0 && !showForm && (
-        <p className="text-sm italic text-foreground-subtle">
-          No questions yet. Add one above.
+        <p className="text-sm italic text-foreground-subtle mb-3">
+          No questions yet. Add the first question below.
         </p>
       )}
 
@@ -384,7 +278,7 @@ export function AssessmentBuilder({
         items={questions}
         onReorder={handleReorder}
         disabled={reordering}
-        className="mb-4 space-y-3"
+        className="mb-3 space-y-2"
       >
         {(question, idx) => (
           <SortableItem key={question.id} id={question.id} disabled={reordering}>
@@ -521,7 +415,7 @@ export function AssessmentBuilder({
       </SortableList>
 
       {/* Add question form */}
-      {showForm && (
+      {showForm ? (
         <form onSubmit={(e) => void handleSubmitQuestion(e)} className="space-y-4 rounded-lg border border-primary/20 bg-primary-subtle/30 p-5">
           <div className="flex flex-wrap gap-4">
             <div className="flex-1">
@@ -535,7 +429,7 @@ export function AssessmentBuilder({
               />
             </div>
           </div>
-          <div className="flex flex-wrap gap-4 items-end">
+          <div className="flex flex-wrap items-end gap-4">
             <div>
               <label className="mb-1 block text-xs font-medium text-foreground">Type</label>
               <select
@@ -569,7 +463,7 @@ export function AssessmentBuilder({
                   <div key={idx} className="flex items-center gap-2">
                     <input
                       type="radio"
-                      name="new-correct-option"
+                      name={`new-correct-option-${variant.id}`}
                       checked={opt.isCorrect}
                       onChange={() => handleCorrectChange(idx)}
                       title={`Mark option ${idx + 1} as correct`}
@@ -615,6 +509,13 @@ export function AssessmentBuilder({
             </button>
           </div>
         </form>
+      ) : (
+        <button
+          onClick={() => setShowForm(true)}
+          className="rounded-md border border-dashed border-border px-3 py-1.5 text-xs text-foreground-muted transition-colors hover:border-primary hover:text-primary"
+        >
+          + Add question
+        </button>
       )}
 
       <ConfirmDialog
@@ -633,8 +534,445 @@ export function AssessmentBuilder({
           ) : null
         }
         confirmLabel="Delete question"
-        onConfirm={() => void handleDelete()}
+        onConfirm={() => void handleDeleteQuestion()}
         loading={deletingId !== null}
+      />
+    </div>
+  );
+}
+
+// ── Main AssessmentBuilder ────────────────────────────────────────────────────
+
+export function AssessmentBuilder({
+  courseId,
+  moduleId,
+  lessonId,
+  initialConfig,
+  initialVariants,
+}: AssessmentBuilderProps) {
+  const router = useRouter();
+  const { toast } = useToast();
+
+  const apiBase = `/api/courses/${courseId}/modules/${moduleId}/lessons/${lessonId}/assessment`;
+  const variantsBase = `${apiBase}/variants`;
+
+  // ── Variants state ─────────────────────────────────────────────────────────
+  const [variants, setVariants] = useState<AssessmentVariant[]>(
+    [...initialVariants].sort((a, b) => a.order - b.order),
+  );
+
+  // Collapsed state per variant (all open by default)
+  const [collapsed, setCollapsed] = useState<Record<string, boolean>>({});
+  const toggleCollapsed = (id: string) =>
+    setCollapsed((prev) => ({ ...prev, [id]: !prev[id] }));
+
+  // ── Config ─────────────────────────────────────────────────────────────────
+  const [config, setConfig] = useState<AssessmentConfig | null>(initialConfig);
+  const [editingConfig, setEditingConfig] = useState(false);
+  const [configDraft, setConfigDraft] = useState<AssessmentConfig>(
+    initialConfig ?? { timeLimitMinutes: 60, passThreshold: 50 },
+  );
+  const [savingConfig, setSavingConfig] = useState(false);
+  const [configError, setConfigError] = useState<string | null>(null);
+
+  const handleSaveConfig = async () => {
+    setConfigError(null);
+    if (configDraft.timeLimitMinutes < 1) {
+      setConfigError("Time limit must be at least 1 minute");
+      return;
+    }
+    if (configDraft.passThreshold < 0) {
+      setConfigError("Pass threshold cannot be negative");
+      return;
+    }
+    setSavingConfig(true);
+    try {
+      const res = await fetch(`${apiBase}/config`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          timeLimitMinutes: Math.round(configDraft.timeLimitMinutes),
+          passThreshold: Math.round(configDraft.passThreshold),
+        }),
+      });
+      if (res.ok) {
+        setConfig({ ...configDraft });
+        setEditingConfig(false);
+        router.refresh();
+      } else {
+        const data = (await res.json()) as { error?: string };
+        setConfigError(data.error ?? "Failed to save config");
+      }
+    } finally {
+      setSavingConfig(false);
+    }
+  };
+
+  // ── Add variant ────────────────────────────────────────────────────────────
+  const [addingVariant, setAddingVariant] = useState(false);
+
+  const handleAddVariant = async () => {
+    const label = `Variant ${variants.length + 1}`;
+    setAddingVariant(true);
+    try {
+      const res = await fetch(variantsBase, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ label }),
+      });
+      if (!res.ok) {
+        const data = (await res.json()) as { error?: string };
+        toast(data.error ?? "Failed to add variant", "error");
+        return;
+      }
+      const created = (await res.json()) as { id: string; label: string; order: number };
+      setVariants([...variants, { ...created, questions: [] }]);
+      router.refresh();
+    } finally {
+      setAddingVariant(false);
+    }
+  };
+
+  // ── Rename variant ─────────────────────────────────────────────────────────
+  const [renamingId, setRenamingId] = useState<string | null>(null);
+  const [renameDraft, setRenameDraft] = useState("");
+  const [savingRenameId, setSavingRenameId] = useState<string | null>(null);
+
+  const startRename = (v: AssessmentVariant) => {
+    setRenamingId(v.id);
+    setRenameDraft(v.label);
+  };
+  const cancelRename = () => { setRenamingId(null); };
+
+  const handleSaveRename = async (variantId: string) => {
+    if (!renameDraft.trim()) return;
+    setSavingRenameId(variantId);
+    try {
+      const res = await fetch(`${variantsBase}/${variantId}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ label: renameDraft.trim() }),
+      });
+      if (!res.ok) {
+        const data = (await res.json()) as { error?: string };
+        toast(data.error ?? "Failed to rename variant", "error");
+        return;
+      }
+      const updated = (await res.json()) as { id: string; label: string; order: number };
+      setVariants(variants.map((v) => (v.id === variantId ? { ...v, label: updated.label } : v)));
+      setRenamingId(null);
+      router.refresh();
+    } finally {
+      setSavingRenameId(null);
+    }
+  };
+
+  // ── Delete variant ─────────────────────────────────────────────────────────
+  const [deletingVariantId, setDeletingVariantId] = useState<string | null>(null);
+  const [pendingDeleteVariant, setPendingDeleteVariant] = useState<AssessmentVariant | null>(null);
+
+  const handleDeleteVariant = async () => {
+    if (!pendingDeleteVariant) return;
+    const variantId = pendingDeleteVariant.id;
+    setDeletingVariantId(variantId);
+    try {
+      const res = await fetch(`${variantsBase}/${variantId}`, { method: "DELETE" });
+      if (res.ok) {
+        setVariants(variants.filter((v) => v.id !== variantId));
+        router.refresh();
+      } else if (res.status === 409) {
+        // Variant has existing student submissions — cannot delete
+        const data = (await res.json()) as { error?: string };
+        toast(data.error ?? "Cannot delete a variant that students have already attempted.", "error");
+      } else {
+        const data = (await res.json()) as { error?: string };
+        toast(data.error ?? "Failed to delete variant", "error");
+      }
+    } finally {
+      setDeletingVariantId(null);
+      setPendingDeleteVariant(null);
+    }
+  };
+
+  // ── Reorder variants ───────────────────────────────────────────────────────
+  const [reorderingVariants, setReorderingVariants] = useState(false);
+
+  const handleReorderVariants = async (next: AssessmentVariant[]) => {
+    const previous = variants;
+    setVariants(next);
+    setReorderingVariants(true);
+    try {
+      const res = await fetch(`${variantsBase}/reorder`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ orderedIds: next.map((v) => v.id) }),
+      });
+      if (!res.ok) {
+        setVariants(previous);
+        toast("Failed to reorder variants", "error");
+      } else {
+        router.refresh();
+      }
+    } catch {
+      setVariants(previous);
+    } finally {
+      setReorderingVariants(false);
+    }
+  };
+
+  // ── Update questions for a variant ────────────────────────────────────────
+  const handleQuestionsChange = (variantId: string, questions: AssessmentQuestion[]) => {
+    setVariants(variants.map((v) => (v.id === variantId ? { ...v, questions } : v)));
+  };
+
+  // ── Derived totals ─────────────────────────────────────────────────────────
+  const totalMarksAllVariants = variants.reduce(
+    (acc, v) => acc + v.questions.reduce((s, q) => s + q.maxMarks, 0),
+    0,
+  );
+
+  // ── Render ─────────────────────────────────────────────────────────────────
+  return (
+    <div className="mt-8 border-t border-border pt-8">
+      {/* Header + config */}
+      <div className="mb-6">
+        <h2 className="font-display text-base font-semibold text-foreground">
+          Assessment Builder
+        </h2>
+
+        {editingConfig ? (
+          <div className="mt-2 space-y-2">
+            <div className="flex flex-wrap items-center gap-3">
+              <label className="flex items-center gap-1.5 text-xs text-foreground-muted">
+                Time limit (min):
+                <input
+                  type="number"
+                  min={1}
+                  value={configDraft.timeLimitMinutes}
+                  onChange={(e) => setConfigDraft((c) => ({ ...c, timeLimitMinutes: Number(e.target.value) }))}
+                  className="w-16 rounded border border-border bg-surface px-2 py-0.5 text-sm text-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
+                />
+              </label>
+              <label className="flex items-center gap-1.5 text-xs text-foreground-muted">
+                Pass threshold (marks):
+                <input
+                  type="number"
+                  min={0}
+                  value={configDraft.passThreshold}
+                  onChange={(e) => setConfigDraft((c) => ({ ...c, passThreshold: Number(e.target.value) }))}
+                  className="w-16 rounded border border-border bg-surface px-2 py-0.5 text-sm text-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
+                />
+              </label>
+              {totalMarksAllVariants > 0 && (
+                <span className="text-xs text-foreground-subtle">
+                  (total available across variants: {totalMarksAllVariants} marks)
+                </span>
+              )}
+            </div>
+            {configError && <p className="text-xs text-danger">{configError}</p>}
+            <div className="flex gap-2">
+              <button
+                onClick={() => void handleSaveConfig()}
+                disabled={savingConfig}
+                className="text-xs text-primary hover:underline disabled:opacity-50"
+              >
+                {savingConfig ? "Saving…" : "Save config"}
+              </button>
+              <button
+                onClick={() => { setEditingConfig(false); setConfigDraft(config ?? { timeLimitMinutes: 60, passThreshold: 50 }); }}
+                className="text-xs text-foreground-muted hover:underline"
+              >
+                Cancel
+              </button>
+            </div>
+          </div>
+        ) : (
+          <button
+            onClick={() => {
+              setConfigDraft(config ?? { timeLimitMinutes: 60, passThreshold: 50 });
+              setEditingConfig(true);
+            }}
+            aria-label="Edit assessment config"
+            className="mt-0.5 inline-flex items-center gap-1 text-xs text-foreground-muted transition-colors hover:text-primary"
+          >
+            {config ? (
+              <span>
+                {config.timeLimitMinutes} min · pass threshold: {config.passThreshold} marks
+              </span>
+            ) : (
+              <span className="text-warning">Not configured — click to set up</span>
+            )}
+            <Pencil className="h-3 w-3" aria-hidden="true" />
+          </button>
+        )}
+
+        {/* Variants info blurb */}
+        <p className="mt-3 text-xs text-foreground-subtle max-w-prose">
+          Each student is randomly assigned one variant per attempt and won&rsquo;t see a repeat
+          until all variants are exhausted. Keep variants comparable in difficulty and total marks.
+          Time limit and pass threshold apply equally to every variant.
+        </p>
+      </div>
+
+      {/* Empty state */}
+      {variants.length === 0 && (
+        <div className="rounded-lg border border-dashed border-border bg-surface-muted/40 p-8 text-center">
+          <p className="text-sm font-medium text-foreground">No variants yet</p>
+          <p className="mt-1 text-xs text-foreground-subtle">
+            Add the first variant to start building your question sets.
+          </p>
+          <button
+            onClick={() => void handleAddVariant()}
+            disabled={addingVariant}
+            className="mt-4 rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground transition-colors hover:bg-primary-hover disabled:opacity-50"
+          >
+            {addingVariant ? "Creating…" : "Add first variant"}
+          </button>
+        </div>
+      )}
+
+      {/* Variants list */}
+      {variants.length > 0 && (
+        <>
+          <SortableList
+            items={variants}
+            onReorder={handleReorderVariants}
+            disabled={reorderingVariants}
+            className="space-y-4"
+          >
+            {(variant) => (
+              <SortableItem key={variant.id} id={variant.id} disabled={reorderingVariants}>
+                {({ setNodeRef, style, dragHandleProps }) => {
+                  const variantTotalMarks = variant.questions.reduce((s, q) => s + q.maxMarks, 0);
+                  const isCollapsed = collapsed[variant.id] ?? false;
+
+                  return (
+                    <div
+                      ref={setNodeRef}
+                      style={style}
+                      className="rounded-lg border border-border bg-surface"
+                    >
+                      {/* Variant header */}
+                      <div className="flex items-center gap-2 px-4 py-3">
+                        <DragHandle
+                          dragHandleProps={dragHandleProps}
+                          label={`Drag variant ${variant.label}`}
+                          size="sm"
+                        />
+
+                        {renamingId === variant.id ? (
+                          <div className="flex flex-1 items-center gap-2">
+                            <input
+                              type="text"
+                              value={renameDraft}
+                              onChange={(e) => setRenameDraft(e.target.value)}
+                              onKeyDown={(e) => {
+                                if (e.key === "Enter") void handleSaveRename(variant.id);
+                                if (e.key === "Escape") cancelRename();
+                              }}
+                              aria-label="Variant label"
+                              autoFocus
+                              className="flex-1 rounded-md border border-border bg-surface px-2 py-1 text-sm text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                            />
+                            <button
+                              onClick={() => void handleSaveRename(variant.id)}
+                              disabled={savingRenameId === variant.id || !renameDraft.trim()}
+                              className="text-xs text-primary hover:underline disabled:opacity-50"
+                            >
+                              {savingRenameId === variant.id ? "Saving…" : "Save"}
+                            </button>
+                            <button
+                              onClick={cancelRename}
+                              className="text-xs text-foreground-muted hover:underline"
+                            >
+                              Cancel
+                            </button>
+                          </div>
+                        ) : (
+                          <button
+                            onClick={() => toggleCollapsed(variant.id)}
+                            className="flex flex-1 items-center gap-2 text-left"
+                            aria-expanded={!isCollapsed}
+                          >
+                            {isCollapsed ? (
+                              <ChevronRight className="h-4 w-4 shrink-0 text-foreground-subtle" />
+                            ) : (
+                              <ChevronDown className="h-4 w-4 shrink-0 text-foreground-subtle" />
+                            )}
+                            <span className="text-sm font-medium text-foreground">{variant.label}</span>
+                            <span className="text-xs text-foreground-subtle">
+                              {variant.questions.length} question{variant.questions.length !== 1 ? "s" : ""}
+                              {variantTotalMarks > 0 && ` · ${variantTotalMarks} marks`}
+                            </span>
+                          </button>
+                        )}
+
+                        {renamingId !== variant.id && (
+                          <div className="flex shrink-0 items-center gap-1">
+                            <button
+                              onClick={() => startRename(variant)}
+                              aria-label={`Rename variant ${variant.label}`}
+                              className="px-1 text-xs text-primary transition-colors hover:underline"
+                            >
+                              Rename
+                            </button>
+                            <button
+                              onClick={() => setPendingDeleteVariant(variant)}
+                              disabled={deletingVariantId === variant.id}
+                              aria-label={`Delete variant ${variant.label}`}
+                              className="px-1 text-xs text-danger transition-colors hover:text-danger/80 disabled:opacity-50"
+                            >
+                              {deletingVariantId === variant.id ? "Deleting…" : "Delete"}
+                            </button>
+                          </div>
+                        )}
+                      </div>
+
+                      {/* Variant questions (collapsible) */}
+                      {!isCollapsed && (
+                        <div className="border-t border-border px-4 pb-4">
+                          <VariantQuestionEditor
+                            variant={variant}
+                            variantQuestionsBase={`${variantsBase}/${variant.id}/questions`}
+                            onQuestionsChange={handleQuestionsChange}
+                          />
+                        </div>
+                      )}
+                    </div>
+                  );
+                }}
+              </SortableItem>
+            )}
+          </SortableList>
+
+          <div className="mt-4">
+            <button
+              onClick={() => void handleAddVariant()}
+              disabled={addingVariant}
+              className="rounded-md border border-dashed border-border px-3 py-1.5 text-xs text-foreground-muted transition-colors hover:border-primary hover:text-primary disabled:opacity-50"
+            >
+              {addingVariant ? "Creating…" : "+ Add variant"}
+            </button>
+          </div>
+        </>
+      )}
+
+      {/* Confirm delete variant */}
+      <ConfirmDialog
+        open={pendingDeleteVariant !== null}
+        onOpenChange={(open) => !open && setPendingDeleteVariant(null)}
+        title="Delete variant?"
+        description={
+          pendingDeleteVariant ? (
+            <>
+              Delete variant &ldquo;{pendingDeleteVariant.label}&rdquo; and all {pendingDeleteVariant.questions.length} of its question{pendingDeleteVariant.questions.length !== 1 ? "s" : ""}?
+              This cannot be undone. If students have already attempted this variant, the delete will be blocked.
+            </>
+          ) : null
+        }
+        confirmLabel="Delete variant"
+        onConfirm={() => void handleDeleteVariant()}
+        loading={deletingVariantId !== null}
       />
     </div>
   );

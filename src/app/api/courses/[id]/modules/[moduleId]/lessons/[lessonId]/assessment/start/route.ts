@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
-import { findOpenSubmission } from "@/lib/assessment";
+import { findOpenSubmission, pickVariantForUser, loadSanitizedQuestionsForVariant } from "@/lib/assessment";
 import type { Role } from "@/lib/types";
 
 type Params = { params: Promise<{ id: string; moduleId: string; lessonId: string }> };
@@ -86,6 +86,16 @@ export async function POST(_request: Request, { params }: Params) {
     );
   }
 
+  // Assign a variant: random among those the student has not yet faced,
+  // recycling to a full-random pick once every variant has been seen.
+  const variantId = await pickVariantForUser(userId, lessonId);
+  if (!variantId) {
+    return NextResponse.json(
+      { error: "This assessment has no variants configured yet" },
+      { status: 404 },
+    );
+  }
+
   const now = new Date();
   const deadlineAt = new Date(now.getTime() + config.timeLimitMinutes * 60 * 1000);
 
@@ -95,6 +105,7 @@ export async function POST(_request: Request, { params }: Params) {
       data: {
         userId,
         lessonId,
+        variantId,
         startedAt: now,
         deadlineAt,
         status: "IN_PROGRESS",
@@ -103,11 +114,13 @@ export async function POST(_request: Request, { params }: Params) {
       },
     });
 
+    const questions = await loadSanitizedQuestionsForVariant(variantId);
     return NextResponse.json(
       {
         submissionId: submission.id,
         deadlineAt: submission.deadlineAt.toISOString(),
         serverNow: now.toISOString(),
+        questions,
       },
       { status: 201 },
     );
@@ -119,13 +132,17 @@ export async function POST(_request: Request, { params }: Params) {
       "code" in err &&
       (err as { code: string }).code === "P2002"
     ) {
-      // Resume the existing open submission
+      // Resume the existing open submission with its already-assigned variant
       const open = await findOpenSubmission(userId, lessonId);
       if (open) {
+        const questions = open.variantId
+          ? await loadSanitizedQuestionsForVariant(open.variantId)
+          : [];
         return NextResponse.json({
           submissionId: open.id,
           deadlineAt: open.deadlineAt.toISOString(),
           serverNow: new Date().toISOString(),
+          questions,
         });
       }
     }

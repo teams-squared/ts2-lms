@@ -41,6 +41,8 @@ export type AssessmentStudentState =
       deadlineAt: string;
       serverNow: string;
       savedAnswers: SavedAssessmentAnswer[];
+      /** Questions of the variant this attempt was assigned. */
+      questions: SanitizedAssessmentQuestion[];
     }
   | { phase: "awaiting_marking"; submittedAt: string | null }
   | {
@@ -101,9 +103,9 @@ export async function finalizeSubmission(
     where: { id: submissionId },
     include: {
       answers: true,
-      lesson: {
+      variant: {
         select: {
-          assessmentQuestions: {
+          questions: {
             select: {
               id: true,
               questionType: true,
@@ -121,7 +123,7 @@ export async function finalizeSubmission(
   if (submission.status !== "IN_PROGRESS") return submission;
 
   const questionById = new Map(
-    submission.lesson.assessmentQuestions.map((q) => [q.id, q]),
+    (submission.variant?.questions ?? []).map((q) => [q.id, q]),
   );
 
   // Score MC answers; collect per-answer awardedMarks for the MC ones.
@@ -200,16 +202,20 @@ export async function getStudentState(
   if (!latest) return { phase: "startable" };
 
   if (latest.status === "IN_PROGRESS") {
-    const answers = await prisma.assessmentAnswer.findMany({
-      where: { submissionId: latest.id },
-      select: { questionId: true, selectedOptionId: true, responseText: true },
-    });
+    const [answers, questions] = await Promise.all([
+      prisma.assessmentAnswer.findMany({
+        where: { submissionId: latest.id },
+        select: { questionId: true, selectedOptionId: true, responseText: true },
+      }),
+      latest.variantId ? loadSanitizedQuestionsForVariant(latest.variantId) : Promise.resolve([]),
+    ]);
     return {
       phase: "in_progress",
       submissionId: latest.id,
       deadlineAt: latest.deadlineAt.toISOString(),
       serverNow: new Date().toISOString(),
       savedAnswers: answers,
+      questions,
     };
   }
 
@@ -232,14 +238,14 @@ export async function getStudentState(
 }
 
 /**
- * Load + sanitize the assessment's questions for a student (strips `isCorrect`).
+ * Load + sanitize one variant's questions for a student (strips `isCorrect`).
  * Privileged callers (authoring/marking) should query directly instead.
  */
-export async function loadSanitizedQuestions(
-  lessonId: string,
+export async function loadSanitizedQuestionsForVariant(
+  variantId: string,
 ): Promise<SanitizedAssessmentQuestion[]> {
   const questions = await prisma.assessmentQuestion.findMany({
-    where: { lessonId },
+    where: { variantId },
     orderBy: { order: "asc" },
     include: { options: { orderBy: { order: "asc" } } },
   });
@@ -251,4 +257,41 @@ export async function loadSanitizedQuestions(
     maxMarks: q.maxMarks,
     options: q.options.map((o) => ({ id: o.id, text: o.text, order: o.order })),
   }));
+}
+
+/** Number of variants configured on an assessment lesson. */
+export async function getVariantCount(lessonId: string): Promise<number> {
+  return prisma.assessmentVariant.count({ where: { lessonId } });
+}
+
+/**
+ * Choose which variant to administer for a new attempt: a random variant the
+ * user has NOT yet faced; once every variant has been seen, fall back to a
+ * fully-random pick (recycle). Returns null if the lesson has no variants.
+ *
+ * "Faced" = any prior submission of this lesson that recorded a variantId
+ * (the reattempt lock means prior attempts are failed/marked, so this set is
+ * exactly the variants already shown to the student).
+ */
+export async function pickVariantForUser(
+  userId: string,
+  lessonId: string,
+): Promise<string | null> {
+  const variants = await prisma.assessmentVariant.findMany({
+    where: { lessonId },
+    select: { id: true },
+    orderBy: { order: "asc" },
+  });
+  if (variants.length === 0) return null;
+
+  const faced = await prisma.assessmentSubmission.findMany({
+    where: { userId, lessonId, variantId: { not: null } },
+    select: { variantId: true },
+    distinct: ["variantId"],
+  });
+  const facedSet = new Set(faced.map((f) => f.variantId));
+
+  const unseen = variants.filter((v) => !facedSet.has(v.id));
+  const pool = unseen.length > 0 ? unseen : variants;
+  return pool[Math.floor(Math.random() * pool.length)].id;
 }

@@ -91,13 +91,15 @@ export async function PUT(request: Request, { params }: Params) {
     );
   }
 
-  // Validate questionIds belong to this lesson
+  // Validate questionIds belong to this submission's assigned variant
   if (answers.length > 0) {
-    const lessonQuestions = await prisma.assessmentQuestion.findMany({
-      where: { lessonId },
-      select: { id: true, questionType: true },
-    });
-    const questionMap = new Map(lessonQuestions.map((q) => [q.id, q]));
+    const variantQuestions = submission.variantId
+      ? await prisma.assessmentQuestion.findMany({
+          where: { variantId: submission.variantId },
+          select: { id: true, questionType: true },
+        })
+      : [];
+    const questionMap = new Map(variantQuestions.map((q) => [q.id, q]));
 
     for (const ans of answers) {
       if (!ans.questionId || typeof ans.questionId !== "string") {

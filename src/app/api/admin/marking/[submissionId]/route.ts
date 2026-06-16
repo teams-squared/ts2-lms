@@ -61,14 +61,16 @@ export async function GET(_request: Request, { params }: Params) {
   // Lazily finalize if somehow still IN_PROGRESS and past deadline.
   await finalizeIfExpired(submission);
 
-  // Load questions WITH answer key (privileged marker path).
-  const questions = await prisma.assessmentQuestion.findMany({
-    where: { lessonId: submission.lessonId },
-    orderBy: { order: "asc" },
-    include: {
-      options: { orderBy: { order: "asc" } },
-    },
-  });
+  // Load the assigned variant's questions WITH answer key (privileged marker path).
+  const questions = submission.variantId
+    ? await prisma.assessmentQuestion.findMany({
+        where: { variantId: submission.variantId },
+        orderBy: { order: "asc" },
+        include: {
+          options: { orderBy: { order: "asc" } },
+        },
+      })
+    : [];
 
   // Build a lookup from questionId → answer for this submission.
   const answerByQuestionId = new Map(
@@ -149,13 +151,6 @@ export async function PATCH(request: Request, { params }: Params) {
               course: { select: { id: true } },
             },
           },
-          assessmentQuestions: {
-            select: {
-              id: true,
-              questionType: true,
-              maxMarks: true,
-            },
-          },
         },
       },
     },
@@ -167,6 +162,15 @@ export async function PATCH(request: Request, { params }: Params) {
 
   const courseId = submission.lesson.module.course.id;
   const lessonId = submission.lesson.id;
+
+  // Free-text questions of the submission's assigned variant — the only ones
+  // a marker may award marks for (MC is auto-scored).
+  const variantQuestions = submission.variantId
+    ? await prisma.assessmentQuestion.findMany({
+        where: { variantId: submission.variantId },
+        select: { id: true, questionType: true, maxMarks: true },
+      })
+    : [];
 
   const allowed = await canManageCourse(userId, role, courseId);
   if (!allowed) {
@@ -199,9 +203,9 @@ export async function PATCH(request: Request, { params }: Params) {
   const feedbackRaw = typeof body.feedback === "string" ? body.feedback.trim() : null;
   const feedback = feedbackRaw !== null && feedbackRaw.length > 0 ? feedbackRaw : null;
 
-  // Build a lookup of FREE_TEXT questions for this lesson (the only ones markers may touch).
+  // Build a lookup of FREE_TEXT questions for the assigned variant (the only ones markers may touch).
   const freeTextById = new Map(
-    submission.lesson.assessmentQuestions
+    variantQuestions
       .filter((q) => q.questionType === "FREE_TEXT")
       .map((q) => [q.id, q]),
   );
