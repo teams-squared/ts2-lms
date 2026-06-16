@@ -53,3 +53,6 @@ next-env.d.ts
 
 # Local mobile-verification screenshots
 /e2e/screenshots/
+
+# graphify knowledge-graph output (local tool, not source)
+/graphify-out/
