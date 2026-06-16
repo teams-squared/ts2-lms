@@ -16,12 +16,15 @@ interface AssessmentViewerProps {
   moduleId: string;
   lessonId: string;
   config: AssessmentConfig | null;
-  questions: SanitizedAssessmentQuestion[];
+  /** Number of variants configured on this assessment. Replaces the old lesson-wide `questions` prop. */
+  variantCount: number;
   initialState: AssessmentStudentState;
   courseLocked?: boolean;
   /** Admins / course managers: enables a read-only "preview as student" dry-run
    *  that renders the exam UI without creating a submission or touching the DB. */
   isPrivileged?: boolean;
+  /** Full sanitized question sets per variant — privileged-only, used for preview. */
+  previewVariants?: { id: string; label: string; questions: SanitizedAssessmentQuestion[] }[];
 }
 
 type AnswerMap = Record<string, { selectedOptionId?: string | null; responseText?: string | null }>;
@@ -114,13 +117,19 @@ export function AssessmentViewer({
   moduleId,
   lessonId,
   config,
-  questions,
+  variantCount,
   initialState,
   courseLocked = false,
   isPrivileged = false,
+  previewVariants,
 }: AssessmentViewerProps) {
   const router = useRouter();
   const apiBase = `/api/courses/${courseId}/modules/${moduleId}/lessons/${lessonId}/assessment`;
+
+  // ── Questions state (per-attempt; populated from initialState or start response) ──
+  const [questions, setQuestions] = useState<SanitizedAssessmentQuestion[]>(
+    initialState.phase === "in_progress" ? initialState.questions : [],
+  );
 
   // ── Phase state ─────────────────────────────────────────────────────────────
   const [phase, setPhase] = useState<Phase>(initialState.phase);
@@ -188,6 +197,8 @@ export function AssessmentViewer({
   // ── Manager preview (read-only dry-run; no API calls, no submission) ──────────
   const [preview, setPreview] = useState(false);
   const [previewAnswers, setPreviewAnswers] = useState<AnswerMap>({});
+  // Which variant is selected in the preview picker (index into previewVariants)
+  const [previewVariantIdx, setPreviewVariantIdx] = useState(0);
   const handlePreviewChange = (
     questionId: string,
     field: "selectedOptionId" | "responseText",
@@ -340,7 +351,12 @@ export function AssessmentViewer({
         setStartError(data.error ?? "Could not start assessment. Please try again.");
         return;
       }
-      const data = (await res.json()) as { submissionId: string; deadlineAt: string; serverNow: string };
+      const data = (await res.json()) as {
+        submissionId: string;
+        deadlineAt: string;
+        serverNow: string;
+        questions: SanitizedAssessmentQuestion[];
+      };
       const offset = Date.parse(data.serverNow) - Date.now();
       setServerOffset(offset);
       setSubmissionId(data.submissionId);
@@ -349,6 +365,8 @@ export function AssessmentViewer({
       setRemainingMs(Math.max(0, Date.parse(data.deadlineAt) - Date.parse(data.serverNow)));
       setTimerExpired(false);
       setAnswers({});
+      // Set questions from the start response (variant-specific)
+      setQuestions(data.questions);
       setPhase("in_progress");
       setSubmitError(null);
     } catch {
@@ -374,22 +392,46 @@ export function AssessmentViewer({
 
   // ── Render: manager preview (read-only dry-run, no persistence) ───────────────
   if (preview) {
+    const variants = previewVariants ?? [];
+    const activeVariant = variants[previewVariantIdx] ?? null;
+    const activeQuestions = activeVariant?.questions ?? [];
+
     return (
       <div className="space-y-6">
         <div className="flex items-center justify-between gap-4 rounded-lg border border-info/60 bg-info-subtle px-5 py-3">
           <div className="flex items-center gap-2">
             <AlertTriangleIcon className="h-5 w-5 shrink-0 text-info" aria-hidden="true" />
             <p className="text-sm font-medium text-info">
-              Preview — manager view. Nothing is saved and no attempt is created.
+              PREVIEW — manager view. Nothing is saved and no attempt is created.
             </p>
           </div>
           <button
-            onClick={() => setPreview(false)}
+            onClick={() => { setPreview(false); setPreviewAnswers({}); }}
             className="shrink-0 rounded-md border border-border bg-surface px-3 py-1.5 text-sm font-medium text-foreground transition-colors hover:bg-surface-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
           >
             Exit preview
           </button>
         </div>
+
+        {/* Variant picker — only shown when there are multiple variants */}
+        {variants.length > 1 && (
+          <div className="flex flex-wrap items-center gap-2">
+            <span className="text-xs font-medium text-foreground-muted">Preview variant:</span>
+            {variants.map((v, idx) => (
+              <button
+                key={v.id}
+                onClick={() => { setPreviewVariantIdx(idx); setPreviewAnswers({}); }}
+                className={`rounded-md border px-3 py-1.5 text-xs font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring ${
+                  idx === previewVariantIdx
+                    ? "border-primary bg-primary text-primary-foreground"
+                    : "border-border bg-surface text-foreground hover:bg-surface-muted"
+                }`}
+              >
+                {v.label}
+              </button>
+            ))}
+          </div>
+        )}
 
         {config && (
           <div className="flex items-center gap-2 rounded-lg border border-border bg-surface-muted px-5 py-3">
@@ -401,15 +443,25 @@ export function AssessmentViewer({
           </div>
         )}
 
-        {questions.map((question, idx) => (
-          <QuestionCard
-            key={question.id}
-            question={question}
-            idx={idx}
-            answer={previewAnswers[question.id]}
-            onChange={handlePreviewChange}
-          />
-        ))}
+        {variants.length === 0 ? (
+          <p className="text-sm text-foreground-muted rounded-lg border border-border bg-surface-muted px-5 py-4">
+            Add a variant to preview the assessment questions.
+          </p>
+        ) : activeQuestions.length === 0 ? (
+          <p className="text-sm text-foreground-muted rounded-lg border border-border bg-surface-muted px-5 py-4">
+            This variant has no questions yet.
+          </p>
+        ) : (
+          activeQuestions.map((question, idx) => (
+            <QuestionCard
+              key={question.id}
+              question={question}
+              idx={idx}
+              answer={previewAnswers[question.id]}
+              onChange={handlePreviewChange}
+            />
+          ))
+        )}
 
         <button
           disabled
@@ -424,6 +476,7 @@ export function AssessmentViewer({
   // ── Render: startable ─────────────────────────────────────────────────────────
   if (phase === "startable") {
     const hasConfig = config !== null;
+    const hasVariants = variantCount > 0;
     return (
       <div className="space-y-6">
         {lastFeedback && (
@@ -438,15 +491,13 @@ export function AssessmentViewer({
           <div className="mb-4">
             <p className="text-sm font-semibold text-foreground mb-2">Assessment overview</p>
             <div className="space-y-1">
-              <p className="text-sm text-foreground-muted">
-                {questions.length} question{questions.length !== 1 ? "s" : ""}
-                {questions.some((q) => q.questionType === "MULTIPLE_CHOICE") &&
-                  questions.some((q) => q.questionType === "FREE_TEXT")
-                  ? " (multiple-choice + written)"
-                  : questions.every((q) => q.questionType === "MULTIPLE_CHOICE")
-                    ? " (multiple-choice)"
-                    : " (written)"}
-              </p>
+              {hasVariants ? (
+                <p className="text-sm text-foreground-muted">
+                  {variantCount === 1
+                    ? "You'll be given 1 version of this exam."
+                    : `You'll be given 1 of ${variantCount} versions at random.`}
+                </p>
+              ) : null}
               {hasConfig && (
                 <>
                   <p className="text-sm text-foreground-muted">
@@ -457,17 +508,13 @@ export function AssessmentViewer({
                   </p>
                 </>
               )}
-              {questions.length > 0 && (
-                <p className="text-sm text-foreground-muted">
-                  Total available marks: {questions.reduce((s, q) => s + q.maxMarks, 0)}
-                </p>
-              )}
             </div>
           </div>
-          {!hasConfig && (
+          {(!hasConfig || !hasVariants) && (
             <p className="mb-4 text-sm text-warning rounded-md border border-warning/40 bg-warning-subtle px-3 py-2">
-              This assessment has not been configured yet. An admin must set the time limit and
-              pass threshold before it can be taken.
+              {!hasVariants
+                ? "This assessment has not been configured yet. An admin must add questions before it can be taken."
+                : "This assessment has not been configured yet. An admin must set the time limit and pass threshold before it can be taken."}
             </p>
           )}
           {startError && (
@@ -478,7 +525,7 @@ export function AssessmentViewer({
           )}
           <button
             onClick={() => void handleStart()}
-            disabled={!hasConfig || courseLocked || questions.length === 0 || starting}
+            disabled={!hasConfig || !hasVariants || courseLocked || starting}
             className="w-full rounded-md bg-primary px-4 py-2.5 text-sm font-medium text-primary-foreground transition-colors hover:bg-primary-hover disabled:cursor-not-allowed disabled:opacity-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background"
           >
             {starting ? (
@@ -494,9 +541,9 @@ export function AssessmentViewer({
               "Start assessment"
             )}
           </button>
-          {isPrivileged && questions.length > 0 && (
+          {isPrivileged && hasVariants && (
             <button
-              onClick={() => setPreview(true)}
+              onClick={() => { setPreviewVariantIdx(0); setPreview(true); }}
               className="mt-2 w-full rounded-md border border-border bg-surface px-4 py-2.5 text-sm font-medium text-foreground transition-colors hover:bg-surface-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background"
             >
               Preview as student
@@ -559,7 +606,7 @@ export function AssessmentViewer({
           </div>
         </div>
 
-        {/* Questions */}
+        {/* Questions — from per-attempt state, not a static prop */}
         {questions.map((question, idx) => (
           <QuestionCard
             key={question.id}

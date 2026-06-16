@@ -15,7 +15,7 @@ import { LessonFooter } from "@/components/courses/LessonFooter";
 import { LessonTitleHeader } from "@/components/courses/LessonTitleHeader";
 import { PolicyDocViewer } from "@/components/courses/PolicyDocViewer";
 import type { ReviewHistoryEntry, RevisionHistoryEntry } from "@/lib/policy-doc/types";
-import { getStudentState, loadSanitizedQuestions } from "@/lib/assessment";
+import { getStudentState, getVariantCount } from "@/lib/assessment";
 import type { SanitizedAssessmentQuestion, AssessmentStudentState } from "@/lib/assessment";
 import { CheckCircleIcon, ClockIcon, AlertTriangleIcon } from "@/components/icons";
 import { Breadcrumbs } from "@/components/ui/Breadcrumbs";
@@ -206,20 +206,28 @@ export default async function LessonPage({
   // ── Assessment fetch ──────────────────────────────────────────────────────────
   let assessmentConfig: { timeLimitMinutes: number; passThreshold: number } | null = null;
   let assessmentStudentState: AssessmentStudentState = { phase: "startable" };
-  let assessmentSanitizedQuestions: SanitizedAssessmentQuestion[] = [];
-  let assessmentFullQuestions: {
+  let assessmentVariantCount = 0;
+  // Full variant data for privileged users (builder + preview)
+  let assessmentVariants: {
     id: string;
-    text: string;
+    label: string;
     order: number;
-    questionType: "MULTIPLE_CHOICE" | "FREE_TEXT";
-    maxMarks: number;
-    options: { id: string; text: string; isCorrect: boolean; order: number }[];
+    questions: {
+      id: string;
+      text: string;
+      order: number;
+      questionType: "MULTIPLE_CHOICE" | "FREE_TEXT";
+      maxMarks: number;
+      options: { id: string; text: string; isCorrect: boolean; order: number }[];
+    }[];
   }[] = [];
+  // Sanitized preview variants (isCorrect stripped) for the viewer
+  let assessmentPreviewVariants: { id: string; label: string; questions: SanitizedAssessmentQuestion[] }[] | undefined;
 
   if (isAssessment) {
-    const [assessmentLesson, sanitizedQs, studentState] = await Promise.all([
+    const [assessmentLesson, variantCount, studentState] = await Promise.all([
       prisma.assessmentLesson.findUnique({ where: { lessonId } }),
-      loadSanitizedQuestions(lessonId),
+      getVariantCount(lessonId),
       getStudentState(userId, lessonId),
     ]);
 
@@ -229,15 +237,33 @@ export default async function LessonPage({
         passThreshold: assessmentLesson.passThreshold,
       };
     }
-    assessmentSanitizedQuestions = sanitizedQs;
+    assessmentVariantCount = variantCount;
     assessmentStudentState = studentState;
 
     if (isPrivileged) {
-      assessmentFullQuestions = await prisma.assessmentQuestion.findMany({
+      assessmentVariants = await prisma.assessmentVariant.findMany({
         where: { lessonId },
         orderBy: { order: "asc" },
-        include: { options: { orderBy: { order: "asc" } } },
+        include: {
+          questions: {
+            orderBy: { order: "asc" },
+            include: { options: { orderBy: { order: "asc" } } },
+          },
+        },
       });
+      // Build sanitized preview variants (strip isCorrect) for the viewer
+      assessmentPreviewVariants = assessmentVariants.map((v) => ({
+        id: v.id,
+        label: v.label,
+        questions: v.questions.map((q) => ({
+          id: q.id,
+          text: q.text,
+          order: q.order,
+          questionType: q.questionType as "MULTIPLE_CHOICE" | "FREE_TEXT",
+          maxMarks: q.maxMarks,
+          options: q.options.map((o) => ({ id: o.id, text: o.text, order: o.order })),
+        })),
+      }));
     }
   }
 
@@ -424,9 +450,9 @@ export default async function LessonPage({
                 type="assessment"
                 estimate={
                   assessmentConfig
-                    ? `${assessmentConfig.timeLimitMinutes} min`
-                    : assessmentSanitizedQuestions.length > 0
-                      ? `${assessmentSanitizedQuestions.length} question${assessmentSanitizedQuestions.length === 1 ? "" : "s"}`
+                    ? `${assessmentConfig.timeLimitMinutes} min${assessmentVariantCount > 1 ? ` · ${assessmentVariantCount} variants` : ""}`
+                    : assessmentVariantCount > 0
+                      ? `${assessmentVariantCount} variant${assessmentVariantCount !== 1 ? "s" : ""}`
                       : null
                 }
               />
@@ -435,10 +461,11 @@ export default async function LessonPage({
                 moduleId={lesson.moduleId}
                 lessonId={lessonId}
                 config={assessmentConfig}
-                questions={assessmentSanitizedQuestions}
+                variantCount={assessmentVariantCount}
                 initialState={assessmentStudentState}
                 courseLocked={courseLocked}
                 isPrivileged={isPrivileged}
+                previewVariants={assessmentPreviewVariants}
               />
               {isCurrentLessonCompleted && (
                 <div className="mt-6 flex items-center gap-3 rounded-lg border border-success/60 bg-success-subtle px-5 py-4">
@@ -454,7 +481,7 @@ export default async function LessonPage({
                   moduleId={lesson.moduleId}
                   lessonId={lessonId}
                   initialConfig={assessmentConfig}
-                  initialQuestions={assessmentFullQuestions}
+                  initialVariants={assessmentVariants}
                 />
               )}
             </>
