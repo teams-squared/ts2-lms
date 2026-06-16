@@ -1,0 +1,641 @@
+"use client";
+
+import { useState } from "react";
+import { useRouter } from "next/navigation";
+import { Pencil } from "lucide-react";
+import { ConfirmDialog } from "@/components/ui/ConfirmDialog";
+import { DragHandle, SortableItem, SortableList } from "@/components/ui/Sortable";
+
+interface AssessmentOption {
+  id: string;
+  text: string;
+  isCorrect: boolean;
+  order: number;
+}
+
+interface AssessmentQuestion {
+  id: string;
+  text: string;
+  order: number;
+  questionType: "MULTIPLE_CHOICE" | "FREE_TEXT";
+  maxMarks: number;
+  options: AssessmentOption[];
+}
+
+interface AssessmentConfig {
+  timeLimitMinutes: number;
+  passThreshold: number;
+}
+
+interface AssessmentBuilderProps {
+  courseId: string;
+  moduleId: string;
+  lessonId: string;
+  initialConfig: AssessmentConfig | null;
+  initialQuestions: AssessmentQuestion[];
+}
+
+interface NewOption {
+  text: string;
+  isCorrect: boolean;
+}
+
+const EMPTY_MC_OPTIONS: NewOption[] = [
+  { text: "", isCorrect: false },
+  { text: "", isCorrect: false },
+];
+
+export function AssessmentBuilder({
+  courseId,
+  moduleId,
+  lessonId,
+  initialConfig,
+  initialQuestions,
+}: AssessmentBuilderProps) {
+  const router = useRouter();
+  const apiBase = `/api/courses/${courseId}/modules/${moduleId}/lessons/${lessonId}/assessment`;
+  const questionsBase = `${apiBase}/questions`;
+
+  const [questions, setQuestions] = useState<AssessmentQuestion[]>(initialQuestions);
+
+  // ── Config ────────────────────────────────────────────────────────────────────
+  const [config, setConfig] = useState<AssessmentConfig | null>(initialConfig);
+  const [editingConfig, setEditingConfig] = useState(false);
+  const [configDraft, setConfigDraft] = useState<AssessmentConfig>(
+    initialConfig ?? { timeLimitMinutes: 60, passThreshold: 50 },
+  );
+  const [savingConfig, setSavingConfig] = useState(false);
+  const [configError, setConfigError] = useState<string | null>(null);
+
+  const totalMarks = questions.reduce((s, q) => s + q.maxMarks, 0);
+
+  const handleSaveConfig = async () => {
+    setConfigError(null);
+    if (configDraft.timeLimitMinutes < 1) {
+      setConfigError("Time limit must be at least 1 minute");
+      return;
+    }
+    if (configDraft.passThreshold < 0) {
+      setConfigError("Pass threshold cannot be negative");
+      return;
+    }
+    setSavingConfig(true);
+    try {
+      const res = await fetch(`${apiBase}/config`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          timeLimitMinutes: Math.round(configDraft.timeLimitMinutes),
+          passThreshold: Math.round(configDraft.passThreshold),
+        }),
+      });
+      if (res.ok) {
+        setConfig({ ...configDraft });
+        setEditingConfig(false);
+        router.refresh();
+      } else {
+        const data = (await res.json()) as { error?: string };
+        setConfigError(data.error ?? "Failed to save config");
+      }
+    } finally {
+      setSavingConfig(false);
+    }
+  };
+
+  // ── Add question form ─────────────────────────────────────────────────────────
+  const [showForm, setShowForm] = useState(false);
+  const [newType, setNewType] = useState<"MULTIPLE_CHOICE" | "FREE_TEXT">("MULTIPLE_CHOICE");
+  const [newText, setNewText] = useState("");
+  const [newMaxMarks, setNewMaxMarks] = useState(1);
+  const [newOptions, setNewOptions] = useState<NewOption[]>(EMPTY_MC_OPTIONS);
+  const [submitting, setSubmitting] = useState(false);
+  const [addError, setAddError] = useState<string | null>(null);
+
+  const handleAddOption = () => {
+    if (newOptions.length < 6) setNewOptions([...newOptions, { text: "", isCorrect: false }]);
+  };
+  const handleRemoveOption = (idx: number) => {
+    if (newOptions.length > 2) setNewOptions(newOptions.filter((_, i) => i !== idx));
+  };
+  const handleOptionText = (idx: number, text: string) => {
+    setNewOptions(newOptions.map((o, i) => (i === idx ? { ...o, text } : o)));
+  };
+  const handleCorrectChange = (idx: number) => {
+    setNewOptions(newOptions.map((o, i) => ({ ...o, isCorrect: i === idx })));
+  };
+
+  const handleSubmitQuestion = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setAddError(null);
+
+    if (!newText.trim()) { setAddError("Question text is required"); return; }
+    if (newMaxMarks < 1) { setAddError("Max marks must be at least 1"); return; }
+
+    if (newType === "MULTIPLE_CHOICE") {
+      if (newOptions.some((o) => !o.text.trim())) { setAddError("All options must have text"); return; }
+      if (!newOptions.some((o) => o.isCorrect)) { setAddError("Mark one option as correct"); return; }
+    }
+
+    setSubmitting(true);
+    try {
+      const body =
+        newType === "MULTIPLE_CHOICE"
+          ? { text: newText.trim(), questionType: newType, maxMarks: newMaxMarks, options: newOptions }
+          : { text: newText.trim(), questionType: newType, maxMarks: newMaxMarks };
+
+      const res = await fetch(questionsBase, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(body),
+      });
+      if (!res.ok) {
+        const data = (await res.json()) as { error?: string };
+        setAddError(data.error ?? "Failed to add question");
+        return;
+      }
+      const created = (await res.json()) as AssessmentQuestion;
+      setQuestions([...questions, created]);
+      setNewText("");
+      setNewMaxMarks(1);
+      setNewOptions(EMPTY_MC_OPTIONS);
+      setShowForm(false);
+      router.refresh();
+    } catch {
+      setAddError("An unexpected error occurred");
+    } finally {
+      setSubmitting(false);
+    }
+  };
+
+  // ── Delete ────────────────────────────────────────────────────────────────────
+  const [deletingId, setDeletingId] = useState<string | null>(null);
+  const [pendingDelete, setPendingDelete] = useState<AssessmentQuestion | null>(null);
+
+  const handleDelete = async () => {
+    if (!pendingDelete) return;
+    const questionId = pendingDelete.id;
+    setDeletingId(questionId);
+    try {
+      const res = await fetch(`${questionsBase}/${questionId}`, { method: "DELETE" });
+      if (res.ok) {
+        setQuestions(questions.filter((q) => q.id !== questionId));
+        router.refresh();
+      }
+    } finally {
+      setDeletingId(null);
+      setPendingDelete(null);
+    }
+  };
+
+  // ── Inline edit ───────────────────────────────────────────────────────────────
+  const [editingId, setEditingId] = useState<string | null>(null);
+  const [editText, setEditText] = useState("");
+  const [editMaxMarks, setEditMaxMarks] = useState(1);
+  const [editOptions, setEditOptions] = useState<{ id?: string; text: string; isCorrect: boolean }[]>([]);
+  const [savingEditId, setSavingEditId] = useState<string | null>(null);
+  const [editError, setEditError] = useState<string | null>(null);
+  const [editQuestionType, setEditQuestionType] = useState<"MULTIPLE_CHOICE" | "FREE_TEXT">("MULTIPLE_CHOICE");
+
+  const startEdit = (q: AssessmentQuestion) => {
+    setEditingId(q.id);
+    setEditText(q.text);
+    setEditMaxMarks(q.maxMarks);
+    setEditQuestionType(q.questionType);
+    setEditOptions(q.options.map((o) => ({ id: o.id, text: o.text, isCorrect: o.isCorrect })));
+    setEditError(null);
+  };
+  const cancelEdit = () => { setEditingId(null); setEditError(null); };
+
+  const handleEditOptionText = (idx: number, text: string) => {
+    setEditOptions(editOptions.map((o, i) => (i === idx ? { ...o, text } : o)));
+  };
+  const handleEditCorrect = (idx: number) => {
+    setEditOptions(editOptions.map((o, i) => ({ ...o, isCorrect: i === idx })));
+  };
+  const handleEditAddOption = () => {
+    if (editOptions.length < 6) setEditOptions([...editOptions, { text: "", isCorrect: false }]);
+  };
+  const handleEditRemoveOption = (idx: number) => {
+    if (editOptions.length <= 2) return;
+    const wasCorrect = editOptions[idx].isCorrect;
+    const next = editOptions.filter((_, i) => i !== idx);
+    if (wasCorrect && next.length > 0) next[0] = { ...next[0], isCorrect: true };
+    setEditOptions(next);
+  };
+
+  const handleSaveEdit = async (questionId: string) => {
+    setEditError(null);
+    if (!editText.trim()) { setEditError("Question text cannot be empty"); return; }
+    if (editMaxMarks < 1) { setEditError("Max marks must be at least 1"); return; }
+    if (editQuestionType === "MULTIPLE_CHOICE") {
+      if (editOptions.some((o) => !o.text.trim())) { setEditError("All options must have text"); return; }
+      if (!editOptions.some((o) => o.isCorrect)) { setEditError("Mark one option as correct"); return; }
+    }
+
+    setSavingEditId(questionId);
+    try {
+      const body =
+        editQuestionType === "MULTIPLE_CHOICE"
+          ? { text: editText.trim(), maxMarks: editMaxMarks, options: editOptions.map((o) => ({ id: o.id, text: o.text.trim(), isCorrect: o.isCorrect })) }
+          : { text: editText.trim(), maxMarks: editMaxMarks };
+
+      const res = await fetch(`${questionsBase}/${questionId}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(body),
+      });
+      if (!res.ok) {
+        const data = (await res.json()) as { error?: string };
+        setEditError(data.error ?? "Failed to save changes");
+        return;
+      }
+      const updated = (await res.json()) as AssessmentQuestion;
+      setQuestions(questions.map((q) => (q.id === questionId ? updated : q)));
+      setEditingId(null);
+      router.refresh();
+    } catch {
+      setEditError("An unexpected error occurred");
+    } finally {
+      setSavingEditId(null);
+    }
+  };
+
+  // ── Reorder ───────────────────────────────────────────────────────────────────
+  const [reordering, setReordering] = useState(false);
+
+  const handleReorder = async (next: AssessmentQuestion[]) => {
+    const previous = questions;
+    setQuestions(next);
+    setReordering(true);
+    try {
+      const res = await fetch(`${questionsBase}/reorder`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ orderedIds: next.map((q) => q.id) }),
+      });
+      if (res.ok) {
+        const updated = (await res.json()) as AssessmentQuestion[];
+        setQuestions(updated);
+        router.refresh();
+      } else {
+        setQuestions(previous);
+      }
+    } catch {
+      setQuestions(previous);
+    } finally {
+      setReordering(false);
+    }
+  };
+
+  // ── Render ────────────────────────────────────────────────────────────────────
+  return (
+    <div className="mt-8 border-t border-border pt-8">
+      <div className="mb-4 flex items-center justify-between">
+        <div>
+          <h2 className="font-display text-base font-semibold text-foreground">
+            Assessment Builder
+          </h2>
+
+          {/* Config display / edit */}
+          {editingConfig ? (
+            <div className="mt-2 space-y-2">
+              <div className="flex flex-wrap items-center gap-3">
+                <label className="flex items-center gap-1.5 text-xs text-foreground-muted">
+                  Time limit (min):
+                  <input
+                    type="number"
+                    min={1}
+                    value={configDraft.timeLimitMinutes}
+                    onChange={(e) => setConfigDraft((c) => ({ ...c, timeLimitMinutes: Number(e.target.value) }))}
+                    className="w-16 rounded border border-border bg-surface px-2 py-0.5 text-sm text-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
+                  />
+                </label>
+                <label className="flex items-center gap-1.5 text-xs text-foreground-muted">
+                  Pass threshold (marks):
+                  <input
+                    type="number"
+                    min={0}
+                    value={configDraft.passThreshold}
+                    onChange={(e) => setConfigDraft((c) => ({ ...c, passThreshold: Number(e.target.value) }))}
+                    className="w-16 rounded border border-border bg-surface px-2 py-0.5 text-sm text-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
+                  />
+                </label>
+                <span className="text-xs text-foreground-subtle">
+                  (total available: {totalMarks} marks)
+                </span>
+              </div>
+              {configError && <p className="text-xs text-danger">{configError}</p>}
+              <div className="flex gap-2">
+                <button
+                  onClick={() => void handleSaveConfig()}
+                  disabled={savingConfig}
+                  className="text-xs text-primary hover:underline disabled:opacity-50"
+                >
+                  {savingConfig ? "Saving…" : "Save config"}
+                </button>
+                <button
+                  onClick={() => { setEditingConfig(false); setConfigDraft(config ?? { timeLimitMinutes: 60, passThreshold: 50 }); }}
+                  className="text-xs text-foreground-muted hover:underline"
+                >
+                  Cancel
+                </button>
+              </div>
+            </div>
+          ) : (
+            <button
+              onClick={() => {
+                setConfigDraft(config ?? { timeLimitMinutes: 60, passThreshold: 50 });
+                setEditingConfig(true);
+              }}
+              aria-label="Edit assessment config"
+              className="mt-0.5 inline-flex items-center gap-1 text-xs text-foreground-muted transition-colors hover:text-primary"
+            >
+              {config ? (
+                <span>
+                  {config.timeLimitMinutes} min · pass threshold: {config.passThreshold} marks
+                  {totalMarks > 0 && (
+                    <span className="text-foreground-subtle"> / {totalMarks} available</span>
+                  )}
+                </span>
+              ) : (
+                <span className="text-warning">Not configured — click to set up</span>
+              )}
+              <Pencil className="h-3 w-3" aria-hidden="true" />
+            </button>
+          )}
+        </div>
+        {!showForm && (
+          <button
+            onClick={() => setShowForm(true)}
+            className="rounded-md bg-primary px-3 py-1.5 text-sm font-medium text-primary-foreground transition-colors hover:bg-primary-hover"
+          >
+            Add question
+          </button>
+        )}
+      </div>
+
+      {questions.length === 0 && !showForm && (
+        <p className="text-sm italic text-foreground-subtle">
+          No questions yet. Add one above.
+        </p>
+      )}
+
+      <SortableList
+        items={questions}
+        onReorder={handleReorder}
+        disabled={reordering}
+        className="mb-4 space-y-3"
+      >
+        {(question, idx) => (
+          <SortableItem key={question.id} id={question.id} disabled={reordering}>
+            {({ setNodeRef, style, dragHandleProps }) => (
+              <div ref={setNodeRef} style={style} className="rounded-lg border border-border bg-surface p-4">
+                {editingId === question.id ? (
+                  <div className="space-y-3">
+                    <input
+                      type="text"
+                      value={editText}
+                      onChange={(e) => setEditText(e.target.value)}
+                      aria-label="Edit question text"
+                      className="w-full rounded-md border border-border bg-surface px-3 py-2 text-sm text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                    />
+                    <label className="flex items-center gap-1.5 text-xs text-foreground-muted">
+                      Max marks:
+                      <input
+                        type="number"
+                        min={1}
+                        value={editMaxMarks}
+                        onChange={(e) => setEditMaxMarks(Number(e.target.value))}
+                        className="w-14 rounded border border-border bg-surface px-2 py-0.5 text-sm text-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
+                      />
+                    </label>
+                    {editQuestionType === "MULTIPLE_CHOICE" && (
+                      <div className="space-y-2">
+                        {editOptions.map((opt, oidx) => (
+                          <div key={opt.id ?? `new-${oidx}`} className="flex flex-wrap items-center gap-2">
+                            <input
+                              type="radio"
+                              name={`edit-correct-${question.id}`}
+                              checked={opt.isCorrect}
+                              onChange={() => handleEditCorrect(oidx)}
+                              title={`Mark option ${oidx + 1} as correct`}
+                              className="shrink-0 text-primary focus:ring-ring"
+                            />
+                            <input
+                              type="text"
+                              value={opt.text}
+                              onChange={(e) => handleEditOptionText(oidx, e.target.value)}
+                              placeholder={`Option ${oidx + 1}`}
+                              aria-label={`Option ${oidx + 1} text`}
+                              className="min-w-0 flex-1 rounded-md border border-border bg-surface px-3 py-1.5 text-sm text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                            />
+                            {editOptions.length > 2 && (
+                              <button
+                                type="button"
+                                onClick={() => handleEditRemoveOption(oidx)}
+                                aria-label={`Remove option ${oidx + 1}`}
+                                className="shrink-0 text-xs text-danger hover:text-danger/80"
+                              >
+                                Remove
+                              </button>
+                            )}
+                          </div>
+                        ))}
+                        {editOptions.length < 6 && (
+                          <button type="button" onClick={handleEditAddOption} className="text-xs text-primary hover:underline">
+                            + Add option
+                          </button>
+                        )}
+                      </div>
+                    )}
+                    {editError && <p className="text-xs text-danger">{editError}</p>}
+                    <div className="flex gap-2">
+                      <button
+                        onClick={() => void handleSaveEdit(question.id)}
+                        disabled={savingEditId === question.id}
+                        className="rounded-md bg-primary px-3 py-1.5 text-xs font-medium text-primary-foreground transition-colors hover:bg-primary-hover disabled:opacity-50"
+                      >
+                        {savingEditId === question.id ? "Saving…" : "Save"}
+                      </button>
+                      <button
+                        onClick={cancelEdit}
+                        className="rounded-md border border-border px-3 py-1.5 text-xs text-foreground transition-colors hover:bg-surface-muted"
+                      >
+                        Cancel
+                      </button>
+                    </div>
+                  </div>
+                ) : (
+                  <>
+                    <div className="flex items-start justify-between gap-2">
+                      <div className="flex flex-1 items-start gap-2">
+                        <DragHandle dragHandleProps={dragHandleProps} label={`Drag question ${idx + 1}`} size="sm" className="mt-0.5" />
+                        <div className="min-w-0 flex-1">
+                          <p className="text-sm font-medium text-foreground">
+                            {idx + 1}. {question.text}
+                          </p>
+                          <p className="mt-0.5 text-xs text-foreground-subtle">
+                            {question.questionType === "MULTIPLE_CHOICE" ? "Multiple choice" : "Written answer"}
+                            {" · "}{question.maxMarks} mark{question.maxMarks !== 1 ? "s" : ""}
+                          </p>
+                        </div>
+                      </div>
+                      <div className="flex shrink-0 items-center gap-1">
+                        <button
+                          onClick={() => startEdit(question)}
+                          aria-label={`Edit question ${idx + 1}`}
+                          className="px-1 text-xs text-primary transition-colors hover:underline"
+                        >
+                          Edit
+                        </button>
+                        <button
+                          onClick={() => setPendingDelete(question)}
+                          disabled={deletingId === question.id}
+                          aria-label={`Delete question ${idx + 1}`}
+                          className="px-1 text-xs text-danger transition-colors hover:text-danger/80 disabled:opacity-50"
+                        >
+                          {deletingId === question.id ? "Deleting…" : "Delete"}
+                        </button>
+                      </div>
+                    </div>
+                    {question.questionType === "MULTIPLE_CHOICE" && (
+                      <ul className="mt-2 space-y-1">
+                        {question.options.map((opt) => (
+                          <li key={opt.id} className="flex items-center gap-2 text-xs text-foreground-muted">
+                            <span className={`h-2 w-2 shrink-0 rounded-full ${opt.isCorrect ? "bg-success" : "bg-border"}`} />
+                            {opt.text}
+                            {opt.isCorrect && <span className="text-success">(correct)</span>}
+                          </li>
+                        ))}
+                      </ul>
+                    )}
+                    {question.questionType === "FREE_TEXT" && (
+                      <p className="mt-2 text-xs italic text-foreground-subtle">Written answer — marked manually</p>
+                    )}
+                  </>
+                )}
+              </div>
+            )}
+          </SortableItem>
+        )}
+      </SortableList>
+
+      {/* Add question form */}
+      {showForm && (
+        <form onSubmit={(e) => void handleSubmitQuestion(e)} className="space-y-4 rounded-lg border border-primary/20 bg-primary-subtle/30 p-5">
+          <div className="flex flex-wrap gap-4">
+            <div className="flex-1">
+              <label className="mb-1 block text-xs font-medium text-foreground">Question text</label>
+              <input
+                type="text"
+                value={newText}
+                onChange={(e) => setNewText(e.target.value)}
+                placeholder="Enter your question…"
+                className="w-full rounded-md border border-border bg-surface px-3 py-2 text-sm text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+              />
+            </div>
+          </div>
+          <div className="flex flex-wrap gap-4 items-end">
+            <div>
+              <label className="mb-1 block text-xs font-medium text-foreground">Type</label>
+              <select
+                value={newType}
+                onChange={(e) => {
+                  setNewType(e.target.value as "MULTIPLE_CHOICE" | "FREE_TEXT");
+                  setNewOptions(EMPTY_MC_OPTIONS);
+                }}
+                className="rounded-md border border-border bg-surface px-3 py-2 text-sm text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+              >
+                <option value="MULTIPLE_CHOICE">Multiple choice</option>
+                <option value="FREE_TEXT">Written answer</option>
+              </select>
+            </div>
+            <label className="flex items-center gap-1.5 text-xs text-foreground-muted">
+              Max marks:
+              <input
+                type="number"
+                min={1}
+                value={newMaxMarks}
+                onChange={(e) => setNewMaxMarks(Number(e.target.value))}
+                className="w-14 rounded border border-border bg-surface px-2 py-1 text-sm text-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
+              />
+            </label>
+          </div>
+          {newType === "MULTIPLE_CHOICE" && (
+            <div>
+              <label className="mb-2 block text-xs font-medium text-foreground">Options (mark one as correct)</label>
+              <div className="space-y-2">
+                {newOptions.map((opt, idx) => (
+                  <div key={idx} className="flex items-center gap-2">
+                    <input
+                      type="radio"
+                      name="new-correct-option"
+                      checked={opt.isCorrect}
+                      onChange={() => handleCorrectChange(idx)}
+                      title={`Mark option ${idx + 1} as correct`}
+                      className="shrink-0 text-primary focus:ring-ring"
+                    />
+                    <input
+                      type="text"
+                      value={opt.text}
+                      onChange={(e) => handleOptionText(idx, e.target.value)}
+                      placeholder={`Option ${idx + 1}`}
+                      className="flex-1 rounded-md border border-border bg-surface px-3 py-1.5 text-sm text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                    />
+                    {newOptions.length > 2 && (
+                      <button type="button" onClick={() => handleRemoveOption(idx)} aria-label={`Remove option ${idx + 1}`} className="shrink-0 text-xs text-danger hover:text-danger/80">
+                        Remove
+                      </button>
+                    )}
+                  </div>
+                ))}
+              </div>
+              {newOptions.length < 6 && (
+                <button type="button" onClick={handleAddOption} className="mt-2 text-xs text-primary hover:underline">
+                  + Add option
+                </button>
+              )}
+            </div>
+          )}
+          {addError && <p className="text-sm text-danger">{addError}</p>}
+          <div className="flex gap-2">
+            <button
+              type="submit"
+              disabled={submitting}
+              className="rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground transition-colors hover:bg-primary-hover disabled:opacity-50"
+            >
+              {submitting ? "Adding…" : "Add question"}
+            </button>
+            <button
+              type="button"
+              onClick={() => { setShowForm(false); setAddError(null); setNewText(""); setNewOptions(EMPTY_MC_OPTIONS); setNewMaxMarks(1); }}
+              className="rounded-md border border-border px-4 py-2 text-sm text-foreground transition-colors hover:bg-surface-muted"
+            >
+              Cancel
+            </button>
+          </div>
+        </form>
+      )}
+
+      <ConfirmDialog
+        open={pendingDelete !== null}
+        onOpenChange={(open) => !open && setPendingDelete(null)}
+        title="Delete question?"
+        description={
+          pendingDelete ? (
+            <>
+              Delete this question and all of its options? Any learner submissions referencing it
+              will lose this question from their records.
+              <span className="mt-2 block font-medium text-foreground">
+                &ldquo;{pendingDelete.text}&rdquo;
+              </span>
+            </>
+          ) : null
+        }
+        confirmLabel="Delete question"
+        onConfirm={() => void handleDelete()}
+        loading={deletingId !== null}
+      />
+    </div>
+  );
+}

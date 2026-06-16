@@ -8,11 +8,15 @@ import { canViewCourse } from "@/lib/courseAccess";
 import { LessonViewer } from "@/components/courses/LessonViewer";
 import { QuizViewer } from "@/components/courses/QuizViewer";
 import { QuizBuilder } from "@/components/courses/QuizBuilder";
+import { AssessmentViewer } from "@/components/courses/AssessmentViewer";
+import { AssessmentBuilder } from "@/components/courses/AssessmentBuilder";
 import { CourseSidebar } from "@/components/courses/CourseSidebar";
 import { LessonFooter } from "@/components/courses/LessonFooter";
 import { LessonTitleHeader } from "@/components/courses/LessonTitleHeader";
 import { PolicyDocViewer } from "@/components/courses/PolicyDocViewer";
 import type { ReviewHistoryEntry, RevisionHistoryEntry } from "@/lib/policy-doc/types";
+import { getStudentState, loadSanitizedQuestions } from "@/lib/assessment";
+import type { SanitizedAssessmentQuestion, AssessmentStudentState } from "@/lib/assessment";
 import { CheckCircleIcon, ClockIcon, AlertTriangleIcon } from "@/components/icons";
 import { Breadcrumbs } from "@/components/ui/Breadcrumbs";
 import { RevealOnView } from "@/components/ui/RevealOnView";
@@ -143,6 +147,7 @@ export default async function LessonPage({
   const isQuiz = lessonType === "quiz";
   const isPolicyDoc = lessonType === "policy_doc";
   const isLink = lessonType === "link";
+  const isAssessment = lessonType === "assessment";
   const isPrivileged = isPrivilegedUser;
 
   // ── Policy doc fetch ──────────────────────────────────────────────────────
@@ -197,6 +202,44 @@ export default async function LessonPage({
   const prevLesson =
     currentLessonIdx > 0 ? allLessonsFlat[currentLessonIdx - 1] : null;
   const prevLessonUrl = prevLesson ? `/courses/${courseId}/lessons/${prevLesson.id}` : null;
+
+  // ── Assessment fetch ──────────────────────────────────────────────────────────
+  let assessmentConfig: { timeLimitMinutes: number; passThreshold: number } | null = null;
+  let assessmentStudentState: AssessmentStudentState = { phase: "startable" };
+  let assessmentSanitizedQuestions: SanitizedAssessmentQuestion[] = [];
+  let assessmentFullQuestions: {
+    id: string;
+    text: string;
+    order: number;
+    questionType: "MULTIPLE_CHOICE" | "FREE_TEXT";
+    maxMarks: number;
+    options: { id: string; text: string; isCorrect: boolean; order: number }[];
+  }[] = [];
+
+  if (isAssessment) {
+    const [assessmentLesson, sanitizedQs, studentState] = await Promise.all([
+      prisma.assessmentLesson.findUnique({ where: { lessonId } }),
+      loadSanitizedQuestions(lessonId),
+      getStudentState(userId, lessonId),
+    ]);
+
+    if (assessmentLesson) {
+      assessmentConfig = {
+        timeLimitMinutes: assessmentLesson.timeLimitMinutes,
+        passThreshold: assessmentLesson.passThreshold,
+      };
+    }
+    assessmentSanitizedQuestions = sanitizedQs;
+    assessmentStudentState = studentState;
+
+    if (isPrivileged) {
+      assessmentFullQuestions = await prisma.assessmentQuestion.findMany({
+        where: { lessonId },
+        orderBy: { order: "asc" },
+        include: { options: { orderBy: { order: "asc" } } },
+      });
+    }
+  }
 
   // Fetch quiz data for quiz-type lessons
   let quizQuestions: {
@@ -374,6 +417,47 @@ export default async function LessonPage({
                 />
               )}
             </>
+          ) : isAssessment ? (
+            <>
+              <LessonTitleHeader
+                title={lesson.title}
+                type="assessment"
+                estimate={
+                  assessmentConfig
+                    ? `${assessmentConfig.timeLimitMinutes} min`
+                    : assessmentSanitizedQuestions.length > 0
+                      ? `${assessmentSanitizedQuestions.length} question${assessmentSanitizedQuestions.length === 1 ? "" : "s"}`
+                      : null
+                }
+              />
+              <AssessmentViewer
+                courseId={courseId}
+                moduleId={lesson.moduleId}
+                lessonId={lessonId}
+                config={assessmentConfig}
+                questions={assessmentSanitizedQuestions}
+                initialState={assessmentStudentState}
+                courseLocked={courseLocked}
+                isPrivileged={isPrivileged}
+              />
+              {isCurrentLessonCompleted && (
+                <div className="mt-6 flex items-center gap-3 rounded-lg border border-success/60 bg-success-subtle px-5 py-4">
+                  <CheckCircleIcon className="h-5 w-5 flex-shrink-0 text-success" />
+                  <p className="text-sm font-semibold text-success">
+                    Lesson complete. You passed this assessment.
+                  </p>
+                </div>
+              )}
+              {isPrivileged && (
+                <AssessmentBuilder
+                  courseId={courseId}
+                  moduleId={lesson.moduleId}
+                  lessonId={lessonId}
+                  initialConfig={assessmentConfig}
+                  initialQuestions={assessmentFullQuestions}
+                />
+              )}
+            </>
           ) : isPolicyDoc ? (
             policyDocViewProps ? (
               <PolicyDocViewer {...policyDocViewProps} />
@@ -409,7 +493,7 @@ export default async function LessonPage({
           nextLessonUrl={nextLessonUrl}
           initialCompleted={isCurrentLessonCompleted}
           courseTitle={course.title}
-          hideMarkComplete={isQuiz}
+          hideMarkComplete={isQuiz || isAssessment}
           courseLocked={courseLocked}
           requireScrollToComplete={
             (isPolicyDoc && policyDocViewProps != null) || isLink

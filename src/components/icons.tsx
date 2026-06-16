@@ -342,6 +342,16 @@ export function ClockIcon(props: IconProps) {
   );
 }
 
+export function AssessmentIcon(props: IconProps) {
+  return (
+    <Icon {...props}>
+      <rect x="9" y="2" width="6" height="4" rx="1" />
+      <path d="M5 4h-1a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2V6a2 2 0 00-2-2h-1" />
+      <path d="M9 12l2 2 4-4" />
+    </Icon>
+  );
+}
+
 export function AlertTriangleIcon(props: IconProps) {
   return (
     <Icon {...props}>

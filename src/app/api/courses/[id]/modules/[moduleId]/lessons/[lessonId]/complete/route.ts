@@ -3,8 +3,8 @@ import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { awardXp } from "@/lib/xp";
 import { trackEvent } from "@/lib/posthog-server";
-import { sendCourseCompletionEmail, sendIsoAcknowledgementEmail } from "@/lib/email";
-import { computeCourseCompletionStats } from "@/lib/enrollments";
+import { sendIsoAcknowledgementEmail } from "@/lib/email";
+import { maybeCompleteCourse } from "@/lib/enrollments";
 import { formatPolicyAttestation } from "@/lib/policy-doc/attestation";
 
 type Params = { params: Promise<{ id: string; moduleId: string; lessonId: string }> };
@@ -278,65 +278,12 @@ export async function POST(request: Request, { params }: Params) {
   } | null = null;
 
   if (transitioned) {
-    try {
-      const allModules = await prisma.module.findMany({
-        where: { courseId },
-        include: { lessons: { select: { id: true } } },
-      });
-      const allLessonIds = (allModules ?? []).flatMap((m) => m.lessons.map((l) => l.id));
-
-      if (allLessonIds.length > 0) {
-        const completedCount = await prisma.lessonProgress.count({
-          where: { userId, lessonId: { in: allLessonIds }, completedAt: { not: null } },
-        });
-
-        if (completedCount >= allLessonIds.length) {
-          // Conditional update: only flip enrollment.completedAt if it's
-          // still null. Concurrent requests racing past the lessonProgress
-          // gate above all converge here; exactly one wins.
-          const stamp = await prisma.enrollment.updateMany({
-            where: { id: enrollment.id, completedAt: null },
-            data: { completedAt: now },
-          });
-
-          if (stamp.count === 1) {
-            // Award course-completion XP bonus
-            await awardXp(userId, 100);
-
-            // Fire analytics event
-            const stats = await computeCourseCompletionStats(userId, courseId, enrollment.enrolledAt);
-            trackEvent(userId, "course_completed", {
-              courseId,
-              xpEarned: stats.xpEarned,
-              daysTaken: stats.daysTaken,
-              lessonCount: stats.totalLessons,
-            });
-
-            // Send completion alert emails
-            const [subs, userData] = await Promise.all([
-              prisma.courseEmailSubscription.findMany({ where: { courseId }, select: { email: true } }),
-              prisma.user.findUnique({ where: { id: userId }, select: { name: true, email: true } }),
-            ]);
-            if (subs.length > 0) {
-              sendCourseCompletionEmail(
-                subs.map((s) => s.email),
-                userData?.name ?? userData?.email ?? "A user",
-                stats.courseTitle,
-              ).catch((err) => console.error("[email] completion alert failed:", err));
-            }
-
-            courseComplete = true;
-            courseStats = stats;
-          }
-          // stamp.count === 0: another concurrent request already stamped
-          // it. No-op — the response below shows courseComplete: false for
-          // this losing request, which is correct (the modal already fired
-          // on the winning request's response).
-        }
-      }
-    } catch {
-      // Course completion check is non-critical; don't fail the request
-    }
+    ({ courseComplete, courseStats } = await maybeCompleteCourse(
+      userId,
+      courseId,
+      enrollment,
+      now,
+    ));
   }
 
   return NextResponse.json({
