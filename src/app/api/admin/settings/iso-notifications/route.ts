@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { z } from "zod";
 import { prisma } from "@/lib/prisma";
 import { requireRole } from "@/lib/roles";
+import { writeAuditLog } from "@/lib/audit";
 
 const SINGLETON_ID = "singleton";
 
@@ -78,6 +79,15 @@ export async function PATCH(request: Request) {
       ccEmails,
       updatedBy: auth.userId,
     },
+  });
+
+  await writeAuditLog({
+    action: "setting.updated",
+    actorId: auth.userId,
+    actorEmail: auth.session?.user?.email,
+    targetType: "setting",
+    targetId: "iso_notifications",
+    metadata: { enabled, toCount: toEmails.length, ccCount: ccEmails.length },
   });
 
   return NextResponse.json({

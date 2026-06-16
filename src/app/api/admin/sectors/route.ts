@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { requireRole } from "@/lib/roles";
+import { writeAuditLog } from "@/lib/audit";
 
 function slugify(value: string): string {
   return value
@@ -53,6 +54,14 @@ export async function POST(request: Request) {
         label,
         description: (body.description ?? "").trim() || null,
       },
+    });
+    await writeAuditLog({
+      action: "sector.created",
+      actorId: authResult.userId,
+      actorEmail: authResult.session?.user?.email,
+      targetType: "sector",
+      targetId: sector.id,
+      metadata: { key: sector.key, label: sector.label },
     });
     return NextResponse.json(sector, { status: 201 });
   } catch (err: unknown) {

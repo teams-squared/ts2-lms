@@ -6,6 +6,7 @@ import type { Role } from "@/lib/types";
 import { createEnrollments } from "@/lib/enrollments";
 import { sendUserInviteEmail } from "@/lib/email";
 import { normalizeInviteEmail } from "@/lib/inviteEmail";
+import { writeAuditLog } from "@/lib/audit";
 
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 const VALID_ROLES: Role[] = ["admin", "course_manager", "employee"];
@@ -174,6 +175,15 @@ export async function POST(request: Request) {
     console.error("[invite] Failed to send invite email", err);
     emailError = "send_failed";
   }
+
+  await writeAuditLog({
+    action: "user.invited",
+    actorId: authResult.userId,
+    actorEmail: authResult.session?.user?.email,
+    targetType: "user",
+    targetId: user.id,
+    metadata: { email: user.email, role },
+  });
 
   return NextResponse.json(
     {

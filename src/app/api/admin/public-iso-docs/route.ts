@@ -3,6 +3,7 @@ import { z } from "zod";
 import { requireRole } from "@/lib/roles";
 import { prisma } from "@/lib/prisma";
 import { syncPublicIsoDoc } from "@/lib/policy-doc/sync";
+import { writeAuditLog } from "@/lib/audit";
 
 const CreateBody = z.object({
   driveId: z.string().min(1),
@@ -82,6 +83,21 @@ export async function POST(request: Request) {
       driveId: parsed.data.driveId,
       itemId: parsed.data.itemId,
       actorUserId: auth.userId,
+    });
+    await writeAuditLog({
+      action: "iso_doc.created",
+      actorId: auth.userId,
+      actorEmail: auth.session?.user?.email,
+      targetType: "policy_doc",
+      targetId: outcome.doc.id,
+      metadata: {
+        driveId: parsed.data.driveId,
+        itemId: parsed.data.itemId,
+        ...(outcome.status === "synced" && {
+          documentTitle: outcome.doc.documentTitle,
+          documentCode: outcome.doc.documentCode,
+        }),
+      },
     });
     return NextResponse.json(outcome, { status: 201 });
   } catch (err) {

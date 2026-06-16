@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { requireRole } from "@/lib/roles";
 import { trackEvent } from "@/lib/posthog-server";
+import { writeAuditLog } from "@/lib/audit";
 
 type Params = { params: Promise<{ id: string; userId: string }> };
 
@@ -34,6 +35,15 @@ export async function DELETE(_request: Request, { params }: Params) {
     courseId,
     courseTitle: course.title,
     managerId: userId,
+  });
+
+  await writeAuditLog({
+    action: "course_manager.revoked",
+    actorId: actorId,
+    actorEmail: authResult.session?.user?.email,
+    targetType: "user",
+    targetId: userId,
+    metadata: { courseId },
   });
 
   return NextResponse.json({ removed: true });

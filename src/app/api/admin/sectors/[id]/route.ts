@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { requireRole } from "@/lib/roles";
+import { writeAuditLog } from "@/lib/audit";
 
 type Params = { params: Promise<{ id: string }> };
 
@@ -65,6 +66,14 @@ export async function PATCH(request: Request, { params }: Params) {
       where: { id },
       data,
     });
+    await writeAuditLog({
+      action: "sector.updated",
+      actorId: authResult.userId,
+      actorEmail: authResult.session?.user?.email,
+      targetType: "sector",
+      targetId: id,
+      metadata: { changed: Object.keys(data) },
+    });
     return NextResponse.json(sector);
   } catch (err: unknown) {
     if (isPrismaError(err, "P2002")) {
@@ -87,8 +96,18 @@ export async function DELETE(_request: Request, { params }: Params) {
 
   const { id } = await params;
 
+  const before = await prisma.sector.findUnique({ where: { id }, select: { key: true, label: true } });
+
   try {
     await prisma.sector.delete({ where: { id } });
+    await writeAuditLog({
+      action: "sector.deleted",
+      actorId: authResult.userId,
+      actorEmail: authResult.session?.user?.email,
+      targetType: "sector",
+      targetId: id,
+      metadata: { key: before?.key, label: before?.label },
+    });
     return NextResponse.json({ deleted: true });
   } catch (err: unknown) {
     if (isPrismaError(err, "P2003")) {

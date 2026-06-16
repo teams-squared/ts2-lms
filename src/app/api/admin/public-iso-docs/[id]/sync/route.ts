@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { requireRole } from "@/lib/roles";
 import { prisma } from "@/lib/prisma";
 import { syncPublicIsoDoc } from "@/lib/policy-doc/sync";
+import { writeAuditLog } from "@/lib/audit";
 
 type Params = { params: Promise<{ id: string }> };
 
@@ -29,6 +30,22 @@ export async function POST(_request: Request, { params }: Params) {
       driveId: row.sharePointDriveId,
       itemId: row.sharePointItemId,
       actorUserId: auth.userId,
+    });
+    await writeAuditLog({
+      action: "iso_doc.synced",
+      actorId: auth.userId,
+      actorEmail: auth.session?.user?.email,
+      targetType: "policy_doc",
+      targetId: id,
+      metadata: {
+        driveId: row.sharePointDriveId,
+        itemId: row.sharePointItemId,
+        ...(outcome.status === "synced" && {
+          documentTitle: outcome.doc.documentTitle,
+          documentCode: outcome.doc.documentCode,
+        }),
+        status: outcome.status,
+      },
     });
     return NextResponse.json(outcome);
   } catch (err) {

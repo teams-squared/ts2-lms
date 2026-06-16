@@ -5,6 +5,7 @@ import { listManagedCourseIds } from "@/lib/courseAccess";
 import { awardXp } from "@/lib/xp";
 import { trackEvent } from "@/lib/posthog-server";
 import { createEnrollments } from "@/lib/enrollments";
+import { writeAuditLog } from "@/lib/audit";
 
 /** POST /api/admin/enrollments/batch — enroll a user in multiple courses at once */
 export async function POST(request: Request) {
@@ -74,6 +75,15 @@ export async function POST(request: Request) {
       batch: true,
     });
   }
+
+  await writeAuditLog({
+    action: "enrollment.created",
+    actorId: authResult.userId,
+    actorEmail: authResult.session?.user?.email,
+    targetType: "enrollment",
+    targetId: courseIds.length === 1 ? courseIds[0] : null,
+    metadata: { courseIds, count: created.length, userId },
+  });
 
   return NextResponse.json(
     {

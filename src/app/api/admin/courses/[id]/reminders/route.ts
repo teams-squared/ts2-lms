@@ -4,6 +4,7 @@ import { requireRole } from "@/lib/roles";
 import { canManageCourse } from "@/lib/courseAccess";
 import { computeDeadline } from "@/lib/deadlines";
 import { sendManualOverdueReminderEmail } from "@/lib/email";
+import { writeAuditLog } from "@/lib/audit";
 
 const NOTE_MAX = 500;
 
@@ -140,6 +141,15 @@ export async function POST(
       lessonId: l.id,
       sentById: callerId,
     })),
+  });
+
+  await writeAuditLog({
+    action: "course.reminder_sent",
+    actorId: callerId,
+    actorEmail: authResult.session?.user?.email,
+    targetType: "course",
+    targetId: courseId,
+    metadata: { count: overdue.length },
   });
 
   return NextResponse.json({
