@@ -12,6 +12,7 @@ const TABS = [
   { href: "/admin/nodes", label: "Nodes", exact: false, adminOnly: false },
   { href: "/admin/assignments", label: "Enrollments", exact: false, adminOnly: false },
   { href: "/admin/progress", label: "Progress", exact: false, adminOnly: false },
+  { href: "/admin/marking", label: "Marking", exact: false, adminOnly: false },
   { href: "/admin/analytics", label: "Analytics", exact: false, adminOnly: false },
   { href: "/admin/iso", label: "ISO", exact: false, adminOnly: true },
   { href: "/admin/clearance", label: "Clearance", exact: false, adminOnly: true },

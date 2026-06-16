@@ -3,8 +3,7 @@ import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { awardXp } from "@/lib/xp";
 import { trackEvent } from "@/lib/posthog-server";
-import { sendCourseCompletionEmail } from "@/lib/email";
-import { computeCourseCompletionStats } from "@/lib/enrollments";
+import { maybeCompleteCourse } from "@/lib/enrollments";
 
 type Params = { params: Promise<{ id: string; moduleId: string; lessonId: string }> };
 
@@ -261,55 +260,12 @@ export async function POST(request: Request, { params }: Params) {
   } | null = null;
 
   if (passed && enrollment) {
-    try {
-      const allModules = await prisma.module.findMany({
-        where: { courseId },
-        include: { lessons: { select: { id: true } } },
-      });
-      const allLessonIds = allModules.flatMap((m) => m.lessons.map((l) => l.id));
-      if (allLessonIds.length > 0) {
-        const completedCount = await prisma.lessonProgress.count({
-          where: { userId, lessonId: { in: allLessonIds }, completedAt: { not: null } },
-        });
-
-        const firstCompletion = completedCount >= allLessonIds.length && enrollment.completedAt === null;
-
-        if (firstCompletion) {
-          const now = new Date();
-          await prisma.enrollment.update({
-            where: { id: enrollment.id },
-            data: { completedAt: now },
-          });
-
-          await awardXp(userId, 100);
-
-          const stats = await computeCourseCompletionStats(userId, courseId, enrollment.enrolledAt);
-          trackEvent(userId, "course_completed", {
-            courseId,
-            xpEarned: stats.xpEarned,
-            daysTaken: stats.daysTaken,
-            lessonCount: stats.totalLessons,
-          });
-
-          const [subs, userData] = await Promise.all([
-            prisma.courseEmailSubscription.findMany({ where: { courseId }, select: { email: true } }),
-            prisma.user.findUnique({ where: { id: userId }, select: { name: true, email: true } }),
-          ]);
-          if (subs.length > 0) {
-            sendCourseCompletionEmail(
-              subs.map((s) => s.email),
-              userData?.name ?? userData?.email ?? "A user",
-              stats.courseTitle,
-            ).catch((err) => console.error("[email] completion alert failed:", err));
-          }
-
-          courseComplete = true;
-          courseStats = stats;
-        }
-      }
-    } catch {
-      // Course completion check is non-critical
-    }
+    ({ courseComplete, courseStats } = await maybeCompleteCourse(
+      userId,
+      courseId,
+      enrollment,
+      new Date(),
+    ));
   }
 
   return NextResponse.json({

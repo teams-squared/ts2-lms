@@ -46,6 +46,8 @@ model User {
   internalDocsAuthored    InternalDoc[]         @relation("InternalDocsAuthored")
   internalDocViews        InternalDocView[]
   auditLogs               AuditLog[]            @relation("AuditLogActor")
+  assessmentSubmissions   AssessmentSubmission[]
+  assessmentsGraded       AssessmentSubmission[] @relation("AssessmentGrader")
 }
 
 enum CourseStatus {
@@ -107,6 +109,19 @@ enum LessonType {
   HTML
   POLICY_DOC
   LINK
+  ASSESSMENT
+}
+
+enum AssessmentQuestionType {
+  MULTIPLE_CHOICE
+  FREE_TEXT
+}
+
+enum AssessmentSubmissionStatus {
+  IN_PROGRESS
+  SUBMITTED
+  MARKED_PASS
+  MARKED_FAIL
 }
 
 enum PolicyDocRenderMode {
@@ -142,6 +157,9 @@ model Lesson {
   deadlineReminderLogs DeadlineReminderLog[]
   manualReminderLogs   ManualReminderLog[]
   policyDoc            PolicyDocLesson?
+  assessment           AssessmentLesson?
+  assessmentVariants   AssessmentVariant[]
+  assessmentSubmissions AssessmentSubmission[]
   createdAt            DateTime              @default(now())
   updatedAt            DateTime              @updatedAt
 
@@ -369,6 +387,115 @@ model QuizAnswer {
   attempt        QuizAttempt  @relation(fields: [attemptId], references: [id], onDelete: Cascade)
   question       QuizQuestion @relation(fields: [questionId], references: [id], onDelete: Cascade)
   selectedOption QuizOption   @relation(fields: [selectedOptionId], references: [id], onDelete: Cascade)
+}
+
+/// Config side-table — one row per Lesson where type === ASSESSMENT. Holds the
+/// server-trusted timer + pass threshold. Kept out of Lesson.content JSON
+/// because timeLimitMinutes drives a security-relevant deadline.
+model AssessmentLesson {
+  id               String   @id @default(cuid())
+  lessonId         String   @unique
+  lesson           Lesson   @relation(fields: [lessonId], references: [id], onDelete: Cascade)
+  timeLimitMinutes Int
+  passThreshold    Int // absolute marks needed to pass (vs sum of question maxMarks)
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
+}
+
+/// One interchangeable version of an assessment. A lesson can hold N variants;
+/// each carries its own question set but shares the lesson-level time limit +
+/// pass threshold (AssessmentLesson). On start, a student is randomly assigned
+/// a variant they have not yet faced (falling back to a full-random pick once
+/// every variant has been seen).
+model AssessmentVariant {
+  id        String               @id @default(cuid())
+  lessonId  String
+  label     String
+  order     Int
+  lesson    Lesson               @relation(fields: [lessonId], references: [id], onDelete: Cascade)
+  questions AssessmentQuestion[]
+  submissions AssessmentSubmission[]
+  createdAt DateTime             @default(now())
+  updatedAt DateTime             @updatedAt
+
+  @@unique([lessonId, order])
+}
+
+model AssessmentQuestion {
+  id           String                 @id @default(cuid())
+  variantId    String
+  text         String
+  order        Int
+  questionType AssessmentQuestionType
+  maxMarks     Int
+  variant      AssessmentVariant      @relation(fields: [variantId], references: [id], onDelete: Cascade)
+  options      AssessmentOption[]
+  answers      AssessmentAnswer[]
+  createdAt    DateTime               @default(now())
+  updatedAt    DateTime               @updatedAt
+
+  @@unique([variantId, order])
+}
+
+model AssessmentOption {
+  id         String             @id @default(cuid())
+  questionId String
+  text       String
+  isCorrect  Boolean            @default(false)
+  order      Int
+  question   AssessmentQuestion @relation(fields: [questionId], references: [id], onDelete: Cascade)
+  answers    AssessmentAnswer[]
+  createdAt  DateTime           @default(now())
+  updatedAt  DateTime           @updatedAt
+
+  @@unique([questionId, order])
+}
+
+model AssessmentSubmission {
+  id            String                     @id @default(cuid())
+  userId        String
+  lessonId      String
+  startedAt     DateTime                   @default(now())
+  deadlineAt    DateTime
+  submittedAt   DateTime?
+  autoSubmitted Boolean                    @default(false)
+  status        AssessmentSubmissionStatus @default(IN_PROGRESS)
+  autoScore     Int                        @default(0)
+  manualScore   Int?
+  totalScore    Int?
+  passThreshold Int // snapshot at submit so later config edits don't change result
+  variantId     String?
+  gradedById    String?
+  gradedAt      DateTime?
+  feedback      String?
+  createdAt     DateTime                   @default(now())
+  updatedAt     DateTime                   @updatedAt
+
+  user     User               @relation(fields: [userId], references: [id], onDelete: Cascade)
+  lesson   Lesson             @relation(fields: [lessonId], references: [id], onDelete: Cascade)
+  variant  AssessmentVariant? @relation(fields: [variantId], references: [id], onDelete: SetNull)
+  gradedBy User?              @relation("AssessmentGrader", fields: [gradedById], references: [id], onDelete: SetNull)
+  answers  AssessmentAnswer[]
+
+  @@index([lessonId])
+  @@index([userId])
+  @@index([status])
+  @@index([variantId])
+}
+
+model AssessmentAnswer {
+  id               String  @id @default(cuid())
+  submissionId     String
+  questionId       String
+  selectedOptionId String?
+  responseText     String?
+  awardedMarks     Int?
+
+  submission     AssessmentSubmission @relation(fields: [submissionId], references: [id], onDelete: Cascade)
+  question       AssessmentQuestion   @relation(fields: [questionId], references: [id], onDelete: Cascade)
+  selectedOption AssessmentOption?    @relation(fields: [selectedOptionId], references: [id], onDelete: SetNull)
+
+  @@unique([submissionId, questionId])
 }
 
 model Notification {

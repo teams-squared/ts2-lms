@@ -6,48 +6,45 @@
 > filler; preserve paths, SHAs, commands exact.
 
 ## Last sync
-- Date: 2026-06-09
-- Branch: `dev` (up to date with `origin/dev`)
-- HEAD: `b848be3` — docs(handoff): regenerate snapshot at e16ae5f
-- Tree: clean (only untracked local-only `.agents/`, `.claire/`, `.claude/settings.local.json`)
-- Ahead of `origin/main`: 0 — release PR #47 merged + deployed
+- Date: 2026-06-16
+- Branch: `dev`
+- HEAD: `a450eba` — chore(security): untrack .claude/settings.local.json (leaked prod DB creds)
+- Tree: clean
+- Ahead of `origin/main` (`8bc4bfa`): **1** — only `a450eba` (untrack file, no runtime change)
 
 ## What just shipped
-**Sector+tier clearance + internal documentation repository — SHIPPED TO PROD.** Release PR #47 (`9c1ac5a`) merged dev→main, deploy `dep-d8js3ftckfvc73cmco30` live 2026-06-09 07:35.
-- `e16ae5f` feat(internal-docs): gate /internal-docs to internal members (route 404 + nav `internal` flag)
-- `bb227a5` refactor(courses): ModuleManager → shared `LessonContentEditor` (−237 lines)
-- `a0b5ba3` feat(internal-docs): clearance-gated docs repo (CRUD API, video proxy, list/viewer/new/edit, audit)
-- `47f20c2` feat(clearance): set sector+tier requirements on courses
-- `3eff134` feat(clearance): rework free-text → sector+tier compartment model (schema, migration, lib)
-- `ac787c9` feat(clearance): Sector admin API + manager UI
+**PR #56 (`8bc4bfa`) merged dev→main + deployed prod 2026-06-16 ~13:24** (deploy `dep-d8oks058nd3s73aj26eg` live). Audit-log coverage + dep security fixes:
+- `cb757bc` feat(audit): wire audit logging into 19 admin mutation routes
+- `7db3b13` feat(iso): central audit log, retention cron, session timeout (#55) — AuditLog table (A.8.15), weekly `prune-audit-logs` cron (A.5.33, `AUDIT_LOG_RETENTION_DAYS` default 365), sliding-window JWT (A.8.5, `SESSION_MAX_AGE_SECONDS` default 8h)
+- `852c516` chore(deps): override transitive deps to patched — **clears all 8 high Dependabot alerts** (protobufjs/esbuild/postcss/vite/hono/fast-uri/ws)
+- `1a1f4d4` chore(deps): override dompurify to 3.4.10
+- `3c9c476` chore(deps): reconcile package-lock; `a256407` chore: gitignore graphify-out
 
-**Deploy mechanism changed.** Prod startCommand now `npx prisma migrate deploy && npm start` (was hand-rolled `prisma/migrate.ts && seed.ts`). Changed in Render **dashboard** (blueprint `render.yaml` detached/stale — editing it does NOTHING; change live command in dashboard). Migrations now AUTO-APPLY on deploy. Migration `20260605000000_add_sector_tier_clearance` applied + verified: Sector/InternalDoc/InternalDocView/ResourceClearanceRequirement tables present, UserClearance.tier+sectorId present, dead Course.requiredClearance + UserClearance.clearance dropped. `_prisma_migrations` clean (pre-merge orphan row `20260527000000_add_iso_library_is_hidden` deleted).
+**SECURITY INCIDENT — RESOLVED.** Prod DB connection string (password in a PowerShell permission rule) found committed to PUBLIC repo in `.claude/settings.local.json` since `c32fd42`. Fix:
+- `a450eba` untracked file (already matched `.claude/*` gitignore, predated rule). Local on-disk copy stays, gitignored.
+- Prod DB password **rotated** in Render dashboard — old leaked string now dead.
+- `DATABASE_URL` manually updated on BOTH services (it is a hardcoded literal, NOT `fromDatabase`) + redeployed: prod `dep-d8oltj9kh4rs7391gbs0` live 14:36, staging `dep-d8oluchkh4rs7391h2n0` live 14:37. Both reconnected clean via `prisma migrate deploy`.
+- History scrub **skipped** (operator decision) — rotation makes leaked string useless.
 
 ## In-flight
 Working tree clean.
 
 ## Pending external actions
-- [ ] **Seed clearance + internal-docs — feature DORMANT until done.** Sign in as ADMIN:
-  1. Create Sectors at `/admin/clearance`
-  2. Grant clearances at `/admin/users/[id]`
-  3. Set per-resource requirements (course edit + internal-doc edit)
-  4. Add first docs at `/internal-docs/new`
-- [ ] **Existing logged-in users re-login** to refresh JWT `internal` flag (nav "Internal docs" link hidden until then; route works regardless).
-- [ ] **Backfill catch-up migration before any fresh DB.** `prisma/migrations/` folders do NOT create `DeadlineReminderLog` table + `Enrollment.completedAt` column (old `migrate.ts` made them). Fine for persistent prod DB; a fresh DB built by `migrate deploy` alone breaks. Bites if `ts2-lms-staging` ever gets own DB (shares prod now).
-- [ ] **Sync or delete `render.yaml`.** Detached from live service — startCommand/buildCommand differ. Stale blueprint = footgun. Either update to match dashboard (`migrate deploy`, no seed) or drop it.
-- [ ] **Triage Dependabot vulns** (~6 high) — `https://github.com/teams-squared/ts2-lms/security/dependabot`.
-- [ ] **Curate first docs into `/policies` library** — `PublicIsoDoc` count still 0. `/admin/iso` → Public library tab.
-- [ ] **Eyeball mobile on real S24** — PR #43 (prior release) never got live 360px pass.
+- [ ] **Release `a450eba` to prod** — security untrack sits on `dev` only. No runtime impact (file untrack), rides next `dev→main` PR. No urgency.
+- [ ] **Triage remaining Dependabot alerts** — 3 medium + 1 low, zero high. `@opentelemetry/core`<2.8.0 (runtime), `js-yaml`<=4.1.1 (dev), `uuid`<11.1.1 (runtime, svix→resend — deferred, needs svix-risky major bump), `@babel/core`<=7.29.0 (dev, low). `https://github.com/teams-squared/ts2-lms/security/dependabot`
+- [ ] **Confirm ISO cron + env on prod** — verify `prune-audit-logs` cron job exists on Render + `AUDIT_LOG_RETENTION_DAYS` / `SESSION_MAX_AGE_SECONDS` set (else defaults 365/8h apply).
+- [ ] **Seed clearance + internal-docs — feature DORMANT until done** (unverified this session). ADMIN: create Sectors `/admin/clearance` → grant clearances `/admin/users/[id]` → set per-resource reqs → add docs `/internal-docs/new`. Existing logged-in users re-login to refresh JWT `internal` flag.
+- [ ] **Sync or delete `render.yaml`** — detached from live. Claims `fromDatabase` wiring + DB name `ts2-lms-db`/`ts2_lms_user`; LIVE is hardcoded `DATABASE_URL` literal + DB `ts_lms_postgresql`. Footgun. Update to match dashboard or drop.
+- [ ] **Backfill catch-up migration before any fresh DB.** `prisma/migrations/` does NOT create `DeadlineReminderLog` table + `Enrollment.completedAt` col (old `migrate.ts` made them). Fine for persistent prod; fresh DB via `migrate deploy` alone breaks. Bites if staging ever gets own DB (shares prod now).
 
 ## Open questions / decisions
-- Cosmetic stale row remains: `20260512000000_add_manual_reminder_log` rolled_back (has successful sibling; `migrate deploy` ignores it, harmless). Gated on: nobody — leave or clean cosmetically.
+- Git-history scrub of leaked cred. Gated on: decided SKIP — rotation killed the string; cosmetic only.
+- `uuid` 10→11 bump. Gated on: svix compat risk — deferred.
 - More entry points to `/policies`? Gated on: product call.
-- Wire React `<ViewTransition>` course-card morph. Gated on: React 19.x exporting `ViewTransition` (undefined in 19.2.4).
-- Right-rail on lesson player (notes/transcript/resources). Gated on: product call.
-- Resend subdomain `lms.teamsquared.io`. Gated on: paid plan or deliverability incident.
+- React `<ViewTransition>` course-card morph. Gated on: React 19.x exporting `ViewTransition` (undefined in 19.2.4).
 
 ## Pickup pointer
-Internal-docs LIVE but dormant — seed it: ADMIN creates Sectors at `/admin/clearance`, grants clearances at `/admin/users/[id]`, sets resource requirements, adds first docs at `/internal-docs/new`. Then re-login to surface nav link.
+No urgent work. Tree clean. Next natural step: triage 3 medium + 1 low Dependabot alerts (uuid deferred), and/or open `dev→main` PR to release `a450eba`. Optionally confirm ISO cron + retention env vars live on prod.
 
 ---
 
@@ -56,15 +53,10 @@ Internal-docs LIVE but dormant — seed it: ADMIN creates Sectors at `/admin/cle
 |---|---|
 | Clearance model (sector+tier) | `prisma/schema.prisma` (Sector, UserClearance, ResourceClearanceRequirement, InternalDoc, InternalDocView) |
 | Clearance logic | `src/lib/clearance.ts` (ANY-satisfies read, ALL-satisfies author) |
-| Course gate | `src/lib/course-eligibility.ts` (`clearanceLocked`/`clearanceHint`) |
-| Internal-docs API | `src/app/api/internal-docs/` (route, [id], [id]/video proxy) |
-| Internal-docs UI | `src/app/internal-docs/`, `src/components/internal-docs/InternalDocEditor.tsx` |
-| Shared content editor | `src/components/courses/LessonContentEditor.tsx` (courses + internal-docs) |
-| Shared req editor | `src/components/courses/ClearanceRequirementEditor.tsx` |
-| Sector admin | `/admin/clearance`, `src/app/api/admin/sectors/`, `src/components/admin/SectorManager.tsx` |
-| Auth `internal` flag | `src/lib/auth.ts` (jwt callback), `src/lib/auth.config.ts` (session) |
-| Nav config | `src/components/layout/navItems.tsx` (`getVisibleNavItems(role, internal)`) |
-| Tier semantics | Lower tier = MORE protected. 0 = most restricted. Tier N grants N + all higher numbers in that sector. |
-| Migrations | hand-write SQL in `prisma/migrations/<ts>_<name>/migration.sql` (idempotent). NOW auto-applied via `prisma migrate deploy` on prod deploy. Verify clean history pre-release: `npx prisma migrate status` |
-| Deploy | Render, from `main` only. startCommand `npx prisma migrate deploy && npm start` (dashboard-set, NOT render.yaml). `ts2-lms` (`srv-d7eb0npj2pic73841ra0`), DB `dpg-d7eb259f9bms738jscig-a` |
-| Staging | `ts2-lms-staging` (`srv-d83bv5btqb8s73dihi60`) tracks `dev`, shares prod DB |
+| Audit log | `prisma/schema.prisma` (AuditLog), admin list + CSV export endpoints; weekly `prune-audit-logs` cron |
+| Internal-docs API / UI | `src/app/api/internal-docs/`, `src/app/internal-docs/`, `src/components/internal-docs/InternalDocEditor.tsx` |
+| Auth `internal` flag | `src/lib/auth.ts` (jwt), `src/lib/auth.config.ts` (session); nav `src/components/layout/navItems.tsx` |
+| Tier semantics | Lower tier = MORE protected. 0 = most restricted. Tier N grants N + all higher numbers in sector. |
+| Migrations | hand-write SQL `prisma/migrations/<ts>_<name>/migration.sql` (idempotent). Auto-applied via `prisma migrate deploy` on prod deploy. Verify clean: `npx prisma migrate status` |
+| Deploy | Render from `main` only. startCommand `npx prisma migrate deploy && npm start` (DASHBOARD-set, NOT render.yaml). Prod `ts2-lms` (`srv-d7eb0npj2pic73841ra0`), staging `ts2-lms-staging` (`srv-d83bv5btqb8s73dihi60`) tracks `dev`, **shares prod DB** `dpg-d7eb259f9bms738jscig-a` |
+| DB creds | `DATABASE_URL` = hardcoded literal env var on BOTH services (NOT `fromDatabase`). Password rotation does NOT auto-propagate — must manually edit env + redeploy each service. |

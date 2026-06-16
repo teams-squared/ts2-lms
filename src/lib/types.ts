@@ -47,7 +47,7 @@ export function appStatusToPrisma(status: CourseStatus): PrismaCourseStatus {
 
 // ─── LessonType mapping ────────────────────────────────────────────────────
 
-export type LessonType = "text" | "video" | "quiz" | "document" | "html" | "policy_doc" | "link";
+export type LessonType = "text" | "video" | "quiz" | "document" | "html" | "policy_doc" | "link" | "assessment";
 
 const PRISMA_LESSON_TYPE_MAP: Record<PrismaLessonType, LessonType> = {
   TEXT: "text",
@@ -57,6 +57,7 @@ const PRISMA_LESSON_TYPE_MAP: Record<PrismaLessonType, LessonType> = {
   HTML: "html",
   POLICY_DOC: "policy_doc",
   LINK: "link",
+  ASSESSMENT: "assessment",
 };
 
 const APP_LESSON_TYPE_MAP: Record<LessonType, PrismaLessonType> = {
@@ -67,6 +68,7 @@ const APP_LESSON_TYPE_MAP: Record<LessonType, PrismaLessonType> = {
   html: "HTML",
   policy_doc: "POLICY_DOC",
   link: "LINK",
+  assessment: "ASSESSMENT",
 };
 
 export function prismaLessonTypeToApp(type: PrismaLessonType): LessonType {

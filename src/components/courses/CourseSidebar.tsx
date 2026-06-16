@@ -15,6 +15,7 @@ import {
   ClockIcon,
   ShieldIcon,
   LinkIcon,
+  AssessmentIcon,
 } from "@/components/icons";
 import { PanelLeftClose, PanelLeftOpen } from "lucide-react";
 import type { LessonType } from "@/lib/types";
@@ -55,6 +56,7 @@ const LESSON_TYPE_ICON: Record<LessonType, React.FC<{ className?: string }>> = {
   html: LayoutGridIcon,
   policy_doc: ShieldIcon,
   link: LinkIcon,
+  assessment: AssessmentIcon,
 };
 
 export function CourseSidebar({

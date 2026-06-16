@@ -699,6 +699,7 @@ export function ModuleManager({
                               <option value="html">HTML: embedded page</option>
                               <option value="policy_doc">Policy doc: ISO Word doc + acknowledgement</option>
                               <option value="link">Link: external article</option>
+                              <option value="assessment">Assessment: timed exam (manually marked)</option>
                             </select>
                           </div>
                           <div className="flex items-center gap-2">
@@ -813,7 +814,7 @@ export function ModuleManager({
                     setEditType(e.target.value as LessonType);
                     setEditContent("");
                   }}
-                  disabled={editingLesson.type === "quiz"}
+                  disabled={editingLesson.type === "quiz" || editingLesson.type === "assessment"}
                   className="w-full sm:w-auto rounded-lg border border-border bg-surface text-sm px-3 py-2 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-60"
                   aria-label="Edit lesson type"
                 >
@@ -823,19 +824,20 @@ export function ModuleManager({
                   <option value="document">Document</option>
                   <option value="html">HTML</option>
                   <option value="policy_doc">Policy doc</option>
+                  <option value="assessment">Assessment</option>
                 </select>
-                {editingLesson.type === "quiz" && (
+                {(editingLesson.type === "quiz" || editingLesson.type === "assessment") && (
                   <p className="text-xs text-foreground-subtle mt-1">
-                    Quiz type can&apos;t be changed. Converting would orphan
-                    the questions. Delete and recreate if you need a different
-                    lesson type.
+                    {editingLesson.type === "assessment" ? "Assessment" : "Quiz"} type can&apos;t
+                    be changed. Converting would orphan existing submissions and questions.
+                    Delete and recreate if you need a different lesson type.
                   </p>
                 )}
               </div>
 
               {editType === "policy_doc" ? (
                 <PolicyDocLessonEditor lessonId={editingLesson.id} />
-              ) : editType === "quiz" ? null : (
+              ) : editType === "quiz" || editType === "assessment" ? null : (
                 <LessonContentEditor
                   type={editType as LessonContentType}
                   content={editContent}

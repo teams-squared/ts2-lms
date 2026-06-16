@@ -1,5 +1,8 @@
 import type { Prisma } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
+import { awardXp } from "@/lib/xp";
+import { trackEvent } from "@/lib/posthog-server";
+import { sendCourseCompletionEmail } from "@/lib/email";
 
 export interface CreateEnrollmentsInput {
   userId: string;
@@ -153,4 +156,88 @@ export async function computeCourseCompletionStats(
     xpEarned,
     daysTaken,
   };
+}
+
+export interface CourseCompletionResult {
+  courseComplete: boolean;
+  courseStats: CourseCompletionStats | null;
+}
+
+/**
+ * Fire the course-completion side-effects exactly once per enrollment. Call
+ * right after a lesson has transitioned incomplete→complete for this user.
+ *
+ * Checks whether every lesson in the course is now complete; if so, it
+ * atomically stamps `enrollment.completedAt` via a conditional `updateMany`
+ * (WHERE completedAt: null) so concurrent callers race safely — exactly one
+ * wins the stamp. The winner awards the 100 XP course bonus, fires the
+ * `course_completed` analytics event, and sends completion-alert emails to
+ * subscribers. Everyone else gets `{courseComplete:false, courseStats:null}`.
+ *
+ * Best-effort: swallows its own errors so completion side-effects never fail
+ * the caller's primary write. Extracted from the lesson-complete + quiz-attempt
+ * routes (which were duplicate copies) and reused by the assessment marking
+ * route.
+ */
+export async function maybeCompleteCourse(
+  userId: string,
+  courseId: string,
+  enrollment: { id: string; completedAt: Date | null; enrolledAt: Date },
+  now: Date,
+): Promise<CourseCompletionResult> {
+  try {
+    const allModules = await prisma.module.findMany({
+      where: { courseId },
+      include: { lessons: { select: { id: true } } },
+    });
+    const allLessonIds = (allModules ?? []).flatMap((m) => m.lessons.map((l) => l.id));
+    if (allLessonIds.length === 0) {
+      return { courseComplete: false, courseStats: null };
+    }
+
+    const completedCount = await prisma.lessonProgress.count({
+      where: { userId, lessonId: { in: allLessonIds }, completedAt: { not: null } },
+    });
+    if (completedCount < allLessonIds.length) {
+      return { courseComplete: false, courseStats: null };
+    }
+
+    // Conditional update: only flip completedAt if still null. Concurrent
+    // requests racing past the count gate above all converge here; exactly
+    // one wins so the side-effects fire exactly once.
+    const stamp = await prisma.enrollment.updateMany({
+      where: { id: enrollment.id, completedAt: null },
+      data: { completedAt: now },
+    });
+    if (stamp.count !== 1) {
+      return { courseComplete: false, courseStats: null };
+    }
+
+    await awardXp(userId, 100);
+
+    const stats = await computeCourseCompletionStats(userId, courseId, enrollment.enrolledAt);
+    trackEvent(userId, "course_completed", {
+      courseId,
+      xpEarned: stats.xpEarned,
+      daysTaken: stats.daysTaken,
+      lessonCount: stats.totalLessons,
+    });
+
+    const [subs, userData] = await Promise.all([
+      prisma.courseEmailSubscription.findMany({ where: { courseId }, select: { email: true } }),
+      prisma.user.findUnique({ where: { id: userId }, select: { name: true, email: true } }),
+    ]);
+    if (subs.length > 0) {
+      sendCourseCompletionEmail(
+        subs.map((s) => s.email),
+        userData?.name ?? userData?.email ?? "A user",
+        stats.courseTitle,
+      ).catch((err) => console.error("[email] completion alert failed:", err));
+    }
+
+    return { courseComplete: true, courseStats: stats };
+  } catch {
+    // Course completion check is non-critical; never fail the caller's write.
+    return { courseComplete: false, courseStats: null };
+  }
 }

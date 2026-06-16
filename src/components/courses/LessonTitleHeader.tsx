@@ -1,4 +1,4 @@
-import { ExternalLink, FileText, Film, HelpCircle, Monitor, ShieldCheck, Type } from "lucide-react";
+import { ClipboardCheck, ExternalLink, FileText, Film, HelpCircle, Monitor, ShieldCheck, Type } from "lucide-react";
 import type { LessonType } from "@/lib/types";
 
 interface LessonTitleHeaderProps {
@@ -18,6 +18,7 @@ const TYPE_LABEL: Record<LessonType, string> = {
   html: "Interactive",
   policy_doc: "Policy document",
   link: "External article",
+  assessment: "Assessment",
 };
 
 const TYPE_ICON: Record<LessonType, React.ComponentType<{ className?: string }>> = {
@@ -28,6 +29,7 @@ const TYPE_ICON: Record<LessonType, React.ComponentType<{ className?: string }>>
   html: Monitor,
   policy_doc: ShieldCheck,
   link: ExternalLink,
+  assessment: ClipboardCheck,
 };
 
 /**
