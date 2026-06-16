@@ -4,7 +4,9 @@ import { prisma } from "@/lib/prisma";
 import { canManageCourse } from "@/lib/courseAccess";
 import type { Role } from "@/lib/types";
 
-type Params = { params: Promise<{ id: string; moduleId: string; lessonId: string }> };
+type Params = {
+  params: Promise<{ id: string; moduleId: string; lessonId: string; variantId: string }>;
+};
 
 interface OptionInput {
   text: string;
@@ -12,9 +14,9 @@ interface OptionInput {
 }
 
 /**
- * POST .../lessons/[lessonId]/assessment/questions
+ * POST .../variants/[variantId]/questions
  *
- * Create a new assessment question. Admin/course_manager only.
+ * Create a new assessment question within a variant. Admin/course_manager only.
  *
  * Request body:
  *   {
@@ -25,7 +27,7 @@ interface OptionInput {
  *   }
  *
  * Response:
- *   201 { id, lessonId, text, order, questionType, maxMarks, options[], createdAt, updatedAt }
+ *   201 { id, variantId, text, order, questionType, maxMarks, options[], createdAt, updatedAt }
  *   400 { error: string }
  *   401 { error: "Unauthorized" }
  *   403 { error: "Forbidden" }
@@ -37,7 +39,7 @@ export async function POST(request: Request, { params }: Params) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
-  const { id: courseId, moduleId, lessonId } = await params;
+  const { id: courseId, moduleId, lessonId, variantId } = await params;
 
   if (!(await canManageCourse(session.user.id, session.user.role as Role, courseId))) {
     return NextResponse.json({ error: "Forbidden" }, { status: 403 });
@@ -55,6 +57,15 @@ export async function POST(request: Request, { params }: Params) {
 
   if (lesson.type !== "ASSESSMENT") {
     return NextResponse.json({ error: "Lesson not found" }, { status: 404 });
+  }
+
+  // Verify variant belongs to this lesson
+  const variant = await prisma.assessmentVariant.findUnique({
+    where: { id: variantId },
+  });
+
+  if (!variant || variant.lessonId !== lessonId) {
+    return NextResponse.json({ error: "Variant not found" }, { status: 404 });
   }
 
   // Parse body
@@ -117,14 +128,14 @@ export async function POST(request: Request, { params }: Params) {
 
   // Auto-assign order = max existing order + 1 (or 1 if no questions yet)
   const maxOrderRow = await prisma.assessmentQuestion.aggregate({
-    where: { lessonId },
+    where: { variantId },
     _max: { order: true },
   });
   const order = (maxOrderRow._max.order ?? 0) + 1;
 
   const question = await prisma.assessmentQuestion.create({
     data: {
-      lessonId,
+      variantId,
       text: (text as string).trim(),
       order,
       questionType: questionType as "MULTIPLE_CHOICE" | "FREE_TEXT",

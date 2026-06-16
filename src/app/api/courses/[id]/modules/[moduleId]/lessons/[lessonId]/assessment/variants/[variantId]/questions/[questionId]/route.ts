@@ -5,7 +5,13 @@ import { canManageCourse } from "@/lib/courseAccess";
 import type { Role } from "@/lib/types";
 
 type Params = {
-  params: Promise<{ id: string; moduleId: string; lessonId: string; questionId: string }>;
+  params: Promise<{
+    id: string;
+    moduleId: string;
+    lessonId: string;
+    variantId: string;
+    questionId: string;
+  }>;
 };
 
 interface OptionInput {
@@ -15,11 +21,11 @@ interface OptionInput {
 }
 
 /**
- * PATCH .../assessment/questions/[questionId]
+ * PATCH .../variants/[variantId]/questions/[questionId]
  *
  * Edit text, maxMarks, and/or options for an assessment question.
- * For MC questions, options are fully replaced (delete + recreate strategy,
- * mirroring the quiz PATCH). Admin/course_manager only.
+ * For MC questions, options are fully replaced (delete + recreate strategy).
+ * Admin/course_manager only.
  *
  * Request body (all fields optional):
  *   {
@@ -29,7 +35,7 @@ interface OptionInput {
  *   }
  *
  * Response:
- *   200 { id, lessonId, text, order, questionType, maxMarks, options[], createdAt, updatedAt }
+ *   200 { id, variantId, text, order, questionType, maxMarks, options[], createdAt, updatedAt }
  *   400 { error: string }
  *   401 { error: "Unauthorized" }
  *   403 { error: "Forbidden" }
@@ -41,7 +47,7 @@ export async function PATCH(request: Request, { params }: Params) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
-  const { id: courseId, moduleId, lessonId, questionId } = await params;
+  const { id: courseId, moduleId, lessonId, variantId, questionId } = await params;
 
   if (!(await canManageCourse(session.user.id, session.user.role as Role, courseId))) {
     return NextResponse.json({ error: "Forbidden" }, { status: 403 });
@@ -60,12 +66,21 @@ export async function PATCH(request: Request, { params }: Params) {
     return NextResponse.json({ error: "Lesson not found" }, { status: 404 });
   }
 
+  // Verify variant belongs to this lesson
+  const variant = await prisma.assessmentVariant.findUnique({
+    where: { id: variantId },
+  });
+
+  if (!variant || variant.lessonId !== lessonId) {
+    return NextResponse.json({ error: "Variant not found" }, { status: 404 });
+  }
+
   const question = await prisma.assessmentQuestion.findUnique({
     where: { id: questionId },
     include: { options: { orderBy: { order: "asc" } } },
   });
 
-  if (!question || question.lessonId !== lessonId) {
+  if (!question || question.variantId !== variantId) {
     return NextResponse.json({ error: "Question not found" }, { status: 404 });
   }
 
@@ -165,7 +180,7 @@ export async function PATCH(request: Request, { params }: Params) {
 }
 
 /**
- * DELETE .../assessment/questions/[questionId]
+ * DELETE .../variants/[variantId]/questions/[questionId]
  *
  * Remove an assessment question (cascade handles options and answers).
  * Admin/course_manager only.
@@ -182,7 +197,7 @@ export async function DELETE(_request: Request, { params }: Params) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
-  const { id: courseId, moduleId, lessonId, questionId } = await params;
+  const { id: courseId, moduleId, lessonId, variantId, questionId } = await params;
 
   if (!(await canManageCourse(session.user.id, session.user.role as Role, courseId))) {
     return NextResponse.json({ error: "Forbidden" }, { status: 403 });
@@ -201,11 +216,20 @@ export async function DELETE(_request: Request, { params }: Params) {
     return NextResponse.json({ error: "Lesson not found" }, { status: 404 });
   }
 
+  // Verify variant belongs to this lesson
+  const variant = await prisma.assessmentVariant.findUnique({
+    where: { id: variantId },
+  });
+
+  if (!variant || variant.lessonId !== lessonId) {
+    return NextResponse.json({ error: "Variant not found" }, { status: 404 });
+  }
+
   const question = await prisma.assessmentQuestion.findUnique({
     where: { id: questionId },
   });
 
-  if (!question || question.lessonId !== lessonId) {
+  if (!question || question.variantId !== variantId) {
     return NextResponse.json({ error: "Question not found" }, { status: 404 });
   }
 

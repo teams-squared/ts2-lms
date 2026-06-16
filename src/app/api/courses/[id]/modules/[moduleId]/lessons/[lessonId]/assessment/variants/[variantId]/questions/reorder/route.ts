@@ -4,15 +4,17 @@ import { prisma } from "@/lib/prisma";
 import { canManageCourse } from "@/lib/courseAccess";
 import type { Role } from "@/lib/types";
 
-type Params = { params: Promise<{ id: string; moduleId: string; lessonId: string }> };
+type Params = {
+  params: Promise<{ id: string; moduleId: string; lessonId: string; variantId: string }>;
+};
 
 /**
- * POST .../assessment/questions/reorder
+ * PATCH .../variants/[variantId]/questions/reorder
  *
- * Reorder all assessment questions for a lesson. Admin/course_manager only.
+ * Reorder all assessment questions within a variant. Admin/course_manager only.
  *
- * Uses a two-phase update to avoid @@unique([lessonId, order]) collisions:
- *   1. Shift all orders to a high temporary range (offset by 10000).
+ * Uses a two-phase update to avoid @@unique([variantId, order]) collisions:
+ *   1. Shift all orders to a high temporary range (offset by 100000).
  *   2. Assign the final orders per the requested sequence.
  * Both phases run inside a single transaction.
  *
@@ -25,13 +27,13 @@ type Params = { params: Promise<{ id: string; moduleId: string; lessonId: string
  *   403 { error: "Forbidden" }
  *   404 { error: string }
  */
-export async function POST(request: Request, { params }: Params) {
+export async function PATCH(request: Request, { params }: Params) {
   const session = await auth();
   if (!session?.user?.id) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
-  const { id: courseId, moduleId, lessonId } = await params;
+  const { id: courseId, moduleId, lessonId, variantId } = await params;
 
   if (!(await canManageCourse(session.user.id, session.user.role as Role, courseId))) {
     return NextResponse.json({ error: "Forbidden" }, { status: 403 });
@@ -50,6 +52,15 @@ export async function POST(request: Request, { params }: Params) {
     return NextResponse.json({ error: "Lesson not found" }, { status: 404 });
   }
 
+  // Verify variant belongs to this lesson
+  const variant = await prisma.assessmentVariant.findUnique({
+    where: { id: variantId },
+  });
+
+  if (!variant || variant.lessonId !== lessonId) {
+    return NextResponse.json({ error: "Variant not found" }, { status: 404 });
+  }
+
   let body: { orderedIds?: unknown };
   try {
     body = (await request.json()) as typeof body;
@@ -63,9 +74,9 @@ export async function POST(request: Request, { params }: Params) {
 
   const orderedIds = body.orderedIds as string[];
 
-  // Verify all IDs belong to this lesson
+  // Verify all IDs belong to this variant
   const existing = await prisma.assessmentQuestion.findMany({
-    where: { lessonId },
+    where: { variantId },
     select: { id: true },
   });
   const existingIds = new Set(existing.map((q) => q.id));
@@ -80,7 +91,7 @@ export async function POST(request: Request, { params }: Params) {
     );
   }
 
-  // Two-phase reorder to avoid @@unique([lessonId, order]) constraint violations:
+  // Two-phase reorder to avoid @@unique([variantId, order]) constraint violations:
   // Phase 1: shift all to a temporary high range that won't collide with any real order.
   // Phase 2: assign the final 1-based order from the requested sequence.
   const OFFSET = 100000;
@@ -103,7 +114,7 @@ export async function POST(request: Request, { params }: Params) {
   ]);
 
   const questions = await prisma.assessmentQuestion.findMany({
-    where: { lessonId },
+    where: { variantId },
     include: { options: { orderBy: { order: "asc" } } },
     orderBy: { order: "asc" },
   });
