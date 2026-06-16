@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { requireRole } from "@/lib/roles";
 import { trackEvent } from "@/lib/posthog-server";
+import { writeAuditLog } from "@/lib/audit";
 
 type Params = { params: Promise<{ userId: string; courseId: string }> };
 
@@ -81,6 +82,15 @@ export async function POST(_request: Request, { params }: Params) {
     wasCompleted: enrollment.completedAt !== null,
     progressDeleted,
     attemptsDeleted,
+  });
+
+  await writeAuditLog({
+    action: "enrollment.reset",
+    actorId: adminId,
+    actorEmail: authResult.session?.user?.email,
+    targetType: "enrollment",
+    targetId: userId,
+    metadata: { courseId },
   });
 
   return NextResponse.json({

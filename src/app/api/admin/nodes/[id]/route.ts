@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { requireRole } from "@/lib/roles";
+import { writeAuditLog } from "@/lib/audit";
 
 /** PATCH /api/admin/nodes/[id] — update a node */
 export async function PATCH(
@@ -43,6 +44,14 @@ export async function PATCH(
   if (body.order !== undefined) data.order = body.order;
 
   const updated = await prisma.courseNode.update({ where: { id }, data });
+  await writeAuditLog({
+    action: "node.updated",
+    actorId: authResult.userId,
+    actorEmail: authResult.session?.user?.email,
+    targetType: "node",
+    targetId: id,
+    metadata: { name: existing.name },
+  });
   return NextResponse.json(updated);
 }
 
@@ -78,6 +87,15 @@ export async function DELETE(
     // Delete the node
     prisma.courseNode.delete({ where: { id } }),
   ]);
+
+  await writeAuditLog({
+    action: "node.deleted",
+    actorId: authResult.userId,
+    actorEmail: authResult.session?.user?.email,
+    targetType: "node",
+    targetId: id,
+    metadata: { name: existing.name },
+  });
 
   return NextResponse.json({ deleted: true });
 }

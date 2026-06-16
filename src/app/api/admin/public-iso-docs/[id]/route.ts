@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { z } from "zod";
 import { requireRole } from "@/lib/roles";
 import { prisma } from "@/lib/prisma";
+import { writeAuditLog } from "@/lib/audit";
 
 const PatchBody = z.object({
   sortOrder: z.number().int().optional(),
@@ -49,6 +50,15 @@ export async function PATCH(request: Request, { params }: Params) {
     },
   });
 
+  await writeAuditLog({
+    action: "iso_doc.updated",
+    actorId: auth.userId,
+    actorEmail: auth.session?.user?.email,
+    targetType: "policy_doc",
+    targetId: id,
+    metadata: { changedKeys: Object.keys(parsed.data) },
+  });
+
   return NextResponse.json({
     doc: {
       id: updated.id,
@@ -63,8 +73,23 @@ export async function DELETE(_request: Request, { params }: Params) {
   if (auth instanceof NextResponse) return auth;
 
   const { id } = await params;
+  const snapshot = await prisma.publicIsoDoc.findUnique({
+    where: { id },
+    select: { documentTitle: true, documentCode: true },
+  });
   try {
     await prisma.publicIsoDoc.delete({ where: { id } });
+    await writeAuditLog({
+      action: "iso_doc.deleted",
+      actorId: auth.userId,
+      actorEmail: auth.session?.user?.email,
+      targetType: "policy_doc",
+      targetId: id,
+      metadata: {
+        documentTitle: snapshot?.documentTitle ?? null,
+        documentCode: snapshot?.documentCode ?? null,
+      },
+    });
     return NextResponse.json({ ok: true });
   } catch {
     return NextResponse.json({ error: "Not found" }, { status: 404 });

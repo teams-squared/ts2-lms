@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { requireRole } from "@/lib/roles";
 import { getNodeTree } from "@/lib/courseNodes";
+import { writeAuditLog } from "@/lib/audit";
 
 /** GET /api/admin/nodes — full node tree with course counts */
 export async function GET() {
@@ -51,6 +52,15 @@ export async function POST(request: Request) {
       parentId: parentId ?? null,
       order: nextOrder,
     },
+  });
+
+  await writeAuditLog({
+    action: "node.created",
+    actorId: authResult.userId,
+    actorEmail: authResult.session?.user?.email,
+    targetType: "node",
+    targetId: node.id,
+    metadata: { name: node.name },
   });
 
   return NextResponse.json(node, { status: 201 });

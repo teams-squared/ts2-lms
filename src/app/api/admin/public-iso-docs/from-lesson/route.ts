@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { z } from "zod";
 import { requireRole } from "@/lib/roles";
 import { prisma } from "@/lib/prisma";
+import { writeAuditLog } from "@/lib/audit";
 
 const Body = z.object({
   policyDocLessonId: z.string().min(1),
@@ -97,6 +98,18 @@ export async function POST(request: Request) {
         publishedById: auth.userId,
         lastSyncedAt: lesson.lastSyncedAt,
         lastSyncedById: auth.userId,
+      },
+    });
+    await writeAuditLog({
+      action: "iso_doc.created",
+      actorId: auth.userId,
+      actorEmail: auth.session?.user?.email,
+      targetType: "policy_doc",
+      targetId: created.id,
+      metadata: {
+        lessonId: parsed.data.policyDocLessonId,
+        documentTitle: created.documentTitle,
+        documentCode: lesson.documentCode,
       },
     });
     return NextResponse.json(

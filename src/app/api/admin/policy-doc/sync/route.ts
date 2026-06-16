@@ -3,6 +3,7 @@ import { z } from "zod";
 import { requireRole } from "@/lib/roles";
 import { prisma } from "@/lib/prisma";
 import { syncPolicyDoc } from "@/lib/policy-doc/sync";
+import { writeAuditLog } from "@/lib/audit";
 
 const Body = z.object({
   lessonId: z.string().min(1),
@@ -58,6 +59,22 @@ export async function POST(request: Request) {
       driveId,
       itemId,
       actorUserId: auth.userId,
+    });
+    await writeAuditLog({
+      action: "policy_doc.synced",
+      actorId: auth.userId,
+      actorEmail: auth.session?.user?.email,
+      targetType: "policy_doc",
+      targetId: outcome.lesson.id ?? null,
+      metadata: {
+        driveId,
+        itemId,
+        ...(outcome.status === "synced" && {
+          documentTitle: outcome.lesson.documentTitle,
+          documentCode: outcome.lesson.documentCode,
+        }),
+        status: outcome.status,
+      },
     });
     return NextResponse.json(outcome);
   } catch (err) {

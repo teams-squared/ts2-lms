@@ -3,6 +3,7 @@ import { prisma } from "@/lib/prisma";
 import { requireRole } from "@/lib/roles";
 import { canManageCourse } from "@/lib/courseAccess";
 import { trackEvent } from "@/lib/posthog-server";
+import { writeAuditLog } from "@/lib/audit";
 
 type Params = { params: Promise<{ id: string }> };
 
@@ -46,6 +47,15 @@ export async function DELETE(_request: Request, { params }: Params) {
     courseId,
     courseTitle: course.title,
     deletedBy: role,
+  });
+
+  await writeAuditLog({
+    action: "course.deleted",
+    actorId: userId,
+    actorEmail: authResult.session?.user?.email,
+    targetType: "course",
+    targetId: courseId,
+    metadata: { title: course.title },
   });
 
   return NextResponse.json({ deleted: true });

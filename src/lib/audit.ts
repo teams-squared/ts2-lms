@@ -17,17 +17,40 @@ export type AuditAction =
   | "session.login_failed"
   | "user.role_changed"
   | "user.deleted"
+  | "user.invited"
   | "clearance.granted"
   | "clearance.revoked"
   | "enrollment.created"
-  | "enrollment.deleted";
+  | "enrollment.deleted"
+  | "enrollment.reset"
+  | "course.updated"
+  | "course.deleted"
+  | "course.reminder_sent"
+  | "course_manager.granted"
+  | "course_manager.revoked"
+  | "node.created"
+  | "node.updated"
+  | "node.deleted"
+  | "sector.created"
+  | "sector.updated"
+  | "sector.deleted"
+  | "policy_doc.synced"
+  | "iso_doc.created"
+  | "iso_doc.updated"
+  | "iso_doc.deleted"
+  | "iso_doc.synced"
+  | "setting.updated";
 
 export type AuditTargetType =
   | "user"
   | "course"
   | "enrollment"
   | "clearance"
-  | "session";
+  | "session"
+  | "node"
+  | "sector"
+  | "policy_doc"
+  | "setting";
 
 export type AuditEntry = {
   action: AuditAction;
