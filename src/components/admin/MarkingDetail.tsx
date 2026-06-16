@@ -286,7 +286,7 @@ export function MarkingDetail({ submissionId }: { submissionId: string }) {
           {submission.passThreshold}.
           {submission.feedback && (
             <p className="mt-2 italic text-foreground-subtle">
-              Feedback: "{submission.feedback}"
+              Feedback: &ldquo;{submission.feedback}&rdquo;
             </p>
           )}
         </div>
