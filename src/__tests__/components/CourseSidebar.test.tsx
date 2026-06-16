@@ -51,6 +51,9 @@ vi.mock("@/components/icons", () => ({
   LinkIcon: (props: Record<string, unknown>) => (
     <svg data-testid="icon-link" {...props} />
   ),
+  AssessmentIcon: (props: Record<string, unknown>) => (
+    <svg data-testid="icon-assessment" {...props} />
+  ),
 }));
 
 const sampleModules = [

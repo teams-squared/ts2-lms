@@ -63,7 +63,7 @@ describe("ModuleManager — add lesson flow", () => {
     expect(screen.getByRole("button", { name: /^Add lesson$/i })).toBeInTheDocument();
   });
 
-  it("offers all seven lesson type options in the new-lesson type select", () => {
+  it("offers all eight lesson type options in the new-lesson type select", () => {
     render(<ModuleManager {...oneModule} />);
     fireEvent.click(screen.getByText(/Module 1/));
     fireEvent.click(screen.getByText("+ Add lesson"));
@@ -77,6 +77,7 @@ describe("ModuleManager — add lesson flow", () => {
       "html",
       "policy_doc",
       "link",
+      "assessment",
     ]);
   });
 
