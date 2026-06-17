@@ -156,12 +156,12 @@ export function MarkingDetail({ submissionId }: { submissionId: string }) {
 
   const projectedTotal = (data?.submission.autoScore ?? 0) + currentManualTotal;
 
-  // Is every manually-marked question filled and in range?
+  // Is every manually-marked question filled and in range (half-mark steps)?
   const manualValid = manualQuestions.every((q) => {
     const v = manualMarks[q.id] ?? "";
     if (v === "") return false;
     const n = Number(v);
-    return Number.isInteger(n) && n >= 0 && n <= q.maxMarks;
+    return Number.isFinite(n) && n >= 0 && n <= q.maxMarks && (n * 2) % 1 === 0;
   });
 
   const alreadyMarked = data ? isAlreadyMarked(data.submission.status) : false;
@@ -461,7 +461,7 @@ function QuestionCard({
     isManuallyMarked(question.questionType) &&
     !readOnly &&
     manualMark !== "" &&
-    (isNaN(mark) || !Number.isInteger(mark) || mark < 0 || mark > question.maxMarks);
+    (isNaN(mark) || mark < 0 || mark > question.maxMarks || (mark * 2) % 1 !== 0);
   const selectedIds = question.answer?.selectedOptionIds ?? [];
 
   return (
@@ -610,7 +610,7 @@ function QuestionCard({
                 type="number"
                 min={0}
                 max={question.maxMarks}
-                step={1}
+                step={0.5}
                 value={manualMark}
                 onChange={(e) => onMarkChange(e.target.value)}
                 className={cn(
@@ -625,7 +625,7 @@ function QuestionCard({
               <span className="text-xs text-foreground-muted">/ {question.maxMarks}</span>
               {markInvalid && (
                 <span className="text-xs text-danger">
-                  Must be integer 0–{question.maxMarks}
+                  0–{question.maxMarks} in steps of 0.5
                 </span>
               )}
             </>

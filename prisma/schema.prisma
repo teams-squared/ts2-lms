@@ -464,9 +464,11 @@ model AssessmentSubmission {
   submittedAt   DateTime?
   autoSubmitted Boolean                    @default(false)
   status        AssessmentSubmissionStatus @default(IN_PROGRESS)
-  autoScore     Int                        @default(0)
-  manualScore   Int?
-  totalScore    Int?
+  autoScore     Int                        @default(0) // MC auto-score — whole marks
+  // Manually-awarded + combined totals support half-marks (e.g. 4.5). Decimal,
+  // not Float, to avoid binary drift. autoScore/maxMarks/passThreshold stay Int.
+  manualScore   Decimal?                   @db.Decimal(6, 2)
+  totalScore    Decimal?                   @db.Decimal(6, 2)
   passThreshold Int // snapshot at submit so later config edits don't change result
   variantId     String?
   gradedById    String?
@@ -494,7 +496,7 @@ model AssessmentAnswer {
   selectedOptionId String? // MULTIPLE_CHOICE: the single chosen option
   selectedOptionIds String[] // MULTI_SELECT: the set of chosen options
   responseText     String? // FREE_TEXT: the written answer
-  awardedMarks     Int?
+  awardedMarks     Decimal? @db.Decimal(6, 2) // supports half-marks (manual)
 
   submission     AssessmentSubmission @relation(fields: [submissionId], references: [id], onDelete: Cascade)
   question       AssessmentQuestion   @relation(fields: [questionId], references: [id], onDelete: Cascade)
