@@ -1,13 +1,14 @@
 import { NextResponse } from "next/server";
 import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
-import { finalizeSubmission } from "@/lib/assessment";
+import { finalizeSubmission, answerDataFor } from "@/lib/assessment";
 
 type Params = { params: Promise<{ id: string; moduleId: string; lessonId: string }> };
 
 interface AnswerInput {
   questionId: string;
   selectedOptionId?: string | null;
+  selectedOptionIds?: string[] | null;
   responseText?: string | null;
 }
 
@@ -106,10 +107,7 @@ export async function POST(request: Request, { params }: Params) {
       await Promise.all(
         validAnswers.map((ans) => {
           const q = questionMap.get(ans.questionId)!;
-          const data =
-            q.questionType === "MULTIPLE_CHOICE"
-              ? { selectedOptionId: ans.selectedOptionId ?? null, responseText: null }
-              : { responseText: ans.responseText ?? null, selectedOptionId: null };
+          const data = answerDataFor(q.questionType, ans);
 
           return prisma.assessmentAnswer.upsert({
             where: {

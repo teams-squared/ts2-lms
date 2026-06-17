@@ -27,17 +27,28 @@ interface AssessmentViewerProps {
   previewVariants?: { id: string; label: string; questions: SanitizedAssessmentQuestion[] }[];
 }
 
-type AnswerMap = Record<string, { selectedOptionId?: string | null; responseText?: string | null }>;
+type AnswerValue = {
+  selectedOptionId?: string | null;
+  selectedOptionIds?: string[];
+  responseText?: string | null;
+};
+type AnswerMap = Record<string, AnswerValue>;
 
 function answersFromSaved(saved: SavedAssessmentAnswer[]): AnswerMap {
   const m: AnswerMap = {};
   for (const a of saved) {
-    m[a.questionId] = { selectedOptionId: a.selectedOptionId, responseText: a.responseText };
+    m[a.questionId] = {
+      selectedOptionId: a.selectedOptionId,
+      selectedOptionIds: a.selectedOptionIds,
+      responseText: a.responseText,
+    };
   }
   return m;
 }
 
-function answersToArray(map: AnswerMap): { questionId: string; selectedOptionId?: string | null; responseText?: string | null }[] {
+function answersToArray(
+  map: AnswerMap,
+): { questionId: string; selectedOptionId?: string | null; selectedOptionIds?: string[]; responseText?: string | null }[] {
   return Object.entries(map).map(([questionId, v]) => ({ questionId, ...v }));
 }
 
@@ -59,11 +70,13 @@ function QuestionCard({
   idx,
   answer,
   onChange,
+  onToggleMulti,
 }: {
   question: SanitizedAssessmentQuestion;
   idx: number;
-  answer: { selectedOptionId?: string | null; responseText?: string | null } | undefined;
+  answer: AnswerValue | undefined;
   onChange: (questionId: string, field: "selectedOptionId" | "responseText", value: string) => void;
+  onToggleMulti: (questionId: string, optionId: string) => void;
 }) {
   return (
     <div className="rounded-lg border border-border p-5">
@@ -98,6 +111,30 @@ function QuestionCard({
               <span className="flex-1 text-sm text-foreground">{option.text}</span>
             </label>
           ))}
+        </div>
+      ) : question.questionType === "MULTI_SELECT" ? (
+        <div className="space-y-2">
+          <p className="mb-1 text-xs text-foreground-subtle">Select all that apply.</p>
+          {question.options.map((option) => {
+            const checked = answer?.selectedOptionIds?.includes(option.id) ?? false;
+            return (
+              <label
+                key={option.id}
+                className={`flex cursor-pointer items-start gap-3 rounded-md border px-4 py-3 transition-colors ${
+                  checked ? "border-primary bg-primary-subtle" : "border-border hover:bg-surface-muted"
+                }`}
+              >
+                <input
+                  type="checkbox"
+                  value={option.id}
+                  checked={checked}
+                  onChange={() => onToggleMulti(question.id, option.id)}
+                  className="text-primary focus-visible:ring-2 focus-visible:ring-ring"
+                />
+                <span className="flex-1 text-sm text-foreground">{option.text}</span>
+              </label>
+            );
+          })}
         </div>
       ) : (
         <textarea
@@ -206,6 +243,15 @@ export function AssessmentViewer({
   ) => {
     setPreviewAnswers((prev) => ({ ...prev, [questionId]: { ...prev[questionId], [field]: value } }));
   };
+  const handlePreviewMultiToggle = (questionId: string, optionId: string) => {
+    setPreviewAnswers((prev) => {
+      const current = prev[questionId]?.selectedOptionIds ?? [];
+      const next = current.includes(optionId)
+        ? current.filter((id) => id !== optionId)
+        : [...current, optionId];
+      return { ...prev, [questionId]: { ...prev[questionId], selectedOptionIds: next } };
+    });
+  };
 
   // ── Autosave infra ───────────────────────────────────────────────────────────
   const answersRef = useRef(answers);
@@ -284,6 +330,20 @@ export function AssessmentViewer({
   const handleAnswerChange = (questionId: string, field: "selectedOptionId" | "responseText", value: string | null) => {
     setAnswers((prev) => {
       const next = { ...prev, [questionId]: { ...prev[questionId], [field]: value } };
+      answersRef.current = next;
+      return next;
+    });
+    scheduleAutosave();
+  };
+
+  // MULTI_SELECT toggle: flip option membership in the question's selected set.
+  const handleMultiToggle = (questionId: string, optionId: string) => {
+    setAnswers((prev) => {
+      const current = prev[questionId]?.selectedOptionIds ?? [];
+      const nextIds = current.includes(optionId)
+        ? current.filter((id) => id !== optionId)
+        : [...current, optionId];
+      const next = { ...prev, [questionId]: { ...prev[questionId], selectedOptionIds: nextIds } };
       answersRef.current = next;
       return next;
     });
@@ -459,6 +519,7 @@ export function AssessmentViewer({
               idx={idx}
               answer={previewAnswers[question.id]}
               onChange={handlePreviewChange}
+              onToggleMulti={handlePreviewMultiToggle}
             />
           ))
         )}
@@ -614,6 +675,7 @@ export function AssessmentViewer({
             idx={idx}
             answer={answers[question.id]}
             onChange={handleAnswerChange}
+            onToggleMulti={handleMultiToggle}
           />
         ))}
 

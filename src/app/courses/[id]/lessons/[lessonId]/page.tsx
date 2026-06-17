@@ -216,7 +216,7 @@ export default async function LessonPage({
       id: string;
       text: string;
       order: number;
-      questionType: "MULTIPLE_CHOICE" | "FREE_TEXT";
+      questionType: "MULTIPLE_CHOICE" | "FREE_TEXT" | "MULTI_SELECT";
       maxMarks: number;
       options: { id: string; text: string; isCorrect: boolean; order: number }[];
     }[];

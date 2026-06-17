@@ -40,6 +40,7 @@ export async function GET(_request: Request, { params }: Params) {
         select: {
           questionId: true,
           selectedOptionId: true,
+          selectedOptionIds: true,
           responseText: true,
           awardedMarks: true,
         },
@@ -118,6 +119,7 @@ export async function GET(_request: Request, { params }: Params) {
         answer: answer
           ? {
               selectedOptionId: answer.selectedOptionId,
+              selectedOptionIds: answer.selectedOptionIds,
               responseText: answer.responseText,
               awardedMarks: answer.awardedMarks,
             }
@@ -163,8 +165,9 @@ export async function PATCH(request: Request, { params }: Params) {
   const courseId = submission.lesson.module.course.id;
   const lessonId = submission.lesson.id;
 
-  // Free-text questions of the submission's assigned variant — the only ones
-  // a marker may award marks for (MC is auto-scored).
+  // Manually-marked questions of the submission's assigned variant — the only
+  // ones a marker may award marks for (MULTIPLE_CHOICE is auto-scored;
+  // FREE_TEXT and MULTI_SELECT are marked by hand).
   const variantQuestions = submission.variantId
     ? await prisma.assessmentQuestion.findMany({
         where: { variantId: submission.variantId },
@@ -203,10 +206,11 @@ export async function PATCH(request: Request, { params }: Params) {
   const feedbackRaw = typeof body.feedback === "string" ? body.feedback.trim() : null;
   const feedback = feedbackRaw !== null && feedbackRaw.length > 0 ? feedbackRaw : null;
 
-  // Build a lookup of FREE_TEXT questions for the assigned variant (the only ones markers may touch).
-  const freeTextById = new Map(
+  // Build a lookup of manually-marked questions (FREE_TEXT + MULTI_SELECT) for
+  // the assigned variant — the only ones markers may award marks for.
+  const manualById = new Map(
     variantQuestions
-      .filter((q) => q.questionType === "FREE_TEXT")
+      .filter((q) => q.questionType === "FREE_TEXT" || q.questionType === "MULTI_SELECT")
       .map((q) => [q.id, q]),
   );
 
@@ -226,12 +230,12 @@ export async function PATCH(request: Request, { params }: Params) {
       );
     }
     const entry = item as MarkEntry;
-    const q = freeTextById.get(entry.questionId);
+    const q = manualById.get(entry.questionId);
     if (!q) {
-      // Not a FREE_TEXT question for this lesson — reject (MC is auto-scored).
+      // Not a manually-marked question for this lesson — reject (MC is auto-scored).
       return NextResponse.json(
         {
-          error: `questionId ${entry.questionId} is not a free-text question for this assessment`,
+          error: `questionId ${entry.questionId} is not a manually-marked question for this assessment`,
         },
         { status: 400 },
       );

@@ -16,14 +16,27 @@ interface AssessmentOption {
   order: number;
 }
 
+type AssessmentQuestionType = "MULTIPLE_CHOICE" | "FREE_TEXT" | "MULTI_SELECT";
+
 interface AssessmentQuestion {
   id: string;
   text: string;
   order: number;
-  questionType: "MULTIPLE_CHOICE" | "FREE_TEXT";
+  questionType: AssessmentQuestionType;
   maxMarks: number;
   options: AssessmentOption[];
 }
+
+/** Question types that carry selectable options (vs free-text). */
+function hasOptions(type: AssessmentQuestionType): boolean {
+  return type === "MULTIPLE_CHOICE" || type === "MULTI_SELECT";
+}
+
+const QUESTION_TYPE_LABEL: Record<AssessmentQuestionType, string> = {
+  MULTIPLE_CHOICE: "Multiple choice",
+  MULTI_SELECT: "Multiple answers (checkbox)",
+  FREE_TEXT: "Written answer",
+};
 
 interface AssessmentVariant {
   id: string;
@@ -79,7 +92,7 @@ function VariantQuestionEditor({
 
   // ── Add question form ─────────────────────────────────────────────────────
   const [showForm, setShowForm] = useState(false);
-  const [newType, setNewType] = useState<"MULTIPLE_CHOICE" | "FREE_TEXT">("MULTIPLE_CHOICE");
+  const [newType, setNewType] = useState<AssessmentQuestionType>("MULTIPLE_CHOICE");
   const [newText, setNewText] = useState("");
   const [newMaxMarks, setNewMaxMarks] = useState(1);
   const [newOptions, setNewOptions] = useState<NewOption[]>(EMPTY_MC_OPTIONS);
@@ -95,8 +108,12 @@ function VariantQuestionEditor({
   const handleOptionText = (idx: number, text: string) => {
     setNewOptions(newOptions.map((o, i) => (i === idx ? { ...o, text } : o)));
   };
+  // MULTIPLE_CHOICE: exactly one correct (radio). MULTI_SELECT: toggle (checkbox).
   const handleCorrectChange = (idx: number) => {
     setNewOptions(newOptions.map((o, i) => ({ ...o, isCorrect: i === idx })));
+  };
+  const handleToggleCorrect = (idx: number) => {
+    setNewOptions(newOptions.map((o, i) => (i === idx ? { ...o, isCorrect: !o.isCorrect } : o)));
   };
 
   const handleSubmitQuestion = async (e: React.FormEvent) => {
@@ -105,18 +122,20 @@ function VariantQuestionEditor({
 
     if (!newText.trim()) { setAddError("Question text is required"); return; }
     if (newMaxMarks < 1) { setAddError("Max marks must be at least 1"); return; }
-    if (newType === "MULTIPLE_CHOICE") {
-      if (newOptions.length < 2 || newOptions.length > 6) { setAddError("Multiple choice requires 2–6 options"); return; }
+    if (hasOptions(newType)) {
+      if (newOptions.length < 2 || newOptions.length > 6) { setAddError("Choice questions require 2–6 options"); return; }
       if (newOptions.some((o) => !o.text.trim())) { setAddError("All options must have text"); return; }
-      if (!newOptions.some((o) => o.isCorrect)) { setAddError("Mark one option as correct"); return; }
+      if (!newOptions.some((o) => o.isCorrect)) {
+        setAddError(newType === "MULTI_SELECT" ? "Mark at least one option as correct" : "Mark one option as correct");
+        return;
+      }
     }
 
     setSubmitting(true);
     try {
-      const body =
-        newType === "MULTIPLE_CHOICE"
-          ? { text: newText.trim(), questionType: newType, maxMarks: newMaxMarks, options: newOptions }
-          : { text: newText.trim(), questionType: newType, maxMarks: newMaxMarks };
+      const body = hasOptions(newType)
+        ? { text: newText.trim(), questionType: newType, maxMarks: newMaxMarks, options: newOptions }
+        : { text: newText.trim(), questionType: newType, maxMarks: newMaxMarks };
 
       const res = await fetch(variantQuestionsBase, {
         method: "POST",
@@ -172,7 +191,7 @@ function VariantQuestionEditor({
   const [editOptions, setEditOptions] = useState<{ id?: string; text: string; isCorrect: boolean }[]>([]);
   const [savingEditId, setSavingEditId] = useState<string | null>(null);
   const [editError, setEditError] = useState<string | null>(null);
-  const [editQuestionType, setEditQuestionType] = useState<"MULTIPLE_CHOICE" | "FREE_TEXT">("MULTIPLE_CHOICE");
+  const [editQuestionType, setEditQuestionType] = useState<AssessmentQuestionType>("MULTIPLE_CHOICE");
 
   const startEdit = (q: AssessmentQuestion) => {
     setEditingId(q.id);
@@ -190,6 +209,9 @@ function VariantQuestionEditor({
   const handleEditCorrect = (idx: number) => {
     setEditOptions(editOptions.map((o, i) => ({ ...o, isCorrect: i === idx })));
   };
+  const handleEditToggleCorrect = (idx: number) => {
+    setEditOptions(editOptions.map((o, i) => (i === idx ? { ...o, isCorrect: !o.isCorrect } : o)));
+  };
   const handleEditAddOption = () => {
     if (editOptions.length < 6) setEditOptions([...editOptions, { text: "", isCorrect: false }]);
   };
@@ -205,17 +227,19 @@ function VariantQuestionEditor({
     setEditError(null);
     if (!editText.trim()) { setEditError("Question text cannot be empty"); return; }
     if (editMaxMarks < 1) { setEditError("Max marks must be at least 1"); return; }
-    if (editQuestionType === "MULTIPLE_CHOICE") {
+    if (hasOptions(editQuestionType)) {
       if (editOptions.some((o) => !o.text.trim())) { setEditError("All options must have text"); return; }
-      if (!editOptions.some((o) => o.isCorrect)) { setEditError("Mark one option as correct"); return; }
+      if (!editOptions.some((o) => o.isCorrect)) {
+        setEditError(editQuestionType === "MULTI_SELECT" ? "Mark at least one option as correct" : "Mark one option as correct");
+        return;
+      }
     }
 
     setSavingEditId(questionId);
     try {
-      const body =
-        editQuestionType === "MULTIPLE_CHOICE"
-          ? { text: editText.trim(), maxMarks: editMaxMarks, options: editOptions.map((o) => ({ id: o.id, text: o.text.trim(), isCorrect: o.isCorrect })) }
-          : { text: editText.trim(), maxMarks: editMaxMarks };
+      const body = hasOptions(editQuestionType)
+        ? { text: editText.trim(), maxMarks: editMaxMarks, options: editOptions.map((o) => ({ id: o.id, text: o.text.trim(), isCorrect: o.isCorrect })) }
+        : { text: editText.trim(), maxMarks: editMaxMarks };
 
       const res = await fetch(`${variantQuestionsBase}/${questionId}`, {
         method: "PATCH",
@@ -303,15 +327,22 @@ function VariantQuestionEditor({
                         className="w-14 rounded border border-border bg-surface px-2 py-0.5 text-sm text-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
                       />
                     </label>
-                    {editQuestionType === "MULTIPLE_CHOICE" && (
+                    {hasOptions(editQuestionType) && (
                       <div className="space-y-2">
+                        {editQuestionType === "MULTI_SELECT" && (
+                          <p className="text-xs text-foreground-subtle">Tick every correct answer.</p>
+                        )}
                         {editOptions.map((opt, oidx) => (
                           <div key={opt.id ?? `new-${oidx}`} className="flex flex-wrap items-center gap-2">
                             <input
-                              type="radio"
+                              type={editQuestionType === "MULTI_SELECT" ? "checkbox" : "radio"}
                               name={`edit-correct-${question.id}`}
                               checked={opt.isCorrect}
-                              onChange={() => handleEditCorrect(oidx)}
+                              onChange={() =>
+                                editQuestionType === "MULTI_SELECT"
+                                  ? handleEditToggleCorrect(oidx)
+                                  : handleEditCorrect(oidx)
+                              }
                               title={`Mark option ${oidx + 1} as correct`}
                               className="shrink-0 text-primary focus:ring-ring"
                             />
@@ -369,7 +400,7 @@ function VariantQuestionEditor({
                             {idx + 1}. {question.text}
                           </p>
                           <p className="mt-0.5 text-xs text-foreground-subtle">
-                            {question.questionType === "MULTIPLE_CHOICE" ? "Multiple choice" : "Written answer"}
+                            {QUESTION_TYPE_LABEL[question.questionType]}
                             {" · "}{question.maxMarks} mark{question.maxMarks !== 1 ? "s" : ""}
                           </p>
                         </div>
@@ -392,7 +423,7 @@ function VariantQuestionEditor({
                         </button>
                       </div>
                     </div>
-                    {question.questionType === "MULTIPLE_CHOICE" && (
+                    {hasOptions(question.questionType) && (
                       <ul className="mt-2 space-y-1">
                         {question.options.map((opt) => (
                           <li key={opt.id} className="flex items-center gap-2 text-xs text-foreground-muted">
@@ -402,6 +433,9 @@ function VariantQuestionEditor({
                           </li>
                         ))}
                       </ul>
+                    )}
+                    {question.questionType === "MULTI_SELECT" && (
+                      <p className="mt-2 text-xs italic text-foreground-subtle">Multiple answers — marked manually</p>
                     )}
                     {question.questionType === "FREE_TEXT" && (
                       <p className="mt-2 text-xs italic text-foreground-subtle">Written answer — marked manually</p>
@@ -435,12 +469,13 @@ function VariantQuestionEditor({
               <select
                 value={newType}
                 onChange={(e) => {
-                  setNewType(e.target.value as "MULTIPLE_CHOICE" | "FREE_TEXT");
+                  setNewType(e.target.value as AssessmentQuestionType);
                   setNewOptions(EMPTY_MC_OPTIONS);
                 }}
                 className="rounded-md border border-border bg-surface px-3 py-2 text-sm text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
               >
                 <option value="MULTIPLE_CHOICE">Multiple choice</option>
+                <option value="MULTI_SELECT">Multiple answers (checkbox)</option>
                 <option value="FREE_TEXT">Written answer</option>
               </select>
             </div>
@@ -455,17 +490,21 @@ function VariantQuestionEditor({
               />
             </label>
           </div>
-          {newType === "MULTIPLE_CHOICE" && (
+          {hasOptions(newType) && (
             <div>
-              <label className="mb-2 block text-xs font-medium text-foreground">Options (mark one as correct)</label>
+              <label className="mb-2 block text-xs font-medium text-foreground">
+                {newType === "MULTI_SELECT" ? "Options (tick every correct answer)" : "Options (mark one as correct)"}
+              </label>
               <div className="space-y-2">
                 {newOptions.map((opt, idx) => (
                   <div key={idx} className="flex items-center gap-2">
                     <input
-                      type="radio"
+                      type={newType === "MULTI_SELECT" ? "checkbox" : "radio"}
                       name={`new-correct-option-${variant.id}`}
                       checked={opt.isCorrect}
-                      onChange={() => handleCorrectChange(idx)}
+                      onChange={() =>
+                        newType === "MULTI_SELECT" ? handleToggleCorrect(idx) : handleCorrectChange(idx)
+                      }
                       title={`Mark option ${idx + 1} as correct`}
                       className="shrink-0 text-primary focus:ring-ring"
                     />
