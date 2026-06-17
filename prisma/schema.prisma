@@ -115,6 +115,10 @@ enum LessonType {
 enum AssessmentQuestionType {
   MULTIPLE_CHOICE
   FREE_TEXT
+  // Checkbox question: like MULTIPLE_CHOICE but >= 1 correct option. Marked
+  // manually (like FREE_TEXT) — never auto-scored. Student picks are stored in
+  // AssessmentAnswer.selectedOptionIds.
+  MULTI_SELECT
 }
 
 enum AssessmentSubmissionStatus {
@@ -487,8 +491,9 @@ model AssessmentAnswer {
   id               String  @id @default(cuid())
   submissionId     String
   questionId       String
-  selectedOptionId String?
-  responseText     String?
+  selectedOptionId String? // MULTIPLE_CHOICE: the single chosen option
+  selectedOptionIds String[] // MULTI_SELECT: the set of chosen options
+  responseText     String? // FREE_TEXT: the written answer
   awardedMarks     Int?
 
   submission     AssessmentSubmission @relation(fields: [submissionId], references: [id], onDelete: Cascade)

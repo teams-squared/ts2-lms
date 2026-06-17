@@ -232,4 +232,42 @@ export const mockPrisma = {
     deleteMany: vi.fn().mockResolvedValue({ count: 0 }),
     count: vi.fn().mockResolvedValue(0),
   },
+  assessmentLesson: {
+    findUnique: vi.fn(),
+    upsert: vi.fn(),
+  },
+  assessmentVariant: {
+    findUnique: vi.fn(),
+    findMany: vi.fn().mockResolvedValue([]),
+    create: vi.fn(),
+    update: vi.fn(),
+    delete: vi.fn(),
+    count: vi.fn().mockResolvedValue(0),
+  },
+  assessmentQuestion: {
+    findUnique: vi.fn(),
+    findMany: vi.fn().mockResolvedValue([]),
+    aggregate: vi.fn().mockResolvedValue({ _max: { order: 0 } }),
+    create: vi.fn(),
+    update: vi.fn(),
+    delete: vi.fn(),
+  },
+  assessmentOption: {
+    create: vi.fn(),
+    update: vi.fn(),
+    deleteMany: vi.fn(),
+  },
+  assessmentSubmission: {
+    findUnique: vi.fn(),
+    findFirst: vi.fn(),
+    findMany: vi.fn().mockResolvedValue([]),
+    create: vi.fn(),
+    update: vi.fn(),
+    updateMany: vi.fn(),
+  },
+  assessmentAnswer: {
+    findMany: vi.fn().mockResolvedValue([]),
+    upsert: vi.fn(),
+    update: vi.fn(),
+  },
 };

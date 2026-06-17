@@ -105,7 +105,8 @@ export async function PATCH(request: Request, { params }: Params) {
     }
   }
 
-  // Validate options if provided
+  // Validate options if provided. MC needs exactly one correct; MULTI_SELECT
+  // needs at least one; FREE_TEXT has no options.
   if (body.options !== undefined) {
     if (question.questionType === "FREE_TEXT") {
       return NextResponse.json(
@@ -118,8 +119,11 @@ export async function PATCH(request: Request, { params }: Params) {
     }
     const opts = body.options as OptionInput[];
     const correctCount = opts.filter((o) => o.isCorrect).length;
-    if (correctCount !== 1) {
+    if (question.questionType === "MULTIPLE_CHOICE" && correctCount !== 1) {
       return NextResponse.json({ error: "Exactly one option must be correct" }, { status: 400 });
+    }
+    if (question.questionType === "MULTI_SELECT" && correctCount < 1) {
+      return NextResponse.json({ error: "At least one option must be correct" }, { status: 400 });
     }
     for (const opt of opts) {
       if (!opt.text?.trim()) {

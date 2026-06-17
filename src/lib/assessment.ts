@@ -11,8 +11,9 @@ import { prisma } from "@/lib/prisma";
  *  - At most one "open" submission per (user, lesson) — IN_PROGRESS or
  *    SUBMITTED (awaiting marking). The DB partial unique index is the hard
  *    guarantee; helpers here surface friendly results.
- *  - Multiple-choice questions are auto-scored at submit; free-text questions
- *    are left unmarked (awardedMarks=null) for a human marker.
+ *  - Multiple-choice questions are auto-scored at submit; free-text AND
+ *    multi-select (checkbox) questions are left unmarked (awardedMarks=null)
+ *    for a human marker.
  */
 
 /** Question shape returned to students — never includes `isCorrect`. */
@@ -20,7 +21,7 @@ export interface SanitizedAssessmentQuestion {
   id: string;
   text: string;
   order: number;
-  questionType: "MULTIPLE_CHOICE" | "FREE_TEXT";
+  questionType: "MULTIPLE_CHOICE" | "FREE_TEXT" | "MULTI_SELECT";
   maxMarks: number;
   options: { id: string; text: string; order: number }[];
 }
@@ -29,6 +30,7 @@ export interface SanitizedAssessmentQuestion {
 export interface SavedAssessmentAnswer {
   questionId: string;
   selectedOptionId: string | null;
+  selectedOptionIds: string[];
   responseText: string | null;
 }
 
@@ -53,6 +55,32 @@ export type AssessmentStudentState =
       feedback: string | null;
       gradedAt: string | null;
     };
+
+/**
+ * Map an incoming student answer to the persisted column shape for its
+ * question type. Exactly one of the three answer channels is populated; the
+ * others are cleared so switching answer never leaves stale data:
+ *  - MULTIPLE_CHOICE → selectedOptionId
+ *  - MULTI_SELECT    → selectedOptionIds[]
+ *  - FREE_TEXT       → responseText
+ * Shared by the autosave (PUT) and submit routes so they never drift.
+ */
+export function answerDataFor(
+  questionType: "MULTIPLE_CHOICE" | "FREE_TEXT" | "MULTI_SELECT",
+  ans: {
+    selectedOptionId?: string | null;
+    selectedOptionIds?: string[] | null;
+    responseText?: string | null;
+  },
+): { selectedOptionId: string | null; selectedOptionIds: string[]; responseText: string | null } {
+  if (questionType === "MULTIPLE_CHOICE") {
+    return { selectedOptionId: ans.selectedOptionId ?? null, selectedOptionIds: [], responseText: null };
+  }
+  if (questionType === "MULTI_SELECT") {
+    return { selectedOptionId: null, selectedOptionIds: ans.selectedOptionIds ?? [], responseText: null };
+  }
+  return { selectedOptionId: null, selectedOptionIds: [], responseText: ans.responseText ?? null };
+}
 
 /** Statuses that occupy the single "open submission" slot (the reattempt lock). */
 const OPEN_STATUSES: AssessmentSubmissionStatus[] = ["IN_PROGRESS", "SUBMITTED"];
@@ -205,7 +233,7 @@ export async function getStudentState(
     const [answers, questions] = await Promise.all([
       prisma.assessmentAnswer.findMany({
         where: { submissionId: latest.id },
-        select: { questionId: true, selectedOptionId: true, responseText: true },
+        select: { questionId: true, selectedOptionId: true, selectedOptionIds: true, responseText: true },
       }),
       latest.variantId ? loadSanitizedQuestionsForVariant(latest.variantId) : Promise.resolve([]),
     ]);

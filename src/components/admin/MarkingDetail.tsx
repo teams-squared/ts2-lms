@@ -12,6 +12,7 @@ import { cn } from "@/lib/utils";
 
 interface AnswerData {
   selectedOptionId: string | null;
+  selectedOptionIds: string[];
   responseText: string | null;
   awardedMarks: number | null;
 }
@@ -23,15 +24,28 @@ interface QuestionOption {
   order: number;
 }
 
+type MarkingQuestionType = "MULTIPLE_CHOICE" | "FREE_TEXT" | "MULTI_SELECT";
+
 interface QuestionData {
   id: string;
   text: string;
   order: number;
-  questionType: "MULTIPLE_CHOICE" | "FREE_TEXT";
+  questionType: MarkingQuestionType;
   maxMarks: number;
   options: QuestionOption[];
   answer: AnswerData | null;
 }
+
+/** Questions a marker awards marks for by hand (MC is auto-scored). */
+function isManuallyMarked(type: MarkingQuestionType): boolean {
+  return type === "FREE_TEXT" || type === "MULTI_SELECT";
+}
+
+const QUESTION_TYPE_LABEL: Record<MarkingQuestionType, string> = {
+  MULTIPLE_CHOICE: "Multiple choice",
+  MULTI_SELECT: "Multiple answers",
+  FREE_TEXT: "Free text",
+};
 
 interface SubmissionData {
   id: string;
@@ -77,8 +91,8 @@ export function MarkingDetail({ submissionId }: { submissionId: string }) {
   const [loading, setLoading] = useState(true);
   const [fetchError, setFetchError] = useState<string | null>(null);
 
-  // Free-text marks keyed by questionId
-  const [freeTextMarks, setFreeTextMarks] = useState<Record<string, string>>({});
+  // Manually-awarded marks (FREE_TEXT + MULTI_SELECT) keyed by questionId
+  const [manualMarks, setManualMarks] = useState<Record<string, string>>({});
   const [feedback, setFeedback] = useState("");
   const [pass, setPass] = useState(true);
   const [submitting, setSubmitting] = useState(false);
@@ -96,17 +110,17 @@ export function MarkingDetail({ submissionId }: { submissionId: string }) {
       const json = (await res.json()) as MarkingDetailResponse;
       setData(json);
 
-      // Initialise free-text marks from existing answers (re-open scenario)
+      // Initialise manual marks from existing answers (re-open scenario)
       const initMarks: Record<string, string> = {};
       for (const q of json.questions) {
-        if (q.questionType === "FREE_TEXT") {
+        if (isManuallyMarked(q.questionType)) {
           initMarks[q.id] =
             q.answer?.awardedMarks != null
               ? String(q.answer.awardedMarks)
               : "";
         }
       }
-      setFreeTextMarks(initMarks);
+      setManualMarks(initMarks);
 
       // Initialise feedback
       setFeedback(json.submission.feedback ?? "");
@@ -131,20 +145,20 @@ export function MarkingDetail({ submissionId }: { submissionId: string }) {
 
   // ── Derived state ────────────────────────────────────────────────────────────
 
-  const freeTextQuestions =
-    data?.questions.filter((q) => q.questionType === "FREE_TEXT") ?? [];
+  const manualQuestions =
+    data?.questions.filter((q) => isManuallyMarked(q.questionType)) ?? [];
 
-  const currentFtTotal = freeTextQuestions.reduce((acc, q) => {
-    const v = freeTextMarks[q.id] ?? "";
+  const currentManualTotal = manualQuestions.reduce((acc, q) => {
+    const v = manualMarks[q.id] ?? "";
     const n = parseFloat(v);
     return acc + (isNaN(n) ? 0 : n);
   }, 0);
 
-  const projectedTotal = (data?.submission.autoScore ?? 0) + currentFtTotal;
+  const projectedTotal = (data?.submission.autoScore ?? 0) + currentManualTotal;
 
-  // Is every free-text mark filled and in range?
-  const freeTextValid = freeTextQuestions.every((q) => {
-    const v = freeTextMarks[q.id] ?? "";
+  // Is every manually-marked question filled and in range?
+  const manualValid = manualQuestions.every((q) => {
+    const v = manualMarks[q.id] ?? "";
     if (v === "") return false;
     const n = Number(v);
     return Number.isInteger(n) && n >= 0 && n <= q.maxMarks;
@@ -155,24 +169,24 @@ export function MarkingDetail({ submissionId }: { submissionId: string }) {
   // ── Handlers ─────────────────────────────────────────────────────────────────
 
   function handleMarkChange(questionId: string, value: string) {
-    setFreeTextMarks((prev) => ({ ...prev, [questionId]: value }));
+    setManualMarks((prev) => ({ ...prev, [questionId]: value }));
     // Re-compute pass default when marks change
     if (data) {
-      const newFtTotal = freeTextQuestions.reduce((acc, q) => {
-        const v = q.id === questionId ? value : (freeTextMarks[q.id] ?? "");
+      const newManualTotal = manualQuestions.reduce((acc, q) => {
+        const v = q.id === questionId ? value : (manualMarks[q.id] ?? "");
         const n = parseFloat(v);
         return acc + (isNaN(n) ? 0 : n);
       }, 0);
-      setPass(data.submission.autoScore + newFtTotal >= data.submission.passThreshold);
+      setPass(data.submission.autoScore + newManualTotal >= data.submission.passThreshold);
     }
   }
 
   async function handleSubmit() {
-    if (!data || submitting || !freeTextValid) return;
+    if (!data || submitting || !manualValid) return;
 
-    const marks = freeTextQuestions.map((q) => ({
+    const marks = manualQuestions.map((q) => ({
       questionId: q.id,
-      awardedMarks: Number(freeTextMarks[q.id] ?? 0),
+      awardedMarks: Number(manualMarks[q.id] ?? 0),
     }));
 
     setSubmitting(true);
@@ -301,7 +315,7 @@ export function MarkingDetail({ submissionId }: { submissionId: string }) {
             <QuestionCard
               key={question.id}
               question={question}
-              freeTextMark={freeTextMarks[question.id] ?? ""}
+              manualMark={manualMarks[question.id] ?? ""}
               onMarkChange={(v) => handleMarkChange(question.id, v)}
               readOnly={alreadyMarked}
             />
@@ -319,9 +333,9 @@ export function MarkingDetail({ submissionId }: { submissionId: string }) {
             </span>
           </div>
           <div className="flex justify-between">
-            <span>Free-text (manual)</span>
+            <span>Manual (free-text + checkbox)</span>
             <span className="tabular-nums font-medium text-foreground">
-              {currentFtTotal}
+              {currentManualTotal}
             </span>
           </div>
           <div className="flex justify-between border-t border-border pt-2 text-foreground font-semibold">
@@ -406,7 +420,7 @@ export function MarkingDetail({ submissionId }: { submissionId: string }) {
             <button
               type="button"
               onClick={handleSubmit}
-              disabled={submitting || !freeTextValid}
+              disabled={submitting || !manualValid}
               className={cn(
                 "inline-flex items-center rounded-md px-4 py-2 text-sm font-medium transition-colors",
                 "bg-primary text-primary-foreground hover:opacity-90",
@@ -417,9 +431,9 @@ export function MarkingDetail({ submissionId }: { submissionId: string }) {
             >
               {submitting ? "Submitting…" : "Submit marks"}
             </button>
-            {!freeTextValid && freeTextQuestions.length > 0 && (
+            {!manualValid && manualQuestions.length > 0 && (
               <p className="text-xs text-foreground-muted">
-                Enter valid marks for all free-text questions to submit.
+                Enter valid marks for all manually-marked questions to submit.
               </p>
             )}
           </div>
@@ -433,21 +447,22 @@ export function MarkingDetail({ submissionId }: { submissionId: string }) {
 
 function QuestionCard({
   question,
-  freeTextMark,
+  manualMark,
   onMarkChange,
   readOnly,
 }: {
   question: QuestionData;
-  freeTextMark: string;
+  manualMark: string;
   onMarkChange: (v: string) => void;
   readOnly: boolean;
 }) {
-  const mark = parseFloat(freeTextMark);
+  const mark = parseFloat(manualMark);
   const markInvalid =
-    question.questionType === "FREE_TEXT" &&
+    isManuallyMarked(question.questionType) &&
     !readOnly &&
-    freeTextMark !== "" &&
+    manualMark !== "" &&
     (isNaN(mark) || !Number.isInteger(mark) || mark < 0 || mark > question.maxMarks);
+  const selectedIds = question.answer?.selectedOptionIds ?? [];
 
   return (
     <div className="rounded-lg border border-border bg-surface shadow-sm p-4 space-y-3">
@@ -455,10 +470,7 @@ function QuestionCard({
       <div className="flex items-start justify-between gap-4">
         <div className="flex-1">
           <span className="text-xs font-medium text-foreground-subtle uppercase tracking-wide">
-            Q{question.order} ·{" "}
-            {question.questionType === "MULTIPLE_CHOICE"
-              ? "Multiple choice"
-              : "Free text"}
+            Q{question.order} · {QUESTION_TYPE_LABEL[question.questionType]}
           </span>
           <p className="mt-0.5 text-sm text-foreground font-medium">
             {question.text}
@@ -520,65 +532,104 @@ function QuestionCard({
         </div>
       )}
 
-      {/* Free-text answer + mark input */}
-      {question.questionType === "FREE_TEXT" && (
-        <div className="space-y-3">
-          {/* Student's answer */}
-          <div>
-            <p className="text-xs font-medium text-foreground-muted mb-1">
-              Student answer
-            </p>
-            <div className="rounded-md border border-border bg-surface-muted/50 px-3 py-2 text-sm text-foreground whitespace-pre-wrap min-h-[3rem]">
-              {question.answer?.responseText?.trim() ? (
-                question.answer.responseText
-              ) : (
-                <span className="text-foreground-subtle italic">No answer provided.</span>
-              )}
-            </div>
-          </div>
-
-          {/* Mark input */}
-          <div className="flex items-center gap-3">
-            <label
-              htmlFor={`mark-${question.id}`}
-              className="text-xs font-medium text-foreground-muted whitespace-nowrap"
-            >
-              Awarded marks
-            </label>
-            {readOnly ? (
-              <span className="text-sm font-medium text-foreground">
-                {question.answer?.awardedMarks ?? "—"} / {question.maxMarks}
-              </span>
-            ) : (
-              <>
-                <input
-                  id={`mark-${question.id}`}
-                  type="number"
-                  min={0}
-                  max={question.maxMarks}
-                  step={1}
-                  value={freeTextMark}
-                  onChange={(e) => onMarkChange(e.target.value)}
+      {/* Multi-select (checkbox) — show student's picks vs the correct set */}
+      {question.questionType === "MULTI_SELECT" && (
+        <div className="space-y-1.5">
+          {question.options
+            .slice()
+            .sort((a, b) => a.order - b.order)
+            .map((opt) => {
+              const isSelected = selectedIds.includes(opt.id);
+              const isCorrect = opt.isCorrect;
+              return (
+                <div
+                  key={opt.id}
                   className={cn(
-                    "w-20 rounded-md border px-2 py-1 text-sm text-foreground text-center",
-                    "focus:outline-none focus:ring-2 focus:ring-ring",
-                    markInvalid
-                      ? "border-danger bg-danger-subtle/30"
-                      : "border-border bg-surface",
+                    "flex items-center gap-2 rounded-md px-3 py-2 text-sm border",
+                    isCorrect && isSelected
+                      ? "border-success bg-success-subtle text-success"
+                      : isCorrect
+                        ? "border-success/40 bg-success-subtle/40 text-success"
+                        : isSelected
+                          ? "border-danger bg-danger-subtle text-danger"
+                          : "border-border bg-surface text-foreground-muted",
                   )}
-                  placeholder="0"
-                />
-                <span className="text-xs text-foreground-muted">
-                  / {question.maxMarks}
-                </span>
-                {markInvalid && (
-                  <span className="text-xs text-danger">
-                    Must be integer 0–{question.maxMarks}
+                >
+                  <span
+                    className={cn(
+                      "w-4 h-4 rounded border-2 flex items-center justify-center shrink-0",
+                      isSelected ? "border-current" : "border-border",
+                    )}
+                  >
+                    {isSelected && <span className="w-2 h-2 bg-current" />}
                   </span>
-                )}
-              </>
+                  <span className="flex-1">{opt.text}</span>
+                  {isCorrect && (
+                    <span className="text-xs font-medium text-success ml-auto">Correct</span>
+                  )}
+                </div>
+              );
+            })}
+          {selectedIds.length === 0 && (
+            <p className="text-xs italic text-foreground-subtle">No options selected.</p>
+          )}
+        </div>
+      )}
+
+      {/* Free-text answer */}
+      {question.questionType === "FREE_TEXT" && (
+        <div>
+          <p className="text-xs font-medium text-foreground-muted mb-1">Student answer</p>
+          <div className="rounded-md border border-border bg-surface-muted/50 px-3 py-2 text-sm text-foreground whitespace-pre-wrap min-h-[3rem]">
+            {question.answer?.responseText?.trim() ? (
+              question.answer.responseText
+            ) : (
+              <span className="text-foreground-subtle italic">No answer provided.</span>
             )}
           </div>
+        </div>
+      )}
+
+      {/* Shared manual-marks input (FREE_TEXT + MULTI_SELECT) */}
+      {isManuallyMarked(question.questionType) && (
+        <div className="flex items-center gap-3">
+          <label
+            htmlFor={`mark-${question.id}`}
+            className="text-xs font-medium text-foreground-muted whitespace-nowrap"
+          >
+            Awarded marks
+          </label>
+          {readOnly ? (
+            <span className="text-sm font-medium text-foreground">
+              {question.answer?.awardedMarks ?? "—"} / {question.maxMarks}
+            </span>
+          ) : (
+            <>
+              <input
+                id={`mark-${question.id}`}
+                type="number"
+                min={0}
+                max={question.maxMarks}
+                step={1}
+                value={manualMark}
+                onChange={(e) => onMarkChange(e.target.value)}
+                className={cn(
+                  "w-20 rounded-md border px-2 py-1 text-sm text-foreground text-center",
+                  "focus:outline-none focus:ring-2 focus:ring-ring",
+                  markInvalid
+                    ? "border-danger bg-danger-subtle/30"
+                    : "border-border bg-surface",
+                )}
+                placeholder="0"
+              />
+              <span className="text-xs text-foreground-muted">/ {question.maxMarks}</span>
+              {markInvalid && (
+                <span className="text-xs text-danger">
+                  Must be integer 0–{question.maxMarks}
+                </span>
+              )}
+            </>
+          )}
         </div>
       )}
     </div>

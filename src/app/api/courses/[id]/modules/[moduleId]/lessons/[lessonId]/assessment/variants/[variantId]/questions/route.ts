@@ -87,9 +87,13 @@ export async function POST(request: Request, { params }: Params) {
     return NextResponse.json({ error: "text is required" }, { status: 400 });
   }
 
-  if (questionType !== "MULTIPLE_CHOICE" && questionType !== "FREE_TEXT") {
+  if (
+    questionType !== "MULTIPLE_CHOICE" &&
+    questionType !== "FREE_TEXT" &&
+    questionType !== "MULTI_SELECT"
+  ) {
     return NextResponse.json(
-      { error: "questionType must be 'MULTIPLE_CHOICE' or 'FREE_TEXT'" },
+      { error: "questionType must be 'MULTIPLE_CHOICE', 'FREE_TEXT', or 'MULTI_SELECT'" },
       { status: 400 },
     );
   }
@@ -98,16 +102,24 @@ export async function POST(request: Request, { params }: Params) {
     return NextResponse.json({ error: "maxMarks must be a positive integer (>= 1)" }, { status: 400 });
   }
 
-  // Validate options per questionType
-  if (questionType === "MULTIPLE_CHOICE") {
+  // Validate options per questionType. MULTIPLE_CHOICE + MULTI_SELECT both carry
+  // 2–6 options; MC needs exactly one correct, MULTI_SELECT needs at least one.
+  const hasOptions = questionType === "MULTIPLE_CHOICE" || questionType === "MULTI_SELECT";
+  if (hasOptions) {
     if (!Array.isArray(options) || options.length < 2 || options.length > 6) {
-      return NextResponse.json({ error: "MULTIPLE_CHOICE questions must have 2–6 options" }, { status: 400 });
+      return NextResponse.json({ error: "Choice questions must have 2–6 options" }, { status: 400 });
     }
     const optArr = options as OptionInput[];
     const correctCount = optArr.filter((o) => o.isCorrect).length;
-    if (correctCount !== 1) {
+    if (questionType === "MULTIPLE_CHOICE" && correctCount !== 1) {
       return NextResponse.json(
         { error: "Exactly one option must be marked as correct" },
+        { status: 400 },
+      );
+    }
+    if (questionType === "MULTI_SELECT" && correctCount < 1) {
+      return NextResponse.json(
+        { error: "At least one option must be marked as correct" },
         { status: 400 },
       );
     }
@@ -138,18 +150,17 @@ export async function POST(request: Request, { params }: Params) {
       variantId,
       text: (text as string).trim(),
       order,
-      questionType: questionType as "MULTIPLE_CHOICE" | "FREE_TEXT",
+      questionType: questionType as "MULTIPLE_CHOICE" | "FREE_TEXT" | "MULTI_SELECT",
       maxMarks: maxMarks as number,
-      options:
-        questionType === "MULTIPLE_CHOICE"
-          ? {
-              create: (options as OptionInput[]).map((opt, idx) => ({
-                text: opt.text.trim(),
-                isCorrect: opt.isCorrect,
-                order: idx,
-              })),
-            }
-          : undefined,
+      options: hasOptions
+        ? {
+            create: (options as OptionInput[]).map((opt, idx) => ({
+              text: opt.text.trim(),
+              isCorrect: opt.isCorrect,
+              order: idx,
+            })),
+          }
+        : undefined,
     },
     include: {
       options: { orderBy: { order: "asc" } },
