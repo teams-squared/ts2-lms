@@ -41,24 +41,46 @@ describe("GET /api/courses/[id]", () => {
     expect(res.status).toBe(404);
   });
 
-  it("returns published course for employee", async () => {
-    mockAuth.mockResolvedValue(mockSession({ role: "employee" }));
-    mockPrisma.course.findUnique.mockResolvedValue({
-      id: "c1",
-      title: "Published",
-      description: null,
-      thumbnail: null,
-      status: "PUBLISHED",
-      createdById: "other",
-      createdBy: { name: "Admin", email: "admin@test.com" },
-      createdAt: new Date(),
-      updatedAt: new Date(),
-    });
+  const publishedCourse = {
+    id: "c1",
+    title: "Published",
+    description: null,
+    thumbnail: null,
+    status: "PUBLISHED",
+    createdById: "other",
+    createdBy: { name: "Admin", email: "admin@test.com" },
+    createdAt: new Date(),
+    updatedAt: new Date(),
+  };
+
+  it("returns published course for an ENROLLED employee", async () => {
+    mockAuth.mockResolvedValue(mockSession({ id: "emp-1", role: "employee" }));
+    mockPrisma.course.findUnique.mockResolvedValue(publishedCourse);
+    mockPrisma.enrollment.findUnique.mockResolvedValue({ id: "enr-1" });
     const req = new Request("http://localhost/api/courses/c1");
     const res = await GET(req, params("c1"));
     expect(res.status).toBe(200);
     const body = await res.json();
     expect(body.status).toBe("published");
+  });
+
+  it("returns 404 for a published course when employee is NOT enrolled", async () => {
+    mockAuth.mockResolvedValue(mockSession({ id: "emp-1", role: "employee" }));
+    mockPrisma.course.findUnique.mockResolvedValue(publishedCourse);
+    mockPrisma.enrollment.findUnique.mockResolvedValue(null);
+    const req = new Request("http://localhost/api/courses/c1");
+    const res = await GET(req, params("c1"));
+    expect(res.status).toBe(404);
+  });
+
+  it("returns published course for admin without enrollment (privileged bypass)", async () => {
+    mockAuth.mockResolvedValue(mockSession({ id: "admin-1", role: "admin" }));
+    mockPrisma.course.findUnique.mockResolvedValue(publishedCourse);
+    mockPrisma.enrollment.findUnique.mockResolvedValue(null);
+    const req = new Request("http://localhost/api/courses/c1");
+    const res = await GET(req, params("c1"));
+    expect(res.status).toBe(200);
+    expect(mockPrisma.enrollment.findUnique).not.toHaveBeenCalled();
   });
 });
 
