@@ -2,9 +2,10 @@ import { describe, it, expect, vi, beforeEach } from "vitest";
 import { render, screen, fireEvent } from "@testing-library/react";
 import { ModuleManager } from "@/components/courses/ModuleManager";
 
-// Mock next/navigation
+// Mock next/navigation — expose a stable push spy so we can assert navigation.
+const { pushMock } = vi.hoisted(() => ({ pushMock: vi.fn() }));
 vi.mock("next/navigation", () => ({
-  useRouter: () => ({ refresh: vi.fn() }),
+  useRouter: () => ({ refresh: vi.fn(), push: pushMock }),
 }));
 
 // Mock SharePointFilePicker
@@ -119,5 +120,49 @@ describe("ModuleManager — quiz builder", () => {
     const toggle = screen.getByTestId("toggle-quiz-builder-lesson-quiz");
     fireEvent.click(toggle);
     expect(screen.queryByTestId("quiz-builder-panel-lesson-quiz")).not.toBeInTheDocument();
+  });
+});
+
+describe("ModuleManager — assessment lessons", () => {
+  const moduleWithAssessment = {
+    id: "mod1",
+    title: "Module One",
+    order: 1,
+    lessons: [
+      { id: "lesson-exam", title: "Final Exam", type: "assessment" as const, content: null, order: 1, deadlineDays: null },
+    ],
+  };
+
+  beforeEach(() => {
+    vi.stubGlobal("fetch", vi.fn());
+    vi.stubGlobal("confirm", () => false);
+    pushMock.mockClear();
+  });
+
+  it("shows an 'Edit questions →' button for assessment lessons (no inline builder)", () => {
+    render(
+      <ModuleManager
+        courseId="course1"
+        initialModules={[moduleWithAssessment]}
+        quizDataByLessonId={{}}
+      />
+    );
+    fireEvent.click(screen.getByText(/Module One/));
+    expect(screen.getByTestId("edit-assessment-lesson-exam")).toHaveTextContent(
+      "Edit questions →",
+    );
+  });
+
+  it("navigates to the lesson detail page (where AssessmentBuilder lives) on click", () => {
+    render(
+      <ModuleManager
+        courseId="course1"
+        initialModules={[moduleWithAssessment]}
+        quizDataByLessonId={{}}
+      />
+    );
+    fireEvent.click(screen.getByText(/Module One/));
+    fireEvent.click(screen.getByTestId("edit-assessment-lesson-exam"));
+    expect(pushMock).toHaveBeenCalledWith("/courses/course1/lessons/lesson-exam");
   });
 });

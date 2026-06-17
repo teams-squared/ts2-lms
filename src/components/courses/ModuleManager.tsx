@@ -625,6 +625,18 @@ export function ModuleManager({
                                 {expandedQuizLessons.has(lesson.id) ? "Quiz Builder ▲" : "Quiz Builder ▼"}
                               </Button>
                             )}
+                            {lesson.type === "assessment" && (
+                              <Button
+                                variant="secondary"
+                                size="xs"
+                                onClick={() =>
+                                  router.push(`/courses/${courseId}/lessons/${lesson.id}`)
+                                }
+                                data-testid={`edit-assessment-${lesson.id}`}
+                              >
+                                Edit questions →
+                              </Button>
+                            )}
                             <Button
                               variant="destructive"
                               size="xs"
