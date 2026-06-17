@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
-import { prismaLessonTypeToApp, appLessonTypeToPrisma } from "@/lib/types";
+import { prismaLessonTypeToApp, appLessonTypeToPrisma, isAppLessonType } from "@/lib/types";
 import { canManageCourse, canViewLesson } from "@/lib/courseAccess";
 import type { LessonType, Role } from "@/lib/types";
 
@@ -79,7 +79,7 @@ export async function PATCH(request: Request, { params }: Params) {
   }
   if (body.type !== undefined) {
     const type = body.type as LessonType;
-    if (!["text", "video", "quiz", "document", "html", "policy_doc"].includes(type)) {
+    if (!isAppLessonType(type)) {
       return NextResponse.json({ error: "Invalid lesson type" }, { status: 400 });
     }
     if ((type === "document" || type === "html") && body.content) {
