@@ -79,6 +79,15 @@ export function appLessonTypeToPrisma(type: LessonType): PrismaLessonType {
   return APP_LESSON_TYPE_MAP[type];
 }
 
+/** Every valid app-side lesson type. Derived from the map so it can't drift
+ *  out of sync when a new LessonType is added (e.g. link, assessment). */
+export const APP_LESSON_TYPES = Object.keys(APP_LESSON_TYPE_MAP) as LessonType[];
+
+/** Runtime guard for an untrusted lesson-type string from a request body. */
+export function isAppLessonType(value: unknown): value is LessonType {
+  return typeof value === "string" && value in APP_LESSON_TYPE_MAP;
+}
+
 // ─── Progress types ────────────────────────────────────────────────────────
 
 import type { DeadlineStatus } from "@/lib/deadlines";

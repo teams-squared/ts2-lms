@@ -95,6 +95,29 @@ describe("POST /api/courses/[id]/modules/[moduleId]/lessons", () => {
     expect(body.type).toBe("text");
   });
 
+  it("creates an assessment lesson (regression: type was rejected by stale whitelist)", async () => {
+    mockAuth.mockResolvedValue(mockSession({ id: "user-1", role: "admin" }));
+    mockPrisma.course.findUnique.mockResolvedValue({ id: "c1", createdById: "user-1" });
+    mockPrisma.module.findUnique.mockResolvedValue({ id: "m1", courseId: "c1" });
+    mockPrisma.lesson.findFirst.mockResolvedValue(null);
+    mockPrisma.lesson.create.mockResolvedValue({
+      id: "l-exam",
+      title: "Final Exam",
+      type: "ASSESSMENT",
+      content: null,
+      order: 1,
+      moduleId: "m1",
+    });
+    const req = new Request("http://localhost/api/courses/c1/modules/m1/lessons", {
+      method: "POST",
+      body: JSON.stringify({ title: "Final Exam", type: "assessment" }),
+    });
+    const res = await lessonsRoute.POST(req, makeLessonsParams("c1", "m1"));
+    expect(res.status).toBe(201);
+    const body = await res.json();
+    expect(body.type).toBe("assessment");
+  });
+
   it("returns 400 when title is empty", async () => {
     mockAuth.mockResolvedValue(mockSession({ id: "user-1", role: "admin" }));
     mockPrisma.course.findUnique.mockResolvedValue({ id: "c1", createdById: "user-1" });
