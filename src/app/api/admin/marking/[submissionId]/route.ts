@@ -83,8 +83,9 @@ export async function GET(_request: Request, { params }: Params) {
       id: submission.id,
       status: submission.status,
       autoScore: submission.autoScore,
-      manualScore: submission.manualScore,
-      totalScore: submission.totalScore,
+      // manualScore / totalScore are Decimal (half-marks) — surface as numbers.
+      manualScore: submission.manualScore != null ? Number(submission.manualScore) : null,
+      totalScore: submission.totalScore != null ? Number(submission.totalScore) : null,
       passThreshold: submission.passThreshold,
       feedback: submission.feedback,
       submittedAt: submission.submittedAt?.toISOString() ?? null,
@@ -121,7 +122,7 @@ export async function GET(_request: Request, { params }: Params) {
               selectedOptionId: answer.selectedOptionId,
               selectedOptionIds: answer.selectedOptionIds,
               responseText: answer.responseText,
-              awardedMarks: answer.awardedMarks,
+              awardedMarks: answer.awardedMarks != null ? Number(answer.awardedMarks) : null,
             }
           : null,
       };
@@ -240,14 +241,16 @@ export async function PATCH(request: Request, { params }: Params) {
         { status: 400 },
       );
     }
+    // Half-mark granularity: 0..maxMarks in steps of 0.5 (e.g. 4.5/5).
     if (
       !Number.isFinite(entry.awardedMarks) ||
       entry.awardedMarks < 0 ||
-      entry.awardedMarks > q.maxMarks
+      entry.awardedMarks > q.maxMarks ||
+      (entry.awardedMarks * 2) % 1 !== 0
     ) {
       return NextResponse.json(
         {
-          error: `awardedMarks for question ${entry.questionId} must be between 0 and ${q.maxMarks}`,
+          error: `awardedMarks for question ${entry.questionId} must be between 0 and ${q.maxMarks} in steps of 0.5`,
         },
         { status: 400 },
       );

@@ -11,9 +11,11 @@ type Params = { params: Promise<{ id: string }> };
 /** GET /api/courses/[id] — single course detail. */
 export async function GET(_request: Request, { params }: Params) {
   const session = await auth();
-  if (!session?.user?.email) {
+  if (!session?.user?.id) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
+  const userId = session.user.id;
+  const role = (session.user.role ?? "employee") as Role;
 
   const { id } = await params;
   const course = await prisma.course.findUnique({
@@ -25,14 +27,24 @@ export async function GET(_request: Request, { params }: Params) {
     return NextResponse.json({ error: "Not found" }, { status: 404 });
   }
 
-  // Non-privileged users can only see published courses
-  if (
-    course.status !== "PUBLISHED" &&
-    session.user.role !== "admin" &&
-    session.user.role !== "course_manager" &&
-    course.createdById !== session.user.id
-  ) {
-    return NextResponse.json({ error: "Not found" }, { status: 404 });
+  // Access mirrors the course detail page: privileged users (admin, manager,
+  // creator) see any course; everyone else needs the course PUBLISHED AND an
+  // enrollment. Return 404 (not 403) so non-enrollees can't even confirm a
+  // course exists by id. Without the enrollment gate this leaked published
+  // course metadata (title/description/creator) to any logged-in user.
+  const isPrivileged =
+    role === "admin" || role === "course_manager" || course.createdById === userId;
+  if (!isPrivileged) {
+    if (course.status !== "PUBLISHED") {
+      return NextResponse.json({ error: "Not found" }, { status: 404 });
+    }
+    const enrollment = await prisma.enrollment.findUnique({
+      where: { userId_courseId: { userId, courseId: id } },
+      select: { id: true },
+    });
+    if (!enrollment) {
+      return NextResponse.json({ error: "Not found" }, { status: 404 });
+    }
   }
 
   return NextResponse.json({

@@ -255,7 +255,8 @@ export async function getStudentState(
     return {
       phase: "marked",
       passed: latest.status === "MARKED_PASS",
-      totalScore: latest.totalScore,
+      // totalScore is Decimal (half-marks) — surface as a plain number.
+      totalScore: latest.totalScore != null ? Number(latest.totalScore) : null,
       passThreshold: latest.passThreshold,
       feedback: latest.feedback,
       gradedAt: latest.gradedAt?.toISOString() ?? null,
