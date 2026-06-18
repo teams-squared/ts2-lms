@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { Pencil, ChevronDown, ChevronRight } from "lucide-react";
+import { ChevronDown, ChevronRight } from "lucide-react";
 import { ConfirmDialog } from "@/components/ui/ConfirmDialog";
 import { DragHandle, SortableItem, SortableList } from "@/components/ui/Sortable";
 import { useToast } from "@/components/ui/ToastProvider";
@@ -605,14 +605,18 @@ export function AssessmentBuilder({
   const toggleCollapsed = (id: string) =>
     setCollapsed((prev) => ({ ...prev, [id]: !prev[id] }));
 
-  // ── Config ─────────────────────────────────────────────────────────────────
+  // ── Config (always-visible required settings) ────────────────────────────
   const [config, setConfig] = useState<AssessmentConfig | null>(initialConfig);
-  const [editingConfig, setEditingConfig] = useState(false);
   const [configDraft, setConfigDraft] = useState<AssessmentConfig>(
     initialConfig ?? { timeLimitMinutes: 60, passThreshold: 50 },
   );
   const [savingConfig, setSavingConfig] = useState(false);
   const [configError, setConfigError] = useState<string | null>(null);
+  const [configSaved, setConfigSaved] = useState(false);
+  const configDirty =
+    config === null ||
+    config.timeLimitMinutes !== configDraft.timeLimitMinutes ||
+    config.passThreshold !== configDraft.passThreshold;
 
   const handleSaveConfig = async () => {
     setConfigError(null);
@@ -636,7 +640,7 @@ export function AssessmentBuilder({
       });
       if (res.ok) {
         setConfig({ ...configDraft });
-        setEditingConfig(false);
+        setConfigSaved(true);
         router.refresh();
       } else {
         const data = (await res.json()) as { error?: string };
@@ -779,71 +783,78 @@ export function AssessmentBuilder({
           Assessment Builder
         </h2>
 
-        {editingConfig ? (
-          <div className="mt-2 space-y-2">
-            <div className="flex flex-wrap items-center gap-3">
-              <label className="flex items-center gap-1.5 text-xs text-foreground-muted">
-                Time limit (min):
-                <input
-                  type="number"
-                  min={1}
-                  value={configDraft.timeLimitMinutes}
-                  onChange={(e) => setConfigDraft((c) => ({ ...c, timeLimitMinutes: Number(e.target.value) }))}
-                  className="w-16 rounded border border-border bg-surface px-2 py-0.5 text-sm text-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
-                />
-              </label>
-              <label className="flex items-center gap-1.5 text-xs text-foreground-muted">
-                Pass threshold (marks):
-                <input
-                  type="number"
-                  min={0}
-                  value={configDraft.passThreshold}
-                  onChange={(e) => setConfigDraft((c) => ({ ...c, passThreshold: Number(e.target.value) }))}
-                  className="w-16 rounded border border-border bg-surface px-2 py-0.5 text-sm text-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
-                />
-              </label>
-              {totalMarksAllVariants > 0 && (
-                <span className="text-xs text-foreground-subtle">
-                  (total available across variants: {totalMarksAllVariants} marks)
-                </span>
-              )}
-            </div>
-            {configError && <p className="text-xs text-danger">{configError}</p>}
-            <div className="flex gap-2">
-              <button
-                onClick={() => void handleSaveConfig()}
-                disabled={savingConfig}
-                className="text-xs text-primary hover:underline disabled:opacity-50"
-              >
-                {savingConfig ? "Saving…" : "Save config"}
-              </button>
-              <button
-                onClick={() => { setEditingConfig(false); setConfigDraft(config ?? { timeLimitMinutes: 60, passThreshold: 50 }); }}
-                className="text-xs text-foreground-muted hover:underline"
-              >
-                Cancel
-              </button>
-            </div>
-          </div>
-        ) : (
-          <button
-            onClick={() => {
-              setConfigDraft(config ?? { timeLimitMinutes: 60, passThreshold: 50 });
-              setEditingConfig(true);
-            }}
-            aria-label="Edit assessment config"
-            className="mt-0.5 inline-flex items-center gap-1 text-xs text-foreground-muted transition-colors hover:text-primary"
-          >
-            {config ? (
-              <span>
-                {config.timeLimitMinutes} min · pass threshold: {config.passThreshold} marks
+        {/* Required settings — always visible so it's obvious they must be set */}
+        <div
+          className={`mt-3 rounded-lg border p-4 ${
+            config ? "border-border bg-surface" : "border-warning/50 bg-warning-subtle/30"
+          }`}
+        >
+          <div className="flex items-center gap-2">
+            <h3 className="text-sm font-medium text-foreground">Assessment settings</h3>
+            {!config && (
+              <span className="inline-flex items-center rounded-md border border-warning/40 bg-warning-subtle px-1.5 py-0.5 text-[10px] font-medium text-warning">
+                Required
               </span>
-            ) : (
-              <span className="text-warning">Not configured — click to set up</span>
             )}
-            <Pencil className="h-3 w-3" aria-hidden="true" />
-          </button>
-        )}
+          </div>
+
+          <div className="mt-3 flex flex-wrap items-end gap-4">
+            <div>
+              <label htmlFor="cfg-time-limit" className="mb-1 block text-xs font-medium text-foreground">
+                Time limit (minutes) <span className="text-danger">*</span>
+              </label>
+              <input
+                id="cfg-time-limit"
+                type="number"
+                min={1}
+                value={configDraft.timeLimitMinutes}
+                onChange={(e) => {
+                  setConfigSaved(false);
+                  setConfigDraft((c) => ({ ...c, timeLimitMinutes: Number(e.target.value) }));
+                }}
+                className="w-24 rounded-md border border-border bg-surface px-2 py-1 text-sm text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+              />
+            </div>
+            <div>
+              <label htmlFor="cfg-pass-threshold" className="mb-1 block text-xs font-medium text-foreground">
+                Pass threshold (marks) <span className="text-danger">*</span>
+              </label>
+              <input
+                id="cfg-pass-threshold"
+                type="number"
+                min={0}
+                value={configDraft.passThreshold}
+                onChange={(e) => {
+                  setConfigSaved(false);
+                  setConfigDraft((c) => ({ ...c, passThreshold: Number(e.target.value) }));
+                }}
+                className="w-24 rounded-md border border-border bg-surface px-2 py-1 text-sm text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+              />
+            </div>
+            <button
+              onClick={() => void handleSaveConfig()}
+              disabled={savingConfig || !configDirty}
+              className="rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground transition-colors hover:bg-primary-hover disabled:opacity-50"
+            >
+              {savingConfig ? "Saving…" : "Save settings"}
+            </button>
+            {configSaved && !configDirty && (
+              <span className="text-xs text-success">Saved</span>
+            )}
+          </div>
+
+          {totalMarksAllVariants > 0 && (
+            <p className="mt-2 text-xs text-foreground-subtle">
+              Total available across variants: {totalMarksAllVariants} marks.
+            </p>
+          )}
+          {configError && <p className="mt-2 text-xs text-danger">{configError}</p>}
+          {!config && (
+            <p className="mt-2 text-xs text-warning">
+              Set the time limit and pass threshold before students can take this assessment.
+            </p>
+          )}
+        </div>
 
         {/* Variants info blurb */}
         <p className="mt-3 text-xs text-foreground-subtle max-w-prose">
