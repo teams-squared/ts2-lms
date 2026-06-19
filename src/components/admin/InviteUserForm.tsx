@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { useToast } from "@/components/ui/ToastProvider";
 import { CourseNodeTree } from "@/components/admin/CourseNodeTree";
@@ -9,7 +9,7 @@ import { FormButton } from "@/components/ui/FormButton";
 import type { NodeWithChildren } from "@/lib/courseNodes";
 import type { Role } from "@/lib/types";
 import { DEFAULT_INVITE_DOMAIN, normalizeInviteEmail } from "@/lib/inviteEmail";
-import type { DirectoryLookup } from "@/lib/entra/graph";
+import type { DirectoryMatch } from "@/lib/entra/graph";
 
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
@@ -501,60 +501,127 @@ function RecipientRow({
 }: RecipientRowProps) {
   const isSent = status?.kind === "sent";
 
-  // Advisory Entra-directory check. `null` = nothing to show (idle, invalid,
-  // or Graph couldn't tell us). Never blocks the send.
-  const [directory, setDirectory] = useState<DirectoryLookup | "checking" | null>(
-    null,
-  );
+  // Entra directory typeahead. The operator types a name prefix (`akil`) and
+  // we suggest matching tenant users (`akil.fernando@…`, `akil.pereira@…`) to
+  // pick from. Advisory only — empty results never block manual entry.
+  const [suggestions, setSuggestions] = useState<DirectoryMatch[] | null>(null);
+  const [open, setOpen] = useState(false);
+  const [picked, setPicked] = useState<DirectoryMatch | null>(null);
+  const boxRef = useRef<HTMLDivElement>(null);
 
-  const checkDirectory = async (email: string) => {
-    if (!EMAIL_RE.test(email)) {
-      setDirectory(null);
-      return;
-    }
-    setDirectory("checking");
-    try {
-      const res = await fetch(
-        `/api/admin/users/lookup?email=${encodeURIComponent(email)}`,
-      );
-      if (!res.ok) {
-        setDirectory(null);
-        return;
+  // Debounced prefix search. Only fires while the field holds a bare prefix
+  // (no `@` yet) of at least 2 chars; clears once a domain is typed/picked.
+  useEffect(() => {
+    const val = recipient.email.trim();
+    if (val.includes("@") || val.length < 2) return;
+    const handle = setTimeout(() => {
+      void (async () => {
+        try {
+          const res = await fetch(
+            `/api/admin/users/search?q=${encodeURIComponent(val)}`,
+          );
+          if (!res.ok) {
+            setSuggestions(null);
+            return;
+          }
+          const data = (await res.json()) as DirectoryMatch[];
+          setSuggestions(data);
+          setOpen(true);
+        } catch {
+          // Network error — stay silent, suggestions are advisory only.
+          setSuggestions(null);
+        }
+      })();
+    }, 250);
+    return () => clearTimeout(handle);
+  }, [recipient.email]);
+
+  // Close the dropdown on an outside click.
+  useEffect(() => {
+    if (!open) return;
+    const onDown = (e: MouseEvent) => {
+      if (boxRef.current && !boxRef.current.contains(e.target as Node)) {
+        setOpen(false);
       }
-      setDirectory((await res.json()) as DirectoryLookup);
-    } catch {
-      // Network error — stay silent, this is advisory only.
-      setDirectory(null);
-    }
+    };
+    document.addEventListener("mousedown", onDown);
+    return () => document.removeEventListener("mousedown", onDown);
+  }, [open]);
+
+  const pickSuggestion = (m: DirectoryMatch) => {
+    onChange({ email: m.email, name: recipient.name || m.displayName || "" });
+    setPicked(m);
+    setSuggestions(null);
+    setOpen(false);
   };
 
   return (
     <div className="flex items-start gap-2">
       <div className="grid sm:grid-cols-[1fr_1fr] gap-2 flex-1">
-        <div>
+        <div ref={boxRef} className="relative">
           <input
             type="email"
             value={recipient.email}
             onChange={(e) => {
-              onChange({ email: e.target.value });
-              // Editing invalidates any prior directory result.
-              setDirectory(null);
+              const v = e.target.value;
+              onChange({ email: v });
+              // Editing invalidates any prior pick.
+              setPicked(null);
+              // A full address or too-short fragment has nothing to suggest.
+              const t = v.trim();
+              if (t.includes("@") || t.length < 2) {
+                setSuggestions(null);
+                setOpen(false);
+              }
             }}
-            // On blur: fill in the org domain for a bare username (`akil` ->
-            // `akil@teamsquared.io`; full addresses left alone), then run the
-            // advisory directory check against the resolved address.
+            onFocus={() => {
+              if (suggestions && suggestions.length > 0) setOpen(true);
+            }}
+            // On blur: fill in the org domain for a bare username left un-picked
+            // (`akil` -> `akil@teamsquared.io`; full addresses left alone). The
+            // suggestion list uses onMouseDown so a pick fires before this.
             onBlur={(e) => {
               const resolved = normalizeInviteEmail(e.target.value);
               if (resolved !== recipient.email) onChange({ email: resolved });
-              void checkDirectory(resolved);
             }}
             placeholder={index === 0 ? "newhire or newhire@teamsquared.io" : "name or name@teamsquared.io"}
             aria-label={`Email for recipient ${index + 1}`}
+            autoComplete="off"
             className="w-full px-3 py-2 rounded-lg border border-border bg-surface text-sm text-foreground placeholder-foreground-subtle focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring transition-all disabled:opacity-50"
             disabled={disabled || isSent}
             required={index === 0}
           />
-          <DirectoryHint directory={directory} />
+          {open && suggestions && suggestions.length > 0 && (
+            <ul
+              // Keep focus on the input so onBlur doesn't fire before the click.
+              onMouseDown={(e) => e.preventDefault()}
+              className="absolute z-10 mt-1 w-full max-h-60 overflow-auto rounded-lg border border-border bg-surface shadow-lg"
+              role="listbox"
+            >
+              {suggestions.map((m) => (
+                <li key={m.email}>
+                  <button
+                    type="button"
+                    onClick={() => pickSuggestion(m)}
+                    className="w-full text-left px-3 py-2 hover:bg-muted focus-visible:bg-muted focus-visible:outline-none"
+                  >
+                    <span className="block text-sm text-foreground">
+                      {m.displayName ?? m.email}
+                      {!m.accountEnabled && (
+                        <span className="ml-1 text-xs text-warning">(disabled)</span>
+                      )}
+                    </span>
+                    {m.displayName && (
+                      <span className="block text-xs text-foreground-subtle">
+                        {m.email}
+                      </span>
+                    )}
+                  </button>
+                </li>
+              ))}
+            </ul>
+          )}
+          <PickedHint picked={picked} />
         </div>
         <input
           type="text"
@@ -596,28 +663,11 @@ function RecipientRow({
   );
 }
 
-/** Inline advisory note under the email field about Entra-directory presence.
- *  Renders nothing when we can't tell (unconfigured / no permission / error) —
- *  the directory check never blocks a send. */
-function DirectoryHint({
-  directory,
-}: {
-  directory: DirectoryLookup | "checking" | null;
-}) {
-  if (directory === null) return null;
-  if (directory === "checking")
-    return (
-      <p className="mt-1 text-xs text-foreground-subtle">Checking directory…</p>
-    );
-  if (directory.status === "unknown") return null;
-  if (directory.status === "not_found")
-    return (
-      <p className="mt-1 text-xs text-warning">
-        Not found in directory — you can still send.
-      </p>
-    );
-  // found
-  if (!directory.accountEnabled)
+/** Inline confirmation shown after the operator picks a directory suggestion.
+ *  Renders nothing until a pick is made — purely advisory, never blocks a send. */
+function PickedHint({ picked }: { picked: DirectoryMatch | null }) {
+  if (!picked) return null;
+  if (!picked.accountEnabled)
     return (
       <p className="mt-1 text-xs text-warning">
         In directory, but the account is disabled.
@@ -625,7 +675,7 @@ function DirectoryHint({
     );
   return (
     <p className="mt-1 text-xs text-success">
-      In directory{directory.displayName ? ` · ${directory.displayName}` : ""}.
+      In directory{picked.displayName ? ` · ${picked.displayName}` : ""}.
     </p>
   );
 }
