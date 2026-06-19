@@ -65,9 +65,82 @@ async function getAppToken(now: number): Promise<string | null> {
   }
 }
 
+/** A directory user surfaced as an invite suggestion. */
+export type DirectoryMatch = {
+  email: string;
+  displayName: string | null;
+  accountEnabled: boolean;
+};
+
 /** Escape a string for safe interpolation into an OData filter literal. */
 function escapeODataLiteral(value: string): string {
   return value.replace(/'/g, "''");
+}
+
+/**
+ * Prefix-search the tenant for invite suggestions. Matches the typed prefix
+ * against `mail`, `userPrincipalName`, `displayName`, `givenName`, and
+ * `surname` so typing `akil` surfaces `akil.fernando@…`, `akil.pereira@…`,
+ * etc. Returns up to `top` matches sorted by display name. Fails open to an
+ * empty list (no suggestions) on any error so the invite flow still works by
+ * manual entry.
+ */
+export async function searchTenantUsers(
+  query: string,
+  top = 8,
+): Promise<DirectoryMatch[]> {
+  const prefix = query.trim().toLowerCase();
+  if (prefix.length < 2) return [];
+
+  const token = await getAppToken(Date.now());
+  if (!token) return [];
+
+  const lit = escapeODataLiteral(prefix);
+  const filter =
+    `startswith(mail,'${lit}') or startswith(userPrincipalName,'${lit}') ` +
+    `or startswith(displayName,'${lit}') or startswith(givenName,'${lit}') ` +
+    `or startswith(surname,'${lit}')`;
+  const url =
+    `https://graph.microsoft.com/v1.0/users?` +
+    `$filter=${encodeURIComponent(filter)}` +
+    `&$select=mail,userPrincipalName,displayName,accountEnabled` +
+    `&$top=${top}&$count=true`;
+
+  try {
+    const res = await fetch(url, {
+      headers: {
+        Authorization: `Bearer ${token}`,
+        // startswith across multiple props is an advanced query.
+        ConsistencyLevel: "eventual",
+      },
+    });
+    if (!res.ok) {
+      console.error("[entra] user search failed", res.status);
+      return [];
+    }
+    const data = (await res.json()) as {
+      value?: Array<{
+        mail?: string | null;
+        userPrincipalName?: string | null;
+        displayName?: string | null;
+        accountEnabled?: boolean;
+      }>;
+    };
+    return (data.value ?? [])
+      // Guests' UPN is the mangled `#EXT#` form — prefer the real `mail`.
+      .map((u) => ({
+        email: (u.mail ?? u.userPrincipalName ?? "").toLowerCase(),
+        displayName: u.displayName ?? null,
+        accountEnabled: u.accountEnabled ?? true,
+      }))
+      .filter((u) => u.email)
+      .sort((a, b) =>
+        (a.displayName ?? a.email).localeCompare(b.displayName ?? b.email),
+      );
+  } catch (err) {
+    console.error("[entra] user search error", err);
+    return [];
+  }
 }
 
 /**
