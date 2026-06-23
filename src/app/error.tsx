@@ -11,14 +11,14 @@ export default function Error({
   unstable_retry: () => void;
 }) {
   useEffect(() => {
-    console.error(error);
+    if (process.env.NODE_ENV !== "production") console.error(error);
   }, [error]);
 
   return (
     <div className="flex-1 flex flex-col items-center justify-center min-h-[60vh] px-4 text-center animate-fade-in">
       <p className="text-6xl font-bold text-danger mb-4">!</p>
       <h1 className="mb-2 font-display text-2xl font-semibold text-foreground">
-        Something went wrong
+        This page didn&apos;t load
       </h1>
       <p className="mb-8 max-w-sm text-sm text-foreground-muted">
         An unexpected error occurred while loading this page. You can try again,

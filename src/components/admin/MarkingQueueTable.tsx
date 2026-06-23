@@ -128,7 +128,7 @@ export function MarkingQueueTable({ queue }: Props) {
             morph(() => setQuery(next));
           }}
           placeholder="Search courses, lessons or students…"
-          className="w-full pl-9 pr-3 py-2 text-sm rounded-md border border-border bg-surface text-foreground placeholder:text-foreground-subtle focus:outline-none focus:ring-2 focus:ring-ring focus:border-ring"
+          className="w-full pl-9 pr-3 py-2 text-sm rounded-md border border-border bg-surface text-foreground placeholder:text-foreground-subtle focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:border-ring"
         />
       </div>
 
@@ -303,7 +303,7 @@ function SubmissionRow({ submission }: { submission: MarkingSubmissionRow }) {
           href={`/admin/marking/${submission.submissionId}`}
           className={cn(
             "inline-flex items-center rounded-md border border-border bg-surface px-3 py-1.5 text-xs font-medium text-foreground",
-            "hover:bg-surface-muted transition-colors focus:outline-none focus:ring-2 focus:ring-ring",
+            "hover:bg-surface-muted transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring",
           )}
         >
           Mark

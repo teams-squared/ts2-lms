@@ -506,7 +506,7 @@ export function ModuleManager({
                         }}
                         autoFocus
                         disabled={savingModuleTitle}
-                        className="flex-1 rounded border border-border bg-background px-2 py-1 text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-primary"
+                        className="flex-1 rounded border border-border bg-background px-2 py-1 text-sm text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
                         aria-label={`Module ${module.order} title`}
                       />
                       <Button

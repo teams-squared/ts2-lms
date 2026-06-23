@@ -177,7 +177,7 @@ export function SectorManager({ initialSectors }: Props) {
               onChange={(e) => setAddLabel(e.target.value)}
               placeholder="e.g. Cybersecurity"
               disabled={adding}
-              className="w-full rounded-md border border-border bg-background px-2.5 py-1.5 text-sm text-foreground placeholder:text-foreground-subtle focus:outline-none focus:ring-2 focus:ring-primary/40 disabled:opacity-50"
+              className="w-full rounded-md border border-border bg-background px-2.5 py-1.5 text-sm text-foreground placeholder:text-foreground-subtle focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/40 disabled:opacity-50"
               onKeyDown={(e) => {
                 if (e.key === "Enter") {
                   e.preventDefault();
@@ -197,7 +197,7 @@ export function SectorManager({ initialSectors }: Props) {
               onChange={(e) => setAddKey(e.target.value)}
               placeholder="e.g. cybersecurity"
               disabled={adding}
-              className="w-full rounded-md border border-border bg-background px-2.5 py-1.5 text-sm text-foreground placeholder:text-foreground-subtle focus:outline-none focus:ring-2 focus:ring-primary/40 disabled:opacity-50"
+              className="w-full rounded-md border border-border bg-background px-2.5 py-1.5 text-sm text-foreground placeholder:text-foreground-subtle focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/40 disabled:opacity-50"
             />
           </div>
         </div>
@@ -212,7 +212,7 @@ export function SectorManager({ initialSectors }: Props) {
             onChange={(e) => setAddDescription(e.target.value)}
             placeholder="Short description of this sector"
             disabled={adding}
-            className="w-full rounded-md border border-border bg-background px-2.5 py-1.5 text-sm text-foreground placeholder:text-foreground-subtle focus:outline-none focus:ring-2 focus:ring-primary/40 disabled:opacity-50"
+            className="w-full rounded-md border border-border bg-background px-2.5 py-1.5 text-sm text-foreground placeholder:text-foreground-subtle focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/40 disabled:opacity-50"
           />
         </div>
         <button
@@ -252,7 +252,7 @@ export function SectorManager({ initialSectors }: Props) {
                       value={editLabel}
                       onChange={(e) => setEditLabel(e.target.value)}
                       disabled={savingId === sector.id}
-                      className="w-full rounded-md border border-border bg-background px-2.5 py-1.5 text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-primary/40 disabled:opacity-50"
+                      className="w-full rounded-md border border-border bg-background px-2.5 py-1.5 text-sm text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/40 disabled:opacity-50"
                     />
                   </div>
                   <div className="space-y-1">
@@ -268,7 +268,7 @@ export function SectorManager({ initialSectors }: Props) {
                       value={editDescription}
                       onChange={(e) => setEditDescription(e.target.value)}
                       disabled={savingId === sector.id}
-                      className="w-full rounded-md border border-border bg-background px-2.5 py-1.5 text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-primary/40 disabled:opacity-50"
+                      className="w-full rounded-md border border-border bg-background px-2.5 py-1.5 text-sm text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/40 disabled:opacity-50"
                     />
                   </div>
                 </div>

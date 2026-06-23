@@ -303,7 +303,8 @@ export async function sendUserInviteEmail({
 }): Promise<boolean> {
   if (!resend || !to) {
     if (!resend) {
-      console.info("[email] Resend not configured — skipping invite email");
+      if (process.env.NODE_ENV !== "production")
+        console.info("[email] Resend not configured — skipping invite email");
     }
     return false;
   }
@@ -381,7 +382,8 @@ export async function sendDeadlineReminderEmail({
 }): Promise<void> {
   if (!resend || !to) {
     if (!resend) {
-      console.info("[email] Resend not configured — skipping deadline reminder");
+      if (process.env.NODE_ENV !== "production")
+        console.info("[email] Resend not configured — skipping deadline reminder");
     }
     return;
   }
@@ -473,7 +475,8 @@ export async function sendIsoAcknowledgementEmail({
 }): Promise<void> {
   if (!resend || to.length === 0) {
     if (!resend) {
-      console.info("[email] Resend not configured — skipping ISO ack email");
+      if (process.env.NODE_ENV !== "production")
+        console.info("[email] Resend not configured — skipping ISO ack email");
     }
     return;
   }
@@ -554,7 +557,8 @@ export async function sendManualOverdueReminderEmail({
 }): Promise<void> {
   if (!resend || !to || lessonTitles.length === 0) {
     if (!resend) {
-      console.info("[email] Resend not configured — skipping manual reminder");
+      if (process.env.NODE_ENV !== "production")
+        console.info("[email] Resend not configured — skipping manual reminder");
     }
     return;
   }

@@ -7,6 +7,13 @@ export default defineConfig({
   test: {
     environment: "happy-dom",
     globals: true,
+    // The Prisma singleton (src/lib/prisma.ts) now hard-fails at construction
+    // if DATABASE_URL is unset. Unit tests never hit a real DB (Prisma is
+    // mocked), but the client is still instantiated on import — give it a
+    // dummy URL so the guard is satisfied.
+    env: {
+      DATABASE_URL: "postgresql://test:test@localhost:5432/test",
+    },
     setupFiles: ["./src/__tests__/setup.ts"],
     exclude: ["node_modules", "e2e/**", ".claude/**", ".claire/**"],
     coverage: {

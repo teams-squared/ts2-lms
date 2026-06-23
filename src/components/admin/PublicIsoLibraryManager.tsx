@@ -305,7 +305,7 @@ export function PublicIsoLibraryManager() {
             onChange={(e) => setShareUrl(e.target.value)}
             placeholder="Paste SharePoint link"
             disabled={adding || resolving}
-            className="flex-1 rounded-md border border-border bg-background px-2.5 py-1.5 text-sm text-foreground placeholder:text-foreground-subtle focus:outline-none focus:ring-2 focus:ring-primary/40 disabled:opacity-50"
+            className="flex-1 rounded-md border border-border bg-background px-2.5 py-1.5 text-sm text-foreground placeholder:text-foreground-subtle focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/40 disabled:opacity-50"
             onKeyDown={(e) => {
               if (e.key === "Enter") {
                 e.preventDefault();
@@ -355,7 +355,7 @@ export function PublicIsoLibraryManager() {
             <select
               value={selectedLessonId}
               onChange={(e) => setSelectedLessonId(e.target.value)}
-              className="w-full rounded-md border border-border bg-background px-2.5 py-1.5 text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-primary/40"
+              className="w-full rounded-md border border-border bg-background px-2.5 py-1.5 text-sm text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/40"
             >
               <option value="">Choose a lesson…</option>
               {availableLessons.map((l) => (

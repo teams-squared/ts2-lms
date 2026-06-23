@@ -10,7 +10,7 @@ export default function CoursesError({
   unstable_retry: () => void;
 }) {
   useEffect(() => {
-    console.error(error);
+    if (process.env.NODE_ENV !== "production") console.error(error);
   }, [error]);
 
   return (
@@ -19,11 +19,12 @@ export default function CoursesError({
         Couldn&apos;t load courses
       </h2>
       <p className="mb-6 text-sm text-foreground-muted">
-        Something went wrong while loading this page.
+        Check your connection and try again. If it keeps happening, contact
+        support.
       </p>
       <button
         onClick={() => unstable_retry()}
-        className="rounded-lg bg-primary px-4 py-2 text-sm font-medium text-primary-foreground transition-colors hover:bg-primary/90"
+        className="rounded-lg bg-primary px-4 py-2 text-sm font-medium text-primary-foreground transition-colors hover:bg-primary-hover"
       >
         Try again
       </button>

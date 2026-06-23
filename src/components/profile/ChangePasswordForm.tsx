@@ -105,7 +105,7 @@ export function ChangePasswordForm({ isSsoOnly }: ChangePasswordFormProps) {
           onChange={(e) => setCurrentPassword(e.target.value)}
           required
           autoComplete="current-password"
-          className="w-full rounded-md border border-border bg-surface px-3 py-1.5 text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-ring"
+          className="w-full rounded-md border border-border bg-surface px-3 py-1.5 text-sm text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
           data-testid="current-password-input"
         />
       </div>
@@ -120,7 +120,7 @@ export function ChangePasswordForm({ isSsoOnly }: ChangePasswordFormProps) {
           required
           minLength={8}
           autoComplete="new-password"
-          className="w-full rounded-md border border-border bg-surface px-3 py-1.5 text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-ring"
+          className="w-full rounded-md border border-border bg-surface px-3 py-1.5 text-sm text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
           data-testid="new-password-input"
         />
       </div>
@@ -134,7 +134,7 @@ export function ChangePasswordForm({ isSsoOnly }: ChangePasswordFormProps) {
           onChange={(e) => setConfirmPassword(e.target.value)}
           required
           autoComplete="new-password"
-          className="w-full rounded-md border border-border bg-surface px-3 py-1.5 text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-ring"
+          className="w-full rounded-md border border-border bg-surface px-3 py-1.5 text-sm text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
           data-testid="confirm-password-input"
         />
       </div>

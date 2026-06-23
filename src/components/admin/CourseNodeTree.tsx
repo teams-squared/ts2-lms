@@ -167,7 +167,7 @@ export function CourseNodeTree({
     <button
       type="button"
       onClick={onClick}
-      className="w-4 h-4 rounded border flex items-center justify-center flex-shrink-0 transition-colors focus:outline-none focus:ring-1 focus:ring-ring"
+      className="w-4 h-4 rounded border flex items-center justify-center flex-shrink-0 transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
       style={{
         borderColor: state === "unchecked" ? "var(--border)" : "var(--primary)",
         backgroundColor: state !== "unchecked" ? "var(--primary)" : "transparent",
