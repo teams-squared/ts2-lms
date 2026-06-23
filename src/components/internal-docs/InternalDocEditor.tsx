@@ -79,7 +79,7 @@ export function InternalDocEditor({
       return;
     }
     if (requirements.length === 0) {
-      setError("Add at least one clearance requirement — internal docs can't be unrestricted.");
+      setError("Add at least one clearance requirement. Internal docs can't be unrestricted.");
       return;
     }
     setSaving(true);

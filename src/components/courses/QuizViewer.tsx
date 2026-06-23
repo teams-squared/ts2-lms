@@ -237,7 +237,7 @@ export function QuizViewer({
             onClick={handleStart}
             className="w-full rounded-md bg-primary px-4 py-2.5 text-sm font-medium text-primary-foreground transition-colors hover:bg-primary-hover focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background"
           >
-            {courseLocked ? "Review Quiz" : bestAttempt ? "Retake Quiz" : "Start Quiz"}
+            {courseLocked ? "Review quiz" : bestAttempt ? "Retake quiz" : "Start quiz"}
           </button>
           {courseLocked && (
             <p className="mt-2 text-center text-xs text-foreground-muted">
@@ -381,7 +381,7 @@ export function QuizViewer({
             href={nextLessonUrl}
             className="mt-4 inline-flex items-center gap-2 rounded-md bg-primary px-5 py-2.5 text-sm font-semibold text-primary-foreground transition-colors hover:bg-primary-hover focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background"
           >
-            Continue to Next Lesson
+            Continue to next lesson
             <ChevronRightIcon className="h-4 w-4" />
           </Link>
         )}

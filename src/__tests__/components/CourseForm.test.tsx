@@ -18,9 +18,9 @@ describe("CourseForm", () => {
     expect(screen.getByLabelText(/status/i)).toBeInTheDocument();
   });
 
-  it("shows 'Create Course' as default submit label", () => {
+  it("shows 'Create course' as default submit label", () => {
     render(<CourseForm onSubmit={mockSubmit} onCancel={mockCancel} />);
-    expect(screen.getByText("Create Course")).toBeInTheDocument();
+    expect(screen.getByText("Create course")).toBeInTheDocument();
   });
 
   it("uses custom submitLabel when provided", () => {
@@ -74,7 +74,7 @@ describe("CourseForm", () => {
     fireEvent.change(screen.getByLabelText(/title/i), {
       target: { value: "   " },
     });
-    fireEvent.click(screen.getByText("Create Course"));
+    fireEvent.click(screen.getByText("Create course"));
     expect(await screen.findByText("Title is required")).toBeInTheDocument();
   });
 
@@ -88,7 +88,7 @@ describe("CourseForm", () => {
     fireEvent.change(screen.getByLabelText(/description/i), {
       target: { value: "Description here" },
     });
-    fireEvent.click(screen.getByText("Create Course"));
+    fireEvent.click(screen.getByText("Create course"));
 
     await waitFor(() => {
       expect(mockSubmit).toHaveBeenCalledWith(
@@ -107,7 +107,7 @@ describe("CourseForm", () => {
     fireEvent.change(screen.getByLabelText(/title/i), {
       target: { value: "New Course" },
     });
-    fireEvent.click(screen.getByText("Create Course"));
+    fireEvent.click(screen.getByText("Create course"));
 
     await waitFor(() => {
       expect(screen.getByText("Server error")).toBeInTheDocument();
@@ -120,7 +120,7 @@ describe("CourseForm", () => {
     fireEvent.change(screen.getByLabelText(/title/i), {
       target: { value: "New Course" },
     });
-    fireEvent.click(screen.getByText("Create Course"));
+    fireEvent.click(screen.getByText("Create course"));
 
     await waitFor(() => {
       expect(screen.getByText("Something went wrong")).toBeInTheDocument();
@@ -138,7 +138,7 @@ describe("CourseForm", () => {
     fireEvent.change(screen.getByLabelText(/title/i), {
       target: { value: "New Course" },
     });
-    fireEvent.click(screen.getByText("Create Course"));
+    fireEvent.click(screen.getByText("Create course"));
 
     expect(screen.getByText("Saving…")).toBeDisabled();
 
@@ -186,7 +186,7 @@ describe("CourseForm", () => {
     fireEvent.change(screen.getByLabelText(/title/i), {
       target: { value: "Test" },
     });
-    fireEvent.click(screen.getByText("Create Course"));
+    fireEvent.click(screen.getByText("Create course"));
 
     await waitFor(() => {
       expect(mockSubmit).toHaveBeenCalledWith(
