@@ -15,8 +15,22 @@ import { CheckCircleIcon } from "@/components/icons";
 import { Breadcrumbs } from "@/components/ui/Breadcrumbs";
 import { EnrollButton } from "@/components/courses/EnrollButton";
 import { Button } from "@/components/ui/button";
+import type { Metadata } from "next";
 
 export const dynamic = "force-dynamic";
+
+export async function generateMetadata({
+  params,
+}: {
+  params: Promise<{ id: string }>;
+}): Promise<Metadata> {
+  const { id } = await params;
+  const course = await prisma.course.findUnique({
+    where: { id },
+    select: { title: true },
+  });
+  return { title: course?.title ?? "Course" };
+}
 
 export default async function CourseDetailPage({
   params,

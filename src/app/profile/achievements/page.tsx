@@ -3,6 +3,9 @@ import { redirect } from "next/navigation";
 import { prisma } from "@/lib/prisma";
 import { AchievementCard } from "@/components/gamification/AchievementCard";
 import { Breadcrumbs } from "@/components/ui/Breadcrumbs";
+import type { Metadata } from "next";
+
+export const metadata: Metadata = { title: "Achievements" };
 
 export const dynamic = "force-dynamic";
 

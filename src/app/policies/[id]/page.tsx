@@ -8,8 +8,22 @@ import type {
   RevisionHistoryEntry,
 } from "@/lib/policy-doc/types";
 import { ChevronLeft } from "lucide-react";
+import type { Metadata } from "next";
 
 export const dynamic = "force-dynamic";
+
+export async function generateMetadata({
+  params,
+}: {
+  params: Promise<{ id: string }>;
+}): Promise<Metadata> {
+  const { id } = await params;
+  const doc = await prisma.publicIsoDoc.findUnique({
+    where: { id },
+    select: { documentTitle: true, isHidden: true },
+  });
+  return { title: doc && !doc.isHidden ? doc.documentTitle : "Policy" };
+}
 
 export default async function PolicyDocPage({
   params,

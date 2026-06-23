@@ -11,6 +11,9 @@ import {
 } from "lucide-react";
 import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
+import type { Metadata } from "next";
+
+export const metadata: Metadata = { title: "Policies" };
 
 export const dynamic = "force-dynamic";
 

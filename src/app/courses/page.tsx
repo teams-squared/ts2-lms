@@ -17,6 +17,9 @@ import type { Prisma } from "@prisma/client";
 import type { Role } from "@/lib/types";
 import type { SidebarNode } from "@/components/courses/CatalogSidebar";
 import type { NodeWithChildren } from "@/lib/courseNodes";
+import type { Metadata } from "next";
+
+export const metadata: Metadata = { title: "Courses" };
 
 export const dynamic = "force-dynamic";
 

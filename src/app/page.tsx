@@ -12,6 +12,9 @@ import { DeadlineAlerts } from "@/components/dashboard/DeadlineAlerts";
 import { CourseProgressList } from "@/components/dashboard/CourseProgressList";
 import { RevealOnView } from "@/components/ui/RevealOnView";
 import { OnboardingModal } from "@/components/onboarding/OnboardingModal";
+import type { Metadata } from "next";
+
+export const metadata: Metadata = { title: "Dashboard" };
 
 export const dynamic = "force-dynamic";
 
