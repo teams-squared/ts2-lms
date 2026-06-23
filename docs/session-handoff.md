@@ -5,51 +5,52 @@
 > preserve paths, SHAs, commands exact.
 
 ## Last sync
-- Date: 2026-06-18
+- Date: 2026-06-23
 - Branch: `dev`
-- HEAD: `b257e4b` — feat(assessment): half-mark (fractional) grading for manual questions
-- Tree: clean (only gitignored `.claude/settings.local.json` + `graphify-out/` on disk)
-- **All code released to prod.** `dev` == `origin/main` (`0ba4db0`, PR #61) — 0 ahead.
+- HEAD: `e73477a` — docs(polish): mark Tier 1A + Tier 2 shipped
+- Tree: clean
+- **`dev` 7 ahead of `main`.** All this-session work on `dev`/staging only — NOT released to prod.
 
 ## What just shipped
-Six prod releases this session — assessment feature hardening + an authz fix. All deploys live + DB-verified where schema changed.
-- `b257e4b` **half-mark grading** (PR #61) — markers award e.g. 4.5/5 on free-text + multi-select; 0.5 steps. `awardedMarks`/`manualScore`/`totalScore` `Int→Decimal(6,2)`; `autoScore`/`maxMarks`/`passThreshold` stay Int. Migration `20260617120000_fractional_marks`.
-- `d17b840` **authz fix** (PR #61) — `GET /api/courses/[id]` now needs published AND enrolled (or privileged), else 404. Closed metadata-enumeration leak. No in-app caller; content was already gated.
-- `230694a` **multi-select (checkbox) question type** (PR #60) — like MC but ≥1 correct; marked manually like free-text (never auto-scored). `MULTI_SELECT` enum + `AssessmentAnswer.selectedOptionIds[]`. Migration `20260617000000_add_multi_select`.
-- `06b87c8` **assessment builder path** (PR #59) — "Edit questions →" button on assessment lessons in `ModuleManager` → routes to lesson detail page where `AssessmentBuilder` lives.
-- `ebc5920` **lesson-create fix** (PR #58) — lesson POST/PATCH whitelist omitted `assessment`+`link` → 400. Now map-derived `isAppLessonType()` guard.
+Polish-backlog execution + two audit docs. No prod release. All polish commits gate-verified: `tsc` clean, `eslint` 0 errors, `vitest` 1356/1356; `f3e175b` also `next build` green.
+- `e73477a` **backlog status** — mark Tier 1A + Tier 2 done in `docs/polish-backlog.md`.
+- `ba3fa64` **microcopy** (Tier 2 Q7) — sentence-case CTAs ("Create course", "Start/Retake/Review quiz", "Continue to next lesson"); em-dashes dropped from button/status labels. Test fixtures updated.
+- `dcc5d5b` **ConfirmDialog + skeletons** (Q4/Q5) — native `confirm()` → `ConfirmDialog` in `PublicIsoLibraryManager`; 6 admin `loading.tsx` (assignments, marking, clearance, nodes, settings, users/[userId]).
+- `be3d278` **a11y + hygiene** (Q2/Q3/Q6/Q8/Q9) — `focus:`→`focus-visible:` sweep (17 files); `aria-live` on AchievementToast; `DATABASE_URL` startup guard (+ vitest dummy env); `hover:bg-primary/90` bug fix; console gating; error-boundary copy.
+- `f3e175b` **metadata/SEO** (Tier 1A) — `robots` noindex + `src/app/robots.ts`, `metadataBase`, title template + per-page titles (`generateMetadata` for course/lesson/policy), OpenGraph, viewport `themeColor`.
+- `a43d837` **polish backlog** — `docs/polish-backlog.md`, 5-dimension audit, ~45 findings in Tier 1/2/3.
+- `6f6059f` **graph Q&A** — `docs/graph-insights.md`. Verified 35/35 inferred authz `calls` edges accurate vs source.
 
 ## In-flight
 Working tree clean.
 
 ## Pending external actions
-- [ ] **Confirm ISO cron + env live on prod** — `prune-audit-logs` GitHub Action (`.github/workflows/prune-audit-logs.yml`, weekly Sun 04:00 UTC, uses `CRON_SECRET`); `AUDIT_LOG_RETENTION_DAYS` / `SESSION_MAX_AGE_SECONDS` set on `ts2-lms` (else defaults 365 / 8h).
-- [ ] **Do NOT switch staging startCommand to `migrate deploy` while it shares prod DB.** Staging runs `npx tsx prisma/migrate.ts` (frozen legacy bootstrap, ignores `prisma/migrations/`) — GUARD so `dev` pushes never mutate prod schema. Only PROD (`main`) deploy migrates the shared DB.
-- [ ] **Staging = prod data.** No separate staging DB (free tier expired, paid not approved). Staging + local `npm run dev` both write PROD DB `dpg-d7eb259f9bms738jscig-a`. Careful with destructive/test-data ops.
-- [ ] **Before pushing feature/migration work, run `npm run lint` + `npx vitest run`** — CI gate ("Lint · Type-check · Test · Build") runs both; local `tsc --noEmit` + `npm run build` do NOT. (Local prod build needs `AUTH_SECRET=<any>`.)
-- [ ] **Triage Dependabot** — 3 moderate + 1 low. `https://github.com/teams-squared/ts2-lms/security/dependabot`
-- [ ] **(Deferred, gated on budget)** separate staging Postgres + switch staging to `migrate deploy` + retire `migrate.ts` + author catch-up migration (creates what `migrate.ts` makes but `prisma/migrations/` lacks: DeadlineReminderLog, `Enrollment.completedAt`, `User.onboardedAt`, SharePointCache, COURSE_MANAGER role restructure) so a FRESH DB via `migrate deploy` is complete.
+- [ ] **Release polish to prod** — `dev` 7 ahead of `main`. Open `dev → main` PR + merge when operator wants release (incl. `robots` noindex now on staging only). Only on explicit ask.
+- [ ] **Tier 1B B4 — `Notification` `@@index([userId, read])` migration** — DEFERRED, needs operator sign-off. Staging+local share PROD DB; migrations apply only on `main` deploy. Details `docs/polish-backlog.md`.
+- [ ] **Deps** — session ran `npm ci` (node_modules was empty at start). Fresh session: `npm ci` before lint/test/build.
+- [ ] **Triage Dependabot** (carry-forward) — was 3 moderate + 1 low. `https://github.com/teams-squared/ts2-lms/security/dependabot`
+- [ ] **Confirm ISO cron + env on prod** (carry-forward) — `prune-audit-logs` Action (weekly Sun 04:00 UTC, `CRON_SECRET`); `AUDIT_LOG_RETENTION_DAYS` / `SESSION_MAX_AGE_SECONDS` on `ts2-lms`.
+- [ ] **(Deferred, budget-gated)** separate staging Postgres + switch staging to `migrate deploy` + retire `migrate.ts`.
 
 ## Open questions / decisions
-- Assessment scoring: MC auto-scored (whole marks); FREE_TEXT + MULTI_SELECT manually marked, half-mark granularity. Settled.
-- Run e2e assessment smoke test? Gated on: operator pick — write-path `e2e/assessment.spec.ts` (writes prod data) vs read-only checks. `npx playwright install chromium` first (binary not cached).
-- Partial-credit per-option auto-scoring for MULTI_SELECT. Gated on: declined — manual marking chosen instead.
+- Polish backlog next tier. Gated on: operator pick — Tier 1B perf (code-only N+1s, no schema) / 1C a11y modals / Tier 3 (Button adoption, `cn()` sweep, zod hardening, `formatDate()`). Operator paused after Tier 1A + Tier 2.
+- Em-dash purge scope. Gated on: decided — fixed button/status LABELS only; empty-cell `—` placeholders + admin prose left as-is (subjective, out of scope).
 
 ## Pickup pointer
-Nothing in-flight; all code live in prod. Next natural step: confirm ISO cron + retention env on Render (`prune-audit-logs`, `AUDIT_LOG_RETENTION_DAYS`/`SESSION_MAX_AGE_SECONDS`), then triage 3 moderate + 1 low Dependabot alerts. Revisit deferred staging-DB infra when budget approved.
+Resume `docs/polish-backlog.md`. Next natural (no schema change, no sign-off): **Tier 1B perf code-only** — `GET /api/courses` swap to `checkCourseEligibilityBatch`; admin analytics `getCourseMetrics` per-user×course `lessonProgress.count` → single `groupBy`; `achievements.countCompletedCourses` 1+2E queries → 2 aggregates. Else operator-picked tier.
 
 ---
 
 ## Where things live
 | Concern | Location |
 |---|---|
-| Assessment schema | `prisma/schema.prisma` — AssessmentLesson, AssessmentVariant, AssessmentQuestion (`questionType`: MULTIPLE_CHOICE / FREE_TEXT / MULTI_SELECT), AssessmentOption, AssessmentSubmission (scores Decimal where manual), AssessmentAnswer (`selectedOptionId` / `selectedOptionIds[]` / `responseText`) |
-| Assessment logic | `src/lib/assessment.ts` — pickVariantForUser, finalizeSubmission (MC auto-score only), getStudentState, loadSanitizedQuestionsForVariant, `answerDataFor()` (per-type answer channel) |
-| Marking | `src/lib/marking.ts`; API `src/app/api/admin/marking/[submissionId]/route.ts` (manual = FREE_TEXT + MULTI_SELECT, half-mark steps); UI `src/components/admin/MarkingDetail.tsx` |
-| Assessment UI | builder `src/components/courses/AssessmentBuilder.tsx`; viewer `src/components/courses/AssessmentViewer.tsx`; dispatch `src/app/courses/[id]/lessons/[lessonId]/page.tsx` |
-| Lesson-type guard | `src/lib/types.ts` `isAppLessonType()` / `APP_LESSON_TYPES` — derived from map, used by lesson create/update routes |
-| Course access | `src/lib/courseAccess.ts` — canManageCourse (admin/manager), canViewLesson (enrolled), canViewCourse. Course/lesson pages + `GET /api/courses/[id]` gate on published+enrolled for non-privileged |
-| Audit log | `prisma/schema.prisma` (AuditLog); `src/lib/audit.ts writeAuditLog`; admin list+CSV `src/app/api/admin/audit-logs/`; cron `src/app/api/cron/prune-audit-logs/` |
-| Migrations | hand-write idempotent SQL `prisma/migrations/<ts>_<name>/migration.sql`. Applied by PROD `prisma migrate deploy` only. Verify post-release: read-only Render MCP `query_render_postgres`, postgresId `dpg-d7eb259f9bms738jscig-a` |
-| Deploy | Render (Teams Squared workspace, LMS services only). PROD `ts2-lms` (`srv-d7eb0npj2pic73841ra0`) ← `main`, start `npx prisma migrate deploy && npm start`. STAGING `ts2-lms-staging` (`srv-d83bv5btqb8s73dihi60`) ← `dev`, start `npx tsx prisma/migrate.ts && npm start`. SHARED DB |
-| Release | `dev`→`main` PR only on explicit ask. main branch-protected (review + CI); admin-bypass only when CI green |
+| Polish backlog (Tier 1/2/3, shipped status) | `docs/polish-backlog.md` |
+| Knowledge-graph Q&A / authz verification | `docs/graph-insights.md`; graph in `graphify-out/` (gitignored) |
+| Metadata / SEO | `src/app/layout.tsx` (metadataBase, title template, robots, OG, viewport themeColor); `src/app/robots.ts`; per-page `metadata`/`generateMetadata` |
+| Authz | `src/lib/roles.ts` `requireRole` (returns 401/403, not throw); `src/lib/courseAccess.ts` `canManageCourse` (admin OR CourseManagers join) |
+| DB client | `src/lib/prisma.ts` — now throws if `DATABASE_URL` unset; vitest supplies dummy via `vitest.config.ts` `test.env` |
+| Assessment | schema `prisma/schema.prisma` (AssessmentLesson/Variant/Question/Option/Submission/Answer); logic `src/lib/assessment.ts`; marking `src/lib/marking.ts` + `MarkingDetail.tsx` |
+| Migrations | hand-write idempotent SQL `prisma/migrations/<ts>_<name>/migration.sql`. PROD `prisma migrate deploy` only. Verify via Render MCP `query_render_postgres`, postgresId `dpg-d7eb259f9bms738jscig-a` |
+| Deploy | Render. PROD `ts2-lms` ← `main` (`migrate deploy && start`). STAGING `ts2-lms-staging` ← `dev` (`npx tsx prisma/migrate.ts && start`). SHARED DB |
+| CI gate | "Lint · Type-check · Test · Build". Pre-push: `npm run lint` + `npx vitest run`. Local build needs `AUTH_SECRET=<any>` |
+| Release | `dev`→`main` PR only on explicit ask. `main` branch-protected |
