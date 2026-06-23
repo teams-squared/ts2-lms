@@ -16,6 +16,28 @@ metadata/SEO + hygiene).
 
 ---
 
+## Shipped
+
+Tier 1A + all of Tier 2 are done (each verified: tsc clean, eslint 0 errors,
+vitest 1356/1356; metadata commit also `next build` green).
+
+- **`f3e175b`** — Tier 1A metadata: `robots` noindex + `robots.ts`,
+  `metadataBase`, title template + per-page titles (`generateMetadata` for
+  course/lesson/policy), OpenGraph, viewport `themeColor` (covers A1–A4, Q1).
+- **`be3d278`** — Q2 `focus:`→`focus-visible:` sweep (17 files), Q3 aria-live
+  on AchievementToast, Q6 `DATABASE_URL` startup guard (+ vitest dummy env),
+  Q8 `hover:bg-primary/90` bug, Q9 console gating, error-boundary copy.
+- **`dcc5d5b`** — Q4 native `confirm()` → `ConfirmDialog`, Q5 six admin
+  `loading.tsx` skeletons.
+- **`ba3fa64`** — Q7 sentence-case CTAs + em-dashes dropped from labels.
+
+**Remaining:** Tier 1B (perf N+1s — B4 needs a DB migration, prod-shared DB so
+needs operator sign-off), Tier 1C (a11y modal focus-traps), Tier 3
+(Button-primitive adoption, `cn()` sweep, robustness hardening, date helper,
+dnd dynamic import, accent-color tokens, etc.).
+
+---
+
 ## Tier 1 — High impact, do first
 
 ### A. Metadata & SEO foundation (self-contained, big visible win)
