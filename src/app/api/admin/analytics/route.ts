@@ -87,7 +87,7 @@ async function getCourseMetrics() {
     for (const id of ids) lessonToCourse.set(id, course.id);
     for (const e of course.enrollments) {
       // Skip offboarded learners — they don't count toward completion metrics.
-      if (e.user.offboardedAt === null) allUserIds.add(e.userId);
+      if (e.user.offboardedAt == null) allUserIds.add(e.userId);
     }
   }
   const allLessonIds = [...lessonToCourse.keys()];
@@ -136,7 +136,7 @@ async function getCourseMetrics() {
     const lessonIds = courseLessonIds.get(course.id) ?? [];
     // Filter out offboarded learners from completion denominator and numerator.
     const enrolledUserIds = course.enrollments
-      .filter((e) => e.user.offboardedAt === null)
+      .filter((e) => e.user.offboardedAt == null)
       .map((e) => e.userId);
     const enrolledCount = enrolledUserIds.length;
 

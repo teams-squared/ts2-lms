@@ -400,7 +400,9 @@ describe("UserDetailManager", () => {
 
   it("renders the danger-zone section heading", () => {
     wrap(<UserDetailManager {...baseProps} />);
-    expect(screen.getByText("Danger zone")).toBeInTheDocument();
+    expect(
+      screen.getByText("Permanently delete (erase data)"),
+    ).toBeInTheDocument();
     expect(
       screen.getByRole("button", { name: /Remove user/i }),
     ).toBeInTheDocument();

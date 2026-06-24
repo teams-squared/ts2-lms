@@ -144,6 +144,52 @@ export async function searchTenantUsers(
 }
 
 /**
+ * All enabled-account emails in the tenant (mail + userPrincipalName,
+ * lowercased). Returns null on ANY error or config gap — caller MUST fail
+ * closed (never offboard on an incomplete picture).
+ */
+export async function listEnabledTenantEmails(): Promise<Set<string> | null> {
+  const token = await getAppToken(Date.now());
+  if (!token) return null;
+
+  const emails = new Set<string>();
+  let url: string | undefined =
+    "https://graph.microsoft.com/v1.0/users" +
+    "?$filter=accountEnabled%20eq%20true" +
+    "&$select=mail,userPrincipalName&$top=999";
+
+  const MAX_PAGES = 100;
+  let page = 0;
+
+  try {
+    while (url && page < MAX_PAGES) {
+      page++;
+      const res = await fetch(url, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      if (!res.ok) {
+        console.error("[entra] enabled-users list failed", res.status);
+        return null;
+      }
+      const data = (await res.json()) as {
+        value: Array<{ mail?: string | null; userPrincipalName?: string | null }>;
+        "@odata.nextLink"?: string;
+      };
+      for (const u of data.value) {
+        if (u.mail) emails.add(u.mail.toLowerCase());
+        if (u.userPrincipalName) emails.add(u.userPrincipalName.toLowerCase());
+      }
+      url = data["@odata.nextLink"];
+    }
+  } catch (err) {
+    console.error("[entra] enabled-users list failed", err);
+    return null;
+  }
+
+  return emails;
+}
+
+/**
  * Look up an email across the tenant. Matches members by `mail`/
  * `userPrincipalName` and guests by `otherMails` (a guest's UPN is the
  * mangled `name_domain.com#EXT#@tenant.onmicrosoft.com` form, so the real

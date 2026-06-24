@@ -13,6 +13,7 @@ export type StudentRow = {
   totalLessons: number;
   enrollmentCompleted: boolean;
   overdueLessons: string[];
+  offboarded: boolean;
 };
 
 export type CourseSegment = {
@@ -57,7 +58,7 @@ export async function loadCourseProgress(
           enrolledAt: true,
           completedAt: true,
           user: {
-            select: { id: true, name: true, email: true, avatar: true },
+            select: { id: true, name: true, email: true, avatar: true, offboardedAt: true },
           },
         },
       },
@@ -90,7 +91,8 @@ export async function loadCourseProgress(
     const lessons = c.modules.flatMap((m) => m.lessons);
     const totalLessons = lessons.length;
 
-    const rows: StudentRow[] = c.enrollments.map((e) => {
+    const allRows: StudentRow[] = c.enrollments.map((e) => {
+      const offboarded = e.user.offboardedAt != null;
       const userCompleted = completedByUser.get(e.userId) ?? new Set<string>();
       const completedLessons = lessons.reduce(
         (n, l) => (userCompleted.has(l.id) ? n + 1 : n),
@@ -105,8 +107,9 @@ export async function loadCourseProgress(
           ? 0
           : Math.round((effectiveCompleted / totalLessons) * 100);
 
+      // Skip overdue computation for offboarded learners — they never count toward overdueCount.
       const overdueLessons: string[] = [];
-      if (!enrollmentCompleted) {
+      if (!offboarded && !enrollmentCompleted) {
         for (const l of lessons) {
           if (l.deadlineDays == null) continue;
           if (userCompleted.has(l.id)) continue;
@@ -125,23 +128,34 @@ export async function loadCourseProgress(
         totalLessons,
         enrollmentCompleted,
         overdueLessons,
+        offboarded,
       };
     });
 
-    rows.sort((a, b) => {
+    // Partition into active and offboarded so aggregate counts exclude offboarded.
+    const activeRows = allRows.filter((r) => !r.offboarded);
+    const offboardedRows = allRows.filter((r) => r.offboarded);
+
+    // Sort active rows with the existing comparator (most overdue first, then least progress).
+    activeRows.sort((a, b) => {
       if (b.overdueLessons.length !== a.overdueLessons.length) {
         return b.overdueLessons.length - a.overdueLessons.length;
       }
       return a.percent - b.percent;
     });
 
+    // Sort offboarded rows alphabetically by name; append after active rows.
+    offboardedRows.sort((a, b) => a.name.localeCompare(b.name));
+
+    const rows = [...activeRows, ...offboardedRows];
+
     return {
       courseId: c.id,
       title: c.title,
       totalLessons,
-      enrolledCount: c.enrollments.length,
-      completedCount: rows.filter((r) => r.enrollmentCompleted).length,
-      overdueCount: rows.reduce((n, r) => n + r.overdueLessons.length, 0),
+      enrolledCount: activeRows.length,
+      completedCount: activeRows.filter((r) => r.enrollmentCompleted).length,
+      overdueCount: activeRows.reduce((n, r) => n + r.overdueLessons.length, 0),
       rows,
     };
   });

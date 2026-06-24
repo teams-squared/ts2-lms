@@ -64,7 +64,7 @@ export async function POST(request: Request, { params }: Params) {
   if (!user) {
     return NextResponse.json({ error: "User not found" }, { status: 404 });
   }
-  if (user.offboardedAt !== null) {
+  if (user.offboardedAt != null) {
     return NextResponse.json(
       { error: "Cannot assign an offboarded user as a course manager" },
       { status: 409 },

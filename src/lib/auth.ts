@@ -99,6 +99,9 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
             update: {
               name: user.name ?? undefined,
               ...(avatar ? { avatar } : {}),
+              // NOTE: do NOT set offboardedAt here — a routine login must not
+              // auto-reactivate an offboarded user. Only the explicit reactivate
+              // endpoint (/api/admin/users/[userId]/offboard DELETE) clears it.
             },
             create: {
               email: user.email,
@@ -106,8 +109,23 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
               avatar,
               role: "EMPLOYEE",
             },
-            select: { id: true, role: true, avatar: true },
+            select: { id: true, role: true, avatar: true, offboardedAt: true },
           });
+
+          // Block offboarded users from obtaining a session.
+          // Offboarded M365 users normally can't SSO (their Entra account is
+          // disabled), but this stops stale tokens from remaining valid and
+          // prevents the upsert above from silently resurrecting them as active
+          // if their Entra account is somehow still live.
+          if (dbUser.offboardedAt != null) {
+            // Returning the token WITHOUT setting id/role keeps the session
+            // callback from emitting a valid user identity. NextAuth v5 jwt
+            // callback: if token.id is never set the session.user.id will be
+            // empty and middleware / requireRole will treat the request as
+            // unauthenticated.
+            return token;
+          }
+
           token.id = dbUser.id;
           token.role = prismaRoleToApp(dbUser.role);
           token.picture = dbUser.avatar ?? null;

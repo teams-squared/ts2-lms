@@ -200,6 +200,9 @@ function ExpandedRows({
   rows: StudentRow[];
   filteredBySearch: boolean;
 }) {
+  const activeRows = rows.filter((r) => !r.offboarded);
+  const offboardedRows = rows.filter((r) => r.offboarded);
+
   if (rows.length === 0) {
     return (
       <p className="text-sm text-foreground-muted px-1">No enrollments yet.</p>
@@ -207,95 +210,142 @@ function ExpandedRows({
   }
 
   return (
-    <div>
+    <div className="space-y-4">
       {filteredBySearch && (
         <p className="text-xs text-foreground-subtle mb-2 px-1">
           Showing students matching search.
         </p>
       )}
-      <div className="rounded-md border border-border bg-surface overflow-x-auto">
-        <table className="w-full min-w-[36rem] text-sm">
-          <thead>
-            <tr className="text-left bg-surface-muted">
-              <th className="px-4 py-2 text-xs font-medium text-foreground-muted">
-                Student
-              </th>
-              <th className="px-4 py-2 text-xs font-medium text-foreground-muted">
-                Progress
-              </th>
-              <th className="px-4 py-2 text-xs font-medium text-foreground-muted">
-                Overdue lessons
-              </th>
-            </tr>
-          </thead>
-          <tbody className="divide-y divide-border">
-            {rows.map((row) => (
-              <tr key={row.userId}>
-                <td className="px-4 py-3 align-top">
-                  <div className="flex items-center gap-3 min-w-0">
-                    <UserAvatar
-                      name={row.name}
-                      image={row.avatar}
-                      size="sm"
-                    />
-                    <div className="min-w-0">
-                      <p className="text-sm font-medium text-foreground truncate">
-                        {row.name}
-                      </p>
-                      <p className="text-xs text-foreground-muted truncate">
-                        {row.email}
-                      </p>
-                    </div>
-                  </div>
-                </td>
-                <td className="px-4 py-3 align-top w-[18rem]">
-                  {row.enrollmentCompleted ? (
-                    <span className="inline-flex items-center gap-1 rounded-full bg-success-subtle px-2 py-0.5 text-xs font-medium text-success">
-                      <CheckCircleIcon className="w-3 h-3" />
-                      Completed
-                    </span>
-                  ) : row.completedLessons === 0 ? (
-                    <span className="text-xs text-foreground-muted">
-                      Not started
-                    </span>
-                  ) : (
-                    <ProgressBar
-                      value={row.percent}
-                      label={`${row.name} progress`}
-                      caption={`${row.completedLessons} of ${row.totalLessons} lessons`}
-                      showPercent
-                    />
-                  )}
-                </td>
-                <td className="px-4 py-3 align-top">
-                  {row.overdueLessons.length === 0 ? (
-                    <span className="text-xs text-foreground-subtle">—</span>
-                  ) : (
-                    <div className="space-y-2">
-                      <details>
-                        <summary className="cursor-pointer list-none inline-flex items-center gap-1 rounded-full bg-danger-subtle px-2 py-0.5 text-xs font-medium text-danger">
-                          <AlertTriangleIcon className="w-3 h-3" />
-                          {row.overdueLessons.length} overdue
-                        </summary>
-                        <ul className="mt-2 ml-1 space-y-0.5 text-xs text-foreground-muted">
-                          {row.overdueLessons.map((title) => (
-                            <li key={title}>· {title}</li>
-                          ))}
-                        </ul>
-                      </details>
-                      <RemindButton
-                        courseId={courseId}
-                        userId={row.userId}
-                        learnerName={row.name}
-                      />
-                    </div>
-                  )}
-                </td>
+
+      {activeRows.length > 0 && (
+        <div className="rounded-md border border-border bg-surface overflow-x-auto">
+          <table className="w-full min-w-[36rem] text-sm">
+            <thead>
+              <tr className="text-left bg-surface-muted">
+                <th className="px-4 py-2 text-xs font-medium text-foreground-muted">
+                  Student
+                </th>
+                <th className="px-4 py-2 text-xs font-medium text-foreground-muted">
+                  Progress
+                </th>
+                <th className="px-4 py-2 text-xs font-medium text-foreground-muted">
+                  Overdue lessons
+                </th>
               </tr>
-            ))}
-          </tbody>
-        </table>
-      </div>
+            </thead>
+            <tbody className="divide-y divide-border">
+              {activeRows.map((row) => (
+                <tr key={row.userId}>
+                  <td className="px-4 py-3 align-top">
+                    <div className="flex items-center gap-3 min-w-0">
+                      <UserAvatar
+                        name={row.name}
+                        image={row.avatar}
+                        size="sm"
+                      />
+                      <div className="min-w-0">
+                        <p className="text-sm font-medium text-foreground truncate">
+                          {row.name}
+                        </p>
+                        <p className="text-xs text-foreground-muted truncate">
+                          {row.email}
+                        </p>
+                      </div>
+                    </div>
+                  </td>
+                  <td className="px-4 py-3 align-top w-[18rem]">
+                    {row.enrollmentCompleted ? (
+                      <span className="inline-flex items-center gap-1 rounded-full bg-success-subtle px-2 py-0.5 text-xs font-medium text-success">
+                        <CheckCircleIcon className="w-3 h-3" />
+                        Completed
+                      </span>
+                    ) : row.completedLessons === 0 ? (
+                      <span className="text-xs text-foreground-muted">
+                        Not started
+                      </span>
+                    ) : (
+                      <ProgressBar
+                        value={row.percent}
+                        label={`${row.name} progress`}
+                        caption={`${row.completedLessons} of ${row.totalLessons} lessons`}
+                        showPercent
+                      />
+                    )}
+                  </td>
+                  <td className="px-4 py-3 align-top">
+                    {row.overdueLessons.length === 0 ? (
+                      <span className="text-xs text-foreground-subtle">—</span>
+                    ) : (
+                      <div className="space-y-2">
+                        <details>
+                          <summary className="cursor-pointer list-none inline-flex items-center gap-1 rounded-full bg-danger-subtle px-2 py-0.5 text-xs font-medium text-danger">
+                            <AlertTriangleIcon className="w-3 h-3" />
+                            {row.overdueLessons.length} overdue
+                          </summary>
+                          <ul className="mt-2 ml-1 space-y-0.5 text-xs text-foreground-muted">
+                            {row.overdueLessons.map((title) => (
+                              <li key={title}>· {title}</li>
+                            ))}
+                          </ul>
+                        </details>
+                        <RemindButton
+                          courseId={courseId}
+                          userId={row.userId}
+                          learnerName={row.name}
+                        />
+                      </div>
+                    )}
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      )}
+
+      {offboardedRows.length > 0 && (
+        <div>
+          <p className="text-xs font-medium text-foreground-muted mb-1.5 px-1">
+            Offboarded ({offboardedRows.length})
+          </p>
+          <div className="rounded-md border border-border bg-surface overflow-x-auto">
+            <table className="w-full min-w-[36rem] text-sm">
+              <tbody className="divide-y divide-border">
+                {offboardedRows.map((row) => (
+                  <tr key={row.userId} className="opacity-60">
+                    <td className="px-4 py-3 align-middle">
+                      <div className="flex items-center gap-3 min-w-0">
+                        <UserAvatar
+                          name={row.name}
+                          image={row.avatar}
+                          size="sm"
+                        />
+                        <div className="min-w-0">
+                          <p className="text-sm font-medium text-foreground-muted truncate">
+                            {row.name}
+                          </p>
+                          <p className="text-xs text-foreground-subtle truncate">
+                            {row.email}
+                          </p>
+                        </div>
+                      </div>
+                    </td>
+                    <td className="px-4 py-3 align-middle" colSpan={2}>
+                      <span className="inline-flex items-center rounded-full border border-border px-2 py-0.5 text-xs font-medium text-foreground-muted">
+                        Offboarded
+                      </span>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      )}
+
+      {activeRows.length === 0 && offboardedRows.length === 0 && (
+        <p className="text-sm text-foreground-muted px-1">No enrollments yet.</p>
+      )}
     </div>
   );
 }

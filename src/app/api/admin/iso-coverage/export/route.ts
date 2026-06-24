@@ -96,7 +96,7 @@ export async function GET() {
 
     for (const e of enrollments) {
       // Skip offboarded users — not counted as outstanding in compliance export.
-      if (e.user.offboardedAt !== null) continue;
+      if (e.user.offboardedAt != null) continue;
       if (ackedCurrent.has(e.user.id)) continue;
       const last = latestAckByUser.get(e.user.id);
       lines.push(

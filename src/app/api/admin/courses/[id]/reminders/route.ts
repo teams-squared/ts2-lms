@@ -78,7 +78,7 @@ export async function POST(
     );
   }
 
-  if (enrollment.user.offboardedAt !== null) {
+  if (enrollment.user.offboardedAt != null) {
     return NextResponse.json(
       { error: "Cannot remind an offboarded user" },
       { status: 409 },

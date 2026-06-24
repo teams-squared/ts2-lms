@@ -75,7 +75,7 @@ export async function POST(request: Request) {
   if (!user) {
     return NextResponse.json({ error: "User not found" }, { status: 404 });
   }
-  if (user.offboardedAt !== null) {
+  if (user.offboardedAt != null) {
     return NextResponse.json(
       { error: "Cannot enroll an offboarded user" },
       { status: 409 },

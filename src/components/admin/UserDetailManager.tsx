@@ -33,6 +33,11 @@ interface UserDetailManagerProps {
   sessionUserId: string;
   /** Per-course enrollment rows shown in the Enrollments section. */
   enrollments: EnrollmentSummary[];
+  /**
+   * ISO string when the user was offboarded; null means the user is active.
+   * Passed as an ISO string (serializable from server component).
+   */
+  offboardedAt: string | null;
 }
 
 const ROLE_LABELS: Record<Role, string> = {
@@ -52,6 +57,7 @@ export function UserDetailManager({
   authoredCourseCount,
   sessionUserId,
   enrollments,
+  offboardedAt,
 }: UserDetailManagerProps) {
   const router = useRouter();
   const { toast } = useToast();
@@ -109,6 +115,16 @@ export function UserDetailManager({
   const isSelf = sessionUserId === userId;
   const canConfirmRemove = removeConfirmText.trim().toLowerCase() === userEmail.toLowerCase();
 
+  // Offboard / Reactivate
+  const [isOffboarded, setIsOffboarded] = useState(offboardedAt != null);
+  const [offboardedDate, setOffboardedDate] = useState<string | null>(offboardedAt);
+  const [offboardOpen, setOffboardOpen] = useState(false);
+  const [offboarding, setOffboarding] = useState(false);
+  const [offboardError, setOffboardError] = useState<string | null>(null);
+  const [reactivateOpen, setReactivateOpen] = useState(false);
+  const [reactivating, setReactivating] = useState(false);
+  const [reactivateError, setReactivateError] = useState<string | null>(null);
+
   const handleRemoveUser = async () => {
     if (!canConfirmRemove || removing) return;
     setRemoving(true);
@@ -143,6 +159,71 @@ export function UserDetailManager({
       setRemoveConfirmText("");
       setRemoveError(null);
     }
+  };
+
+  const handleOffboard = async () => {
+    if (offboarding) return;
+    setOffboarding(true);
+    setOffboardError(null);
+    try {
+      const res = await fetch(`/api/admin/users/${userId}/offboard`, { method: "POST" });
+      if (!res.ok) {
+        const data = (await res.json().catch(() => ({}))) as { error?: string };
+        if (res.status === 409) {
+          setOffboardError(data.error ?? "This user can't be offboarded");
+        } else {
+          setOffboardError(data.error ?? "Failed to offboard user");
+        }
+        return;
+      }
+      const displayName = userName?.trim() || userEmail;
+      const now = new Date().toISOString();
+      setIsOffboarded(true);
+      setOffboardedDate(now);
+      setOffboardOpen(false);
+      toast(`${displayName} has been offboarded`);
+      router.refresh();
+    } catch {
+      setOffboardError("An unexpected error occurred");
+    } finally {
+      setOffboarding(false);
+    }
+  };
+
+  const handleCloseOffboardDialog = (open: boolean) => {
+    if (offboarding) return;
+    setOffboardOpen(open);
+    if (!open) setOffboardError(null);
+  };
+
+  const handleReactivate = async () => {
+    if (reactivating) return;
+    setReactivating(true);
+    setReactivateError(null);
+    try {
+      const res = await fetch(`/api/admin/users/${userId}/offboard`, { method: "DELETE" });
+      if (!res.ok) {
+        const data = (await res.json().catch(() => ({}))) as { error?: string };
+        setReactivateError(data.error ?? "Failed to reactivate user");
+        return;
+      }
+      const displayName = userName?.trim() || userEmail;
+      setIsOffboarded(false);
+      setOffboardedDate(null);
+      setReactivateOpen(false);
+      toast(`${displayName} has been reactivated`);
+      router.refresh();
+    } catch {
+      setReactivateError("An unexpected error occurred");
+    } finally {
+      setReactivating(false);
+    }
+  };
+
+  const handleCloseReactivateDialog = (open: boolean) => {
+    if (reactivating) return;
+    setReactivateOpen(open);
+    if (!open) setReactivateError(null);
   };
 
   const handleGrantClearance = async () => {
@@ -231,8 +312,24 @@ export function UserDetailManager({
 
   return (
     <div className="space-y-6">
-      {/* Role card */}
-      <div className="rounded-lg border border-border bg-card p-6">
+      {/* Offboarded banner */}
+      {isOffboarded && offboardedDate && (
+        <div className="flex items-center gap-3 rounded-lg border border-warning/60 bg-warning-subtle px-4 py-3">
+          <span className="inline-flex items-center gap-1.5 rounded-full bg-warning/20 px-2.5 py-0.5 text-xs font-semibold text-warning">
+            Offboarded
+          </span>
+          <span className="text-sm text-foreground-muted">
+            {new Date(offboardedDate).toLocaleDateString("en-US", {
+              month: "long",
+              day: "numeric",
+              year: "numeric",
+            })}
+          </span>
+        </div>
+      )}
+
+      {/* Role card — disabled for offboarded users */}
+      <div className={`rounded-lg border border-border bg-card p-6${isOffboarded ? " opacity-50 pointer-events-none select-none" : ""}`}>
         <h3 className="text-sm font-semibold text-foreground mb-4">Role</h3>
         <div className="flex flex-col sm:flex-row sm:items-center gap-3">
           <select
@@ -242,6 +339,7 @@ export function UserDetailManager({
               setRoleSuccess(false);
             }}
             aria-label="User role"
+            disabled={isOffboarded}
             className="w-full sm:w-auto px-3 py-2 rounded-lg border border-border bg-surface text-sm text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
           >
             {(["admin", "course_manager", "employee"] as Role[]).map((r) => (
@@ -250,7 +348,7 @@ export function UserDetailManager({
           </select>
           <button
             onClick={handleSaveRole}
-            disabled={savingRole || role === initialRole}
+            disabled={savingRole || role === initialRole || isOffboarded}
             className="rounded-lg bg-primary hover:bg-primary-hover disabled:opacity-50 text-primary-foreground text-sm font-medium px-4 py-2 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background"
           >
             {savingRole ? "Saving…" : "Save role"}
@@ -264,8 +362,8 @@ export function UserDetailManager({
         )}
       </div>
 
-      {/* Clearances (sector + tier) */}
-      <div className="rounded-lg border border-border bg-card p-6">
+      {/* Clearances (sector + tier) — disabled for offboarded users */}
+      <div className={`rounded-lg border border-border bg-card p-6${isOffboarded ? " opacity-50 pointer-events-none select-none" : ""}`}>
         <h3 className="text-sm font-semibold text-foreground mb-1">
           Clearances
         </h3>
@@ -359,8 +457,8 @@ export function UserDetailManager({
         )}
       </div>
 
-      {/* Enrollments — list with per-course "Reset progress" action */}
-      <div className="rounded-lg border border-border bg-card p-6">
+      {/* Enrollments — list with per-course "Reset progress" action; disabled for offboarded users */}
+      <div className={`rounded-lg border border-border bg-card p-6${isOffboarded ? " opacity-50 pointer-events-none select-none" : ""}`}>
         <h3 className="text-sm font-semibold text-foreground mb-1">Enrollments</h3>
         <p className="text-xs text-foreground-muted mb-4">
           Resetting clears all lesson progress and quiz attempts for the course
@@ -425,22 +523,56 @@ export function UserDetailManager({
         )}
       </div>
 
-      {/* Danger zone — permanent user removal */}
-      <div className="rounded-lg border border-danger/60 bg-card p-6">
-        <h3 className="text-sm font-semibold text-danger mb-1">Danger zone</h3>
+      {/* Offboard / Reactivate */}
+      <div className="rounded-lg border border-border bg-card p-6">
+        <h3 className="text-sm font-semibold text-foreground mb-1">
+          {isOffboarded ? "Reactivate user" : "Offboard user"}
+        </h3>
         <p className="text-xs text-foreground-muted mb-4">
-          Permanently delete this user and all of their activity data. Courses they
-          authored will be reassigned to you. This cannot be undone.
+          {isOffboarded
+            ? "Restore this user's access. They will be able to sign in and use the platform again."
+            : "Revoke this user's access without deleting their data. Their progress, clearances, and enrollments are preserved and can be restored by reactivating."}
         </p>
-        <button
-          type="button"
-          onClick={() => setRemoveOpen(true)}
-          disabled={isSelf}
-          title={isSelf ? "You cannot remove your own account" : undefined}
-          className="rounded-lg border border-danger/40 bg-card text-sm font-medium text-danger hover:bg-danger-subtle disabled:opacity-50 disabled:cursor-not-allowed px-4 py-2 transition-colors"
-        >
-          Remove user
-        </button>
+        {isOffboarded ? (
+          <button
+            type="button"
+            onClick={() => setReactivateOpen(true)}
+            className="rounded-lg bg-primary hover:bg-primary-hover text-primary-foreground text-sm font-medium px-4 py-2 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background"
+          >
+            Reactivate
+          </button>
+        ) : (
+          <button
+            type="button"
+            onClick={() => setOffboardOpen(true)}
+            disabled={isSelf}
+            title={isSelf ? "You cannot offboard your own account" : undefined}
+            className="rounded-lg border border-warning/60 bg-card text-sm font-medium text-warning hover:bg-warning-subtle disabled:opacity-50 disabled:cursor-not-allowed px-4 py-2 transition-colors"
+          >
+            Offboard
+          </button>
+        )}
+      </div>
+
+      {/* Danger zone — permanent user removal (demoted, always available) */}
+      <div className="rounded-lg border border-danger/40 bg-card p-4">
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+          <div>
+            <h3 className="text-xs font-semibold text-danger mb-0.5">Permanently delete (erase data)</h3>
+            <p className="text-xs text-foreground-muted">
+              Deletes this user and all their activity data. Courses authored will be reassigned to you. Cannot be undone.
+            </p>
+          </div>
+          <button
+            type="button"
+            onClick={() => setRemoveOpen(true)}
+            disabled={isSelf}
+            title={isSelf ? "You cannot remove your own account" : undefined}
+            className="shrink-0 rounded-lg border border-danger/40 bg-card text-xs font-medium text-danger hover:bg-danger-subtle disabled:opacity-50 disabled:cursor-not-allowed px-3 py-1.5 transition-colors"
+          >
+            Remove user
+          </button>
+        </div>
       </div>
 
       <ConfirmDialog
@@ -557,6 +689,51 @@ export function UserDetailManager({
         confirmLabel="Revoke"
         onConfirm={handleRevokeClearance}
         loading={revokingSector !== null}
+      />
+
+      <ConfirmDialog
+        open={offboardOpen}
+        onOpenChange={handleCloseOffboardDialog}
+        title="Offboard this user?"
+        description={
+          <div className="space-y-3">
+            <p>
+              This will revoke access for{" "}
+              <span className="font-medium text-foreground">
+                {userName?.trim() || userEmail}
+              </span>
+              . Their data is preserved — enrollments, progress, clearances, and XP are kept intact and can be restored by reactivating.
+            </p>
+            <p className="text-xs text-foreground-subtle">
+              They will not be able to sign in until reactivated.
+            </p>
+            {offboardError && <p className="text-sm text-danger">{offboardError}</p>}
+          </div>
+        }
+        confirmLabel="Offboard"
+        onConfirm={handleOffboard}
+        loading={offboarding}
+      />
+
+      <ConfirmDialog
+        open={reactivateOpen}
+        onOpenChange={handleCloseReactivateDialog}
+        title="Reactivate this user?"
+        description={
+          <div className="space-y-3">
+            <p>
+              Restore access for{" "}
+              <span className="font-medium text-foreground">
+                {userName?.trim() || userEmail}
+              </span>
+              . They will be able to sign in and resume their work immediately.
+            </p>
+            {reactivateError && <p className="text-sm text-danger">{reactivateError}</p>}
+          </div>
+        }
+        confirmLabel="Reactivate"
+        onConfirm={handleReactivate}
+        loading={reactivating}
       />
     </div>
   );

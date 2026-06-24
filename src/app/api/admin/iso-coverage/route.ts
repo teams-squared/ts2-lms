@@ -75,7 +75,7 @@ export async function GET() {
       const enrollments = l.module.course.enrollments;
       // Exclude offboarded users — they are not required to ack current policy.
       const enrolled = enrollments
-        .filter((e) => e.user.offboardedAt === null)
+        .filter((e) => e.user.offboardedAt == null)
         .map((e) => ({
           ...e.user,
           enrolledAt: e.enrolledAt,
