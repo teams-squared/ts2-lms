@@ -159,7 +159,7 @@ export async function checkCourseEligibilityBatch(
   // All prerequisite course IDs across the batch (deduped)
   const prereqCourseIds = [
     ...new Set(
-      courses.flatMap((c) => c.prerequisites.map((p) => p.prerequisite.id)),
+      courses.flatMap((c) => (c.prerequisites ?? []).map((p) => p.prerequisite.id)),
     ),
   ];
 
@@ -202,12 +202,12 @@ export async function checkCourseEligibilityBatch(
     }
 
     const { locked: clearanceLocked, hint: clearanceHint } = evalClearance(
-      course.clearanceRequirements,
+      course.clearanceRequirements ?? [],
       tiers,
     );
 
     const missingPrerequisites: { id: string; title: string }[] = [];
-    for (const { prerequisite } of course.prerequisites) {
+    for (const { prerequisite } of course.prerequisites ?? []) {
       const lessonIds = lessonsByPrereq.get(prerequisite.id) ?? [];
       if (lessonIds.length === 0) {
         // Empty prereq course — treat as not completed

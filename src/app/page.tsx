@@ -73,7 +73,9 @@ export default async function HomePage() {
             category: true,
             modules: {
               orderBy: { order: "asc" },
-              include: {
+              // Only `lessons` is read downstream — select it, not all module
+              // scalars (id/title/courseId/timestamps) the default include pulls.
+              select: {
                 lessons: {
                   orderBy: { order: "asc" },
                   select: { id: true, title: true, deadlineDays: true },

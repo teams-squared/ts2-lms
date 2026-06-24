@@ -2,7 +2,7 @@ import { NextResponse } from "next/server";
 import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { prismaStatusToApp, appStatusToPrisma } from "@/lib/types";
-import { checkCourseEligibility } from "@/lib/course-eligibility";
+import { checkCourseEligibilityBatch } from "@/lib/course-eligibility";
 import type { CourseStatus, Role } from "@/lib/types";
 
 /** GET /api/courses — course catalog.
@@ -48,16 +48,24 @@ export async function GET(request: Request) {
     orderBy: { createdAt: "desc" },
   });
 
-  // Batch-check eligibility for the current user
+  // Batch-check eligibility for the current user — one bounded set of queries
+  // regardless of course count (vs 2N–4N from a per-course Promise.all).
   const userId = session.user.id ?? "";
   const role = session.user.role as Role;
-  const eligibilityResults = await Promise.all(
-    courses.map((c) => checkCourseEligibility(userId, role, c.id)),
+  const eligibilityByCourse = await checkCourseEligibilityBatch(
+    userId,
+    role,
+    courses.map((c) => c.id),
   );
 
   return NextResponse.json(
-    courses.map((c, i) => {
-      const elig = eligibilityResults[i];
+    courses.map((c) => {
+      const elig = eligibilityByCourse.get(c.id) ?? {
+        eligible: true,
+        missingPrerequisites: [],
+        clearanceLocked: false,
+        clearanceHint: null,
+      };
       let lockReason: string | undefined;
       if (!elig.eligible) {
         const parts: string[] = [];

@@ -9,15 +9,17 @@ export async function GET() {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
-  const notifications = await prisma.notification.findMany({
-    where: { userId: session.user.id },
-    orderBy: { createdAt: "desc" },
-    take: 20,
-  });
-
-  const unreadCount = await prisma.notification.count({
-    where: { userId: session.user.id, read: false },
-  });
+  // Independent reads — run concurrently rather than sequentially.
+  const [notifications, unreadCount] = await Promise.all([
+    prisma.notification.findMany({
+      where: { userId: session.user.id },
+      orderBy: { createdAt: "desc" },
+      take: 20,
+    }),
+    prisma.notification.count({
+      where: { userId: session.user.id, read: false },
+    }),
+  ]);
 
   return NextResponse.json({ notifications, unreadCount });
 }
