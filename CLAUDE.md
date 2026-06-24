@@ -1,5 +1,14 @@
 @AGENTS.md
 
+## Notion (canonical product docs)
+
+This repo's living overview lives in the **Teams Squared Tech** wiki. Keep
+the "For engineers" section there in sync when stack/architecture changes.
+
+- Product page: https://app.notion.com/p/37b1b16362b381379a75d8acb45653d0
+- SOP (how to run) + Changelog are sub-pages of that page.
+- Tech hub (all products): https://app.notion.com/p/37b1b16362b38149b508fa12e51fe635
+
 ## Git Workflow
 
 End of meaningful unit of work — feature, fix, refactor, or one logical file change — commit relevant files + push remote. Don't batch unrelated changes.
