@@ -54,10 +54,10 @@ dnd dynamic import, accent-color tokens, etc.).
 | # | Item | File | Eff·Imp |
 |---|------|------|---------|
 | ✅ B1 | **DONE** — `GET /api/courses` now uses `checkCourseEligibilityBatch` (4 queries vs 2N–4N). | `src/app/api/courses/route.ts:54` | S·H |
-| B2 | `/api/admin/analytics` `getCourseMetrics` runs `lessonProgress.count` per **user×course** (O(C×U), potentially hundreds). The RSC version (`admin/analytics/page.tsx`) already batches via `groupBy` — mirror it. | `src/app/api/admin/analytics/route.ts:86` | M·H |
-| B3 | `achievements.countCompletedCourses` fires `1 + 2E` queries (module.findMany + lessonProgress.count per enrolled course) — runs **synchronously on every lesson completion** via `checkAndAwardAchievements`. Collapse to 2 aggregate queries. | `src/lib/achievements.ts:111` | M·H |
+| ✅ B2 | **DONE** — `getCourseMetrics` collapsed to 2 batch reads (completed-progress + quiz-attempts) over the union of lessons/users; no more per-user×course `count` or per-course quiz `findMany`. | `src/app/api/admin/analytics/route.ts:86` | M·H |
+| ✅ B3 | **DONE** — `countCompletedCourses` now 2 queries (enrollments+lessons, then one progress lookup) regardless of enrollment count. | `src/lib/achievements.ts:111` | M·H |
 | B4 | **Missing `@@index([userId, read])`** on `Notification` — `count({where:{userId,read:false}})` is polled every 60s by `NotificationBell`, plus the mark-all-read `updateMany`. Table-scans without it. | `prisma/schema.prisma:508` | S·H |
-| B5 | `getUserMetrics` includes full `lessonProgress` rows just to take `.length` (up to ~20k ORM rows). Replace with `_count`. | `src/app/api/admin/analytics/route.ts:127` | S·M |
+| ✅ B5 | **DONE** — `getUserMetrics` uses filtered `_count` (enrollments + completed lessonProgress) instead of pulling full rows. | `src/app/api/admin/analytics/route.ts:127` | S·M |
 | ✅ B6 | **DONE** — dashboard enrollment `modules` narrowed `include`→`select` (lessons only). | `src/app/page.tsx:62` | S·M |
 | ✅ B7 | **DONE** — notification `findMany` + `count` wrapped in `Promise.all`. | `src/app/api/notifications/route.ts:12` | S·M |
 | B8 | `@dnd-kit/*` (~40KB) statically imported into the course-edit client bundle via `Sortable`. `dynamic(..., {ssr:false})` the editor components. | `Sortable.tsx` ← `ModuleManager.tsx:13`, `QuizBuilder.tsx:7`, `AssessmentBuilder.tsx:7` | M·M |
