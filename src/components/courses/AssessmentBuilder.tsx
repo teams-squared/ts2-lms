@@ -6,6 +6,8 @@ import { ChevronDown, ChevronRight } from "lucide-react";
 import { ConfirmDialog } from "@/components/ui/ConfirmDialog";
 import { DragHandle, SortableItem, SortableList } from "@/components/ui/Sortable";
 import { useToast } from "@/components/ui/ToastProvider";
+import { QuestionMarkdown } from "@/components/courses/QuestionMarkdown";
+import { MarkdownHint } from "@/components/courses/MarkdownHint";
 
 // ── Types ─────────────────────────────────────────────────────────────────────
 
@@ -310,13 +312,16 @@ function VariantQuestionEditor({
               <div ref={setNodeRef} style={style} className="rounded-lg border border-border bg-surface p-4">
                 {editingId === question.id ? (
                   <div className="space-y-3">
-                    <input
-                      type="text"
-                      value={editText}
-                      onChange={(e) => setEditText(e.target.value)}
-                      aria-label="Edit question text"
-                      className="w-full rounded-md border border-border bg-surface px-3 py-2 text-sm text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
-                    />
+                    <div>
+                      <textarea
+                        rows={3}
+                        value={editText}
+                        onChange={(e) => setEditText(e.target.value)}
+                        aria-label="Edit question text"
+                        className="w-full rounded-md border border-border bg-surface px-3 py-2 text-sm text-foreground resize-y focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                      />
+                      <MarkdownHint />
+                    </div>
                     <label className="flex items-center gap-1.5 text-xs text-foreground-muted">
                       Max marks:
                       <input
@@ -396,9 +401,12 @@ function VariantQuestionEditor({
                       <div className="flex flex-1 items-start gap-2">
                         <DragHandle dragHandleProps={dragHandleProps} label={`Drag question ${idx + 1}`} size="sm" className="mt-0.5" />
                         <div className="min-w-0 flex-1">
-                          <p className="text-sm font-medium text-foreground">
-                            {idx + 1}. {question.text}
-                          </p>
+                          <div className="flex gap-1.5 text-sm font-medium text-foreground">
+                            <span className="shrink-0">{idx + 1}.</span>
+                            <div className="min-w-0 flex-1">
+                              <QuestionMarkdown>{question.text}</QuestionMarkdown>
+                            </div>
+                          </div>
                           <p className="mt-0.5 text-xs text-foreground-subtle">
                             {QUESTION_TYPE_LABEL[question.questionType]}
                             {" · "}{question.maxMarks} mark{question.maxMarks !== 1 ? "s" : ""}
@@ -428,7 +436,9 @@ function VariantQuestionEditor({
                         {question.options.map((opt) => (
                           <li key={opt.id} className="flex items-center gap-2 text-xs text-foreground-muted">
                             <span className={`h-2 w-2 shrink-0 rounded-full ${opt.isCorrect ? "bg-success" : "bg-border"}`} />
-                            {opt.text}
+                            <span className="min-w-0">
+                              <QuestionMarkdown inline>{opt.text}</QuestionMarkdown>
+                            </span>
                             {opt.isCorrect && <span className="text-success">(correct)</span>}
                           </li>
                         ))}
@@ -454,13 +464,14 @@ function VariantQuestionEditor({
           <div className="flex flex-wrap gap-4">
             <div className="flex-1">
               <label className="mb-1 block text-xs font-medium text-foreground">Question text</label>
-              <input
-                type="text"
+              <textarea
+                rows={3}
                 value={newText}
                 onChange={(e) => setNewText(e.target.value)}
                 placeholder="Enter your question…"
-                className="w-full rounded-md border border-border bg-surface px-3 py-2 text-sm text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                className="w-full rounded-md border border-border bg-surface px-3 py-2 text-sm text-foreground resize-y focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
               />
+              <MarkdownHint />
             </div>
           </div>
           <div className="flex flex-wrap items-end gap-4">
