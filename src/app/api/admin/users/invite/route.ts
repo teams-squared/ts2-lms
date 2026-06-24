@@ -4,6 +4,7 @@ import { requireRole } from "@/lib/roles";
 import { appRoleToPrisma } from "@/lib/types";
 import type { Role } from "@/lib/types";
 import { createEnrollments } from "@/lib/enrollments";
+import { listManagedCourseIds } from "@/lib/courseAccess";
 import { sendUserInviteEmail } from "@/lib/email";
 import { normalizeInviteEmail } from "@/lib/inviteEmail";
 import { writeAuditLog } from "@/lib/audit";
@@ -78,6 +79,26 @@ export async function POST(request: Request) {
       { error: "Only admins can invite admins or course managers" },
       { status: 403 },
     );
+  }
+
+  // Scope enroll-on-invite to courses the inviter manages. Mirrors the gate in
+  // /api/admin/enrollments/batch — without this a course_manager could enroll a
+  // freshly-invited user into ANY course by passing arbitrary courseIds.
+  if (courseIds.length > 0) {
+    const managedIds = await listManagedCourseIds(inviterId, inviterRole);
+    if (managedIds !== null) {
+      const allowed = new Set(managedIds);
+      const unauthorized = courseIds.filter((cid) => !allowed.has(cid));
+      if (unauthorized.length > 0) {
+        return NextResponse.json(
+          {
+            error: "You can only enroll users in courses you manage",
+            unauthorizedCourseIds: unauthorized,
+          },
+          { status: 403 },
+        );
+      }
+    }
   }
 
   // Classify the existing row (if any) before the transaction. An SSO ghost

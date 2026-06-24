@@ -80,6 +80,66 @@ describe("POST /api/admin/users/invite", () => {
     expect(res.status).toBe(403);
   });
 
+  it("blocks a course_manager from enrolling into a course they do not manage", async () => {
+    mockRequireRole.mockResolvedValue({ userId: "cm-1", role: "course_manager" });
+    // listManagedCourseIds → only c-managed is managed by this course_manager.
+    mockPrisma.course.findMany.mockResolvedValue([{ id: "c-managed" }]);
+
+    const res = await POST(
+      makeReq({
+        email: "hire@test.com",
+        role: "employee",
+        courseIds: ["c-managed", "c-OTHER"],
+      }),
+    );
+    expect(res.status).toBe(403);
+    const body = await res.json();
+    expect(body.unauthorizedCourseIds).toEqual(["c-OTHER"]);
+    // Rejected before any user row is touched.
+    expect(mockPrisma.user.findUnique).not.toHaveBeenCalled();
+    expect(mockSendInvite).not.toHaveBeenCalled();
+  });
+
+  it("lets a course_manager invite + enroll into a course they manage", async () => {
+    mockRequireRole.mockResolvedValue({ userId: "cm-1", role: "course_manager" });
+    mockPrisma.course.findMany.mockResolvedValue([{ id: "c-managed" }]);
+    mockPrisma.user.findUnique
+      .mockResolvedValueOnce(null) // duplicate check
+      .mockResolvedValueOnce({ name: "CM", email: "cm@t.com" }); // inviter lookup
+
+    const mockTx = makeMockTx();
+    mockTx.user.create.mockResolvedValue({
+      id: "new-1",
+      email: "hire@test.com",
+      name: null,
+      role: "EMPLOYEE",
+      createdAt: new Date(),
+    });
+    mockTx.course.findMany.mockResolvedValue([
+      { id: "c-managed", title: "Onboarding" },
+    ]);
+    mockTx.enrollment.create.mockResolvedValueOnce({
+      id: "e1",
+      enrolledAt: new Date(),
+      user: { id: "new-1", name: null, email: "hire@test.com" },
+      course: { id: "c-managed", title: "Onboarding" },
+    });
+    mockPrisma.$transaction.mockImplementation(
+      async (cb: (tx: typeof mockTx) => Promise<unknown>) => cb(mockTx),
+    );
+
+    const res = await POST(
+      makeReq({
+        email: "hire@test.com",
+        role: "employee",
+        courseIds: ["c-managed"],
+      }),
+    );
+    expect(res.status).toBe(201);
+    const body = await res.json();
+    expect(body.enrollmentCount).toBe(1);
+  });
+
   it("returns 409 already_invited for a prior invite without resend flag", async () => {
     mockRequireRole.mockResolvedValue({ userId: "admin-1", role: "admin" });
     mockPrisma.user.findUnique.mockResolvedValue({
