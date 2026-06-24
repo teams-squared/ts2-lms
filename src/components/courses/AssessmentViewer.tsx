@@ -4,6 +4,7 @@ import { useState, useEffect, useRef, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import { Spinner } from "@/components/ui/Spinner";
 import { CheckCircleIcon, AlertTriangleIcon, ClockIcon } from "@/components/icons";
+import { QuestionMarkdown } from "@/components/courses/QuestionMarkdown";
 import type { SanitizedAssessmentQuestion, AssessmentStudentState, SavedAssessmentAnswer } from "@/lib/assessment";
 
 interface AssessmentConfig {
@@ -81,9 +82,12 @@ function QuestionCard({
   return (
     <div className="rounded-lg border border-border p-5">
       <div className="mb-3 flex items-start justify-between gap-2">
-        <p className="text-sm font-medium text-foreground">
-          {idx + 1}. {question.text}
-        </p>
+        <div className="flex min-w-0 gap-1.5 text-sm font-medium text-foreground">
+          <span className="shrink-0">{idx + 1}.</span>
+          <div className="min-w-0 flex-1">
+            <QuestionMarkdown>{question.text}</QuestionMarkdown>
+          </div>
+        </div>
         <span className="shrink-0 text-xs text-foreground-subtle">
           {question.maxMarks} mark{question.maxMarks !== 1 ? "s" : ""}
         </span>
@@ -108,7 +112,9 @@ function QuestionCard({
                 onChange={() => onChange(question.id, "selectedOptionId", option.id)}
                 className="text-primary focus-visible:ring-2 focus-visible:ring-ring"
               />
-              <span className="flex-1 text-sm text-foreground">{option.text}</span>
+              <span className="flex-1 text-sm text-foreground">
+                <QuestionMarkdown inline>{option.text}</QuestionMarkdown>
+              </span>
             </label>
           ))}
         </div>
@@ -131,7 +137,9 @@ function QuestionCard({
                   onChange={() => onToggleMulti(question.id, option.id)}
                   className="text-primary focus-visible:ring-2 focus-visible:ring-ring"
                 />
-                <span className="flex-1 text-sm text-foreground">{option.text}</span>
+                <span className="flex-1 text-sm text-foreground">
+                  <QuestionMarkdown inline>{option.text}</QuestionMarkdown>
+                </span>
               </label>
             );
           })}
