@@ -396,6 +396,20 @@ async function main() {
     ALTER TABLE "User" ADD COLUMN IF NOT EXISTS "onboardedAt" TIMESTAMP(3);
   `);
 
+  // AuditRetentionSettings — singleton legal-hold switch for the audit-log
+  // prune cron. Self-provision on staging so the toggle/cron never hit a
+  // missing table in the window before prod's migrate deploy runs (shared DB).
+  await client.query(`
+    CREATE TABLE IF NOT EXISTS "AuditRetentionSettings" (
+      "id"          TEXT NOT NULL,
+      "prunePaused" BOOLEAN NOT NULL DEFAULT false,
+      "pauseReason" TEXT,
+      "updatedAt"   TIMESTAMP(3) NOT NULL,
+      "updatedBy"   TEXT,
+      CONSTRAINT "AuditRetentionSettings_pkey" PRIMARY KEY ("id")
+    );
+  `);
+
   // Commit the transaction opened on line 142 (BEGIN after the Role enum
   // restructure). Without this, client.end() closes the connection with an
   // open transaction and Postgres rolls back EVERY statement after the BEGIN

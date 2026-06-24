@@ -11,48 +11,13 @@ import { prisma } from "./prisma";
  * a transaction client so the audit row commits atomically with the delete.
  */
 
-/** Closed set of audited actions — keep in sync with the routes that emit them. */
-export type AuditAction =
-  | "session.login"
-  | "session.login_failed"
-  | "user.role_changed"
-  | "user.deleted"
-  | "user.offboarded"
-  | "user.reactivated"
-  | "user.invited"
-  | "clearance.granted"
-  | "clearance.revoked"
-  | "enrollment.created"
-  | "enrollment.deleted"
-  | "enrollment.reset"
-  | "course.updated"
-  | "course.deleted"
-  | "course.reminder_sent"
-  | "course_manager.granted"
-  | "course_manager.revoked"
-  | "node.created"
-  | "node.updated"
-  | "node.deleted"
-  | "sector.created"
-  | "sector.updated"
-  | "sector.deleted"
-  | "policy_doc.synced"
-  | "iso_doc.created"
-  | "iso_doc.updated"
-  | "iso_doc.deleted"
-  | "iso_doc.synced"
-  | "setting.updated";
+// Action/target constants live in a server-free module so client components
+// can import them without dragging prisma into the browser bundle. Re-exported
+// here for existing server-side callers that import from "@/lib/audit".
+export { AUDIT_ACTIONS, AUDIT_TARGET_TYPES } from "./auditActions";
+export type { AuditAction, AuditTargetType } from "./auditActions";
 
-export type AuditTargetType =
-  | "user"
-  | "course"
-  | "enrollment"
-  | "clearance"
-  | "session"
-  | "node"
-  | "sector"
-  | "policy_doc"
-  | "setting";
+import type { AuditAction, AuditTargetType } from "./auditActions";
 
 export type AuditEntry = {
   action: AuditAction;

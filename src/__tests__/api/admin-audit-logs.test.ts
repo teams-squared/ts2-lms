@@ -118,4 +118,79 @@ describe("GET /api/admin/audit-logs/export", () => {
     );
     expect(lines[1]).toContain("user.role_changed");
   });
+
+  it("carries integrity headers whose SHA-256 matches the CSV bytes", async () => {
+    mockAuth.mockResolvedValue(adminSession());
+    mockPrisma.auditLog.findMany.mockResolvedValue([
+      {
+        createdAt: new Date("2026-06-15T10:00:00.000Z"),
+        action: "user.role_changed",
+        actorEmail: "admin@teamssquared.com",
+        targetType: "user",
+        targetId: "u1",
+        metadata: { oldRole: "employee", newRole: "admin" },
+        actor: { name: "Admin One", email: "admin@teamssquared.com" },
+      },
+    ]);
+
+    const res = await EXPORT(
+      new Request("http://localhost/api/admin/audit-logs/export"),
+    );
+    expect(res.status).toBe(200);
+    expect(res.headers.get("X-Audit-Export-Rows")).toBe("1");
+    expect(res.headers.get("X-Audit-Export-Generated")).toBeTruthy();
+
+    const text = await res.text();
+    const { createHash } = await import("node:crypto");
+    const expected = createHash("sha256").update(text, "utf8").digest("hex");
+    expect(res.headers.get("X-Content-SHA256")).toBe(expected);
+  });
+
+  it("?format=manifest returns a JSON manifest matching the CSV hash", async () => {
+    mockAuth.mockResolvedValue(adminSession());
+    const row = [
+      {
+        createdAt: new Date("2026-06-15T10:00:00.000Z"),
+        action: "user.role_changed",
+        actorEmail: "admin@teamssquared.com",
+        targetType: "user",
+        targetId: "u1",
+        metadata: { oldRole: "employee", newRole: "admin" },
+        actor: { name: "Admin One", email: "admin@teamssquared.com" },
+      },
+    ];
+    mockPrisma.auditLog.findMany.mockResolvedValue(row);
+
+    // Hash the CSV the export would produce for the same filters.
+    const csvRes = await EXPORT(
+      new Request("http://localhost/api/admin/audit-logs/export"),
+    );
+    const csvHash = csvRes.headers.get("X-Content-SHA256");
+
+    const manRes = await EXPORT(
+      new Request(
+        "http://localhost/api/admin/audit-logs/export?format=manifest",
+      ),
+    );
+    expect(manRes.status).toBe(200);
+    expect(manRes.headers.get("Content-Type")).toContain("application/json");
+    const manifest = await manRes.json();
+    expect(manifest).toMatchObject({
+      algorithm: "sha256",
+      encoding: "utf-8",
+      rowCount: 1,
+      sha256: csvHash,
+    });
+    expect(manifest.generatedBy).toBe("test@teamssquared.com");
+  });
+
+  it("manifest requires admin", async () => {
+    mockAuth.mockResolvedValue(mockSession({ role: "employee" }));
+    const res = await EXPORT(
+      new Request(
+        "http://localhost/api/admin/audit-logs/export?format=manifest",
+      ),
+    );
+    expect(res.status).toBe(403);
+  });
 });

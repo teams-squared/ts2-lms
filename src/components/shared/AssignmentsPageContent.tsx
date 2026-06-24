@@ -3,6 +3,7 @@ import { auth } from "@/lib/auth";
 import { getNodeTree } from "@/lib/courseNodes";
 import { listManagedCourseIds } from "@/lib/courseAccess";
 import { EnrollmentManager } from "@/components/admin/EnrollmentManager";
+import { InviteUserPanel } from "@/components/admin/InviteUserPanel";
 import type { NodeWithChildren } from "@/lib/courseNodes";
 import type { Role } from "@/lib/types";
 import { ACTIVE_USER } from "@/lib/users";
@@ -62,6 +63,7 @@ export async function AssignmentsPageContent() {
       <h2 className="text-sm font-semibold text-foreground mb-4">
         Enrollments
       </h2>
+      <InviteUserPanel nodeTree={nodeTree} inviterRole={role} />
       <EnrollmentManager
         nodeTree={nodeTree}
         users={users}

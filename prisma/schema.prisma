@@ -683,6 +683,20 @@ model IsoNotificationSettings {
   updatedBy String?
 }
 
+/// Singleton legal-hold switch for audit-log retention (ISO 27001 A.5.33 /
+/// A.8.15). When `prunePaused` is true the prune-audit-logs cron skips
+/// entirely, so logs tied to an open investigation or active ISO audit survive
+/// past the AUDIT_LOG_RETENTION_DAYS window. Toggled by admins via
+/// /api/admin/settings/audit-retention; every toggle is itself written to the
+/// AuditLog trail (action `setting.updated`, target `audit_retention`).
+model AuditRetentionSettings {
+  id          String   @id @default("singleton")
+  prunePaused Boolean  @default(false)
+  pauseReason String?
+  updatedAt   DateTime @updatedAt
+  updatedBy   String?
+}
+
 /// Singleton template for the user-invite email. Configured by admins via
 /// /admin/emails. When `bodyText` is empty (or the row is missing), the
 /// system falls back to the built-in default. Body supports placeholders:

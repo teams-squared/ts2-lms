@@ -17,6 +17,7 @@ const TABS = [
   { href: "/admin/iso", label: "ISO", exact: false, adminOnly: true },
   { href: "/admin/clearance", label: "Clearance", exact: false, adminOnly: true },
   { href: "/admin/emails", label: "Emails", exact: false, adminOnly: true },
+  { href: "/admin/audit-logs", label: "Audit logs", exact: false, adminOnly: true },
 ];
 
 export function AdminTabs() {

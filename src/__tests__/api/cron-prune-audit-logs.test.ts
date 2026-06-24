@@ -78,4 +78,38 @@ describe("GET /api/cron/prune-audit-logs", () => {
     expect(body).toMatchObject({ dryRun: true, wouldDelete: 42, retentionDays: 365 });
     expect(mockPrisma.auditLog.deleteMany).not.toHaveBeenCalled();
   });
+
+  it("skips the prune when a legal hold is active", async () => {
+    mockPrisma.auditRetentionSettings.findUnique.mockResolvedValue({
+      id: "singleton",
+      prunePaused: true,
+      pauseReason: "ISO audit 2026-Q3",
+    });
+    mockPrisma.auditLog.deleteMany.mockResolvedValue({ count: 99 });
+    const GET = await importGET();
+    const res = await GET(makeRequest(`Bearer ${CRON_SECRET}`));
+    expect(res.status).toBe(200);
+
+    const body = await res.json();
+    expect(body).toMatchObject({
+      skipped: true,
+      reason: "legal-hold active (prunePaused)",
+      pauseReason: "ISO audit 2026-Q3",
+    });
+    // Hold must prevent deletion — even in non-dryRun mode.
+    expect(mockPrisma.auditLog.deleteMany).not.toHaveBeenCalled();
+  });
+
+  it("skips the prune even in dryRun mode under a legal hold", async () => {
+    mockPrisma.auditRetentionSettings.findUnique.mockResolvedValue({
+      id: "singleton",
+      prunePaused: true,
+      pauseReason: null,
+    });
+    const GET = await importGET();
+    const res = await GET(makeRequest(`Bearer ${CRON_SECRET}`, "?dryRun=1"));
+    const body = await res.json();
+    expect(body.skipped).toBe(true);
+    expect(mockPrisma.auditLog.count).not.toHaveBeenCalled();
+  });
 });

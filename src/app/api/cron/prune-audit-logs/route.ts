@@ -25,8 +25,10 @@ export const dynamic = "force-dynamic";
  * register is the source of truth; bump the env var if the documented period
  * changes — no code change needed.
  *
- * NOTE: this is an unconditional hard delete. There is no legal-hold carve-out
- * yet, so do not rely on it to preserve logs tied to an open investigation.
+ * Legal hold: if AuditRetentionSettings.prunePaused is true, this cron skips
+ * deletion entirely so logs tied to an open investigation or active ISO audit
+ * survive past the window. Admins toggle the hold via
+ * /api/admin/settings/audit-retention; the toggle is itself audited.
  */
 const DEFAULT_RETENTION_DAYS = 365;
 
@@ -59,6 +61,21 @@ export async function GET(req: Request): Promise<NextResponse> {
   const dryRun = url.searchParams.get("dryRun") === "1";
 
   try {
+    // Legal hold — skip the prune entirely while a hold is active so evidence
+    // tied to an open investigation / ISO audit is preserved past the window.
+    const hold = await prisma.auditRetentionSettings.findUnique({
+      where: { id: "singleton" },
+    });
+    if (hold?.prunePaused) {
+      return NextResponse.json({
+        skipped: true,
+        reason: "legal-hold active (prunePaused)",
+        pauseReason: hold.pauseReason ?? null,
+        retentionDays: days,
+        cutoff: cutoff.toISOString(),
+      });
+    }
+
     if (dryRun) {
       const wouldDelete = await prisma.auditLog.count({
         where: { createdAt: { lt: cutoff } },
