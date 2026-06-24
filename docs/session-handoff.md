@@ -7,13 +7,15 @@
 ## Last sync
 - Date: 2026-06-24
 - Branch: `dev`
-- HEAD: `5f729e1` — docs: add Notion canonical product-docs pointers to CLAUDE.md
+- HEAD: `551d62e` — chore(deps): npm audit fix — resolve 15 transitive vulns
 - Tree: clean
-- **`dev` 1 ahead of `main`** — only the docs commit `5f729e1` (doc-only, no need to release).
+- **`dev` == `main`** after release PR #70. All work released PROD.
 
 ## What just shipped
-Markdown-in-assessments released to PROD. Offboarding + Tier 1B perf released earlier same day. All CI-green on `dev`.
-- `5f729e1` **docs** — Notion canonical-docs pointers in `CLAUDE.md` (this session, not released).
+Dep-vuln cleanup + markdown-in-assessments + offboarding + Tier 1B perf, all released PROD same day. All CI-green.
+- `551d62e` **deps** — `npm audit fix`, 15 transitive vulns resolved (undici, uuid, @opentelemetry/posthog-js, js-yaml, dompurify, babel). Lockfile-only. 22→7 alerts. Released PROD via PR #70.
+- `b7116eb` **handoff** — prior regenerate.
+- `5f729e1` **docs** — Notion canonical-docs pointers in `CLAUDE.md`. Released PROD via PR #70.
 - `b3a1624` **assessment markdown** — question prompts + answer options render markdown (react-markdown + remark-gfm, no new dep, no schema). New: `QuestionMarkdown.tsx`, `MarkdownHint.tsx`. **Released PROD via PR #69 → `main` `2d31825`, deploy `dep-d8to89740ujc739d96k0` live 07:18 UTC.**
 - `9ef52ff` **offboarding** — soft-offboard users (`User.offboardedAt`), retain history, Entra auto-sync. Migration `20260624000000_add_user_offboarded_at`. Released PROD via PR #68 → `main` `f5de8a5`, deploy live 05:47 UTC.
 - `a23289d` **offboarding filter** — exclude offboarded users from active surfaces.
@@ -25,7 +27,7 @@ Markdown-in-assessments released to PROD. Offboarding + Tier 1B perf released ea
 Working tree clean.
 
 ## Pending external actions
-- [ ] **Triage Dependabot** (carry-forward) — was 3 moderate + 1 low. `https://github.com/teams-squared/ts2-lms/security/dependabot`
+- [ ] **Dependabot remaining 7** (1 high, 6 moderate) — ALL `hono` via `@prisma/dev` → `prisma`. Dev/CLI-only, NOT prod runtime. Fix needs `npm audit fix --force` → `prisma@6.19.3` (breaking). DEFERRED, needs operator sign-off before prisma bump. `https://github.com/teams-squared/ts2-lms/security/dependabot`
 - [ ] **Confirm ISO cron + env on prod** (carry-forward) — `prune-audit-logs` Action (weekly Sun 04:00 UTC, `CRON_SECRET`); `AUDIT_LOG_RETENTION_DAYS` / `SESSION_MAX_AGE_SECONDS` on `ts2-lms`.
 - [ ] **Tier 1B B4 — `Notification` `@@index([userId, read])` migration** — DEFERRED, needs operator sign-off. Staging+local share PROD DB. Details `docs/polish-backlog.md`.
 - [ ] **(Deferred, budget-gated)** separate staging Postgres + switch staging to `migrate deploy` + retire `migrate.ts`.
@@ -36,7 +38,7 @@ Working tree clean.
 - Notion "For engineers" section sync. Gated on: update only when stack/architecture changes (per new `CLAUDE.md` block).
 
 ## Pickup pointer
-No active WIP. All recent features released PROD. Next natural: operator-picked polish tier (1C a11y modals or Tier 3) from `docs/polish-backlog.md`, OR Dependabot triage. Nothing forces a move.
+No active WIP. All work released PROD (`dev` == `main`). Next natural: operator-picked polish tier (1C a11y modals or Tier 3) from `docs/polish-backlog.md`. Dependabot 7-remaining gated on prisma-bump sign-off. Nothing forces a move.
 
 ---
 
