@@ -1,6 +1,9 @@
 import { Suspense } from "react";
+import type { Metadata } from "next";
 import Logo from "@/components/Logo";
 import LoginForm from "@/components/auth/LoginForm";
+
+export const metadata: Metadata = { title: "Sign in" };
 
 /**
  * Login — the one place the brand gradient is used intentionally per

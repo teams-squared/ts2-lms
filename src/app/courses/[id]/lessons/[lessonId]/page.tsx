@@ -22,8 +22,22 @@ import { Breadcrumbs } from "@/components/ui/Breadcrumbs";
 import { RevealOnView } from "@/components/ui/RevealOnView";
 import { computeDeadline, getDeadlineStatus, formatDeadlineRelative } from "@/lib/deadlines";
 import type { DeadlineInfo } from "@/lib/deadlines";
+import type { Metadata } from "next";
 
 export const dynamic = "force-dynamic";
+
+export async function generateMetadata({
+  params,
+}: {
+  params: Promise<{ id: string; lessonId: string }>;
+}): Promise<Metadata> {
+  const { lessonId } = await params;
+  const lesson = await prisma.lesson.findUnique({
+    where: { id: lessonId },
+    select: { title: true },
+  });
+  return { title: lesson?.title ?? "Lesson" };
+}
 
 export default async function LessonPage({
   params,

@@ -13,6 +13,7 @@ import { Eye, EyeOff } from "lucide-react";
 import { SharePointFilePicker } from "@/components/courses/SharePointFilePicker";
 import type { SharePointDocumentRef } from "@/lib/sharepoint/types";
 import { DragHandle, SortableItem, SortableList } from "@/components/ui/Sortable";
+import { ConfirmDialog } from "@/components/ui/ConfirmDialog";
 
 interface PublicIsoDocRow {
   id: string;
@@ -51,6 +52,7 @@ export function PublicIsoLibraryManager() {
   const [rows, setRows] = useState<PublicIsoDocRow[] | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [busyId, setBusyId] = useState<string | null>(null);
+  const [pendingRemoveId, setPendingRemoveId] = useState<string | null>(null);
   const [adding, setAdding] = useState(false);
   const [pickerOpen, setPickerOpen] = useState(false);
   const [shareUrl, setShareUrl] = useState("");
@@ -209,7 +211,6 @@ export function PublicIsoLibraryManager() {
 
   const remove = useCallback(
     async (id: string) => {
-      if (!confirm("Remove this document from the public library?")) return;
       setBusyId(id);
       setError(null);
       setMessage(null);
@@ -305,7 +306,7 @@ export function PublicIsoLibraryManager() {
             onChange={(e) => setShareUrl(e.target.value)}
             placeholder="Paste SharePoint link"
             disabled={adding || resolving}
-            className="flex-1 rounded-md border border-border bg-background px-2.5 py-1.5 text-sm text-foreground placeholder:text-foreground-subtle focus:outline-none focus:ring-2 focus:ring-primary/40 disabled:opacity-50"
+            className="flex-1 rounded-md border border-border bg-background px-2.5 py-1.5 text-sm text-foreground placeholder:text-foreground-subtle focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/40 disabled:opacity-50"
             onKeyDown={(e) => {
               if (e.key === "Enter") {
                 e.preventDefault();
@@ -355,7 +356,7 @@ export function PublicIsoLibraryManager() {
             <select
               value={selectedLessonId}
               onChange={(e) => setSelectedLessonId(e.target.value)}
-              className="w-full rounded-md border border-border bg-background px-2.5 py-1.5 text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-primary/40"
+              className="w-full rounded-md border border-border bg-background px-2.5 py-1.5 text-sm text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/40"
             >
               <option value="">Choose a lesson…</option>
               {availableLessons.map((l) => (
@@ -474,7 +475,7 @@ export function PublicIsoLibraryManager() {
                     </button>
                     <button
                       type="button"
-                      onClick={() => void remove(row.id)}
+                      onClick={() => setPendingRemoveId(row.id)}
                       disabled={busyId === row.id}
                       className="rounded-md border border-border text-xs text-danger px-2.5 py-1 hover:bg-danger-subtle disabled:opacity-50"
                     >
@@ -494,6 +495,21 @@ export function PublicIsoLibraryManager() {
         onSelect={handlePickerSelect}
         mimeTypeFilter={(m) => m === DOCX_MIME}
         filterLabel="Word documents (.docx)"
+      />
+
+      <ConfirmDialog
+        open={pendingRemoveId !== null}
+        onOpenChange={(open) => {
+          if (!open) setPendingRemoveId(null);
+        }}
+        title="Remove from public library?"
+        description="This severs the LMS pointer to the document. The SharePoint file itself is untouched, and you can re-add it later."
+        confirmLabel="Remove"
+        loading={pendingRemoveId !== null && busyId === pendingRemoveId}
+        onConfirm={async () => {
+          if (pendingRemoveId) await remove(pendingRemoveId);
+          setPendingRemoveId(null);
+        }}
       />
     </div>
   );

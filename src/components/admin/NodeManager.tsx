@@ -283,7 +283,7 @@ export function NodeManager({ initialTree }: NodeManagerProps) {
               onChange={(e) => setNewNodeName(e.target.value)}
               onKeyDown={(e) => { if (e.key === "Escape") setAddingParentId(null); if (e.key === "Enter") void handleCreate(null); }}
               placeholder="Root node name…"
-              className="text-sm px-2 py-1.5 rounded-lg border border-border bg-surface text-foreground focus:outline-none focus:ring-1 focus:ring-ring w-48"
+              className="text-sm px-2 py-1.5 rounded-lg border border-border bg-surface text-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring w-48"
             />
             <Button
               size="sm"

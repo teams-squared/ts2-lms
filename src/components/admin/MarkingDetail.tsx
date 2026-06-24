@@ -242,7 +242,7 @@ export function MarkingDetail({ submissionId }: { submissionId: string }) {
         </p>
         <Link
           href="/admin/marking"
-          className="text-xs text-primary hover:underline focus:outline-none focus:ring-2 focus:ring-ring rounded-sm"
+          className="text-xs text-primary hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring rounded-sm"
         >
           Back to marking queue
         </Link>
@@ -257,7 +257,7 @@ export function MarkingDetail({ submissionId }: { submissionId: string }) {
       {/* Back link */}
       <Link
         href="/admin/marking"
-        className="inline-flex items-center gap-1 text-xs text-foreground-muted hover:text-foreground focus:outline-none focus:ring-2 focus:ring-ring rounded-sm"
+        className="inline-flex items-center gap-1 text-xs text-foreground-muted hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring rounded-sm"
       >
         ← Back to marking queue
       </Link>
@@ -375,7 +375,7 @@ export function MarkingDetail({ submissionId }: { submissionId: string }) {
               onChange={(e) => setFeedback(e.target.value)}
               rows={4}
               placeholder="Enter feedback for the student…"
-              className="w-full text-sm rounded-md border border-border bg-surface px-3 py-2 text-foreground placeholder:text-foreground-subtle focus:outline-none focus:ring-2 focus:ring-ring focus:border-ring resize-y"
+              className="w-full text-sm rounded-md border border-border bg-surface px-3 py-2 text-foreground placeholder:text-foreground-subtle focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:border-ring resize-y"
             />
           </div>
 
@@ -389,7 +389,7 @@ export function MarkingDetail({ submissionId }: { submissionId: string }) {
                 type="button"
                 onClick={() => setPass(true)}
                 className={cn(
-                  "px-4 py-1.5 text-xs font-medium transition-colors focus:outline-none focus:ring-2 focus:ring-ring focus:ring-inset",
+                  "px-4 py-1.5 text-xs font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-inset",
                   pass
                     ? "bg-success text-success-foreground"
                     : "bg-surface text-foreground-muted hover:bg-surface-muted",
@@ -401,7 +401,7 @@ export function MarkingDetail({ submissionId }: { submissionId: string }) {
                 type="button"
                 onClick={() => setPass(false)}
                 className={cn(
-                  "px-4 py-1.5 text-xs font-medium transition-colors focus:outline-none focus:ring-2 focus:ring-ring focus:ring-inset border-l border-border",
+                  "px-4 py-1.5 text-xs font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-inset border-l border-border",
                   !pass
                     ? "bg-danger text-danger-foreground"
                     : "bg-surface text-foreground-muted hover:bg-surface-muted",
@@ -425,7 +425,7 @@ export function MarkingDetail({ submissionId }: { submissionId: string }) {
                 "inline-flex items-center rounded-md px-4 py-2 text-sm font-medium transition-colors",
                 "bg-primary text-primary-foreground hover:opacity-90",
                 "disabled:opacity-50 disabled:cursor-not-allowed",
-                "focus:outline-none focus:ring-2 focus:ring-ring",
+                "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring",
                 pulseClass(submissionId),
               )}
             >
@@ -615,7 +615,7 @@ function QuestionCard({
                 onChange={(e) => onMarkChange(e.target.value)}
                 className={cn(
                   "w-20 rounded-md border px-2 py-1 text-sm text-foreground text-center",
-                  "focus:outline-none focus:ring-2 focus:ring-ring",
+                  "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring",
                   markInvalid
                     ? "border-danger bg-danger-subtle/30"
                     : "border-border bg-surface",

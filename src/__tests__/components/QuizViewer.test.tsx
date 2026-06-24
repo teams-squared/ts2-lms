@@ -55,7 +55,7 @@ describe("QuizViewer", () => {
 
   it("shows idle state with start button when no prior attempt", () => {
     render(<QuizViewer {...defaultProps} />);
-    expect(screen.getByText("Start Quiz")).toBeInTheDocument();
+    expect(screen.getByText("Start quiz")).toBeInTheDocument();
     expect(screen.getByText(/2 questions/i)).toBeInTheDocument();
     expect(screen.getByText(/passing score: 70%/i)).toBeInTheDocument();
   });
@@ -73,12 +73,12 @@ describe("QuizViewer", () => {
         }}
       />,
     );
-    expect(screen.getByText("Retake Quiz")).toBeInTheDocument();
+    expect(screen.getByText("Retake quiz")).toBeInTheDocument();
   });
 
-  it("transitions to taking state on Start Quiz click", () => {
+  it("transitions to taking state on Start quiz click", () => {
     render(<QuizViewer {...defaultProps} />);
-    fireEvent.click(screen.getByText("Start Quiz"));
+    fireEvent.click(screen.getByText("Start quiz"));
     // Questions should now be visible (text may be split across nodes)
     expect(screen.getByText(/What is 2\+2\?/)).toBeInTheDocument();
     expect(screen.getByText(/What is 3\+3\?/)).toBeInTheDocument();
@@ -86,21 +86,21 @@ describe("QuizViewer", () => {
 
   it("renders radio buttons for each option in taking state", () => {
     render(<QuizViewer {...defaultProps} />);
-    fireEvent.click(screen.getByText("Start Quiz"));
+    fireEvent.click(screen.getByText("Start quiz"));
     const radios = screen.getAllByRole("radio");
     expect(radios).toHaveLength(4); // 2 questions × 2 options each
   });
 
   it("disables submit until all questions are answered", () => {
     render(<QuizViewer {...defaultProps} />);
-    fireEvent.click(screen.getByText("Start Quiz"));
+    fireEvent.click(screen.getByText("Start quiz"));
     const submitBtn = screen.getByText("Submit Quiz");
     expect(submitBtn).toBeDisabled();
   });
 
   it("enables submit when all questions are answered", () => {
     render(<QuizViewer {...defaultProps} />);
-    fireEvent.click(screen.getByText("Start Quiz"));
+    fireEvent.click(screen.getByText("Start quiz"));
 
     // Answer q1
     fireEvent.click(screen.getByDisplayValue("o2"));
@@ -128,7 +128,7 @@ describe("QuizViewer", () => {
     vi.stubGlobal("fetch", mockFetch);
 
     render(<QuizViewer {...defaultProps} />);
-    fireEvent.click(screen.getByText("Start Quiz"));
+    fireEvent.click(screen.getByText("Start quiz"));
     fireEvent.click(screen.getByDisplayValue("o2"));
     fireEvent.click(screen.getByDisplayValue("o4"));
     fireEvent.click(screen.getByText("Submit Quiz"));
@@ -161,7 +161,7 @@ describe("QuizViewer", () => {
     );
 
     render(<QuizViewer {...defaultProps} />);
-    fireEvent.click(screen.getByText("Start Quiz"));
+    fireEvent.click(screen.getByText("Start quiz"));
     fireEvent.click(screen.getByDisplayValue("o2"));
     fireEvent.click(screen.getByDisplayValue("o4"));
     fireEvent.click(screen.getByText("Submit Quiz"));
@@ -194,7 +194,7 @@ describe("QuizViewer", () => {
     );
 
     render(<QuizViewer {...defaultProps} />);
-    fireEvent.click(screen.getByText("Start Quiz"));
+    fireEvent.click(screen.getByText("Start quiz"));
     fireEvent.click(screen.getByDisplayValue("o1"));
     fireEvent.click(screen.getByDisplayValue("o3"));
     fireEvent.click(screen.getByText("Submit Quiz"));
@@ -225,7 +225,7 @@ describe("QuizViewer", () => {
     );
 
     render(<QuizViewer {...defaultProps} />);
-    fireEvent.click(screen.getByText("Start Quiz"));
+    fireEvent.click(screen.getByText("Start quiz"));
     fireEvent.click(screen.getByDisplayValue("o1"));
     fireEvent.click(screen.getByDisplayValue("o3"));
     fireEvent.click(screen.getByText("Submit Quiz"));
@@ -252,7 +252,7 @@ describe("QuizViewer", () => {
       />,
     );
     // Must NOT return null — idle state renders quiz info and a button
-    expect(screen.getByText("Retake Quiz")).toBeInTheDocument();
+    expect(screen.getByText("Retake quiz")).toBeInTheDocument();
     expect(screen.getByText(/2 questions/i)).toBeInTheDocument();
   });
 
@@ -292,7 +292,7 @@ describe("QuizViewer", () => {
     vi.stubGlobal("fetch", vi.fn().mockRejectedValue(new Error("Network error")));
 
     render(<QuizViewer {...defaultProps} />);
-    fireEvent.click(screen.getByText("Start Quiz"));
+    fireEvent.click(screen.getByText("Start quiz"));
     fireEvent.click(screen.getByDisplayValue("o2"));
     fireEvent.click(screen.getByDisplayValue("o4"));
     fireEvent.click(screen.getByText("Submit Quiz"));
@@ -314,7 +314,7 @@ describe("QuizViewer", () => {
     );
 
     render(<QuizViewer {...defaultProps} />);
-    fireEvent.click(screen.getByText("Start Quiz"));
+    fireEvent.click(screen.getByText("Start quiz"));
     fireEvent.click(screen.getByDisplayValue("o2"));
     fireEvent.click(screen.getByDisplayValue("o4"));
     fireEvent.click(screen.getByText("Submit Quiz"));

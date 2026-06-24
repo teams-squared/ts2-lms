@@ -1,6 +1,13 @@
 import { auth } from "@/lib/auth";
 import { redirect } from "next/navigation";
+import type { Metadata } from "next";
 import { AdminTabs } from "@/components/admin/AdminTabs";
+
+// Admin pages inherit this: a page setting `title: "Users"` renders as
+// "Users · Admin | Teams Squared LMS"; pages without one fall back to "Admin".
+export const metadata: Metadata = {
+  title: { default: "Admin", template: "%s · Admin | Teams Squared LMS" },
+};
 
 export default async function AdminLayout({
   children,

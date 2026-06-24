@@ -77,7 +77,7 @@ export function CourseProgressTable({ segments }: Props) {
             morph(() => setQuery(next));
           }}
           placeholder="Search courses or students…"
-          className="w-full pl-9 pr-3 py-2 text-sm rounded-md border border-border bg-surface text-foreground placeholder:text-foreground-subtle focus:outline-none focus:ring-2 focus:ring-ring focus:border-ring"
+          className="w-full pl-9 pr-3 py-2 text-sm rounded-md border border-border bg-surface text-foreground placeholder:text-foreground-subtle focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:border-ring"
         />
       </div>
 
@@ -368,7 +368,7 @@ function RemindButton({
         <button
           type="button"
           onClick={() => setOpen(true)}
-          className="text-xs font-medium text-primary hover:underline focus:outline-none focus:ring-2 focus:ring-ring rounded-sm px-1"
+          className="text-xs font-medium text-primary hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring rounded-sm px-1"
         >
           Send reminder
         </button>
@@ -391,13 +391,13 @@ function RemindButton({
         onChange={(e) => setNote(e.target.value.slice(0, NOTE_MAX))}
         placeholder={`Optional note to ${learnerName}…`}
         rows={3}
-        className="w-full text-xs rounded-md border border-border bg-surface px-2 py-1.5 text-foreground placeholder:text-foreground-subtle focus:outline-none focus:ring-2 focus:ring-ring focus:border-ring"
+        className="w-full text-xs rounded-md border border-border bg-surface px-2 py-1.5 text-foreground placeholder:text-foreground-subtle focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:border-ring"
       />
       <div className="flex items-center gap-2">
         <button
           type="submit"
           disabled={sending}
-          className="text-xs font-medium rounded-md bg-primary text-primary-foreground px-2.5 py-1 hover:opacity-90 disabled:opacity-50 focus:outline-none focus:ring-2 focus:ring-ring"
+          className="text-xs font-medium rounded-md bg-primary text-primary-foreground px-2.5 py-1 hover:opacity-90 disabled:opacity-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
         >
           {sending ? "Sending…" : "Send"}
         </button>
@@ -408,7 +408,7 @@ function RemindButton({
             setNote("");
           }}
           disabled={sending}
-          className="text-xs font-medium rounded-md border border-border text-foreground-muted px-2.5 py-1 hover:bg-surface-muted disabled:opacity-50 focus:outline-none focus:ring-2 focus:ring-ring"
+          className="text-xs font-medium rounded-md border border-border text-foreground-muted px-2.5 py-1 hover:bg-surface-muted disabled:opacity-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
         >
           Cancel
         </button>

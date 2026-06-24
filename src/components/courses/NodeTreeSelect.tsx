@@ -123,7 +123,7 @@ export function NodeTreeSelect({ nodes, value, onChange }: NodeTreeSelectProps) 
       <button
         type="button"
         onClick={() => setOpen(!open)}
-        className="w-full flex items-center justify-between gap-2 rounded-lg border border-border bg-surface text-sm px-3 py-2 text-left focus:outline-none focus:ring-2 focus:ring-ring transition-colors"
+        className="w-full flex items-center justify-between gap-2 rounded-lg border border-border bg-surface text-sm px-3 py-2 text-left focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring transition-colors"
       >
         <span className={selectedName ? "text-foreground" : "text-foreground-subtle"}>
           {selectedName ?? "No node"}

@@ -222,7 +222,7 @@ export function PolicyDocLessonEditor({ lessonId }: { lessonId: string }) {
                 onChange={(e) => setShareUrl(e.target.value)}
                 placeholder="https://teamssquared.sharepoint.com/…/POL-002.docx"
                 disabled={syncing || resolving}
-                className="flex-1 rounded-md border border-border bg-background px-2.5 py-1.5 text-sm text-foreground placeholder:text-foreground-subtle focus:outline-none focus:ring-2 focus:ring-primary/40 disabled:opacity-50"
+                className="flex-1 rounded-md border border-border bg-background px-2.5 py-1.5 text-sm text-foreground placeholder:text-foreground-subtle focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/40 disabled:opacity-50"
                 onKeyDown={(e) => {
                   if (e.key === "Enter") {
                     e.preventDefault();

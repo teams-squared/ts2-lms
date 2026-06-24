@@ -595,7 +595,7 @@ export function AssessmentViewer({
                 Starting…
               </span>
             ) : courseLocked ? (
-              "Course completed — assessment locked"
+              "Course completed. Assessment locked"
             ) : lastFeedback != null ? (
               "Retake assessment"
             ) : (
@@ -712,7 +712,7 @@ export function AssessmentViewer({
     return (
       <div className="rounded-lg border border-info/60 bg-info-subtle p-8 text-center">
         <CheckCircleIcon className="mx-auto mb-3 h-10 w-10 text-info" aria-hidden="true" />
-        <p className="text-base font-semibold text-info">Submitted — awaiting marking</p>
+        <p className="text-base font-semibold text-info">Submitted. Awaiting marking</p>
         <p className="mt-2 text-sm text-foreground-muted">
           Your assessment has been submitted
           {awaitingSubmittedAt

@@ -31,7 +31,7 @@ export function CourseForm({
   nodeTree,
   onSubmit,
   onCancel,
-  submitLabel = "Create Course",
+  submitLabel = "Create course",
 }: CourseFormProps) {
   const [title, setTitle] = useState(initialData?.title || "");
   const [description, setDescription] = useState(

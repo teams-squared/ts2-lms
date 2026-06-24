@@ -24,15 +24,42 @@ const jakarta = Plus_Jakarta_Sans({
   weight: ["500", "600", "700"],
 });
 
+const APP_URL =
+  process.env.NEXT_PUBLIC_APP_URL ??
+  process.env.APP_URL ??
+  "https://learn.teamsquared.io";
+
 export const metadata: Metadata = {
-  title: "Teams Squared LMS",
+  metadataBase: new URL(APP_URL),
+  // `template` applies to child segments: a page that sets `title: "Courses"`
+  // renders as "Courses | Teams Squared LMS". `default` covers the root itself.
+  title: {
+    default: "Teams Squared LMS",
+    template: "%s | Teams Squared LMS",
+  },
   description: "Learning Management System for Teams Squared",
+  applicationName: "Teams Squared LMS",
+  // Authenticated-only app — keep it out of search indexes entirely.
+  // Reinforced by src/app/robots.ts (Disallow: /).
+  robots: { index: false, follow: false },
+  openGraph: {
+    title: "Teams Squared LMS",
+    description: "Learning Management System for Teams Squared",
+    siteName: "Teams Squared LMS",
+    type: "website",
+  },
 };
 
 export const viewport: Viewport = {
   width: "device-width",
   initialScale: 1,
   maximumScale: 5,
+  // Matches the light/dark --background tokens in globals.css so mobile
+  // browser chrome blends with the app instead of the OS default.
+  themeColor: [
+    { media: "(prefers-color-scheme: light)", color: "#FFFFFF" },
+    { media: "(prefers-color-scheme: dark)", color: "#0B0B14" },
+  ],
 };
 
 export default function RootLayout({

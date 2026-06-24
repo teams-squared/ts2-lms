@@ -344,7 +344,7 @@ function VariantQuestionEditor({
                                   : handleEditCorrect(oidx)
                               }
                               title={`Mark option ${oidx + 1} as correct`}
-                              className="shrink-0 text-primary focus:ring-ring"
+                              className="shrink-0 text-primary focus-visible:ring-ring"
                             />
                             <input
                               type="text"
@@ -506,7 +506,7 @@ function VariantQuestionEditor({
                         newType === "MULTI_SELECT" ? handleToggleCorrect(idx) : handleCorrectChange(idx)
                       }
                       title={`Mark option ${idx + 1} as correct`}
-                      className="shrink-0 text-primary focus:ring-ring"
+                      className="shrink-0 text-primary focus-visible:ring-ring"
                     />
                     <input
                       type="text"

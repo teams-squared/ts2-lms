@@ -5,6 +5,9 @@ import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { filterAccessibleDocIds, hasAnyClearance } from "@/lib/clearance";
 import { prismaLessonTypeToApp, type Role } from "@/lib/types";
+import type { Metadata } from "next";
+
+export const metadata: Metadata = { title: "Internal docs" };
 
 export const dynamic = "force-dynamic";
 

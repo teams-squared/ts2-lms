@@ -10,16 +10,16 @@ export default function AdminError({
   unstable_retry: () => void;
 }) {
   useEffect(() => {
-    console.error(error);
+    if (process.env.NODE_ENV !== "production") console.error(error);
   }, [error]);
 
   return (
     <div className="mx-auto max-w-2xl px-4 py-16 text-center animate-fade-in">
       <h2 className="mb-2 font-display text-xl font-semibold text-foreground">
-        Admin page error
+        This admin view didn&apos;t load
       </h2>
       <p className="mb-6 text-sm text-foreground-muted">
-        Something went wrong while loading this admin view.
+        Refresh to try again. If it keeps happening, contact support.
       </p>
       <button
         onClick={() => unstable_retry()}
@@ -27,6 +27,11 @@ export default function AdminError({
       >
         Try again
       </button>
+      {error.digest && (
+        <p className="mt-6 text-xs text-foreground-subtle">
+          Reference: {error.digest}
+        </p>
+      )}
     </div>
   );
 }
