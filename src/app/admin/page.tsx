@@ -5,6 +5,7 @@ import { CourseStatusBadge } from "@/components/courses/CourseStatusBadge";
 import { Button } from "@/components/ui/button";
 import { AnimatedNumber } from "@/components/ui/AnimatedNumber";
 import { RevealOnView } from "@/components/ui/RevealOnView";
+import { ACTIVE_USER } from "@/lib/users";
 
 export const dynamic = "force-dynamic";
 
@@ -18,12 +19,13 @@ export default async function AdminPage() {
     recentUsers,
     recentCourses,
   ] = await Promise.all([
-    prisma.user.count(),
-    prisma.user.count({ where: { role: "ADMIN" } }),
-    prisma.user.count({ where: { role: "COURSE_MANAGER" } }),
-    prisma.user.count({ where: { role: "EMPLOYEE" } }),
+    prisma.user.count({ where: { ...ACTIVE_USER } }),
+    prisma.user.count({ where: { ...ACTIVE_USER, role: "ADMIN" } }),
+    prisma.user.count({ where: { ...ACTIVE_USER, role: "COURSE_MANAGER" } }),
+    prisma.user.count({ where: { ...ACTIVE_USER, role: "EMPLOYEE" } }),
     prisma.course.count(),
     prisma.user.findMany({
+      where: { ...ACTIVE_USER },
       select: { id: true, email: true, name: true, role: true, avatar: true, createdAt: true },
       orderBy: { createdAt: "desc" },
       take: 5,

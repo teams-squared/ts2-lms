@@ -5,6 +5,7 @@ import { canManageCourse, listManagedCourseIds } from "@/lib/courseAccess";
 import { awardXp } from "@/lib/xp";
 import { trackEvent } from "@/lib/posthog-server";
 import { writeAuditLog } from "@/lib/audit";
+import { ACTIVE_ENROLLMENT_USER } from "@/lib/users";
 
 /** GET /api/admin/enrollments — list enrollments (scoped to managed courses for course_manager). */
 export async function GET() {
@@ -14,7 +15,9 @@ export async function GET() {
 
   const managedIds = await listManagedCourseIds(userId, role);
   const where =
-    managedIds === null ? {} : { courseId: { in: managedIds } };
+    managedIds === null
+      ? { ...ACTIVE_ENROLLMENT_USER }
+      : { courseId: { in: managedIds }, ...ACTIVE_ENROLLMENT_USER };
 
   const enrollments = await prisma.enrollment.findMany({
     where,
@@ -64,10 +67,19 @@ export async function POST(request: Request) {
     );
   }
 
-  // Verify user exists
-  const user = await prisma.user.findUnique({ where: { id: userId } });
+  // Verify user exists and is not offboarded
+  const user = await prisma.user.findUnique({
+    where: { id: userId },
+    select: { id: true, offboardedAt: true },
+  });
   if (!user) {
     return NextResponse.json({ error: "User not found" }, { status: 404 });
+  }
+  if (user.offboardedAt != null) {
+    return NextResponse.json(
+      { error: "Cannot enroll an offboarded user" },
+      { status: 409 },
+    );
   }
 
   // Check if already enrolled

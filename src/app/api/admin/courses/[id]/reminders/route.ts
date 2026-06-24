@@ -53,7 +53,8 @@ export async function POST(
   const enrollment = await prisma.enrollment.findUnique({
     where: { userId_courseId: { userId: targetUserId, courseId } },
     include: {
-      user: { select: { id: true, name: true, email: true } },
+      // offboardedAt loaded so we can reject sending reminders to offboarded users.
+      user: { select: { id: true, name: true, email: true, offboardedAt: true } },
       course: {
         select: {
           id: true,
@@ -74,6 +75,13 @@ export async function POST(
     return NextResponse.json(
       { error: "Enrollment not found" },
       { status: 404 },
+    );
+  }
+
+  if (enrollment.user.offboardedAt != null) {
+    return NextResponse.json(
+      { error: "Cannot remind an offboarded user" },
+      { status: 409 },
     );
   }
 

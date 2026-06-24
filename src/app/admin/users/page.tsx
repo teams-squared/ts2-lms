@@ -5,6 +5,7 @@ import { prismaRoleToApp } from "@/lib/types";
 import type { Role } from "@/lib/types";
 import { getNodeTree } from "@/lib/courseNodes";
 import { UserList } from "@/components/admin/UserList";
+import { ACTIVE_USER } from "@/lib/users";
 
 export const dynamic = "force-dynamic";
 
@@ -16,6 +17,7 @@ export default async function AdminUsersPage() {
 
   const [users, nodeTree] = await Promise.all([
     prisma.user.findMany({
+      where: { ...ACTIVE_USER },
       select: {
         id: true,
         email: true,

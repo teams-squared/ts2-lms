@@ -17,6 +17,8 @@ export type AuditAction =
   | "session.login_failed"
   | "user.role_changed"
   | "user.deleted"
+  | "user.offboarded"
+  | "user.reactivated"
   | "user.invited"
   | "clearance.granted"
   | "clearance.revoked"

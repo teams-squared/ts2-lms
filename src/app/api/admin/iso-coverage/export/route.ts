@@ -29,7 +29,9 @@ export async function GET() {
                 select: {
                   enrolledAt: true,
                   user: {
-                    select: { id: true, name: true, email: true, role: true },
+                    // offboardedAt included so we can exclude offboarded users
+                    // from the outstanding CSV export.
+                    select: { id: true, name: true, email: true, role: true, offboardedAt: true },
                   },
                 },
               },
@@ -93,6 +95,8 @@ export async function GET() {
     );
 
     for (const e of enrollments) {
+      // Skip offboarded users — not counted as outstanding in compliance export.
+      if (e.user.offboardedAt != null) continue;
       if (ackedCurrent.has(e.user.id)) continue;
       const last = latestAckByUser.get(e.user.id);
       lines.push(

@@ -28,6 +28,7 @@ export default async function AdminUserDetailPage({
       name: true,
       role: true,
       createdAt: true,
+      offboardedAt: true,
     },
   });
 
@@ -133,6 +134,7 @@ export default async function AdminUserDetailPage({
         authoredCourseCount={authoredCount}
         sessionUserId={sessionUserId}
         enrollments={enrollmentSummaries}
+        offboardedAt={user.offboardedAt?.toISOString() ?? null}
       />
 
       {overdueList.length > 0 && (

@@ -59,10 +59,16 @@ export async function POST(request: Request, { params }: Params) {
 
   const user = await prisma.user.findUnique({
     where: { id: userId },
-    select: { id: true, name: true, email: true, role: true },
+    select: { id: true, name: true, email: true, role: true, offboardedAt: true },
   });
   if (!user) {
     return NextResponse.json({ error: "User not found" }, { status: 404 });
+  }
+  if (user.offboardedAt != null) {
+    return NextResponse.json(
+      { error: "Cannot assign an offboarded user as a course manager" },
+      { status: 409 },
+    );
   }
   if (user.role !== "COURSE_MANAGER" && user.role !== "ADMIN") {
     return NextResponse.json(

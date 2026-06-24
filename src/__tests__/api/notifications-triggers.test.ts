@@ -49,7 +49,9 @@ describe("Course publish notification", () => {
 
     expect(res.status).toBe(200);
     expect(mockPrisma.enrollment.findMany).toHaveBeenCalledWith(
-      expect.objectContaining({ where: { courseId: "c1" } })
+      expect.objectContaining({
+        where: { courseId: "c1", user: { offboardedAt: null } },
+      })
     );
     expect(mockPrisma.notification.createMany).toHaveBeenCalledWith(
       expect.objectContaining({

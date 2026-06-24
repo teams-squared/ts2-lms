@@ -39,7 +39,9 @@ export async function GET() {
                 select: {
                   enrolledAt: true,
                   user: {
-                    select: { id: true, name: true, email: true, role: true },
+                    // offboardedAt included so we can exclude offboarded users
+                    // from coverage totals and outstanding lists.
+                    select: { id: true, name: true, email: true, role: true, offboardedAt: true },
                   },
                 },
               },
@@ -71,10 +73,13 @@ export async function GET() {
     .map((l) => {
       const policy = l.policyDoc!;
       const enrollments = l.module.course.enrollments;
-      const enrolled = enrollments.map((e) => ({
-        ...e.user,
-        enrolledAt: e.enrolledAt,
-      }));
+      // Exclude offboarded users — they are not required to ack current policy.
+      const enrolled = enrollments
+        .filter((e) => e.user.offboardedAt == null)
+        .map((e) => ({
+          ...e.user,
+          enrolledAt: e.enrolledAt,
+        }));
 
       // Build a map of userId -> latest ack on this lesson (any version).
       // Used to surface "last seen ack" so an auditor can tell if the

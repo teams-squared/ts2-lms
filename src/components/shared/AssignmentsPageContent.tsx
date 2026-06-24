@@ -5,6 +5,7 @@ import { listManagedCourseIds } from "@/lib/courseAccess";
 import { EnrollmentManager } from "@/components/admin/EnrollmentManager";
 import type { NodeWithChildren } from "@/lib/courseNodes";
 import type { Role } from "@/lib/types";
+import { ACTIVE_USER } from "@/lib/users";
 
 /**
  * Filter a node tree in place by removing courses outside `keepIds`.
@@ -36,6 +37,7 @@ export async function AssignmentsPageContent() {
   const [fullNodeTree, users, enrollments] = await Promise.all([
     getNodeTree({ publishedOnly: true }),
     prisma.user.findMany({
+      where: { ...ACTIVE_USER },
       select: { id: true, name: true, email: true },
       orderBy: { name: "asc" },
     }),

@@ -1,4 +1,5 @@
 import { prisma } from "@/lib/prisma";
+import { ACTIVE_ENROLLMENT_USER } from "@/lib/users";
 
 /**
  * Creates a notification for every user enrolled in a course.
@@ -10,7 +11,7 @@ export async function createNotificationsForCourse(
   message: string
 ): Promise<void> {
   const enrollments = await prisma.enrollment.findMany({
-    where: { courseId },
+    where: { courseId, ...ACTIVE_ENROLLMENT_USER },
     select: { userId: true },
   });
 

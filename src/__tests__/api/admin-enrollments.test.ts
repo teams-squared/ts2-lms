@@ -57,7 +57,7 @@ describe("GET /api/admin/enrollments", () => {
     expect(res.status).toBe(200);
     expect(mockPrisma.enrollment.findMany).toHaveBeenCalledWith(
       expect.objectContaining({
-        where: { courseId: { in: ["c1"] } },
+        where: { courseId: { in: ["c1"] }, user: { offboardedAt: null } },
       }),
     );
   });

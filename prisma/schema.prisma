@@ -23,6 +23,7 @@ model User {
   updatedAt               DateTime              @updatedAt
   onboardedAt             DateTime?
   invitedAt               DateTime?
+  offboardedAt            DateTime?
   invitedById             String?
   invitedBy               User?                 @relation("UserInvites", fields: [invitedById], references: [id], onDelete: SetNull)
   invitedUsers            User[]                @relation("UserInvites")
@@ -48,6 +49,8 @@ model User {
   auditLogs               AuditLog[]            @relation("AuditLogActor")
   assessmentSubmissions   AssessmentSubmission[]
   assessmentsGraded       AssessmentSubmission[] @relation("AssessmentGrader")
+
+  @@index([offboardedAt])
 }
 
 enum CourseStatus {

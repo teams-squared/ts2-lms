@@ -1,0 +1,47 @@
+name: Entra offboard sync
+
+on:
+  schedule:
+    # 04:00 UTC daily = 09:30 IST. Marks LMS users offboarded when their
+    # Entra account is disabled or deleted.
+    - cron: "0 4 * * *"
+  workflow_dispatch:
+    inputs:
+      dryRun:
+        description: "Dry run (report who would be offboarded, don't write)"
+        type: boolean
+        default: false
+
+jobs:
+  entra-offboard-sync:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Hit entra-offboard-sync endpoint
+        env:
+          CRON_SECRET: ${{ secrets.CRON_SECRET }}
+          APP_URL: https://learn.teamsquared.io
+          DRY_RUN: ${{ inputs.dryRun }}
+        run: |
+          set -euo pipefail
+          if [ -z "${CRON_SECRET:-}" ]; then
+            echo "::error::CRON_SECRET repo secret is not set"
+            exit 1
+          fi
+          URL="$APP_URL/api/cron/entra-offboard-sync"
+          if [ "${DRY_RUN:-false}" = "true" ]; then
+            URL="$URL?dryRun=1"
+          fi
+          echo "Calling $URL"
+          HTTP_CODE=$(curl -sS -o response.json -w "%{http_code}" \
+            -H "Authorization: Bearer $CRON_SECRET" \
+            --max-time 120 \
+            "$URL")
+          echo "HTTP $HTTP_CODE"
+          echo "--- Response ---"
+          cat response.json
+          echo
+          if [ "$HTTP_CODE" != "200" ]; then
+            echo "::error::Non-200 response from entra-offboard-sync endpoint"
+            exit 1
+          fi
