@@ -71,56 +71,88 @@ async function getCourseMetrics() {
     orderBy: { title: "asc" },
   });
 
-  const results = [];
-
+  // Union of every published-course lesson id + enrolled user id, plus a
+  // lesson→course map — so completion + quiz stats come from TWO batch reads
+  // instead of a `lessonProgress.count` per user×course and a `quizAttempt`
+  // findMany per course (was O(C×U + C) round-trips).
+  const courseLessonIds = new Map<string, string[]>();
+  const lessonToCourse = new Map<string, string>();
+  const allUserIds = new Set<string>();
   for (const course of courses) {
-    const allLessonIds = course.modules.flatMap((m) => m.lessons.map((l) => l.id));
-    const enrolledCount = course.enrollments.length;
+    const ids = course.modules.flatMap((m) => m.lessons.map((l) => l.id));
+    courseLessonIds.set(course.id, ids);
+    for (const id of ids) lessonToCourse.set(id, course.id);
+    for (const e of course.enrollments) allUserIds.add(e.userId);
+  }
+  const allLessonIds = [...lessonToCourse.keys()];
+
+  const [completedRows, quizRows] = await Promise.all([
+    allLessonIds.length > 0
+      ? prisma.lessonProgress.findMany({
+          where: {
+            completedAt: { not: null },
+            lessonId: { in: allLessonIds },
+            userId: { in: [...allUserIds] },
+          },
+          select: { userId: true, lessonId: true },
+        })
+      : Promise.resolve([] as { userId: string; lessonId: string }[]),
+    allLessonIds.length > 0
+      ? prisma.quizAttempt.findMany({
+          where: { lessonId: { in: allLessonIds } },
+          select: { lessonId: true, score: true, totalQuestions: true },
+        })
+      : Promise.resolve([] as { lessonId: string; score: number; totalQuestions: number }[]),
+  ]);
+
+  // userId → set of completed lesson ids
+  const completedByUser = new Map<string, Set<string>>();
+  for (const r of completedRows) {
+    let s = completedByUser.get(r.userId);
+    if (!s) {
+      s = new Set();
+      completedByUser.set(r.userId, s);
+    }
+    s.add(r.lessonId);
+  }
+  // courseId → { summed % , attempt count }
+  const quizByCourse = new Map<string, { sum: number; count: number }>();
+  for (const a of quizRows) {
+    const cid = lessonToCourse.get(a.lessonId);
+    if (!cid) continue;
+    const bucket = quizByCourse.get(cid) ?? { sum: 0, count: 0 };
+    bucket.sum += a.totalQuestions > 0 ? (a.score / a.totalQuestions) * 100 : 0;
+    bucket.count += 1;
+    quizByCourse.set(cid, bucket);
+  }
+
+  return courses.map((course) => {
+    const lessonIds = courseLessonIds.get(course.id) ?? [];
     const enrolledUserIds = course.enrollments.map((e) => e.userId);
+    const enrolledCount = enrolledUserIds.length;
 
     let completedCount = 0;
-    let totalQuizScore = 0;
-    let quizAttemptCount = 0;
-
-    if (enrolledCount > 0 && allLessonIds.length > 0) {
-      // Count users who completed all lessons
+    let avgQuizScore: number | null = null;
+    if (enrolledCount > 0 && lessonIds.length > 0) {
       for (const userId of enrolledUserIds) {
-        const userCompleted = await prisma.lessonProgress.count({
-          where: {
-            userId,
-            lessonId: { in: allLessonIds },
-            completedAt: { not: null },
-          },
-        });
-        if (userCompleted >= allLessonIds.length) completedCount++;
+        const done = completedByUser.get(userId);
+        if (done && lessonIds.every((id) => done.has(id))) completedCount++;
       }
-
-      // Get quiz stats for this course
-      const quizAttempts = await prisma.quizAttempt.findMany({
-        where: { lessonId: { in: allLessonIds } },
-        select: { score: true, totalQuestions: true },
-      });
-      quizAttemptCount = quizAttempts.length;
-      totalQuizScore = quizAttempts.reduce(
-        (sum, a) => sum + (a.totalQuestions > 0 ? (a.score / a.totalQuestions) * 100 : 0),
-        0,
-      );
+      const quiz = quizByCourse.get(course.id);
+      avgQuizScore = quiz && quiz.count > 0 ? Math.round(quiz.sum / quiz.count) : null;
     }
 
-    results.push({
+    return {
       id: course.id,
       title: course.title,
       enrolledCount,
       completedCount,
       completionPercent:
         enrolledCount > 0 ? Math.round((completedCount / enrolledCount) * 100) : 0,
-      avgQuizScore:
-        quizAttemptCount > 0 ? Math.round(totalQuizScore / quizAttemptCount) : null,
-      totalLessons: allLessonIds.length,
-    });
-  }
-
-  return results;
+      avgQuizScore,
+      totalLessons: lessonIds.length,
+    };
+  });
 }
 
 async function getUserMetrics() {
@@ -131,10 +163,13 @@ async function getUserMetrics() {
       email: true,
       role: true,
       stats: { select: { xp: true, streak: true, lastActivityDate: true } },
-      enrollments: { select: { courseId: true } },
-      lessonProgress: {
-        where: { completedAt: { not: null } },
-        select: { lessonId: true },
+      // Count relations in SQL rather than pulling every row to read `.length`
+      // (lessonProgress could be ~20k rows). Filtered `_count` for completions.
+      _count: {
+        select: {
+          enrollments: true,
+          lessonProgress: { where: { completedAt: { not: null } } },
+        },
       },
     },
     orderBy: { name: "asc" },
@@ -146,8 +181,8 @@ async function getUserMetrics() {
     name: u.name,
     email: u.email,
     role: u.role.toLowerCase(),
-    enrolledCourses: u.enrollments.length,
-    lessonsCompleted: u.lessonProgress.length,
+    enrolledCourses: u._count.enrollments,
+    lessonsCompleted: u._count.lessonProgress,
     xp: u.stats?.xp ?? 0,
     streak: u.stats?.streak ?? 0,
     lastActive: u.stats?.lastActivityDate?.toISOString() ?? null,

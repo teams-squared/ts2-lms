@@ -202,13 +202,15 @@ describe("checkAndAwardAchievements", () => {
     mockPrisma.achievement.findMany.mockResolvedValue([ach]);
     mockPrisma.userStats.findUnique.mockResolvedValue({ streak: 0, xp: 50 });
 
-    // countCompletedCourses flow: enrollment.findMany -> module.findMany -> lessonProgress.count
-    mockPrisma.enrollment.findMany.mockResolvedValue([{ courseId: "c1" }]);
-    mockPrisma.module.findMany.mockResolvedValue([
-      { lessons: [{ id: "l1" }, { id: "l2" }] },
+    // countCompletedCourses flow: enrollment.findMany (course+lessons) ->
+    // lessonProgress.findMany (completed). Course c1 has 2 lessons, both done.
+    mockPrisma.enrollment.findMany.mockResolvedValue([
+      { course: { modules: [{ lessons: [{ id: "l1" }, { id: "l2" }] }] } },
     ]);
-    // All 2 lessons completed
-    mockPrisma.lessonProgress.count.mockResolvedValue(2);
+    mockPrisma.lessonProgress.findMany.mockResolvedValue([
+      { lessonId: "l1" },
+      { lessonId: "l2" },
+    ]);
 
     const result = await checkAndAwardAchievements("u1");
 

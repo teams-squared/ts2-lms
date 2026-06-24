@@ -108,29 +108,36 @@ async function getUserCounts(userId: string): Promise<UserCounts> {
 }
 
 async function countCompletedCourses(userId: string): Promise<number> {
-  const enrolledCourses = await prisma.enrollment.findMany({
+  // Two queries regardless of enrollment count (was 1 + 2 per enrolled
+  // course, run synchronously on every lesson completion): pull each
+  // enrolled course's lesson ids, then one progress lookup over their union.
+  const enrollments = await prisma.enrollment.findMany({
     where: { userId },
-    select: { courseId: true },
+    select: {
+      course: {
+        select: {
+          modules: { select: { lessons: { select: { id: true } } } },
+        },
+      },
+    },
   });
 
+  const courseLessonIds = enrollments.map((e) =>
+    e.course.modules.flatMap((m) => m.lessons.map((l) => l.id)),
+  );
+  const allLessonIds = [...new Set(courseLessonIds.flat())];
+  if (allLessonIds.length === 0) return 0;
+
+  const completedRows = await prisma.lessonProgress.findMany({
+    where: { userId, completedAt: { not: null }, lessonId: { in: allLessonIds } },
+    select: { lessonId: true },
+  });
+  const completedSet = new Set(completedRows.map((r) => r.lessonId));
+
   let completed = 0;
-  for (const { courseId } of enrolledCourses) {
-    const modules = await prisma.module.findMany({
-      where: { courseId },
-      include: { lessons: { select: { id: true } } },
-    });
-    const allLessonIds = modules.flatMap((m) => m.lessons.map((l) => l.id));
-    if (allLessonIds.length === 0) continue;
-
-    const completedCount = await prisma.lessonProgress.count({
-      where: {
-        userId,
-        lessonId: { in: allLessonIds },
-        completedAt: { not: null },
-      },
-    });
-
-    if (completedCount >= allLessonIds.length) completed++;
+  for (const lessonIds of courseLessonIds) {
+    if (lessonIds.length === 0) continue;
+    if (lessonIds.every((id) => completedSet.has(id))) completed++;
   }
   return completed;
 }
