@@ -7,9 +7,11 @@ import { canViewCourse } from "@/lib/courseAccess";
 
 import { LessonViewer } from "@/components/courses/LessonViewer";
 import { QuizViewer } from "@/components/courses/QuizViewer";
-import { QuizBuilder } from "@/components/courses/QuizBuilder";
 import { AssessmentViewer } from "@/components/courses/AssessmentViewer";
-import { AssessmentBuilder } from "@/components/courses/AssessmentBuilder";
+import {
+  QuizBuilderLazy as QuizBuilder,
+  AssessmentBuilderLazy as AssessmentBuilder,
+} from "@/components/courses/LazyEditors";
 import { CourseSidebar } from "@/components/courses/CourseSidebar";
 import { LessonFooter } from "@/components/courses/LessonFooter";
 import { LessonTitleHeader } from "@/components/courses/LessonTitleHeader";

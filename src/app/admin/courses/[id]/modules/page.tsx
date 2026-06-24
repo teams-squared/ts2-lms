@@ -1,7 +1,7 @@
 import { auth } from "@/lib/auth";
 import { notFound, redirect } from "next/navigation";
 import Link from "next/link";
-import { ModuleManager } from "@/components/courses/ModuleManager";
+import { ModuleManagerLazy as ModuleManager } from "@/components/courses/LazyEditors";
 import { loadCourseEditData } from "@/lib/courseEditData";
 import type { Role } from "@/lib/types";
 

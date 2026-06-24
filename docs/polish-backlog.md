@@ -60,7 +60,7 @@ dnd dynamic import, accent-color tokens, etc.).
 | ✅ B5 | **DONE** — `getUserMetrics` uses filtered `_count` (enrollments + completed lessonProgress) instead of pulling full rows. | `src/app/api/admin/analytics/route.ts:127` | S·M |
 | ✅ B6 | **DONE** — dashboard enrollment `modules` narrowed `include`→`select` (lessons only). | `src/app/page.tsx:62` | S·M |
 | ✅ B7 | **DONE** — notification `findMany` + `count` wrapped in `Promise.all`. | `src/app/api/notifications/route.ts:12` | S·M |
-| B8 | `@dnd-kit/*` (~40KB) statically imported into the course-edit client bundle via `Sortable`. `dynamic(..., {ssr:false})` the editor components. | `Sortable.tsx` ← `ModuleManager.tsx:13`, `QuizBuilder.tsx:7`, `AssessmentBuilder.tsx:7` | M·M |
+| ✅ B8 | **DONE** — editors (ModuleManager/QuizBuilder/AssessmentBuilder) lazy-loaded `ssr:false` via client wrappers in `LazyEditors.tsx` (Next 16 forbids `ssr:false` in the Server-Component pages). dnd-kit out of initial bundle. | `src/components/courses/LazyEditors.tsx` | M·M |
 
 ### C. Accessibility blockers
 
