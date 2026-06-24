@@ -3,6 +3,7 @@ import { timingSafeEqual } from "node:crypto";
 import { prisma } from "@/lib/prisma";
 import { computeDueReminders } from "@/lib/deadline-reminders";
 import { sendDeadlineReminderEmail } from "@/lib/email";
+import { ACTIVE_ENROLLMENT_USER } from "@/lib/users";
 
 /** Constant-time bearer-token comparison. Falls back to false on length
  *  mismatch (timingSafeEqual throws when buffer lengths differ, which is
@@ -75,6 +76,7 @@ export async function GET(req: Request): Promise<NextResponse> {
     const enrollments = await prisma.enrollment.findMany({
       skip,
       take: PAGE_SIZE,
+      where: { ...ACTIVE_ENROLLMENT_USER },
       select: {
         userId: true,
         enrolledAt: true,

@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { requireRole } from "@/lib/roles";
+import { ACTIVE_USER, ACTIVE_ENROLLMENT_USER } from "@/lib/users";
 
 /**
  * GET /api/admin/analytics — aggregate LMS analytics for admins.
@@ -22,11 +23,11 @@ export async function GET() {
     courses,
     users,
   ] = await Promise.all([
-    prisma.user.count(),
-    prisma.enrollment.count(),
+    prisma.user.count({ where: { ...ACTIVE_USER } }),
+    prisma.enrollment.count({ where: { ...ACTIVE_ENROLLMENT_USER } }),
     prisma.quizAttempt.count(),
     prisma.userStats.count({
-      where: { lastActivityDate: { gte: sevenDaysAgo } },
+      where: { lastActivityDate: { gte: sevenDaysAgo }, user: { ...ACTIVE_USER } },
     }),
     getCourseMetrics(),
     getUserMetrics(),
@@ -66,7 +67,9 @@ async function getCourseMetrics() {
           lessons: { select: { id: true } },
         },
       },
-      enrollments: { select: { userId: true } },
+      // Include offboardedAt so we can exclude offboarded learners from
+      // completion % denominator without a separate query.
+      enrollments: { select: { userId: true, user: { select: { offboardedAt: true } } } },
     },
     orderBy: { title: "asc" },
   });
@@ -82,7 +85,10 @@ async function getCourseMetrics() {
     const ids = course.modules.flatMap((m) => m.lessons.map((l) => l.id));
     courseLessonIds.set(course.id, ids);
     for (const id of ids) lessonToCourse.set(id, course.id);
-    for (const e of course.enrollments) allUserIds.add(e.userId);
+    for (const e of course.enrollments) {
+      // Skip offboarded learners — they don't count toward completion metrics.
+      if (e.user.offboardedAt === null) allUserIds.add(e.userId);
+    }
   }
   const allLessonIds = [...lessonToCourse.keys()];
 
@@ -128,7 +134,10 @@ async function getCourseMetrics() {
 
   return courses.map((course) => {
     const lessonIds = courseLessonIds.get(course.id) ?? [];
-    const enrolledUserIds = course.enrollments.map((e) => e.userId);
+    // Filter out offboarded learners from completion denominator and numerator.
+    const enrolledUserIds = course.enrollments
+      .filter((e) => e.user.offboardedAt === null)
+      .map((e) => e.userId);
     const enrolledCount = enrolledUserIds.length;
 
     let completedCount = 0;
@@ -157,6 +166,7 @@ async function getCourseMetrics() {
 
 async function getUserMetrics() {
   const users = await prisma.user.findMany({
+    where: { ...ACTIVE_USER },
     select: {
       id: true,
       name: true,

@@ -4,12 +4,14 @@ import { requireRole } from "@/lib/roles";
 import { prismaRoleToApp, appRoleToPrisma } from "@/lib/types";
 import type { Role } from "@/lib/types";
 import { writeAuditLog } from "@/lib/audit";
+import { ACTIVE_USER } from "@/lib/users";
 
 export async function GET() {
   const authResult = await requireRole("admin");
   if (authResult instanceof NextResponse) return authResult;
 
   const users = await prisma.user.findMany({
+    where: { ...ACTIVE_USER },
     select: { id: true, email: true, name: true, avatar: true, role: true, createdAt: true },
     orderBy: { createdAt: "asc" },
   });
