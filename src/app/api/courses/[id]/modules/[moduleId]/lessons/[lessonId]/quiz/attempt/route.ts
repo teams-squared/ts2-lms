@@ -3,7 +3,7 @@ import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { awardXp } from "@/lib/xp";
 import { trackEvent } from "@/lib/posthog-server";
-import { maybeCompleteCourse } from "@/lib/enrollments";
+import { maybeCompleteCourse, maybeCompleteModule } from "@/lib/enrollments";
 
 type Params = { params: Promise<{ id: string; moduleId: string; lessonId: string }> };
 
@@ -260,11 +260,14 @@ export async function POST(request: Request, { params }: Params) {
   } | null = null;
 
   if (passed && enrollment) {
+    const completionNow = new Date();
+    // Module completion is independent of course completion (scoped students).
+    await maybeCompleteModule(userId, moduleId, completionNow);
     ({ courseComplete, courseStats } = await maybeCompleteCourse(
       userId,
       courseId,
       enrollment,
-      new Date(),
+      completionNow,
     ));
   }
 

@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { requireRole } from "@/lib/roles";
 import { canManageCourse, listManagedCourseIds } from "@/lib/courseAccess";
+import { modulesNotInCourse } from "@/lib/enrollments";
 import { awardXp } from "@/lib/xp";
 import { trackEvent } from "@/lib/posthog-server";
 import { writeAuditLog } from "@/lib/audit";
@@ -37,9 +38,13 @@ export async function POST(request: Request) {
   if (authResult instanceof NextResponse) return authResult;
   const { userId: enrolledBy, role } = authResult;
 
-  let body: { courseId?: string; userId?: string };
+  let body: { courseId?: string; userId?: string; moduleIds?: string[] };
   try {
-    body = (await request.json()) as { courseId?: string; userId?: string };
+    body = (await request.json()) as {
+      courseId?: string;
+      userId?: string;
+      moduleIds?: string[];
+    };
   } catch {
     return NextResponse.json({ error: "Invalid JSON body" }, { status: 400 });
   }
@@ -52,10 +57,27 @@ export async function POST(request: Request) {
     );
   }
 
+  // Optional module scope. Omitted/empty = whole course (no EnrollmentModule
+  // rows). When present, each ID must belong to this course.
+  const moduleIds = Array.isArray(body.moduleIds)
+    ? [...new Set(body.moduleIds)]
+    : [];
+
   // Verify course exists
   const course = await prisma.course.findUnique({ where: { id: courseId } });
   if (!course) {
     return NextResponse.json({ error: "Course not found" }, { status: 404 });
+  }
+
+  // Validate scope (if any) before doing any writes.
+  if (moduleIds.length > 0) {
+    const invalid = await modulesNotInCourse(courseId, moduleIds);
+    if (invalid.length > 0) {
+      return NextResponse.json(
+        { error: "Some modules do not belong to this course", invalid },
+        { status: 400 },
+      );
+    }
   }
 
   // Course managers may only enroll into courses they manage.
@@ -94,7 +116,14 @@ export async function POST(request: Request) {
   }
 
   const enrollment = await prisma.enrollment.create({
-    data: { userId, courseId, enrolledById: enrolledBy },
+    data: {
+      userId,
+      courseId,
+      enrolledById: enrolledBy,
+      ...(moduleIds.length > 0
+        ? { scopedModules: { create: moduleIds.map((moduleId) => ({ moduleId })) } }
+        : {}),
+    },
     include: {
       user: { select: { id: true, name: true, email: true } },
       course: { select: { id: true, title: true } },
@@ -121,7 +150,12 @@ export async function POST(request: Request) {
     actorEmail: authResult.session?.user?.email,
     targetType: "enrollment",
     targetId: enrollment.id,
-    metadata: { enrolledUserId: userId, courseId, courseTitle: course.title },
+    metadata: {
+      enrolledUserId: userId,
+      courseId,
+      courseTitle: course.title,
+      scopedModuleIds: moduleIds.length > 0 ? moduleIds : undefined,
+    },
   });
 
   return NextResponse.json(

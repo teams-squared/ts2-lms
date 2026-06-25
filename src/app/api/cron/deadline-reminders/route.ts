@@ -80,6 +80,7 @@ export async function GET(req: Request): Promise<NextResponse> {
       select: {
         userId: true,
         enrolledAt: true,
+        scopedModules: { select: { moduleId: true } },
         user: { select: { email: true, name: true } },
         course: {
           select: {
@@ -87,6 +88,7 @@ export async function GET(req: Request): Promise<NextResponse> {
             title: true,
             modules: {
               select: {
+                id: true,
                 lessons: {
                   where: { deadlineDays: { not: null } },
                   select: { id: true, title: true, deadlineDays: true },

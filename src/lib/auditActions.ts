@@ -20,6 +20,7 @@ export const AUDIT_ACTIONS = [
   "enrollment.created",
   "enrollment.deleted",
   "enrollment.reset",
+  "enrollment.scope_updated",
   "course.updated",
   "course.deleted",
   "course.reminder_sent",

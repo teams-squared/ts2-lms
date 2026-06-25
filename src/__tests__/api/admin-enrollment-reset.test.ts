@@ -32,6 +32,7 @@ function makeMockTx() {
   return {
     lessonProgress: { deleteMany: vi.fn().mockResolvedValue({ count: 0 }) },
     quizAttempt: { deleteMany: vi.fn().mockResolvedValue({ count: 0 }) },
+    moduleCompletion: { deleteMany: vi.fn().mockResolvedValue({ count: 0 }) },
     enrollment: { update: vi.fn().mockResolvedValue({}) },
   };
 }
@@ -70,6 +71,7 @@ describe("POST /api/admin/users/[userId]/enrollments/[courseId]/reset", () => {
       { id: "l2" },
       { id: "l3" },
     ]);
+    mockPrisma.module.findMany.mockResolvedValue([{ id: "m1" }, { id: "m2" }]);
 
     const tx = makeMockTx();
     tx.lessonProgress.deleteMany.mockResolvedValue({ count: 3 });
@@ -94,6 +96,10 @@ describe("POST /api/admin/users/[userId]/enrollments/[courseId]/reset", () => {
     });
     expect(tx.quizAttempt.deleteMany).toHaveBeenCalledWith({
       where: { userId: "u1", lessonId: { in: ["l1", "l2", "l3"] } },
+    });
+    // Module-completion records cleared for the course's modules
+    expect(tx.moduleCompletion.deleteMany).toHaveBeenCalledWith({
+      where: { userId: "u1", moduleId: { in: ["m1", "m2"] } },
     });
     // Sticky completedAt cleared
     expect(tx.enrollment.update).toHaveBeenCalledWith({
@@ -120,6 +126,7 @@ describe("POST /api/admin/users/[userId]/enrollments/[courseId]/reset", () => {
       course: { title: "Compliance" },
     });
     mockPrisma.lesson.findMany.mockResolvedValue([{ id: "lA" }]);
+    mockPrisma.module.findMany.mockResolvedValue([{ id: "mA" }]);
 
     const tx = makeMockTx();
     tx.lessonProgress.deleteMany.mockResolvedValue({ count: 1 });
@@ -145,6 +152,7 @@ describe("POST /api/admin/users/[userId]/enrollments/[courseId]/reset", () => {
       course: { title: "Empty Course" },
     });
     mockPrisma.lesson.findMany.mockResolvedValue([]);
+    mockPrisma.module.findMany.mockResolvedValue([]);
 
     const tx = makeMockTx();
     mockPrisma.$transaction.mockImplementation(
@@ -155,6 +163,7 @@ describe("POST /api/admin/users/[userId]/enrollments/[courseId]/reset", () => {
     expect(res.status).toBe(200);
     expect(tx.lessonProgress.deleteMany).not.toHaveBeenCalled();
     expect(tx.quizAttempt.deleteMany).not.toHaveBeenCalled();
+    expect(tx.moduleCompletion.deleteMany).not.toHaveBeenCalled();
     expect(tx.enrollment.update).toHaveBeenCalled();
   });
 });

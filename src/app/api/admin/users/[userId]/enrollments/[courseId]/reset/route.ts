@@ -16,10 +16,13 @@ type Params = { params: Promise<{ userId: string; courseId: string }> };
  * Effects (transactional):
  *   - Delete LessonProgress rows for (userId × lessons in course)
  *   - Delete QuizAttempt rows for the same scope (cascades QuizAnswer)
+ *   - Delete ModuleCompletion rows for (userId × modules in course)
  *   - Set enrollment.completedAt = null
  *
  * NOT touched:
  *   - The enrollment itself (the user stays enrolled, just at 0%).
+ *   - The module scope (EnrollmentModule rows) — reset clears progress, not the
+ *     assignment. The learner retakes the same assigned modules.
  *   - XP, streak, achievements (reversing those is messy and not what we want
  *     for a "let them retake it" reset).
  *   - Any other course's progress.
@@ -54,6 +57,12 @@ export async function POST(_request: Request, { params }: Params) {
   });
   const lessonIds = lessons.map((l) => l.id);
 
+  const modules = await prisma.module.findMany({
+    where: { courseId },
+    select: { id: true },
+  });
+  const moduleIds = modules.map((m) => m.id);
+
   let progressDeleted = 0;
   let attemptsDeleted = 0;
 
@@ -68,6 +77,12 @@ export async function POST(_request: Request, { params }: Params) {
         where: { userId, lessonId: { in: lessonIds } },
       });
       attemptsDeleted = a.count;
+    }
+    if (moduleIds.length > 0) {
+      // Clear earned module-completion records so the retake re-earns them.
+      await tx.moduleCompletion.deleteMany({
+        where: { userId, moduleId: { in: moduleIds } },
+      });
     }
     await tx.enrollment.update({
       where: { id: enrollment.id },

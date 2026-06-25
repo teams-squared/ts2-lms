@@ -23,6 +23,7 @@ function makeEnrollment(opts: {
       title: "Test Course",
       modules: [
         {
+          id: "module-1",
           lessons: opts.lessons.map((l, i) => ({
             id: l.id ?? `lesson-${i}`,
             title: l.title ?? `Lesson ${i}`,
@@ -31,6 +32,7 @@ function makeEnrollment(opts: {
         },
       ],
     },
+    scopedModules: [],
     lessonProgressForUser: (opts.completedLessonIds ?? []).map((lessonId) => ({
       lessonId,
       completedAt: new Date("2026-01-01"),
@@ -147,17 +149,51 @@ describe("computeDueReminders", () => {
         title: "Test Course",
         modules: [
           {
+            id: "module-1",
             lessons: [
               { id: "lesson-0", title: "Lesson 0", deadlineDays: null },
             ],
           },
         ],
       },
+      scopedModules: [],
       lessonProgressForUser: [],
     };
 
     const results = computeDueReminders([enrollment], NOW);
     expect(results).toHaveLength(0);
+  });
+
+  it("scope: skips lessons in modules outside the enrollment's scope", () => {
+    const enrolledAt = new Date("2026-04-09T00:00:00Z");
+    // Two modules, each with a due-today lesson. Scope restricts to module-1.
+    const enrollment: EnrollmentWithNested = {
+      userId: "user-1",
+      enrolledAt,
+      user: { email: "user-1@test.com", name: "User 1" },
+      course: {
+        id: "course-1",
+        title: "Test Course",
+        modules: [
+          {
+            id: "module-1",
+            lessons: [{ id: "in-scope", title: "In scope", deadlineDays: 10 }],
+          },
+          {
+            id: "module-2",
+            lessons: [
+              { id: "out-scope", title: "Out of scope", deadlineDays: 10 },
+            ],
+          },
+        ],
+      },
+      scopedModules: [{ moduleId: "module-1" }],
+      lessonProgressForUser: [],
+    };
+
+    const results = computeDueReminders([enrollment], NOW);
+    expect(results).toHaveLength(1);
+    expect(results[0].lessonId).toBe("in-scope");
   });
 
   it("handles multiple enrollments and emits correct candidates", () => {

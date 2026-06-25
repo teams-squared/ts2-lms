@@ -48,6 +48,7 @@ export async function AssignmentsPageContent() {
         user: { select: { id: true, name: true, email: true } },
         course: { select: { id: true, title: true } },
         enrolledBy: { select: { id: true, name: true, email: true } },
+        scopedModules: { select: { moduleId: true } },
       },
       orderBy: { enrolledAt: "desc" },
     }),
@@ -73,6 +74,7 @@ export async function AssignmentsPageContent() {
           user: e.user,
           enrolledBy: e.enrolledBy,
           enrolledAt: e.enrolledAt.toISOString(),
+          scopedModuleIds: e.scopedModules.map((sm) => sm.moduleId),
         }))}
       />
     </div>

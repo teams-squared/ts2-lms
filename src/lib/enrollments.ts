@@ -4,6 +4,27 @@ import { awardXp } from "@/lib/xp";
 import { trackEvent } from "@/lib/posthog-server";
 import { sendCourseCompletionEmail } from "@/lib/email";
 
+/** XP bonus awarded once when a user completes every lesson in a module. */
+export const MODULE_COMPLETION_XP = 25;
+
+/**
+ * Validate that every `moduleId` belongs to `courseId`. Returns the IDs that do
+ * NOT (empty = all valid). Used by the enroll + scope-edit endpoints to reject a
+ * scope that references modules outside the course.
+ */
+export async function modulesNotInCourse(
+  courseId: string,
+  moduleIds: string[],
+): Promise<string[]> {
+  if (moduleIds.length === 0) return [];
+  const found = await prisma.module.findMany({
+    where: { id: { in: moduleIds }, courseId },
+    select: { id: true },
+  });
+  const foundSet = new Set(found.map((m) => m.id));
+  return moduleIds.filter((id) => !foundSet.has(id));
+}
+
 export interface CreateEnrollmentsInput {
   userId: string;
   courseIds: string[];
@@ -239,5 +260,69 @@ export async function maybeCompleteCourse(
   } catch {
     // Course completion check is non-critical; never fail the caller's write.
     return { courseComplete: false, courseStats: null };
+  }
+}
+
+/**
+ * Fire the module-completion side-effects exactly once per (user, module). Call
+ * right after a lesson in `moduleId` has transitioned incomplete→complete for
+ * this user. This is the first-class achievement a scoped student earns
+ * ("completed Module A") — independent of course completion.
+ *
+ * Checks whether every lesson in the module is now complete; if so, stamps a
+ * `ModuleCompletion` row. The unique constraint on (userId, moduleId) makes
+ * this idempotent and race-safe — exactly one concurrent caller wins the
+ * `create`, the rest hit P2002 and no-op. The winner awards MODULE_COMPLETION_XP
+ * and fires the `module_completed` analytics event.
+ *
+ * Best-effort: swallows its own errors so completion side-effects never fail
+ * the caller's primary write.
+ */
+export async function maybeCompleteModule(
+  userId: string,
+  moduleId: string,
+  now: Date,
+): Promise<{ moduleComplete: boolean }> {
+  try {
+    const lessons = await prisma.lesson.findMany({
+      where: { moduleId },
+      select: { id: true },
+    });
+    const lessonIds = lessons.map((l) => l.id);
+    if (lessonIds.length === 0) {
+      return { moduleComplete: false };
+    }
+
+    const completedCount = await prisma.lessonProgress.count({
+      where: { userId, lessonId: { in: lessonIds }, completedAt: { not: null } },
+    });
+    if (completedCount < lessonIds.length) {
+      return { moduleComplete: false };
+    }
+
+    // Idempotent stamp: unique (userId, moduleId). Concurrent callers racing
+    // past the count gate above converge here; exactly one wins the create so
+    // the side-effects fire exactly once. Losers hit P2002 and no-op.
+    try {
+      await prisma.moduleCompletion.create({
+        data: { userId, moduleId, completedAt: now },
+      });
+    } catch (err) {
+      if ((err as { code?: string }).code === "P2002") {
+        return { moduleComplete: false };
+      }
+      throw err;
+    }
+
+    await awardXp(userId, MODULE_COMPLETION_XP);
+    trackEvent(userId, "module_completed", {
+      moduleId,
+      xpEarned: MODULE_COMPLETION_XP,
+    });
+
+    return { moduleComplete: true };
+  } catch {
+    // Module completion check is non-critical; never fail the caller's write.
+    return { moduleComplete: false };
   }
 }

@@ -4,6 +4,11 @@ import { prisma } from "@/lib/prisma";
 import { prismaLessonTypeToApp } from "@/lib/types";
 import type { Role } from "@/lib/types";
 import { canViewCourse } from "@/lib/courseAccess";
+import {
+  scopeSetFromRows,
+  filterModulesByScope,
+  isModuleInScope,
+} from "@/lib/enrollmentScope";
 
 import { LessonViewer } from "@/components/courses/LessonViewer";
 import { QuizViewer } from "@/components/courses/QuizViewer";
@@ -81,13 +86,22 @@ export default async function LessonPage({
 
   const enrollment = await prisma.enrollment.findUnique({
     where: { userId_courseId: { userId, courseId } },
+    include: { scopedModules: { select: { moduleId: true } } },
   });
   if (!enrollment && !isPrivilegedUser) {
     redirect("/courses");
   }
 
-  // Fetch all modules + lessons for the sidebar (and progress computation)
-  const modules = await prisma.module.findMany({
+  // Module scope: a scoped enrollment can only reach its assigned modules.
+  // Privileged viewers see everything. Block deep-links to out-of-scope lessons.
+  const scope = isPrivilegedUser ? null : scopeSetFromRows(enrollment?.scopedModules);
+  if (!isModuleInScope(lesson.module.id, scope)) {
+    notFound();
+  }
+
+  // Fetch all modules + lessons for the sidebar (and progress computation),
+  // then narrow to the student's scope.
+  const allModules = await prisma.module.findMany({
     where: { courseId },
     include: {
       lessons: {
@@ -97,6 +111,7 @@ export default async function LessonPage({
     },
     orderBy: { order: "asc" },
   });
+  const modules = filterModulesByScope(allModules, scope);
 
   const allLessonIds = modules.flatMap((m) => m.lessons.map((l) => l.id));
 

@@ -49,6 +49,7 @@ model User {
   auditLogs               AuditLog[]            @relation("AuditLogActor")
   assessmentSubmissions   AssessmentSubmission[]
   assessmentsGraded       AssessmentSubmission[] @relation("AssessmentGrader")
+  moduleCompletions       ModuleCompletion[]
 
   @@index([offboardedAt])
 }
@@ -137,14 +138,16 @@ enum PolicyDocRenderMode {
 }
 
 model Module {
-  id        String   @id @default(cuid())
-  title     String
-  order     Int
-  courseId  String
-  course    Course   @relation(fields: [courseId], references: [id], onDelete: Cascade)
-  lessons   Lesson[]
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  id               String             @id @default(cuid())
+  title            String
+  order            Int
+  courseId         String
+  course           Course             @relation(fields: [courseId], references: [id], onDelete: Cascade)
+  lessons          Lesson[]
+  enrollmentScopes EnrollmentModule[]
+  completions      ModuleCompletion[]
+  createdAt        DateTime           @default(now())
+  updatedAt        DateTime           @updatedAt
 
   @@unique([courseId, order])
 }
@@ -290,12 +293,46 @@ model Enrollment {
   enrolledAt   DateTime  @default(now())
   completedAt  DateTime?
 
-  user       User   @relation(fields: [userId], references: [id], onDelete: Cascade)
-  course     Course @relation(fields: [courseId], references: [id], onDelete: Cascade)
-  enrolledBy User?  @relation("EnrolledBy", fields: [enrolledById], references: [id], onDelete: SetNull)
+  user          User               @relation(fields: [userId], references: [id], onDelete: Cascade)
+  course        Course             @relation(fields: [courseId], references: [id], onDelete: Cascade)
+  enrolledBy    User?              @relation("EnrolledBy", fields: [enrolledById], references: [id], onDelete: SetNull)
+  scopedModules EnrollmentModule[]
 
   @@unique([userId, courseId])
   @@index([courseId])
+}
+
+/// Per-enrollment module allowlist (scope). INVARIANT: zero rows for an
+/// enrollment = whole course (the default, backward-compatible state). One or
+/// more rows = the student is restricted to exactly those modules. Scope drives
+/// visibility, the student's own progress denominator, module completion, and
+/// deadline reminders — NOT course completion (Enrollment.completedAt stays
+/// "all course modules done"). See src/lib/enrollmentScope.ts.
+model EnrollmentModule {
+  enrollmentId String
+  moduleId     String
+  enrollment   Enrollment @relation(fields: [enrollmentId], references: [id], onDelete: Cascade)
+  module       Module     @relation(fields: [moduleId], references: [id], onDelete: Cascade)
+
+  @@id([enrollmentId, moduleId])
+  @@index([moduleId])
+}
+
+/// First-class record that a user completed every lesson in a module. This is
+/// the achievement a scoped student actually earns ("completed Module A"),
+/// distinct from course completion. Stamped idempotently when the module's
+/// last lesson transitions complete; cleared on enrollment reset.
+model ModuleCompletion {
+  id          String   @id @default(cuid())
+  userId      String
+  moduleId    String
+  completedAt DateTime @default(now())
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  module      Module   @relation(fields: [moduleId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, moduleId])
+  @@index([moduleId])
+  @@index([userId])
 }
 
 model LessonProgress {

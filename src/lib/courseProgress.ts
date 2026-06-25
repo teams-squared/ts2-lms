@@ -1,6 +1,7 @@
 import { prisma } from "@/lib/prisma";
 import { listManagedCourseIds } from "@/lib/courseAccess";
 import { computeDeadline } from "@/lib/deadlines";
+import { scopeSetFromRows, filterModulesByScope } from "@/lib/enrollmentScope";
 import type { Role } from "@/lib/types";
 
 export type StudentRow = {
@@ -12,6 +13,10 @@ export type StudentRow = {
   completedLessons: number;
   totalLessons: number;
   enrollmentCompleted: boolean;
+  /** True when this enrollment is restricted to a subset of the course's
+   *  modules — so completedLessons/totalLessons count assigned work, not the
+   *  whole course. */
+  scoped: boolean;
   overdueLessons: string[];
   offboarded: boolean;
 };
@@ -47,6 +52,7 @@ export async function loadCourseProgress(
       title: true,
       modules: {
         select: {
+          id: true,
           lessons: {
             select: { id: true, title: true, deadlineDays: true },
           },
@@ -57,6 +63,7 @@ export async function loadCourseProgress(
           userId: true,
           enrolledAt: true,
           completedAt: true,
+          scopedModules: { select: { moduleId: true } },
           user: {
             select: { id: true, name: true, email: true, avatar: true, offboardedAt: true },
           },
@@ -88,11 +95,19 @@ export async function loadCourseProgress(
 
   const now = new Date();
   return courses.map((c) => {
-    const lessons = c.modules.flatMap((m) => m.lessons);
-    const totalLessons = lessons.length;
+    // Course-level total (segment header) is the whole course. Each student's
+    // denominator below is their assigned-module scope, which may be smaller.
+    const courseTotalLessons = c.modules.flatMap((m) => m.lessons).length;
 
     const allRows: StudentRow[] = c.enrollments.map((e) => {
       const offboarded = e.user.offboardedAt != null;
+      // Per-student scope: zero rows = whole course.
+      const scope = scopeSetFromRows(e.scopedModules);
+      const lessons = filterModulesByScope(c.modules, scope).flatMap(
+        (m) => m.lessons,
+      );
+      const totalLessons = lessons.length;
+
       const userCompleted = completedByUser.get(e.userId) ?? new Set<string>();
       const completedLessons = lessons.reduce(
         (n, l) => (userCompleted.has(l.id) ? n + 1 : n),
@@ -127,6 +142,7 @@ export async function loadCourseProgress(
         completedLessons: effectiveCompleted,
         totalLessons,
         enrollmentCompleted,
+        scoped: scope !== null,
         overdueLessons,
         offboarded,
       };
@@ -152,7 +168,7 @@ export async function loadCourseProgress(
     return {
       courseId: c.id,
       title: c.title,
-      totalLessons,
+      totalLessons: courseTotalLessons,
       enrolledCount: activeRows.length,
       completedCount: activeRows.filter((r) => r.enrollmentCompleted).length,
       overdueCount: activeRows.reduce((n, r) => n + r.overdueLessons.length, 0),
