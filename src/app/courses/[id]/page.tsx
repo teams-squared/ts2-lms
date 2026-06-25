@@ -11,6 +11,7 @@ import { CourseStatusBadge } from "@/components/courses/CourseStatusBadge";
 import { CourseThumbnail } from "@/components/courses/CourseThumbnail";
 import { UserAvatar } from "@/components/ui/UserAvatar";
 import { ModuleList } from "@/components/courses/ModuleList";
+import { scopeSetFromRows, filterModulesByScope } from "@/lib/enrollmentScope";
 import { CheckCircleIcon } from "@/components/icons";
 import { Breadcrumbs } from "@/components/ui/Breadcrumbs";
 import { EnrollButton } from "@/components/courses/EnrollButton";
@@ -69,9 +70,10 @@ export default async function CourseDetailPage({
     notFound();
   }
 
-  // Fetch enrollment
+  // Fetch enrollment (with its module scope, if any)
   const enrollment = await prisma.enrollment.findUnique({
     where: { userId_courseId: { userId, courseId: id } },
+    include: { scopedModules: { select: { moduleId: true } } },
   });
 
   // Non-privileged users must be enrolled to view the course
@@ -79,7 +81,12 @@ export default async function CourseDetailPage({
     notFound();
   }
 
-  const allLessonsFlat = course.modules.flatMap((m) => m.lessons);
+  // Module scope: a scoped enrollment only sees its assigned modules. Privileged
+  // viewers (admin/manager preview) and whole-course enrollments see everything.
+  const scope = scopeSetFromRows(enrollment?.scopedModules);
+  const visibleModules = filterModulesByScope(course.modules, scope);
+
+  const allLessonsFlat = visibleModules.flatMap((m) => m.lessons);
   const allLessonIds = allLessonsFlat.map((l) => l.id);
   const totalLessons = allLessonIds.length;
 
@@ -240,7 +247,7 @@ export default async function CourseDetailPage({
             Course Content
           </h2>
           <p className="mt-0.5 text-xs text-foreground-subtle">
-            {course.modules.length} module{course.modules.length !== 1 ? "s" : ""} &middot;{" "}
+            {visibleModules.length} module{visibleModules.length !== 1 ? "s" : ""} &middot;{" "}
             {totalLessons} lesson
             {totalLessons !== 1 ? "s" : ""}
           </p>
@@ -249,7 +256,7 @@ export default async function CourseDetailPage({
           courseId={id}
           completedLessonIds={completedLessonIdSet}
           deadlineInfoMap={Object.fromEntries(deadlineInfoMap)}
-          modules={course.modules.map((m) => ({
+          modules={visibleModules.map((m) => ({
             id: m.id,
             title: m.title,
             order: m.order,

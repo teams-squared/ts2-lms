@@ -323,6 +323,60 @@ describe("loadCourseProgress — percent + overdue math", () => {
     ]);
   });
 
+  it("scope: denominator counts only the student's assigned modules", async () => {
+    mockListManagedCourseIds.mockResolvedValue(null);
+    mockPrisma.course.findMany.mockResolvedValue([
+      {
+        id: "c1",
+        title: "Course One",
+        // Two modules, two lessons each = 4 lessons total in the course.
+        modules: [
+          {
+            id: "mA",
+            lessons: [
+              { id: "L1", title: "L1", deadlineDays: null },
+              { id: "L2", title: "L2", deadlineDays: null },
+            ],
+          },
+          {
+            id: "mB",
+            lessons: [
+              { id: "L3", title: "L3", deadlineDays: null },
+              { id: "L4", title: "L4", deadlineDays: null },
+            ],
+          },
+        ],
+        enrollments: [
+          {
+            userId: "u1",
+            enrolledAt: daysAgo(1),
+            completedAt: null,
+            scopedModules: [{ moduleId: "mA" }], // assigned module A only
+            user: { id: "u1", name: "Akil", email: "a@t.com", avatar: null },
+          },
+        ],
+      },
+    ]);
+    // Student finished both lessons of module A.
+    mockPrisma.lessonProgress.findMany.mockResolvedValue([
+      { userId: "u1", lessonId: "L1" },
+      { userId: "u1", lessonId: "L2" },
+    ]);
+
+    const result = await loadCourseProgress("admin1", "admin");
+    const row = result![0].rows[0];
+    // Denominator is the 2 assigned lessons, not the course's 4.
+    expect(row.totalLessons).toBe(2);
+    expect(row.completedLessons).toBe(2);
+    expect(row.percent).toBe(100);
+    expect(row.scoped).toBe(true);
+    // enrollment.completedAt is course-wide and still null — they did not
+    // complete the whole course, only their assigned modules.
+    expect(row.enrollmentCompleted).toBe(false);
+    // Segment header still reflects the whole course.
+    expect(result![0].totalLessons).toBe(4);
+  });
+
   it("falls back to 'Unnamed' when user.name is blank", async () => {
     mockListManagedCourseIds.mockResolvedValue(null);
     mockPrisma.course.findMany.mockResolvedValue([

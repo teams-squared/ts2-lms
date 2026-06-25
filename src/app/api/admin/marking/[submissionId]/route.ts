@@ -3,7 +3,7 @@ import { prisma } from "@/lib/prisma";
 import { requireRole } from "@/lib/roles";
 import { canManageCourse } from "@/lib/courseAccess";
 import { finalizeIfExpired } from "@/lib/assessment";
-import { maybeCompleteCourse } from "@/lib/enrollments";
+import { maybeCompleteCourse, maybeCompleteModule } from "@/lib/enrollments";
 import { awardXp } from "@/lib/xp";
 import { trackEvent } from "@/lib/posthog-server";
 
@@ -151,6 +151,7 @@ export async function PATCH(request: Request, { params }: Params) {
           id: true,
           module: {
             select: {
+              id: true,
               course: { select: { id: true } },
             },
           },
@@ -164,6 +165,7 @@ export async function PATCH(request: Request, { params }: Params) {
   }
 
   const courseId = submission.lesson.module.course.id;
+  const moduleId = submission.lesson.module.id;
   const lessonId = submission.lesson.id;
 
   // Manually-marked questions of the submission's assigned variant — the only
@@ -340,7 +342,8 @@ export async function PATCH(request: Request, { params }: Params) {
       // Award assessment XP to the student (25 XP mirrors quiz pass).
       await awardXp(studentId, 25);
 
-      // Fire course-completion side-effects (idempotent via conditional stamp).
+      // Fire module- + course-completion side-effects (both idempotent).
+      await maybeCompleteModule(studentId, moduleId, now);
       await maybeCompleteCourse(studentId, courseId, enrollment, now);
     }
 

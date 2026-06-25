@@ -259,15 +259,20 @@ function ExpandedRows({
                         <CheckCircleIcon className="w-3 h-3" />
                         Completed
                       </span>
+                    ) : row.scoped && row.totalLessons > 0 && row.percent === 100 ? (
+                      <span className="inline-flex items-center gap-1 rounded-full bg-success-subtle px-2 py-0.5 text-xs font-medium text-success">
+                        <CheckCircleIcon className="w-3 h-3" />
+                        Assigned modules done
+                      </span>
                     ) : row.completedLessons === 0 ? (
                       <span className="text-xs text-foreground-muted">
-                        Not started
+                        {row.scoped ? "Not started (assigned subset)" : "Not started"}
                       </span>
                     ) : (
                       <ProgressBar
                         value={row.percent}
                         label={`${row.name} progress`}
-                        caption={`${row.completedLessons} of ${row.totalLessons} lessons`}
+                        caption={`${row.completedLessons} of ${row.totalLessons} ${row.scoped ? "assigned lessons" : "lessons"}`}
                         showPercent
                       />
                     )}

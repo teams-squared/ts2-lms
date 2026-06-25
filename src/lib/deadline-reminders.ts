@@ -1,5 +1,6 @@
 import { computeDeadline } from "@/lib/deadlines";
 import { prisma } from "@/lib/prisma";
+import { scopeSetFromRows, filterModulesByScope } from "@/lib/enrollmentScope";
 
 export type ReminderKind = "due_soon_1" | "due_today" | "overdue_1";
 
@@ -27,6 +28,7 @@ export interface EnrollmentWithNested {
     id: string;
     title: string;
     modules: Array<{
+      id: string;
       lessons: Array<{
         id: string;
         title: string;
@@ -34,6 +36,9 @@ export interface EnrollmentWithNested {
       }>;
     }>;
   };
+  /** Enrollment module scope (zero rows = whole course). Reminders only fire
+   *  for lessons in assigned modules. */
+  scopedModules: Array<{ moduleId: string }>;
   lessonProgressForUser: Array<{
     lessonId: string;
     completedAt: Date | null;
@@ -64,7 +69,9 @@ export function computeDueReminders(
         .map((lp) => lp.lessonId),
     );
 
-    for (const mod of enrollment.course.modules) {
+    const scope = scopeSetFromRows(enrollment.scopedModules);
+    const visibleModules = filterModulesByScope(enrollment.course.modules, scope);
+    for (const mod of visibleModules) {
       for (const lesson of mod.lessons) {
         if (lesson.deadlineDays == null) continue;
         if (completedSet.has(lesson.id)) continue;
@@ -128,12 +135,14 @@ export async function getOverdueForUser(userId: string): Promise<OverdueLesson[]
     where: { userId },
     select: {
       enrolledAt: true,
+      scopedModules: { select: { moduleId: true } },
       course: {
         select: {
           id: true,
           title: true,
           modules: {
             select: {
+              id: true,
               lessons: {
                 where: { deadlineDays: { not: null } },
                 select: { id: true, title: true, deadlineDays: true },
@@ -155,7 +164,9 @@ export async function getOverdueForUser(userId: string): Promise<OverdueLesson[]
   const results: OverdueLesson[] = [];
 
   for (const enrollment of enrollments) {
-    for (const mod of enrollment.course.modules) {
+    const scope = scopeSetFromRows(enrollment.scopedModules);
+    const visibleModules = filterModulesByScope(enrollment.course.modules, scope);
+    for (const mod of visibleModules) {
       for (const lesson of mod.lessons) {
         if (!lesson.deadlineDays) continue;
         if (completedSet.has(lesson.id)) continue;

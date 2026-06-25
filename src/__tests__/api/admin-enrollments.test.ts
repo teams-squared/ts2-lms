@@ -151,4 +151,48 @@ describe("POST /api/admin/enrollments", () => {
       }),
     );
   });
+
+  it("creates a module-scoped enrollment when moduleIds are provided", async () => {
+    mockAuth.mockResolvedValue(mockSession({ id: "admin-1", role: "admin" }));
+    mockPrisma.course.findUnique.mockResolvedValue({ id: "c1", title: "Course One" });
+    // modulesNotInCourse → both belong to the course (no invalid ids).
+    mockPrisma.module.findMany.mockResolvedValue([{ id: "m1" }, { id: "m2" }]);
+    mockPrisma.user.findUnique.mockResolvedValue({ id: "u1", name: "User One" });
+    mockPrisma.enrollment.findUnique.mockResolvedValue(null);
+    mockPrisma.enrollment.create.mockResolvedValue({
+      id: "e-scoped",
+      user: { id: "u1", name: "User One", email: "u1@test.com" },
+      course: { id: "c1", title: "Course One" },
+      enrolledAt: new Date(),
+    });
+    mockPrisma.notification.create.mockResolvedValue({});
+
+    const res = await POST(
+      makeReq({ courseId: "c1", userId: "u1", moduleIds: ["m1", "m2"] }),
+    );
+    expect(res.status).toBe(201);
+    // Scope rows created alongside the enrollment.
+    expect(mockPrisma.enrollment.create).toHaveBeenCalledWith(
+      expect.objectContaining({
+        data: expect.objectContaining({
+          scopedModules: { create: [{ moduleId: "m1" }, { moduleId: "m2" }] },
+        }),
+      }),
+    );
+  });
+
+  it("returns 400 when moduleIds reference modules outside the course", async () => {
+    mockAuth.mockResolvedValue(mockSession({ id: "admin-1", role: "admin" }));
+    mockPrisma.course.findUnique.mockResolvedValue({ id: "c1", title: "Course One" });
+    // Only m1 belongs to the course; mX is invalid.
+    mockPrisma.module.findMany.mockResolvedValue([{ id: "m1" }]);
+
+    const res = await POST(
+      makeReq({ courseId: "c1", userId: "u1", moduleIds: ["m1", "mX"] }),
+    );
+    expect(res.status).toBe(400);
+    const body = await res.json();
+    expect(body.invalid).toEqual(["mX"]);
+    expect(mockPrisma.enrollment.create).not.toHaveBeenCalled();
+  });
 });

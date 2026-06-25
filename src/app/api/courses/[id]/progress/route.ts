@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { computeDeadline, getDeadlineStatus } from "@/lib/deadlines";
+import { scopeSetFromRows, filterModulesByScope } from "@/lib/enrollmentScope";
 import type { CourseProgress } from "@/lib/types";
 
 type Params = { params: Promise<{ id: string }> };
@@ -18,14 +19,18 @@ export async function GET(_request: Request, { params }: Params) {
 
   const enrollment = await prisma.enrollment.findUnique({
     where: { userId_courseId: { userId, courseId } },
+    include: { scopedModules: { select: { moduleId: true } } },
   });
 
-  // Fetch all lesson IDs for this course
+  // Fetch all modules, then narrow to the enrollment's module scope. A scoped
+  // student's progress is measured against their assigned modules only; the
+  // not-enrolled branch below sees the whole course (scope is null).
   const modules = await prisma.module.findMany({
     where: { courseId },
     include: { lessons: { select: { id: true, deadlineDays: true } } },
   });
-  const allLessons = modules.flatMap((m) => m.lessons);
+  const scope = scopeSetFromRows(enrollment?.scopedModules);
+  const allLessons = filterModulesByScope(modules, scope).flatMap((m) => m.lessons);
   const allLessonIds = allLessons.map((l) => l.id);
   const lessonDeadlineMap = new Map(allLessons.map((l) => [l.id, l.deadlineDays]));
 

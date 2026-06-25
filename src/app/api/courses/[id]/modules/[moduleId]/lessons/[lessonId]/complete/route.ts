@@ -4,7 +4,7 @@ import { prisma } from "@/lib/prisma";
 import { awardXp } from "@/lib/xp";
 import { trackEvent } from "@/lib/posthog-server";
 import { sendIsoAcknowledgementEmail } from "@/lib/email";
-import { maybeCompleteCourse } from "@/lib/enrollments";
+import { maybeCompleteCourse, maybeCompleteModule } from "@/lib/enrollments";
 import { formatPolicyAttestation } from "@/lib/policy-doc/attestation";
 
 type Params = { params: Promise<{ id: string; moduleId: string; lessonId: string }> };
@@ -278,6 +278,10 @@ export async function POST(request: Request, { params }: Params) {
   } | null = null;
 
   if (transitioned) {
+    // Module completion (first-class achievement) is independent of course
+    // completion — it can fire for a scoped student who will never complete
+    // the whole course. Both checks are best-effort and idempotent.
+    await maybeCompleteModule(userId, moduleId, now);
     ({ courseComplete, courseStats } = await maybeCompleteCourse(
       userId,
       courseId,
